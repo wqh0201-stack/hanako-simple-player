@@ -70,10 +70,20 @@
     --hk-faint: var(--text-light, #9FB1BC);
     --hk-accent: var(--accent, #C99AAF);
     --hk-border: var(--border, rgba(170, 121, 141, 0.16));
-    /* 夜间强调色是浅藕荷粉，压在它上面的字要深色才看得清 */
+    /* 无宿主主题（真·auto）时的兜底：夜间强调色是浅藕荷粉，压在上面的字要深色才看得清。
+     * 一旦宿主给了 hana-theme-appearance，下面那两条属性规则会以更高特异性接管。 */
     --hk-on-accent: #2A3238;
   }
 }
+
+/* ── 压在强调色上的字（--hk-on-accent）──
+ * 由【当前主题的深浅】决定，不由系统深浅：浅色主题的强调色偏深（远山蓝）→ 配近白字；
+ * 深色主题的强调色偏浅（藕荷粉）→ 配深字。
+ * 宿主在 iframe URL 给了权威的 hana-theme-appearance，app.js 落到 <html data-appearance>。
+ * 优先于上面的 prefers-color-scheme 兜底（属性选择器特异性更高），
+ * 两者冲突时以宿主主题为准 —— 否则「系统浅色 + 深色主题」下会拿近白字压浅粉强调色。 */
+:root[data-appearance="dark"] { --hk-on-accent: #2A3238; }
+:root[data-appearance="light"] { --hk-on-accent: #FFFDF7; }
 
 /* ============================================================
    封面层 / 环境色层

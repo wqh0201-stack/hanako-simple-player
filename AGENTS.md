@@ -488,6 +488,16 @@ app-data（`~/.hanako/app-data/hanako-audio-player/`：`playlist.json` /
   与 `lifecycle.seekFollowOk`（跳转后落盘位置必须跟着实际播放走）。验收 **106/106** 断言。
   交接：`docs/player-ui/REFINE-DONE-RESUME.md`。
 - 原始背景/根因/边界：`docs/REFACTOR-BRIEF.md`、`docs/player-ui/CONTRACT.md`、`docs/player-ui/WIRING.md`
+- **主题注入按「Hana 当前主题」而非「系统深浅」**（2026-10-11，**已部署**，构建号 1003131624）：
+  用户报「深色卡面上两角露近白补丁 + 强调色不跟随主题」，两者同一根因 —— 初始注入把宿主给的
+  两套调色板包成 `@media (prefers-color-scheme: light/dark)`，用**操作系统深浅**挑色，而不是用
+  **Hana 当前主题**（触发：系统浅色 + midnight）。修法：初始分支**无条件注入 `hana-css`**（当前主题，
+  不包 media）；palette 对只作老宿主兜底、按 `hana-theme-appearance` 选；`themePolarity()` 改为优先读
+  `data-appearance`（由 `app.js` 顶部 + `syncAppearance()` 落地，按实际底色算，换主题自动跟上）；
+  连带修同族的 `--hk-on-accent`（也挂在系统 media 上，浅色主题下会拿近白字压浅蓝强调色）。
+  接管：`docs/player-ui/REFINE-DONE-THEME-APPEARANCE.md`；原理见知识库
+  `20-资料/Hana App 卡片UI-主题变量与存储接线.md`「初始注入绝不能用系统深浅挑主题」。
+  验收 **118/118**（新增 `theme-real-host-shape-uses-current-theme` 等三条，旧实现必挂）。
 - 待办：独立窗/小卡音频不中断（pagehide/beacon 落盘 + 续播，2026-10-10 两轮：快照自带曲目 +
   换曲即落盘 + 进度护栏 + 媒体时钟进度 + seek 落点前不起播 + boot 提速，构建号 1003131614，
   **真机已复核（2026-10-10，罐头确认「ok 了」）**；剩余「一小段静默」是换文档重连媒体的固有代价，

@@ -242,7 +242,7 @@ const server = http.createServer((req, res) => {
   if (p === '/api/apps/theme.css') {
     const name = u.searchParams.get('theme') || '';
     const HOSTFIX = { '--bg': '#112233', '--bg-card': '#1B2E44', '--text': '#E8F2FF', '--text-muted': '#8FA8C0', '--text-light': '#8FA8C0', '--accent': '#22AA88', '--border': 'rgba(150,180,220,0.2)' };
-    const vars = /dark/.test(name) ? THEME_VARS.dark : (/hostfix/.test(name) ? HOSTFIX : THEME_VARS.light);
+    const vars = /dark|midnight/.test(name) ? THEME_VARS.dark : (/hostfix/.test(name) ? HOSTFIX : THEME_VARS.light);
     return text(res, 200, ':root{' + Object.entries(vars).map(([k, v]) => `${k}:${v}`).join(';') + ';}', 'text/css; charset=utf-8');
   }
   if (p === API + '/widget/api/music/search') {
@@ -2331,36 +2331,103 @@ for (const [name, w, h, file] of [['312x494', 312, 494, 'index.html'], ['465x930
   await page.close();
 }
 {
-  // (b) palette 对：宿主给深浅两套主题时，跟随 macOS 深浅自动切换
+  // (a2) 真实宿主形状：同时给 hana-css + palette 对 + hana-theme-appearance。
+  //      系统浅色 + 主题深色（就是报告里的 bug 环境）→ 必须用 hana-css 那套（暗色），
+  //      绝不能因为系统浅色而挑 palette-light。旧实现（palette 对优先 + 包 media）此处必挂。
+  const page = await newPage();
+  await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
+  const q = new URLSearchParams({
+    appSurfaceSession: 'fake-ticket',
+    shot: '1',
+    'hana-theme': 'midnight-fix',
+    'hana-theme-appearance': 'dark',
+    'hana-css': '/api/apps/theme.css?theme=midnight-fix',
+    'hana-palette-light-css': '/api/apps/theme.css?theme=palette-light-fix',
+    'hana-palette-dark-css': '/api/apps/theme.css?theme=palette-dark-fix'
+  });
+  await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'light' }]);
+  await page.goto(`${BASE}/index.html?${q}`, { waitUntil: 'domcontentloaded' });
+  await sleep(500);
+  const vals = await page.evaluate(() => ({
+    accent: getComputedStyle(document.getElementById('playBtn')).backgroundColor,
+    body: getComputedStyle(document.body).backgroundColor,
+    onAccent: getComputedStyle(document.documentElement).getPropertyValue('--hk-on-accent').trim(),
+    appearance: document.documentElement.getAttribute('data-appearance')
+  }));
+  report.theme.realHostShape = vals;
+  // midnight-fix 走 /dark/ 分支（THEME_VARS.dark）：body #3B4A54 / accent #C99AAF；深色 → 强调色上用深字
+  assert('theme-real-host-shape-uses-current-theme',
+    vals.accent === 'rgb(201, 154, 175)' && vals.body === 'rgb(59, 74, 84)' &&
+    vals.onAccent === '#2A3238' && vals.appearance === 'dark',
+    JSON.stringify(vals));
+  await page.screenshot({ path: path.join(outDir, 'theme-real-host-shape.png') });
+  await page.close();
+}
+{
+  // (b) palette 对（兼容老宿主）：宿主只给深浅两套主题、不给 hana-css 时，
+  //     必须按 hana-theme-appearance 选，【不】按系统深浅选。
+  //     这条同时是两个 bug 的回归判据：系统深浅与 Hana 主题深浅不一致时不许翻车。
   const page = await newPage();
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
   const q = new URLSearchParams({
     appSurfaceSession: 'fake-ticket',
     shot: '1',
     'hana-theme': 'palette-fix',
+    'hana-theme-appearance': 'dark',
     'hana-palette-light-css': '/api/apps/theme.css?theme=palette-light-fix',
     'hana-palette-dark-css': '/api/apps/theme.css?theme=palette-dark-fix'
   });
-  await page.goto(`${BASE}/index.html?${q}`, { waitUntil: 'domcontentloaded' });
+  // 故意把系统设成浅色：旧实现会因此错选浅色那套（bug 根因）
   await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'light' }]);
+  await page.goto(`${BASE}/index.html?${q}`, { waitUntil: 'domcontentloaded' });
   await sleep(500);
-  const lightVals = await page.evaluate(() => ({
+  const sysLightVals = await page.evaluate(() => ({
     accent: getComputedStyle(document.getElementById('playBtn')).backgroundColor,
     body: getComputedStyle(document.body).backgroundColor
   }));
-  await page.screenshot({ path: path.join(outDir, 'theme-palette-macos-light.png') });
+  await page.screenshot({ path: path.join(outDir, 'theme-palette-appearance-dark-syslight.png') });
+  // 系统切成深色，结果必须不变（说明看的是主题权威值，不是系统）
   await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'dark' }]);
   await sleep(300);
-  const darkVals = await page.evaluate(() => ({
+  const sysDarkVals = await page.evaluate(() => ({
     accent: getComputedStyle(document.getElementById('playBtn')).backgroundColor,
     body: getComputedStyle(document.body).backgroundColor
   }));
-  await page.screenshot({ path: path.join(outDir, 'theme-palette-macos-dark.png') });
-  report.theme.palette = { light: lightVals, dark: darkVals };
-  assert('theme-palette-follows-macos',
-    lightVals.accent === 'rgb(83, 125, 150)' && lightVals.body === 'rgb(248, 244, 237)' &&
-    darkVals.accent === 'rgb(201, 154, 175)' && darkVals.body === 'rgb(59, 74, 84)',
-    JSON.stringify({ light: lightVals, dark: darkVals }));
+  await page.screenshot({ path: path.join(outDir, 'theme-palette-appearance-dark-sysdark.png') });
+  report.theme.palette = { sysLight: sysLightVals, sysDark: sysDarkVals };
+  // dark 那套：accent #C99AAF / body #3B4A54
+  assert('theme-palette-follows-appearance-not-macos',
+    sysLightVals.accent === 'rgb(201, 154, 175)' && sysLightVals.body === 'rgb(59, 74, 84)' &&
+    sysDarkVals.accent === 'rgb(201, 154, 175)' && sysDarkVals.body === 'rgb(59, 74, 84)',
+    JSON.stringify({ sysLight: sysLightVals, sysDark: sysDarkVals }));
+  await page.close();
+}
+{
+  // (b2) 系统深色 + 主题浅色那套 → 必须选浅色（旧实现会错选深色）
+  const page = await newPage();
+  await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
+  const q = new URLSearchParams({
+    appSurfaceSession: 'fake-ticket',
+    shot: '1',
+    'hana-theme': 'palette-fix',
+    'hana-theme-appearance': 'light',
+    'hana-palette-light-css': '/api/apps/theme.css?theme=palette-light-fix',
+    'hana-palette-dark-css': '/api/apps/theme.css?theme=palette-dark-fix'
+  });
+  await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'dark' }]);
+  await page.goto(`${BASE}/index.html?${q}`, { waitUntil: 'domcontentloaded' });
+  await sleep(500);
+  const vals = await page.evaluate(() => ({
+    accent: getComputedStyle(document.getElementById('playBtn')).backgroundColor,
+    body: getComputedStyle(document.body).backgroundColor,
+    onAccent: getComputedStyle(document.documentElement).getPropertyValue('--hk-on-accent').trim()
+  }));
+  report.theme.paletteLight = vals;
+  // light 那套：accent #537D96 / body #F8F4ED；浅色主题 → 强调色上是近白字
+  assert('theme-palette-light-despite-macos-dark',
+    vals.accent === 'rgb(83, 125, 150)' && vals.body === 'rgb(248, 244, 237)' &&
+    vals.onAccent === '#FFFDF7',
+    JSON.stringify(vals));
   await page.close();
 }
 {

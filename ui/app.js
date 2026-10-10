@@ -11,6 +11,17 @@
   var SHOT = params.get('shot') === '1';
   if (SHOT) document.body.classList.add('is-shot');
 
+  /* ---------- 当前主题的深浅（权威源）----------
+   * 宿主在 iframe URL 里给了 hana-theme-appearance（'light' | 'dark'）=「当前主题
+   * 属于深还是浅」。这才是 App 该看的答案；prefers-color-scheme 是操作系统的口音，
+   * 与 Hana 主题无关。先落到 <html data-appearance>，让主题样式表还没拉回来的
+   * 那一瞬（沉浸色/纱极性）也读得到。
+   * 【别拿系统深浅去挑宿主给的两套调色板 —— 那就是当初两个 bug 的根因。】 */
+  var HOST_APPEARANCE = params.get('hana-theme-appearance') || '';
+  if (HOST_APPEARANCE === 'dark' || HOST_APPEARANCE === 'light') {
+    document.documentElement.setAttribute('data-appearance', HOST_APPEARANCE);
+  }
+
   /* ---------- 卡片鉴权 ----------
    * App 卡片的 iframe URL 带 `appSurfaceSession`。后端路由（/api/apps/<id>/routes/...）
    * 靠它鉴权 —— 宿主**不**给页面注入 cookie、也不替页面加头，必须自己带上。
@@ -894,10 +905,48 @@
   }
 
   function themePolarity() {
+    /* 优先读宿主给的权威深浅（data-appearance），其次主题字面量 light/dark，
+     * 再次按真实底色 --hk-surface 算，最后才退系统深浅。
+     * data-theme 现在装的是主题 id（midnight / warm-paper …），不再当深浅用；
+     * 之前只认字面量 'dark'/'light'，既接不住主题 id、又掉回系统深浅，
+     * 于是「系统浅色 + 主题深色」时纱/字挑错极性。 */
+    var ap = document.documentElement.getAttribute('data-appearance');
+    if (ap === 'dark' || ap === 'light') return ap;
+    /* 按实际底色算，排在 data-theme 字面量之前 ——
+     * HTML 里有写死的 data-theme="light" 占位，先信它会在真·auto 时把系统深色钉成浅。 */
+    try {
+      var s = getComputedStyle(document.documentElement).getPropertyValue('--hk-surface').trim();
+      var c = rgbStr2arr(s);
+      if (c) return lumOf(c) > 0.5 ? 'light' : 'dark';
+    } catch (e) { /* 读不到就继续退 */ }
     var t = document.documentElement.getAttribute('data-theme');
     if (t === 'dark' || t === 'light') return t;
     try { return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
     catch (e) { return 'light'; }
+  }
+
+  /* 把「当前主题深浅」落到 <html data-appearance>，供 CSS 选压在强调色上的字
+   * （--hk-on-accent）等。三个分支：
+   *   - 宿主主题已生效（主题样式表定义了 --bg）→ 按实际底色 --hk-bg 算（换主题后自动跟上）；
+   *   - 主题还没回来、但 URL 有权威值 → 用 HOST_APPEARANCE 垫；
+   *   - 真·auto（两者都无）→ 读 --hk-bg（此时 = fallback，本来就按系统深浅切）→ 与 CSS 兜底一致。
+   * 总之不用系统深浅去猜宿主主题的深浅；系统深浅只在真·auto 时才该参与。 */
+  function syncAppearance() {
+    var ap = '';
+    try {
+      var cs = getComputedStyle(document.documentElement);
+      var hasHost = !!cs.getPropertyValue('--bg').trim();
+      if (!hasHost && HOST_APPEARANCE) {
+        ap = HOST_APPEARANCE;
+      } else {
+        var c = rgbStr2arr(cs.getPropertyValue('--hk-bg').trim());
+        if (c) ap = lumOf(c) > 0.5 ? 'light' : 'dark';
+      }
+    } catch (e) { /* 读不到就退 URL 值 */ }
+    if (!ap) ap = HOST_APPEARANCE;
+    if (ap && document.documentElement.getAttribute('data-appearance') !== ap) {
+      document.documentElement.setAttribute('data-appearance', ap);
+    }
   }
 
   /* 「悬停抬升」的两档物理得按【真实底色】选，不能猜主题名。
@@ -913,6 +962,7 @@
     return lumOf(c) > 0.5 ? 'light' : 'dark';
   }
   function applyTone() {
+    syncAppearance();   // 先把当前主题深浅落到 data-appearance（--hk-on-accent 等要用）
     var tone = resolveTone();
     if (player.getAttribute('data-tone') !== tone) player.setAttribute('data-tone', tone);
   }
@@ -4141,18 +4191,21 @@
   }
 
   /* ============================================================
-     主题（R5 + macOS 夜间模式）
+     主题（跟随 Hana 当前主题）
      优先级：宿主显式注入的变量 > @media prefers-color-scheme 兜底 > 写死默认。
      style.css 的 --hk-* 桥已保证优先级；这里负责「让宿主值真的进来」：
      宿主把 hana-css / hana-palette-* 拼进 iframe URL，但 SDK 只在用户换主题
      （THEME_CHANGED）时才拉样式表，初始并不拉 —— 线上从未见过 theme.css 请求，
-     --accent 一直落兜底就是这个原因。这里按 Creator 模板的方式自己补初始注入：
-       1) 有 hana-palette-light/dark-css → 分别包 @media 注入（跟随 macOS 深浅，
-          用宿主真主题的深浅两套，不是自己配的颜色）；
-       2) 否则有 hana-css → 注入单份；
+     --accent 一直落兜底就是这个原因。这里自己补初始注入：
+       1) 有 hana-css → 注入单份（= 宿主当前主题，权威）；
+       2) 兼容老宿主只给 palette 对时 → 按 hana-theme-appearance 选一套，仍不看系统深浅；
        3) 都没有但知道主题名 → 自己拉 /api/apps/theme.css?theme=…；
-       4) 全都没有 → 不注水，交给 CSS 兜底层（prefers-color-scheme）。
-     拉不到就静默降级，绝不硬编宿主主题值。 */
+       4) 全都没有（真·auto）→ 不注水，交给 CSS 兜底层（prefers-color-scheme）。
+     拉不到就静默降级，绝不硬编宿主主题值。
+     ⚠️ 初始注入必须用【当前主题】，不能用 prefers-color-scheme 去挑宿主给的深浅两套 ——
+     那等于拿操作系统的深浅决定 App 配色，而不是拿 Hana 主题。
+     hana-theme-appearance 才是「当前主题属于深还是浅」的权威答案，
+     宿主在 iframe URL 里已经给了；系统深浅只是浏览器的口音，两回事。 */
   function setThemeStyle(key, css) {
     var el = document.querySelector('style[data-app-theme="' + key + '"]');
     if (!css) {
@@ -4188,16 +4241,19 @@
       return put(snap.cssUrl, 'base', '');
     }
     if (!isUpdate) {
+      /* 当前主题（hana-css）无条件注入，不包 media —— 与 isUpdate 分支等价。
+       * 真·auto 时宿主给的是 theme.css?theme=auto，服务端取不到文件、
+       * fetchThemeCss 返回空 → 不注水，正好落到 CSS 的 prefers-color-scheme 兜底层。 */
+      var cssUrl = params.get('hana-css');
+      if (cssUrl) return put(cssUrl, 'base', '');
+      /* 兼容：老宿主只给 palette 对、不给 hana-css 时，按 hana-theme-appearance 选，
+       * 仍不看系统深浅（真实宿主恒给 hana-css，这条基本用不到，纯兜底）。 */
       var lightCss = params.get('hana-palette-light-css');
       var darkCss = params.get('hana-palette-dark-css');
       if (lightCss && darkCss) {
-        return Promise.all([
-          put(lightCss, 'palette-light', 'light'),
-          put(darkCss, 'palette-dark', 'dark')
-        ]);
+        var ap = params.get('hana-theme-appearance');
+        return put(ap === 'dark' ? darkCss : lightCss, 'base', '');
       }
-      var cssUrl = params.get('hana-css');
-      if (cssUrl) return put(cssUrl, 'base', '');
     }
     var name = (snap && snap.theme) || params.get('hana-theme') || '';
     if (name) return put('/api/apps/theme.css?theme=' + encodeURIComponent(name), 'base', '');
