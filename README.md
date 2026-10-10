@@ -45,12 +45,19 @@
 
 ## 可选：完整音源
 
-在 `app-data/hanako-audio-player/cookies.env` 里配置登录 cookie，可向 full-url 端点换完整音频（没有则回退试听版）：
+播放器**开箱即用**（内置公共 Meting 节点 + 各平台官方接口），不填 cookie 也能搜能听，
+代价是**部分歌只能听到试听版**。想解锁完整音频，在 `app-data/hanako-audio-player/cookies.env`
+里填一次登录 cookie：
 
 ```
 NETEASE_COOKIE=MUSIC_U=xxx; __csrf=xxx; ...
 TENCENT_COOKIE=uin=xxx; qqmusic_key=xxx; ...
 ```
+
+怎么拿到 `MUSIC_U` / `__csrf` 这些值：**问你自己的 Hana**（它能带你从浏览器开发者工具里
+拿到），或参考上游仓库关于 cookie 的说明。填完 Reload 即可生效。
+
+> 首次打开播放器时会弹一次这个提示，知道后不会再打扰。
 
 ## 开发
 

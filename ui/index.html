@@ -161,12 +161,6 @@
           </section>
         </div>
         <p class="search-section" id="searchSection" hidden></p>
-        <!-- 音源提示条：节点未导入/未生效时才显示（官方接口只能撑住网易云+B站）。
-             点击 → 选一个音源文件导入。文案与「下一步」由 JS 按后端状态填。 -->
-        <div class="search-srcbar" id="searchSrcBar" hidden>
-          <p class="src-note" id="searchSrcNote"></p>
-          <button class="src-act" id="searchSrcImportBtn" type="button">导入音源</button>
-        </div>
         <ol class="search-list" id="searchList"></ol>
         <p class="search-note" id="searchNote"></p>
       </section>
@@ -239,6 +233,17 @@
       <svg class="icon icon-sm" aria-hidden="true"><use href="#i-play"></use></svg>
       <span>继续播放</span>
     </button>
+
+    <!-- 首次使用提示（只弹一次，记住已读）：说明 cookie 能让在线音源出完整音频。
+         怎么填交给用户去问自己的 Hana —— 不在卡片里教。 -->
+    <div class="first-run" id="firstRun" hidden>
+      <div class="fr-card" role="dialog" aria-labelledby="frTitle">
+        <p class="fr-title" id="frTitle">想听到完整音源？</p>
+        <p class="fr-body">不填也能用，部分歌会是试听版。在 <code>cookies.env</code> 里填一次登录 cookie，就能解锁完整音频。</p>
+        <p class="fr-body fr-hint">怎么填：问你的 Hana，或看仓库 README 的「可选：完整音源」。</p>
+        <button class="fr-ok" id="firstRunOk" type="button">知道了</button>
+      </div>
+    </div>
 
     <pre class="report" id="report" hidden></pre>
   </div>
@@ -313,7 +318,7 @@
 </defs></svg>
 
 <script src="app.js" defer></script>
-<script>window.__HANA_BUILD = "1003131625";</script>
+<script>window.__HANA_BUILD = "1003131626";</script>
 <script type="module">
   import { hana } from "./sdk.js";
   window.hana = hana;

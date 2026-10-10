@@ -22,16 +22,6 @@ const app = {
 
 const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hap-be-'));
 
-/* 音源夹具：Meting 节点现在从 {dataDir}/sources.json 读（不进仓库）。
- * 这里放一个（主机名无所谓 —— 本测试把 ctx.network.fetch 全换成假实现，
- * 不走白名单）。不写这个文件的话，meting 相关路径会按「未配置音源」返回
- * NO_SOURCES_CONFIGURED，那是新行为，不是 bug。 */
-fs.writeFileSync(
-  path.join(dataDir, 'sources.json'),
-  JSON.stringify({ version: 1, nodes: ['https://node.test/meting/api'] }),
-  'utf8'
-);
-
 /* 网络探针：playlist 路由会先问 Meting 节点拿曲目、再（仅 netease）问网易云官方
  * 拿歌单真名。这里把 ctx.network.fetch 换成可控的假实现，按 URL 分流，并记录调用。 */
 let netCalls = [];

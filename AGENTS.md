@@ -335,27 +335,19 @@ app-data（`~/.hanako/app-data/hanako-audio-player/`：`playlist.json` /
   ⚠️ **fav 是「无归属」的额外列表**，会出现在切换条最前；与 `local` 一样不吃 `imp:N` 编号。
   断言 `fav-row-toggles-on` / `fav-list-collects-and-labels` / `fav-state-by-stable-id-cross-list` /
   `fav-unfav-keeps-original-list` / `fav-not-deletable` / `stage-fav-toggles-and-syncs-row`。
-- **音源节点脱敏：地址抽成外置文件 + 导入入口**（2026-10-11，**已部署**，构建号 1003131625，罐头反馈）：
-  Meting 公共节点地址属灰色资源，不能进公开仓库。做法与平台约束见
-  `docs/player-ui/SOURCES-EXTRACTION.md`。要点：
-  ① **仓库不再带节点地址**：`manifest.json` 只留公共接口（`music.163.com` / `api.bilibili.com` /
-     `u.y.qq.com` / `*.music.126.net` / `amll-ttml-db…` / `*.hdslb.com` / `*.bilivideo.*`）；
-     `lib/meting.js` 不再硬编码节点，运行时读 `{dataDir}/sources.json`（新 `lib/sources.js`）。
-  ② **可分享文件** = `sources.json`（真实节点，**gitignore 挡住**）；仓库只留
-     `sources.example.json` 占位模板。
-  ③ ⚠️ **平台约束**：`network.allowedHosts` 是**清单里的静态表，运行时加不了主机** →
-     导入文件本身不足以连上，必须再跑 `node tools/apply-sources.mjs`（把节点主机写进
-     **本机安装目录**的 manifest，备份 `.bak-sources`）+ reload（首次弹审核卡批一次）。
-     罐头拍板选「本地 apply 脚本」而非自建中继。
-  ④ **官方接口兜底**：无节点时网易云（官方搜索/直链/歌词）与 B站仍可用，
-     QQ/酷狗无公共接口 → 回 `code:"NO_SOURCES_CONFIGURED"`；搜索页顶部给提示条 + 「导入音源」按钮。
-  ⑤ 顺手修：`normalizeTrack` 接 `name/artist` 别名（部分节点用它而不用 `title/author`，
-     不接则 QQ/酷狗搜出空白行）。
-  验收：verify-backend 10/10、verify-ui **121/121**（新增 3 条），真机四平台搜索均通。
-  **已推** `hana-simple` → `30c2f5f`（远端 raw 复验零节点域名、`sources.json` 404）。
-  ⚠️ **历史不动**（罐头拍板）：那 4 个地址是**上游仓库自带**（上游 `master` 的 meting.js/manifest 就有），
-  我们 fork 的 `master` 与上游 SHA 一致、只是继承；重写收益有限且会与上游假分叉。
-  真要彻底干净得动上游本身，不在我们单方面范围。
+- **音源改回内置 + 首次 cookie 提示**（2026-10-11，**已部署**，构建号 1003131626，罐头拍板）：
+  前情：一度把 Meting 节点抽成外置 `sources.json` + apply 脚本。**后修正**（见
+  `docs/player-ui/SOURCES-BUILTIN.md`）：判据校准为「**只保证自己不加新的；公开可获取的没问题**」——
+  那 4 个地址**上游仓库本就公开**（其 `master` 的 meting.js/manifest 就列着，我们 fork `master`
+  与上游 SHA 一致），我们只是继承，写回合规；且内置后**装完即用**（白名单静态表，无需 apply 脚本）。
+  ① **节点写回**：`lib/meting.js` 的 `NODES` 数组、`manifest.json` 的 4 个节点主机。
+  ② **外置那套已删**：`lib/sources.js` / `sources.example.json` / `tools/apply-sources.mjs` /
+     `.gitignore` 那条 / 搜索页导入入口与提示条。
+  ③ **新增首次使用 cookie 提示**：一次性轻浮层 `#firstRun`（文案「想听到完整音源？」+「怎么填：
+     问你的 Hana，或看 README」）。**只弹一次的判据卡得紧**：只有「存储确实读过且读到空」才弹；
+     存储不可用/截图模式不弹（否则每次启动都骚扰）。断言 `first-run-notice-shows-once`。
+  ④ 保留 `normalizeTrack` 的 `name/artist` 别名修复（外置那轮唯一真正有价值的改动）。
+  验收：verify-backend 10/10、verify-ui（搜源 3 条已随外置一并撤，新增首次提示 1 条）。
 - 音源改造（2026-10-10，罐头拍板「按你说的」，构建号 1003131604）：**删酷我/百度，接 B站**。探活结论见知识库《音乐音源探活与层级》。改动：
   ① `ui/app.js` 的 `SEARCH_SERVERS` 改为 网易云 / B站 / QQ / 酷狗（删酷我、百度；两处跨源回退列表同步）；`lib/meting.js` 的 `ALLOWED_SERVERS` 删 kuwo/baidu。
   ② 新增 `lib/bilibili.js`：搜视频抽音轨（search → view → playurl，选最高带宽 dash.audio）；`lib/register-routes.js` 的 `/music/search` 对 `server=bilibili` 走它，`resolveAudioUrl` 加 bilibili 分支（id=bvid，走 go 跳板同源分片代理），go 的 fetch 与 cover 路由对 B站带 Referer。

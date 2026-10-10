@@ -77,7 +77,6 @@
     radioPrograms: API + '/widget/api/music/radio-programs',
     importFile: API + '/widget/api/import-file',
     scanFolder: API + '/widget/api/scan-folder',
-    sources: API + '/widget/api/sources',
     playbackState: API + '/api/playback-state'
   };
 
@@ -324,6 +323,7 @@
    * 功能照常，只是不跨重启。绝不写 localStorage（契约）。 */
   var LISTS_KEY = 'player-lists';
   var LOCALDIR_KEY = 'player-local-dir';
+  var FIRST_RUN_KEY = 'player-cookie-notice-seen';   // 首次 cookie 说明是否已读
   var memStore = {};
 
   /* 读存储，返回 { ok, value }：ok=false 表示这次**没读到**（宿主未就绪 / 超时 / 报错）。
@@ -647,6 +647,25 @@
         resolve(true);
       });
     });
+  }
+
+  /* 首次使用提示：只弹一次。
+   * 条件卡得紧：**只有「存储确实读过且读到空」才弹** ——
+   * 存储不可用（纯浏览器 / 宿主未就绪 / 测试无头环境）时读不到，就不弹，
+   * 否则每次启动都弹一次，那是骚扰不是提示。 */
+  function closeFirstRun(remember) {
+    var el = $('firstRun');
+    if (el) el.hidden = true;
+    if (remember) storeSet(FIRST_RUN_KEY, 1);
+  }
+  function maybeShowFirstRun(read) {
+    var el = $('firstRun');
+    if (!el || SHOT) return;                 // 截图模式不打扰（保持图确定性）
+    if (!read || read.ok !== true) return;   // 读不到 → 不弹
+    if (read.value) return;                  // 已读过 → 不弹
+    el.hidden = false;
+    var ok = $('firstRunOk');
+    if (ok && !ok._bound) { ok._bound = true; ok.addEventListener('click', function () { closeFirstRun(true); }); }
   }
 
   /* ---------- 播放列表：读写都走后端（与工具侧共用 playlist.json） ---------- */
@@ -3470,76 +3489,6 @@
   var hotListEl = $('hotList');
   var chartsGridEl = $('chartsGrid');
   var radiosGridEl = $('radiosGrid');
-  var srcBarEl = $('searchSrcBar');
-  var srcNoteEl = $('searchSrcNote');
-  var srcImportBtn = $('searchSrcImportBtn');
-
-  /* ── 音源节点（灰色资源，不进仓库）──────────────────────────
-   * 官方接口只能撑住网易云 + B站；QQ / 酷狗的搜索全赖 Meting 节点。
-   * 后端 /sources 报三态：未导入 / 导入了但主机未进白名单（需跑 apply 脚本）/ 已生效。
-   * 没生效时在搜索页顶部给一条真实的下一步 —— 不假装搜索能用。 */
-  var sourcesState = { exists: false, count: 0, pendingHosts: [], applied: false };
-
-  function refreshSources() {
-    return apiGetJson(ENDPOINT.sources).then(function (r) {
-      var b = (r.ok && r.body) || {};
-      sourcesState = {
-        exists: !!b.exists,
-        count: Number(b.count) || 0,
-        pendingHosts: Array.isArray(b.pendingHosts) ? b.pendingHosts : [],
-        applied: !!b.applied,
-        file: b.file || ''
-      };
-      renderSourcesBar();
-      return sourcesState;
-    }).catch(function () { renderSourcesBar(); return sourcesState; });
-  }
-
-  function renderSourcesBar() {
-    if (!srcBarEl) return;
-    var s = sourcesState;
-    if (s.applied) { srcBarEl.hidden = true; return; }
-    srcBarEl.hidden = false;
-    var msg;
-    if (!s.exists || !s.count) {
-      msg = '未导入音源：QQ / 酷狗搜不了（网易云与 B站可用）。导入后可跨源搜索。';
-    } else if (s.pendingHosts.length) {
-      msg = '音源已导入，但 ' + s.pendingHosts.join(' / ') +
-        ' 还没进白名单：要跑一次 node tools/apply-sources.mjs 再 reload，否则连不上。';
-    } else {
-      msg = '';
-    }
-    if (srcNoteEl) srcNoteEl.textContent = msg;
-    if (srcImportBtn) srcImportBtn.textContent = s.count ? '重新导入' : '导入音源';
-  }
-
-  function importSources() {
-    if (window.__srcBusy) return;
-    hostPick({ mode: 'file' }).then(function (res) {
-      var ref = res && res.resources && res.resources[0];
-      var p = ref && ref.path;
-      if (!p) return;
-      window.__srcBusy = true;
-      if (srcNoteEl) srcNoteEl.textContent = '正在导入…';
-      return apiPostJson(ENDPOINT.sources, { path: p }).then(function (r) {
-        window.__srcBusy = false;
-        var b = (r.body) || {};
-        if (!r.ok || !b.ok) {
-          if (srcNoteEl) srcNoteEl.textContent = '导入失败：' + (b.error || r.status);
-          return;
-        }
-        toast('已导入 ' + b.count + ' 个音源节点');
-        return refreshSources();
-      }).catch(function (e) {
-        window.__srcBusy = false;
-        if (srcNoteEl) srcNoteEl.textContent = '导入失败：' + (e && e.message ? e.message : '未知错误');
-      });
-    }).catch(function (e) {
-      toast(e && e.message ? e.message : '文件选择不可用');
-    });
-  }
-
-  if (srcImportBtn) srcImportBtn.addEventListener('click', importSources);
 
   function setSearchNote(msg) { if (searchNoteEl) searchNoteEl.textContent = msg || ''; }
   function setSearchSection(msg) {
@@ -3647,7 +3596,6 @@
     renderSearchServers();
     renderSearchScope();
     renderSearchResults();
-    refreshSources();   // 每次开页刷新音源状态（导入/未生效会露出提示条）
     if (!String((searchInput && searchInput.value) || '').trim()) loadDiscover();   // 空白页预置推荐
     // 从左侧滑入（与队列抽屉同一套语言；reduced-motion 下退为淡入）
     searchPage.classList.remove('is-anim');
@@ -3899,17 +3847,7 @@
       .then(function (res) {
         if (gen !== searchSeq) return;
         searchBusy = false;
-        var body = (res.ok && res.body) || {};
-        /* 音源未配置（后端 NO_SOURCES）：QQ / 酷狗无公共接口可回退，
-         * 给一条能直接照做的提示，并让提示条暴露出来。 */
-        if (body.code === 'NO_SOURCES_CONFIGURED') {
-          searchResults = [];
-          renderSearchResults();
-          setSearchNote('这个平台要导入音源才能搜（网易云 / B站 不用）');
-          refreshSources();
-          return;
-        }
-        var list = (res.ok && body.ok && Array.isArray(body.results)) ? body.results : [];
+        var list = (res.ok && res.body && res.body.ok && Array.isArray(res.body.results)) ? res.body.results : [];
         if (!list.length) {
           searchResults = [];
           renderSearchResults();
@@ -4536,6 +4474,8 @@
         saveLists();
         if (before !== listNamesKey()) renderAll();
       }
+      /* 首次使用提示：再读一次一个专用 key（不拿 listsRead 代表一切）。 */
+      storeRead(FIRST_RUN_KEY).then(maybeShowFirstRun);
     });
   }
 
@@ -4812,9 +4752,15 @@
     closeSearch: closeSearch,
     renderResults: function (list) { searchSeq++; searchBusy = false; setDiscoverVisible(false); searchResults = list || []; renderSearchResults(); },
     setScope: function (sc) { searchScope = sc; renderSearchScope(); },
-    setServer: function (sv) { searchServer = sv; renderSearchServers(); },
-    doSearch: doSearch,
-    refreshSources: refreshSources,
+    /* 首次提示（测试用）：直接喂一个 read 结果，验弹/不弹的条件。
+     * 每次先复位 hidden，避免上一次调用残留状态影响判定。 */
+    firstRunState: function () { var el = $('firstRun'); return { hidden: el ? el.hidden : null }; },
+    firstRunTry: function (read) {
+      var el = $('firstRun');
+      if (el) el.hidden = true;
+      maybeShowFirstRun(read);
+      return el ? el.hidden : null;
+    },
     clearSearch: clearSearch,
     renderDiscover: function (o) {
       o = o || {};

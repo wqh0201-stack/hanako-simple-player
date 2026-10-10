@@ -1600,6 +1600,69 @@ button:disabled { cursor: default; }
 
 .report { display: none; }
 
+/* 首次使用提示：一张居中小卡 + 一层很淡的底。只在第一次打开时弹一次（见 app.js）。
+ * 用「可点掉」的轻浮层，不用 alert —— 不抢焦点、不拦操作。 */
+.first-run {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: color-mix(in srgb, var(--hk-bg) 62%, transparent);
+  animation: fadeIn 0.22s ease both;
+}
+.first-run[hidden] { display: none; }
+.fr-card {
+  width: min(360px, 100%);
+  padding: 16px 16px 14px;
+  border-radius: var(--radius-m, 8px);
+  background: var(--hk-surface);
+  border: 1px solid var(--hk-hairline);
+  box-shadow: var(--hk-pop-shadow);
+  animation: frIn 0.24s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+@keyframes frIn { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+.fr-title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--hk-text);
+}
+.fr-body {
+  margin: 0 0 6px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--hk-muted);
+}
+.fr-body code {
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--hk-hover, color-mix(in srgb, var(--hk-text) 8%, transparent));
+  font-size: 11.5px;
+  color: var(--hk-text);
+}
+.fr-hint { color: var(--hk-faint); }
+.fr-ok {
+  display: block;
+  margin: 12px 0 0 auto;
+  padding: 6px 16px;
+  border: 1px solid var(--hk-accent);
+  border-radius: var(--radius-s, 5px);
+  background: var(--hk-accent);
+  color: var(--hk-on-accent);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color .14s ease, transform .14s ease;
+}
+.fr-ok:hover { background: var(--hk-accent-hover, var(--hk-accent)); }
+.fr-ok:active { transform: scale(0.97); }
+/* 降低动效：只留淡入 */
+@media (prefers-reduced-motion: reduce) {
+  .fr-card { animation: none; }
+}
+
 /* ============================================================
    布局一 · 长卡（默认）：舞台/队列比例可拖，控制条常驻
    ============================================================ */
@@ -2123,41 +2186,3 @@ body.is-shot *::after {
   color: var(--hk-muted);
 }
 .search-note:empty { display: none; }
-
-/* 音源提示条：节点未导入 / 未生效时才露出（官方接口只能撑住网易云 + B站）。
-   不抢镜 —— 一行字 + 一颗轻按钮，跟 search-note 同一层信息。 */
-.search-srcbar {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 2px 16px 8px;
-  padding: 8px 11px;
-  border: 1px solid var(--hk-hairline);
-  border-radius: var(--radius-s, 5px);
-  background: var(--hk-surface);
-}
-.search-srcbar[hidden] { display: none; }
-.src-note {
-  flex: 1 1 auto;
-  min-width: 0;
-  margin: 0;
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: var(--hk-muted);
-  overflow-wrap: anywhere;
-}
-.src-act {
-  flex: 0 0 auto;
-  padding: 5px 12px;
-  border: 1px solid var(--hk-accent);
-  border-radius: var(--radius-s, 5px);
-  background: transparent;
-  color: var(--hk-accent);
-  font: inherit;
-  font-size: 11.5px;
-  cursor: pointer;
-  transition: background-color .14s ease, color .14s ease;
-}
-.src-act:hover { background: var(--hk-accent); color: var(--hk-on-accent); }
-.src-act:active { transform: scale(0.97); }

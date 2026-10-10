@@ -105,9 +105,6 @@ for (let i = 0; i < 2; i++) OLD_TRACKS.push({ name: `未分类曲 ${i + 1}`, url
 
 /* 假后端状态：POST /playlist 会落盘，GET 优先返回落盘值（测迁移幂等） */
 let fixtureMode = 'main';
-/* 音源状态夹具：none（未导入）/ pending（导入了但主机未进白名单）/ applied（已生效）。
- * 默认 applied，保持既有用例不受影响；验证「去导入音源」提示的用例再切。 */
-let sourcesMode = 'applied';
 let persistedPlaylist = null;
 /* 播放状态（跨文档）：POST 落盘，GET 取回 */
 let playbackState = null;
@@ -251,23 +248,7 @@ const server = http.createServer((req, res) => {
   if (p === API + '/widget/api/music/search') {
     searchHits++;
     const kw = u.searchParams.get('keyword') || '';
-    const server = u.searchParams.get('server') || 'netease';
-    /* 音源夹具开关：sourcesMode !== 'applied' 时，QQ / 酷狗如后端一样回 NO_SOURCES
-     * （官方接口只撑网易云/B站）—— 用来验前端是否给出「去导入音源」。 */
-    if (server !== 'netease' && server !== 'bilibili' && sourcesMode !== 'applied') {
-      return json(res, 200, { ok: false, code: 'NO_SOURCES_CONFIGURED', error: '未配置音源节点（请导入音源文件）' });
-    }
     return json(res, 200, { ok: true, results: [{ id: `netease:${770000 + kw.length}`, title: `命中 ${kw}`, author: '搜索歌手', url: goUrl(770000 + kw.length), pic: '', lrc: 'http://mock/lrc/' + encodeURIComponent(kw) }], host: 'mock', total: 1 });
-  }
-  /* 音源状态：sourcesMode = none / pending / applied */
-  if (p === API + '/widget/api/sources') {
-    if (req.method === 'POST') return json(res, 200, { ok: true, count: 3, hosts: ['a.example', 'b.example', 'c.example'], pendingHosts: ['a.example', 'b.example', 'c.example'], applied: false });
-    const map = {
-      none: { exists: false, count: 0, hosts: [], pendingHosts: [], applied: false },
-      pending: { exists: true, count: 3, hosts: ['a.example', 'b.example', 'c.example'], pendingHosts: ['a.example', 'b.example', 'c.example'], applied: false },
-      applied: { exists: true, count: 3, hosts: ['a.example', 'b.example', 'c.example'], pendingHosts: [], applied: true }
-    };
-    return json(res, 200, { ok: true, ...(map[sourcesMode] || map.none) });
   }
   if (p === API + '/widget/api/music/hot') {
     const results = Array.from({ length: 3 }, (_, i) => ({ id: `netease:${780000 + i}`, title: `热门推荐 ${i + 1}`, author: `推荐歌手 ${i + 1}`, url: goUrl(780000 + i), pic: '', lrc: '' }));
@@ -1759,6 +1740,21 @@ const motion = {};
     s.empty.name === '' && s.empty.h === 0 && s.empty.iconShown === false,
     JSON.stringify(s.empty));
 
+  /* 首次使用提示：只有「存储读过且读到空」才弹；读过、读不到都不弹。 */
+  s.firstRun = await page.evaluate(() => {
+    const D = window.__playerDebug;
+    const r = {};
+    r.hiddenInit = D.firstRunState().hidden;               // 初始（未触发过）
+    r.shownWhenUnseen = D.firstRunTry({ ok: true, value: null });   // 未读过 → 弹
+    r.hiddenAfterSeen = D.firstRunTry({ ok: true, value: 1 });      // 读过 → 不弹
+    r.hiddenWhenUnreadable = D.firstRunTry({ ok: false, value: null }); // 读不到 → 不弹
+    return r;
+  });
+  assert('first-run-notice-shows-once',
+    s.firstRun.hiddenInit === true && s.firstRun.shownWhenUnseen === false &&
+    s.firstRun.hiddenAfterSeen === true && s.firstRun.hiddenWhenUnreadable === true,
+    JSON.stringify(s.firstRun));
+
   // 播一首「有歌手」的搜索结果（夹具搜索结果 author = 搜索歌手）→ 歌手行变成活的入口
   await page.evaluate(() => window.__playerDebug.openSearch());
   await sleep(380);
@@ -1968,73 +1964,6 @@ const motion = {};
     s.afterResize.hint === '点下方播放列表里的 ＋ 添加',
     JSON.stringify(s.afterResize));
   report.emptyHint = s;
-}
-
-/* ============ 2g) 音源导入（灰色资源不进仓库）：未导入时的提示与导入入口 ============ */
-{
-  const s = {};
-  const CASES = [
-    ['none', 1040, 780, 'standalone.html'],
-    ['pending', 1040, 780, 'standalone.html'],
-    ['applied', 1040, 780, 'standalone.html'],
-  ];
-  for (const [mode, w, h, file] of CASES) {
-    await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
-    sourcesMode = mode;
-    const page = await newPage();
-    await page.setViewport({ width: w, height: h, deviceScaleFactor: 1 });
-    await page.goto(`${BASE}/${file}?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
-    await page.evaluate((t) => window.__fixtureTheme(t), 'light');
-    await sleep(700);
-    await page.evaluate(() => window.__playerDebug.openSearch());
-    await sleep(500);
-    s[mode] = await page.evaluate(() => {
-      const bar = document.getElementById('searchSrcBar');
-      return {
-        barHidden: bar.hidden,
-        note: (document.getElementById('searchSrcNote') || {}).textContent || '',
-        btn: (document.getElementById('searchSrcImportBtn') || {}).textContent || ''
-      };
-    });
-    await page.close();
-  }
-  // 未导入 / 导入了但主机未进白名单 → 提示条露出，且告诉用户下一步；已生效 → 不露
-  assert('sources-bar-shown-when-not-applied',
-    s.none.barHidden === false && /未导入/.test(s.none.note) &&
-    s.none.btn === '导入音源' &&
-    s.pending.barHidden === false && /apply-sources/.test(s.pending.note) &&
-    s.pending.btn === '重新导入',
-    JSON.stringify(s));
-  assert('sources-bar-hidden-when-applied',
-    s.applied.barHidden === true,
-    JSON.stringify(s.applied));
-
-  /* QQ（非网易/非 B站）在未生效时搜索：后端回 NO_SOURCES，前端要给可照做的提示 */
-  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
-  sourcesMode = 'none';
-  const page = await newPage();
-  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/standalone.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
-  await page.evaluate((t) => window.__fixtureTheme(t), 'light');
-  await sleep(700);
-  await page.evaluate(() => {
-    window.__playerDebug.openSearch();
-    window.__playerDebug.setServer('tencent');
-    const inp = document.getElementById('searchInput');
-    inp.value = '测试';
-    window.__playerDebug.doSearch();
-  });
-  await sleep(700);
-  const qq = await page.evaluate(() => ({
-    note: (document.getElementById('searchNote') || {}).textContent || '',
-    barHidden: document.getElementById('searchSrcBar').hidden
-  }));
-  assert('sources-qq-search-tells-user-to-import',
-    /导入音源/.test(qq.note) && qq.barHidden === false,
-    JSON.stringify(qq));
-  await page.close();
-  sourcesMode = 'applied';   // 复位，不影响后续用例
-  report.sources = s;
 }
 
 /* ============ 3) 精修矩阵：312 / 465 / 1040 × 浅深 × 歌词开/关 ============ */

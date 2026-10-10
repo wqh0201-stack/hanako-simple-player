@@ -16,6 +16,10 @@
   ],
   "network": {
     "allowedHosts": [
+      "metingapi.nanorocky.top",
+      "api.amarea.cn",
+      "api.qijieya.cn",
+      "met.liiiu.cn",
       "music.163.com",
       "amll-ttml-db.stevexmh.net",
       "*.music.126.net",

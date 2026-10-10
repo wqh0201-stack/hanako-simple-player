@@ -11,9 +11,6 @@ dist/
 # 依赖
 node_modules/
 
-# 音源节点（灰色资源，不进公开仓库；仓库只留 sources.example.json）
-sources.json
-
 # macOS / 编辑器
 .DS_Store
 *.log
