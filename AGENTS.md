@@ -274,6 +274,8 @@ app-data（`~/.hanako/app-data/hanako-audio-player/`：`playlist.json` /
   搜索页的悬停**没动**（罐头明确说不用改）。断言新增 `tone-matches-surface-polarity` / `hover-glow-replaces-gray` /
   `hover-glow-on-all-controls` / `hover-glow-two-tiers`，验收 **114/114**（布局 12/12、窄卡 4/4、零运行时错误）。
   目视脚本 `node tools/shoot-hover.mjs`（真悬停＋按元素矩形裁图，深浅四种组合）。
+  **2026-10-10 真机已复核（罐头确认「都 ok」）**：深底发光、浅底浮起两套物理都成立，播放键与辅助键的
+  强度分层也成立（主键没被抢戏），列表行内图标的光未被容器裁边。
   交接：`docs/player-ui/REFINE-DONE-HOVER-GLOW.md`；原理与坑见知识库
   `20-资料/深底用光浅底用影-悬停态在两种底色上.md`（含「伪类读不了 `getComputedStyle(el, ':hover')`，断言得扫样式表」）。
 - 无头验收：`node tools/verify-ui.mjs`（12/12 布局自检 + 4/4 窄卡 + **114/114** 断言 + 接线冒烟 + 迁移 + 跨文档生命周期（含「快照自带曲目」续播）+ 来源/真名/补齐/删除 + 红心/我的喜欢 + 环境色两态/兜底 + 动效五项 + 跨源安全/歌词兜底 + 搜索页/推荐区 + 涟漪 + 控制条对称/歌名 + 切换条溢出/跟随 + 音量浮层 + 悬停抬升）
