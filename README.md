@@ -35,9 +35,26 @@
 
 ## 安装
 
-1. 把本仓库目录放进 `<HANA_HOME>/apps/hanako-audio-player`（目录名须与 `manifest.id` 一致）
-2. Hana → Market → Installed → 批准该应用
-3. 之后改代码只需在详情页 Reload
+**推荐：装 release 包**（不用 clone 源码，也不用碰打包工具链）
+
+1. 到 [Releases](https://github.com/wqh0201-stack/openhanako-audio-player/releases) 下载
+   `app-hanako-audio-player-<版本>.zip`（连同同名 `.entry.json`）；
+2. 让 Hana 安装这个 zip（本地来源安装），审批它声明的 5 项能力；
+3. 装完在应用详情页即可 Reload。
+
+> release zip 是**运行时文件**打的包（约 0.2MB），不含 `docs/` 设计与交接文档、
+> `tools/` 验证脚本。仓库里这些都在，只是不进包。
+
+**从源码装**（改代码、参与开发时）
+
+1. 把源码目录放到 `<HANA_HOME>/apps/` 下，**目录名必须等于 `manifest.id`**，
+   即 `hanako-audio-player`（GitHub 直接下载的 zip 解压出来是
+   `openhanako-audio-player-hana-simple`，**必须重命名**，否则官方校验器直接拒绝）；
+2. 打包或直接安装都需要官方工具链，先设环境变量：
+   `HANA_APP_TOOLS_ROOT=<HANA_HOME>/artifacts/server/<版本>`
+   （该目录里有 `APPS.md` 与 `scripts/`）；
+3. 让 Hana 以**本地来源**安装（目录或 `tools/pack-release.mjs` 产出的 zip），审批能力；
+4. 之后改代码：同步 `ui/` + Reload 即可。
 
 最低 Hana 版本：`0.946.2`。
 
@@ -67,6 +84,8 @@ ui/standalone.html       独立窗页（内容与 index.html 相同，仅 data-s
 ui/app.js                全部逻辑（ES5，无构建）
 ui/style.css             全部样式（三态布局 + 动效）
 tools/bump-build.mjs     构建号三处同步（_build.json + index.html + standalone.html）
+tools/pack-release.mjs   出 release 包：白名单复制运行时文件 → 官方 extension-pack
+                         （排除 docs/ tools/ AGENTS.md，55MB → ≈0.2MB）
 tools/verify-ui.mjs      无头验收：布局自检 + 断言 + 截图
 tools/verify-backend.mjs 后端验收：去重键 / DELETE / playback-state / playlist-meta
 ```

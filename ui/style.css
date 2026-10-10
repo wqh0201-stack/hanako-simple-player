@@ -116,7 +116,7 @@
     0 0 1px color-mix(in srgb, var(--hl-accent) 70%, transparent),
     0 0 7px color-mix(in srgb, var(--hl-accent) 55%, transparent),
     0 0 16px color-mix(in srgb, var(--hl-accent) 30%, transparent);
-  /* 在线曲目有 pic 时由 JS 写入 url(...)；没有就只剩兜底 */
+  /* 在线曲目有 pic 时由 JS 写入 background-image；没有就只剩兜底 */
   --cover-image: none;
   /* 兜底：主题色 + 极淡斜纹纹理，不是彩色糊渐变，也不硬编码山景 */
   --cover-fallback:
