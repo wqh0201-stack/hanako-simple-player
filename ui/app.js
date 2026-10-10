@@ -1131,6 +1131,20 @@
     else btn.removeAttribute('aria-label');
   }
 
+  /* 空列表时的引导语：＋ 住在队列面板头部（#importBtn），而队列在三种布局里位置不同 ——
+   * 长卡常驻在下方、窄卡是独立一页、独立窗是右侧抽屉（都从右下角队列键进）。
+   * 所以不能一律说「右上角」（那是极简版早期的位置，控制条/队列重排后就失效了）。 */
+  function emptyImportHint() {
+    if (player.getAttribute('data-layout') === 'long') return '点下方播放列表里的 ＋ 添加';
+    return '点右下角队列里的 ＋ 添加';
+  }
+
+  /* 换布局（长卡/窄卡/独立窗）后 ＋ 的位置跟着变，空列表引导语要重写。 */
+  function refreshEmptyHint() {
+    if (currentTrack()) return;
+    setArtistLine(emptyImportHint(), false);
+  }
+
   function renderTrack() {
     var t = currentTrack();
     var favBtn = $('stageFavBtn');
@@ -1139,7 +1153,7 @@
     if (favBtn && !favBtn.querySelector('use')) favBtn.innerHTML = icon('i-heart');
     if (!t) {
       $('trackTitle').textContent = '还没有曲目';
-      setArtistLine('用右上角的 ＋ 导入', false);
+      setArtistLine(emptyImportHint(), false);
       $('trackMeta').textContent = '';
       setCtlTrack(null);
       paintFav(favBtn, null);
@@ -4057,6 +4071,7 @@
       /* 搜索页不再因「离开宽窗」而强收：舞台上的歌手名是三种布局通用的入口，
        * 卡片里也开得了（宽窄只在头部排布上有别）。用户自己用「返回」退出。 */
       renderChrome();
+      refreshEmptyHint();   // 空列表引导语里 ＋ 的方位随布局变（长卡下方 / 窄卡另一页 / 独立窗抽屉）
     }
     updateStageMetrics();
     sizeLyricPad();

@@ -179,7 +179,7 @@ const server = http.createServer((req, res) => {
       });
       return;
     }
-    const tracks = persistedPlaylist || (fixtureMode === 'migrate' ? OLD_TRACKS : TRACKS);
+    const tracks = persistedPlaylist || (fixtureMode === 'migrate' ? OLD_TRACKS : (fixtureMode === 'empty' ? [] : TRACKS));
     return json(res, 200, { ok: true, tracks, count: tracks.length });
   }
   if (p === API + '/__fixture/reset') {
@@ -1897,6 +1897,58 @@ const motion = {};
     wd.overflow === false && wd.inputW >= 200 && wd.serversFadeR === false,
     JSON.stringify(wd));
   report.searchHeader = s;
+}
+
+/* ============ 2f) 空列表引导语：＋ 的方位随布局变（不能一律说「右上角」） ============
+ * 背景：这条引导语曾是「用右上角的 ＋ 导入」—— 那是极简版早期 ＋ 的位置。
+ * 之后控制条重排、队列改为下方面板/独立页/右侧抽屉，＋ 搬到了队列面板头部，
+ * 三种布局里位置各不相同（长卡常驻下方、窄卡与独立窗都要先点右下角队列键），
+ * 所以文案必须跟着布局走，换布局时也要重写。 */
+{
+  const CASES = [
+    ['long-465x930', 465, 930, 'index.html', 'long', '点下方播放列表里的 ＋ 添加'],
+    ['compact-312x494', 312, 494, 'index.html', 'compact', '点右下角队列里的 ＋ 添加'],
+    ['wide-1040x780', 1040, 780, 'standalone.html', 'wide', '点右下角队列里的 ＋ 添加']
+  ];
+  const s = {};
+  for (const [name, w, h, file, wantLayout, wantHint] of CASES) {
+    await fetch(`${BASE}${API}/__fixture/reset?mode=empty&appSurfaceSession=fake-ticket`);
+    const page = await newPage();
+    await page.setViewport({ width: w, height: h, deviceScaleFactor: 1 });
+    await page.goto(`${BASE}/${file}?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+    await page.evaluate((t) => window.__fixtureTheme(t), 'light');
+    await sleep(850);
+    s[name] = await page.evaluate(() => ({
+      layout: document.getElementById('player').getAttribute('data-layout'),
+      title: document.getElementById('trackTitle').textContent,
+      hint: document.getElementById('trackArtistName').textContent,
+      inert: document.getElementById('trackArtist').disabled === true
+    }));
+    s[name].wantLayout = wantLayout; s[name].wantHint = wantHint;
+    await page.screenshot({ path: path.join(outDir, `empty-hint-${name}-light.png`) });
+
+    /* 同页换布局：宽窗 → 长卡，「＋ 在哪」变了，引导语也该跟着换。 */
+    if (name === 'wide-1040x780') {
+      await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
+      await sleep(700);
+      s.afterResize = await page.evaluate(() => ({
+        layout: document.getElementById('player').getAttribute('data-layout'),
+        hint: document.getElementById('trackArtistName').textContent
+      }));
+    }
+    await page.close();
+  }
+  const CASES_MAP = {};
+  for (const [name, , , , wantLayout, wantHint] of CASES) CASES_MAP[name] = { wantLayout, wantHint };
+  const bad = Object.keys(CASES_MAP).filter((k) => s[k].hint !== CASES_MAP[k].wantHint || s[k].layout !== CASES_MAP[k].wantLayout);
+  assert('empty-hint-names-the-right-place',
+    bad.length === 0 && Object.keys(CASES_MAP).every((k) => s[k].title === '还没有曲目' && s[k].inert === true),
+    JSON.stringify(s));
+  assert('empty-hint-follows-layout-change',
+    s.afterResize && s.afterResize.layout === 'long' &&
+    s.afterResize.hint === '点下方播放列表里的 ＋ 添加',
+    JSON.stringify(s.afterResize));
+  report.emptyHint = s;
 }
 
 /* ============ 3) 精修矩阵：312 / 465 / 1040 × 浅深 × 歌词开/关 ============ */
