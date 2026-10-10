@@ -114,9 +114,22 @@ node tools/apply-sources.mjs
 - 临时清空 `sources.json`：网易回退官方接口仍可搜；QQ/酷狗回 `NO_SOURCES_CONFIGURED`
 - 部署：构建号 1003131625；安装目录 manifest 由 `apply-sources.mjs` 写入 4 个主机（仓库那份仍干净）
 
-## 9. ⚠️ 还没做的一步：已推送的历史
+## 9. 已推送历史：决定不动（2026-10-11，罐头拍板）
 
-**4 个节点域名早已在公开 fork 上**（`wqh0201-stack/openhanako-audio-player` 的 `hana-simple`
-分支，`lib/meting.js` 与 `manifest.json`）。本次改动只保证**新版本干净**，
-旧 commit 里仍有。清理旧历史要重写公开分支（`git filter-repo` + 强推），
-属破坏性操作，须先跟罐头确认再做。
+侦察后确认一个关键事实：**那 4 个节点地址是上游仓库自带的**。
+`openhanako-labs/openhanako-audio-player` 的 `master` 的 `lib/meting.js` / `manifest.json`
+就列着这 4 个地址（直接拉上游公开 raw 确认）。我们 fork 的 `master` 与上游 SHA **完全一致**
+（`4294455`）—— 那几个分支上的地址是**原样继承**，不是我们推的。
+
+| 分支 | 地址来源 |
+|---|---|
+| `master` / `fix/same-origin-audio-proxy` / `ui-screenshots` | 上游血统（继承） |
+| `hana-simple` / `hana-simple-lists` | 我们的线 |
+
+**罐头拍板：不重写历史，只把新版本推上去。** 理由：地址在上游开源仓本就公开，
+重写 fork 收益有限，且会让 `master` 与上游假分叉（以后拉上游更新会冲突）、
+`fix/same-origin-audio-proxy` 的 PR 失效。真要彻底干净得动**上游仓库**本身，
+不属我们单方面能做到的范围。
+
+**已推**：`hana-simple` → `30c2f5f`（远端 raw 复验：`lib/meting.js` / `manifest.json` /
+`lib/sources.js` 零节点域名，`sources.json` 404，`sources.example.json` 200）。

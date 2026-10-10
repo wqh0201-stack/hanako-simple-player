@@ -352,7 +352,10 @@ app-data（`~/.hanako/app-data/hanako-audio-player/`：`playlist.json` /
   ⑤ 顺手修：`normalizeTrack` 接 `name/artist` 别名（部分节点用它而不用 `title/author`，
      不接则 QQ/酷狗搜出空白行）。
   验收：verify-backend 10/10、verify-ui **121/121**（新增 3 条），真机四平台搜索均通。
-  ⚠️ **遗留**：4 个节点域名早已在公开 fork 上（旧 commit），清理需重写公开分支，待罐头确认。
+  **已推** `hana-simple` → `30c2f5f`（远端 raw 复验零节点域名、`sources.json` 404）。
+  ⚠️ **历史不动**（罐头拍板）：那 4 个地址是**上游仓库自带**（上游 `master` 的 meting.js/manifest 就有），
+  我们 fork 的 `master` 与上游 SHA 一致、只是继承；重写收益有限且会与上游假分叉。
+  真要彻底干净得动上游本身，不在我们单方面范围。
 - 音源改造（2026-10-10，罐头拍板「按你说的」，构建号 1003131604）：**删酷我/百度，接 B站**。探活结论见知识库《音乐音源探活与层级》。改动：
   ① `ui/app.js` 的 `SEARCH_SERVERS` 改为 网易云 / B站 / QQ / 酷狗（删酷我、百度；两处跨源回退列表同步）；`lib/meting.js` 的 `ALLOWED_SERVERS` 删 kuwo/baidu。
   ② 新增 `lib/bilibili.js`：搜视频抽音轨（search → view → playurl，选最高带宽 dash.audio）；`lib/register-routes.js` 的 `/music/search` 对 `server=bilibili` 走它，`resolveAudioUrl` 加 bilibili 分支（id=bvid，走 go 跳板同源分片代理），go 的 fetch 与 cover 路由对 B站带 Referer。
