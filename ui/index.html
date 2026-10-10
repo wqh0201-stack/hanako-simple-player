@@ -161,6 +161,12 @@
           </section>
         </div>
         <p class="search-section" id="searchSection" hidden></p>
+        <!-- 音源提示条：节点未导入/未生效时才显示（官方接口只能撑住网易云+B站）。
+             点击 → 选一个音源文件导入。文案与「下一步」由 JS 按后端状态填。 -->
+        <div class="search-srcbar" id="searchSrcBar" hidden>
+          <p class="src-note" id="searchSrcNote"></p>
+          <button class="src-act" id="searchSrcImportBtn" type="button">导入音源</button>
+        </div>
         <ol class="search-list" id="searchList"></ol>
         <p class="search-note" id="searchNote"></p>
       </section>
@@ -307,7 +313,7 @@
 </defs></svg>
 
 <script src="app.js" defer></script>
-<script>window.__HANA_BUILD = "1003131624";</script>
+<script>window.__HANA_BUILD = "1003131625";</script>
 <script type="module">
   import { hana } from "./sdk.js";
   window.hana = hana;

@@ -2123,3 +2123,41 @@ body.is-shot *::after {
   color: var(--hk-muted);
 }
 .search-note:empty { display: none; }
+
+/* 音源提示条：节点未导入 / 未生效时才露出（官方接口只能撑住网易云 + B站）。
+   不抢镜 —— 一行字 + 一颗轻按钮，跟 search-note 同一层信息。 */
+.search-srcbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 16px 8px;
+  padding: 8px 11px;
+  border: 1px solid var(--hk-hairline);
+  border-radius: var(--radius-s, 5px);
+  background: var(--hk-surface);
+}
+.search-srcbar[hidden] { display: none; }
+.src-note {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--hk-muted);
+  overflow-wrap: anywhere;
+}
+.src-act {
+  flex: 0 0 auto;
+  padding: 5px 12px;
+  border: 1px solid var(--hk-accent);
+  border-radius: var(--radius-s, 5px);
+  background: transparent;
+  color: var(--hk-accent);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: background-color .14s ease, color .14s ease;
+}
+.src-act:hover { background: var(--hk-accent); color: var(--hk-on-accent); }
+.src-act:active { transform: scale(0.97); }
