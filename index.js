@@ -36,11 +36,6 @@ export async function apply(ctx) {
     } catch {
       /* fiber teardown */
     }
-    try {
-      unregisterBus?.();
-    } catch {
-      /* fiber teardown */
-    }
   };
 }
 
