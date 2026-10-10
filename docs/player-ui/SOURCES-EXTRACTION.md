@@ -100,7 +100,21 @@ node tools/apply-sources.mjs
   - `sources-bar-hidden-when-applied`
   - `sources-qq-search-tells-user-to-import`
 
-## 8. ⚠️ 还没做的一步：已推送的历史
+## 7.5 顺手修：节点字段别名（QQ/酷狗搜索空白行）
+
+`api.qijieya.cn` 这类节点回的是 `name/artist`，不是 `title/author`。之前前端只用网易，
+没暴露；现在 QQ / 酷狗在这类节点上是主路，`normalizeTrack` 不接别名就会搜出一片空白行。
+`lib/meting.js` 的 `normalizeTrack` 改为 `title ?? name` / `author ?? artist`。
+真机复验：QQ / 酷狗搜「晴天」现在都能出 `晴天 / 周杰伦`。
+
+## 8. 真机复验（2026-10-11，宿主 token 直连后端）
+
+- `GET /sources` → `applied: true`、`pendingHosts: []`（白名单已生效）
+- 网易走 `met.liiiu.cn`、QQ/酷狗走 `api.qijieya.cn`、B站走官方 —— 四平台搜索均出数据
+- 临时清空 `sources.json`：网易回退官方接口仍可搜；QQ/酷狗回 `NO_SOURCES_CONFIGURED`
+- 部署：构建号 1003131625；安装目录 manifest 由 `apply-sources.mjs` 写入 4 个主机（仓库那份仍干净）
+
+## 9. ⚠️ 还没做的一步：已推送的历史
 
 **4 个节点域名早已在公开 fork 上**（`wqh0201-stack/openhanako-audio-player` 的 `hana-simple`
 分支，`lib/meting.js` 与 `manifest.json`）。本次改动只保证**新版本干净**，
