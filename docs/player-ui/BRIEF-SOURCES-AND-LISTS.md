@@ -18,7 +18,7 @@
 
 ### 1. 歌单名：Meting 不给，网易云官方接口给
 
-- Meting 三个节点（`met.liiiu.cn` 等）`type=playlist` **只回曲目数组**，无歌单名 —— 所以现在只能叫「歌单 1」。
+- Meting 节点`type=playlist` **只回曲目数组**，无歌单名 —— 所以现在只能叫「歌单 1」。
 - **官方接口给真名**（实测 2026-10-09）：
   ```
   GET https://music.163.com/api/v6/playlist/detail?id=12881021&n=1

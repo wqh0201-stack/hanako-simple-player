@@ -102,15 +102,15 @@ node tools/apply-sources.mjs
 
 ## 7.5 顺手修：节点字段别名（QQ/酷狗搜索空白行）
 
-`api.qijieya.cn` 这类节点回的是 `name/artist`，不是 `title/author`。之前前端只用网易，
+某些节点回的是 `name/artist`，不是 `title/author`。之前前端只用网易，
 没暴露；现在 QQ / 酷狗在这类节点上是主路，`normalizeTrack` 不接别名就会搜出一片空白行。
 `lib/meting.js` 的 `normalizeTrack` 改为 `title ?? name` / `author ?? artist`。
-真机复验：QQ / 酷狗搜「晴天」现在都能出 `晴天 / 周杰伦`。
+真机复验：QQ / 酷狗搜「晴天」现在都能出「晴天 / 周杰伦」。
 
 ## 8. 真机复验（2026-10-11，宿主 token 直连后端）
 
 - `GET /sources` → `applied: true`、`pendingHosts: []`（白名单已生效）
-- 网易走 `met.liiiu.cn`、QQ/酷狗走 `api.qijieya.cn`、B站走官方 —— 四平台搜索均出数据
+- 四平台搜索均出数据（网易/QQ/酷狗走导入的节点，B站走官方）
 - 临时清空 `sources.json`：网易回退官方接口仍可搜；QQ/酷狗回 `NO_SOURCES_CONFIGURED`
 - 部署：构建号 1003131625；安装目录 manifest 由 `apply-sources.mjs` 写入 4 个主机（仓库那份仍干净）
 
