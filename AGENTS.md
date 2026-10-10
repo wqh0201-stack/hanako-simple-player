@@ -335,6 +335,24 @@ app-data（`~/.hanako/app-data/hanako-audio-player/`：`playlist.json` /
   ⚠️ **fav 是「无归属」的额外列表**，会出现在切换条最前；与 `local` 一样不吃 `imp:N` 编号。
   断言 `fav-row-toggles-on` / `fav-list-collects-and-labels` / `fav-state-by-stable-id-cross-list` /
   `fav-unfav-keeps-original-list` / `fav-not-deletable` / `stage-fav-toggles-and-syncs-row`。
+- **音源节点脱敏：地址抽成外置文件 + 导入入口**（2026-10-11，**已部署**，构建号 1003131625，罐头反馈）：
+  Meting 公共节点地址属灰色资源，不能进公开仓库。做法与平台约束见
+  `docs/player-ui/SOURCES-EXTRACTION.md`。要点：
+  ① **仓库不再带节点地址**：`manifest.json` 只留公共接口（`music.163.com` / `api.bilibili.com` /
+     `u.y.qq.com` / `*.music.126.net` / `amll-ttml-db…` / `*.hdslb.com` / `*.bilivideo.*`）；
+     `lib/meting.js` 不再硬编码节点，运行时读 `{dataDir}/sources.json`（新 `lib/sources.js`）。
+  ② **可分享文件** = `sources.json`（真实节点，**gitignore 挡住**）；仓库只留
+     `sources.example.json` 占位模板。
+  ③ ⚠️ **平台约束**：`network.allowedHosts` 是**清单里的静态表，运行时加不了主机** →
+     导入文件本身不足以连上，必须再跑 `node tools/apply-sources.mjs`（把节点主机写进
+     **本机安装目录**的 manifest，备份 `.bak-sources`）+ reload（首次弹审核卡批一次）。
+     罐头拍板选「本地 apply 脚本」而非自建中继。
+  ④ **官方接口兜底**：无节点时网易云（官方搜索/直链/歌词）与 B站仍可用，
+     QQ/酷狗无公共接口 → 回 `code:"NO_SOURCES_CONFIGURED"`；搜索页顶部给提示条 + 「导入音源」按钮。
+  ⑤ 顺手修：`normalizeTrack` 接 `name/artist` 别名（`api.qijieya.cn` 这类节点用它，
+     不接则 QQ/酷狗搜出空白行）。
+  验收：verify-backend 10/10、verify-ui **121/121**（新增 3 条），真机四平台搜索均通。
+  ⚠️ **遗留**：4 个节点域名早已在公开 fork 上（旧 commit），清理需重写公开分支，待罐头确认。
 - 音源改造（2026-10-10，罐头拍板「按你说的」，构建号 1003131604）：**删酷我/百度，接 B站**。探活结论见知识库《音乐音源探活与层级》。改动：
   ① `ui/app.js` 的 `SEARCH_SERVERS` 改为 网易云 / B站 / QQ / 酷狗（删酷我、百度；两处跨源回退列表同步）；`lib/meting.js` 的 `ALLOWED_SERVERS` 删 kuwo/baidu。
   ② 新增 `lib/bilibili.js`：搜视频抽音轨（search → view → playurl，选最高带宽 dash.audio）；`lib/register-routes.js` 的 `/music/search` 对 `server=bilibili` 走它，`resolveAudioUrl` 加 bilibili 分支（id=bvid，走 go 跳板同源分片代理），go 的 fetch 与 cover 路由对 B站带 Referer。
