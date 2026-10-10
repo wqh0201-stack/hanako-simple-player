@@ -822,6 +822,23 @@
     return fromHsl(h, s, l);
   }
   function rgbStr(c) { return 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')'; }
+  /* 解析 CSS 计算出的颜色字符串 → [r,g,b]。
+   * 主题变量可能是 #rrggbb / rgb(a)() / color-mix 算完的 rgb() 串；
+   * 宿主主题文件里也确有 #FFF 这种三位写法（delve 主题），一并认。 */
+  function rgbStr2arr(s) {
+    if (!s) return null;
+    s = String(s).trim();
+    var m = s.match(/^#([0-9a-f]{3,8})$/i);
+    if (m) {
+      var h = m[1];
+      if (h.length === 3 || h.length === 4) h = h.replace(/(.)/g, '$1$1');
+      if (h.length < 6) return null;
+      return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+    }
+    m = s.match(/^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/i);
+    if (m) return [Math.round(+m[1]), Math.round(+m[2]), Math.round(+m[3])];
+    return null;
+  }
 
   /* 占比最多的色（4bit/通道量化）。近中性色（灰/黑/白）降权，优先取有彩的：
    * 纯灰底当背景平淡，封面里的彩才是「主色调」的观感来源。 */
@@ -882,6 +899,31 @@
     try { return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
     catch (e) { return 'light'; }
   }
+
+  /* 「悬停抬升」的两档物理得按【真实底色】选，不能猜主题名。
+   * 宿主主题 id 有十来个（warm-paper / midnight / high-contrast / delve …），
+   * data-theme 只有 light/dark 两种写法，靠名字判会误判。
+   * 直接读 --hk-surface（= 控制条 / 队列那层面板色，也是 .player 的底色桥）算相对亮度。
+   * .5 不写死 —— 取 [0.5] 附近都给 light（浅纸那一片都在 0.8+，深板岩在 0.06）。 */
+  function resolveTone() {
+    var raw = '';
+    try { raw = getComputedStyle(player).getPropertyValue('--hk-surface').trim(); }
+    catch (e) { raw = ''; }
+    var c = rgbStr2arr(raw) || (themePolarity() === 'light' ? [252, 250, 245] : [65, 77, 86]);
+    return lumOf(c) > 0.5 ? 'light' : 'dark';
+  }
+  function applyTone() {
+    var tone = resolveTone();
+    if (player.getAttribute('data-tone') !== tone) player.setAttribute('data-tone', tone);
+  }
+  /* 无宿主主题时（走 CSS 的 prefers-color-scheme 兜底），macOS 切深浅不会派主题事件，
+   * 得自己听 —— 否则 data-tone 停在启动那一刻，悬停光在浅底上用了深底那套。 */
+  try {
+    var toneMq = matchMedia('(prefers-color-scheme: dark)');
+    var onToneMq = function () { setTimeout(applyTone, 0); };
+    if (toneMq.addEventListener) toneMq.addEventListener('change', onToneMq);
+    else if (toneMq.addListener) toneMq.addListener(onToneMq);
+  } catch (e) { /* 老引擎：不管，启动时那一判已够用 */ }
 
   function applyAmbient(res) {
     if (!res || !res.color) {
@@ -4148,7 +4190,7 @@
   }
   function applyHostTheme() {
     var forced = params.get('theme');
-    if (forced) { document.documentElement.setAttribute('data-theme', forced); return; }
+    if (forced) { document.documentElement.setAttribute('data-theme', forced); applyTone(); return; }
     try {
       if (window.hana && window.hana.theme) {
         var snap0 = window.hana.theme.getSnapshot ? window.hana.theme.getSnapshot() : null;
@@ -4158,6 +4200,9 @@
           var first = true;
           window.hana.theme.subscribe(function (s) {
             if (s && s.theme) document.documentElement.setAttribute('data-theme', s.theme);
+            /* 换主题（可能是异步拉样式表）之后重判一次底色，「悬停抬升」的深浅跟着走。 */
+            setTimeout(applyTone, 0);
+            setTimeout(applyTone, 120);
             /* 首次回调是当前快照回放，注入已在上面做过，不重复 */
             if (first) { first = false; return; }
             injectHostTheme(s, true);
@@ -4173,6 +4218,7 @@
      初始化
      ============================================================ */
   function renderAll() {
+    applyTone();
     renderTrack();
     renderQueue();
     renderProgress();
@@ -4323,6 +4369,7 @@
        * 再读存储：读到就套用真名 / 本地目录 / 分隔比例。 */
       return sdkReady.then(function () {
         applyHostTheme();
+        applyTone();                                   // 主题值落地后重判一次底色
         return Promise.all([storeRead(LISTS_KEY), storeRead(LOCALDIR_KEY), storeRead(SPLIT_KEY)]);
       });
     }).then(function (reads) {
@@ -4503,7 +4550,71 @@
     });
     add('font-min-11px', small.length === 0, small.join(','));
 
-    /* 11. 无 emoji */
+    /* 11. 悬停抬升（发光）
+     * ① 底色极性判对：浅纸（相对亮度 > 0.5）走 light 档，深板岩走 dark 档；
+     * ② 控制条辅助位悬停真的换了表面色 + 上了辉光（不再是 --hk-hover 那块底）；
+     * ③ 图标位（辅助位 / 中央三键 / 播放键）都有辉光，且强度分两档。 */
+    (function () {
+      add('tone-matches-surface-polarity',
+        (function () {
+          var cs = getComputedStyle(player);
+          var s = (cs.getPropertyValue('--hk-surface') || '').trim();
+          var m = s.match(/^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/i);
+          var c = m ? [Math.round(+m[1]), Math.round(+m[2]), Math.round(+m[3])]
+                    : (themeLabel() === 'dark' ? [65, 77, 86] : [252, 250, 245]);
+          function ch(v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }
+          var L = 0.2126 * ch(c[0]) + 0.7152 * ch(c[1]) + 0.0722 * ch(c[2]);
+          var want = L > 0.5 ? 'light' : 'dark';
+          return player.getAttribute('data-tone') === want;
+        })(),
+        'surface=' + (getComputedStyle(player).getPropertyValue('--hk-surface') || '').trim() +
+        ' tone=' + player.getAttribute('data-tone'));
+
+      /* 伪类没法用 getComputedStyle 读（第二个参数只认 ::before/::after），
+       * 所以直接扫样式表：找 selectorText 命中该选择器、且声明了 box-shadow 的规则。 */
+      var hoverRule = function (needle) {
+        var out = [];
+        try {
+          var sheets = document.styleSheets;
+          for (var i = 0; i < sheets.length; i++) {
+            var rules = sheets[i].cssRules || [];
+            for (var j = 0; j < rules.length; j++) {
+              var r = rules[j];
+              if (!r.selectorText || !r.style) continue;
+              if (r.selectorText.indexOf(needle) < 0) continue;
+              if (r.selectorText.indexOf(':hover') < 0) continue;
+              out.push({ sel: r.selectorText, shadow: r.style.boxShadow || '', bg: r.style.background || r.style.backgroundColor || '' });
+            }
+          }
+        } catch (e) { /* 读不到样式表就算了，下面报空 */ }
+        return out;
+      };
+
+      var auxRule = hoverRule('.queue-btn');
+      var auxShadow = auxRule.map(function (r) { return r.shadow; }).join(' | ');
+      add('hover-glow-replaces-gray',
+        auxRule.length > 0 && !!auxShadow && auxShadow.indexOf('var(--hv-') >= 0,
+        'rules=' + auxRule.length + ' shadow=' + String(auxShadow).slice(0, 52));
+
+      var wantSels = [
+        '#searchEntryBtn', '.queue-btn', '.transport > .icon-btn', '.play-btn', '.fav-btn-bar', '.q-more', '.q-fav'
+      ];
+      /* #searchEntryBtn 在样式表里写作 .search-entry，单独映射 */
+      var selFor = function (id) { return id === '#searchEntryBtn' ? '.search-entry' : id; };
+      var missing = wantSels.filter(function (id) {
+        var sel = selFor(id);
+        return !hoverRule(sel).some(function (r) { return r.shadow && r.shadow.indexOf('var(--hv-') >= 0; });
+      });
+      add('hover-glow-on-all-controls', missing.length === 0, missing.join(','));
+
+      var pc = getComputedStyle(player);
+      var ring = (pc.getPropertyValue('--hv-ring') || '').trim();
+      var ringStrong = (pc.getPropertyValue('--hv-ring-strong') || '').trim();
+      add('hover-glow-two-tiers', !!ring && !!ringStrong && ring !== ringStrong,
+        'ring=' + ring.slice(0, 22) + ' | strong=' + ringStrong.slice(0, 22));
+    })();
+
+    /* 12. 无 emoji */
     var emoji = /\p{Extended_Pictographic}/u.test(player.textContent);
     add('no-emoji', !emoji, '');
 

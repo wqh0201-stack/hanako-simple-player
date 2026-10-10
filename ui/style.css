@@ -270,6 +270,84 @@ body {
   border-radius: 14px 14px 0 0;
 }
 
+/* ============================================================
+   悬停抬升（发光）
+   ------------------------------------------------------------
+   罐头 2026-10-10 定：指针停到图标上要「像音量条那样发光」，
+   不再是现在那块 `--hk-hover` 灰底（那只是一块底，没有光）。
+
+   参考图的物理：表面整体提亮一档 + 外面散一圈柔和同色辉光，
+   无硬边、内亮外隐。同一个手感在两种底色上要换一种借力方式：
+     · 深底（默认 / data-tone="dark"）：光是真的 ——
+       表面提亮并染一档强调色 + 一圈同色外辉 + 一层内辉。
+     · 浅底（data-tone="light"）：浅纸上的白光晕不存在
+       （比纸更亮就是白，加到极限也看不见）—— 改用「影子托起」：
+       表面提到近白并微染强调色 + 同色柔光 + 软投影。
+   手感一致（被光 / 被影接住），借的力不同。
+
+   光色 = --hk-accent（**不跟封面**）。控制条与队列是常驻面板，不是沉浸区；
+   封面换一首歌就换色的话按钮会跟着晃。跟随封面主色的撞色只留给
+   --hl-accent 那一族语义（歌词当前句 / 红心描线），两者别混。
+
+   分两档强度：辅助位一档，中央三键一档（更强的近光 + 远光，焦点仍落在它身上）。
+   队列容器（.queue / .queue-list / .list-tabs / .pop）有 overflow 裁切，
+   所以列表里的图标光走 --hv-ring-icon（以 inset 为主、外扩收一档），
+   避免光晕被容器切掉一截。
+   ============================================================ */
+.player {
+  /* ── 深色档（默认）：光 ── */
+  --hv-surface: color-mix(in srgb, var(--hk-accent) 15%, color-mix(in srgb, #FFFFFF 7%, var(--hk-surface)));
+  --hv-surface-strong: color-mix(in srgb, var(--hk-accent) 22%, color-mix(in srgb, #FFFFFF 10%, var(--hk-surface)));
+  --hv-row: color-mix(in srgb, var(--hk-accent) 9%, var(--hk-surface));
+  --hv-ring:
+    0 0 16px -2px color-mix(in srgb, var(--hk-accent) 55%, transparent),
+    inset 0 0 10px color-mix(in srgb, var(--hk-accent) 14%, transparent);
+  --hv-ring-strong:
+    0 0 8px -1px color-mix(in srgb, var(--hk-accent) 55%, transparent),
+    0 0 28px -2px color-mix(in srgb, var(--hk-accent) 68%, transparent);
+  --hv-ring-icon:
+    inset 0 0 10px color-mix(in srgb, var(--hk-accent) 26%, transparent),
+    0 0 9px -2px color-mix(in srgb, var(--hk-accent) 52%, transparent);
+}
+
+/* ── 浅色档：影 ── */
+.player[data-tone="light"] {
+  --hv-surface: color-mix(in srgb, var(--hk-accent) 10%, color-mix(in srgb, #FFFFFF 55%, var(--hk-surface)));
+  --hv-surface-strong: color-mix(in srgb, var(--hk-accent) 16%, color-mix(in srgb, #FFFFFF 70%, var(--hk-surface)));
+  --hv-row: color-mix(in srgb, var(--hk-accent) 6%, var(--hk-surface));
+  --hv-ring:
+    0 1px 2px color-mix(in srgb, var(--hk-text) 7%, transparent),
+    0 4px 12px color-mix(in srgb, var(--hk-text) 11%, transparent),
+    0 0 14px -2px color-mix(in srgb, var(--hk-accent) 28%, transparent);
+  --hv-ring-strong:
+    0 1px 2px color-mix(in srgb, var(--hk-text) 10%, transparent),
+    0 6px 16px color-mix(in srgb, var(--hk-text) 14%, transparent),
+    0 0 20px -2px color-mix(in srgb, var(--hk-accent) 42%, transparent);
+  --hv-ring-icon:
+    0 1px 2px color-mix(in srgb, var(--hk-text) 8%, transparent),
+    0 0 11px -2px color-mix(in srgb, var(--hk-accent) 38%, transparent);
+}
+
+/* JS 未落地时（data-tone 还没写）按系统深浅兜底，取值与上面两档同源。 */
+@media (prefers-color-scheme: light) {
+  .player:not([data-tone]) {
+    --hv-surface: color-mix(in srgb, var(--hk-accent) 10%, color-mix(in srgb, #FFFFFF 55%, var(--hk-surface)));
+    --hv-surface-strong: color-mix(in srgb, var(--hk-accent) 16%, color-mix(in srgb, #FFFFFF 70%, var(--hk-surface)));
+    --hv-row: color-mix(in srgb, var(--hk-accent) 6%, var(--hk-surface));
+    --hv-ring:
+      0 1px 2px color-mix(in srgb, var(--hk-text) 7%, transparent),
+      0 4px 12px color-mix(in srgb, var(--hk-text) 11%, transparent),
+      0 0 14px -2px color-mix(in srgb, var(--hk-accent) 28%, transparent);
+    --hv-ring-strong:
+      0 1px 2px color-mix(in srgb, var(--hk-text) 10%, transparent),
+      0 6px 16px color-mix(in srgb, var(--hk-text) 14%, transparent),
+      0 0 20px -2px color-mix(in srgb, var(--hk-accent) 42%, transparent);
+    --hv-ring-icon:
+      0 1px 2px color-mix(in srgb, var(--hk-text) 8%, transparent),
+      0 0 11px -2px color-mix(in srgb, var(--hk-accent) 38%, transparent);
+  }
+}
+
 button {
   font: inherit;
   color: inherit;
@@ -562,7 +640,7 @@ button:disabled { cursor: default; }
   color: var(--hl-accent);
   opacity: 0.75;
 }
-.fav-btn:hover { background: var(--hk-hover); opacity: 1; }
+.fav-btn:hover { background: var(--hv-surface); opacity: 1; box-shadow: var(--hv-ring-icon); }
 .fav-btn.is-on { opacity: 1; }
 .fav-btn.is-on .icon { fill: currentColor; }
 .player[data-bar="tight"] .fav-btn { width: 22px; height: 22px; }
@@ -775,7 +853,11 @@ button:disabled { cursor: default; }
   border-radius: var(--radius-s);
   color: var(--hk-muted);
 }
-.icon-btn:hover { background: var(--hk-hover); color: var(--hk-text); }
+.icon-btn:hover {
+  background: var(--hv-surface);
+  color: var(--hk-text);
+  box-shadow: var(--hv-ring);
+}
 
 .queue-list {
   flex: 1 1 auto;
@@ -824,7 +906,8 @@ button:disabled { cursor: default; }
 }
 .q-row:last-child,
 .q-row.is-current { border-bottom-color: transparent; }
-.q-row:hover { background: var(--hk-hover); }
+/* 行悬停保持「极轻提亮」做定位（整行发光会变成一条条亮带），光只给行内图标。 */
+.q-row:hover { background: var(--hv-row); }
 .q-row.is-current { background: var(--hk-accent-soft); }
 
 .q-hit {
@@ -915,7 +998,11 @@ button:disabled { cursor: default; }
 }
 .q-row:hover .q-more,
 .q-more:focus-visible { opacity: 1; }
-.q-more:hover { background: var(--hk-hover); color: var(--hk-text); }
+.q-more:hover {
+  background: var(--hv-surface);
+  color: var(--hk-text);
+  box-shadow: var(--hv-ring-icon);
+}
 
 /* ============================================================
    红心（喜欢）：未点亮 = 撞色描线（与歌词当前句同一套 --hl-accent），
@@ -934,7 +1021,11 @@ button:disabled { cursor: default; }
   color: var(--hl-accent);
   opacity: 0.55;
 }
-.fav-btn-bar:hover { background: var(--hk-hover); opacity: 1; }
+.fav-btn-bar:hover {
+  background: var(--hv-surface);
+  opacity: 1;
+  box-shadow: var(--hv-ring-icon);
+}
 .fav-btn-bar.is-on { opacity: 1; }
 .fav-btn-bar.is-on .icon { fill: currentColor; }
 
@@ -953,7 +1044,10 @@ button:disabled { cursor: default; }
 .q-row:hover .q-fav,
 .q-fav:focus-visible,
 .q-fav.is-on { opacity: 1; }
-.q-fav:hover { background: var(--hk-hover); }
+.q-fav:hover {
+  background: var(--hv-surface);
+  box-shadow: var(--hv-ring-icon);
+}
 .q-fav.is-on .icon { fill: currentColor; }
 /* 窄卡：行内容紧，红心仍保留（它是一次点击就能记住的请求），只把触区收小 */
 .player[data-bar="tight"] .q-fav { width: 26px; }
@@ -1132,7 +1226,11 @@ button:disabled { cursor: default; }
 .controls .search-entry:hover,
 .controls .mode:hover,
 .controls .queue-btn:hover,
-.controls .volume-wrap > .icon-btn:hover { background: var(--hk-hover); color: var(--hk-text); }
+.controls .volume-wrap > .icon-btn:hover {
+  background: var(--hv-surface);
+  color: var(--hk-text);
+  box-shadow: var(--hv-ring);
+}
 .controls .search-entry:active,
 .controls .mode:active,
 .controls .queue-btn:active,
@@ -1228,7 +1326,10 @@ button:disabled { cursor: default; }
   opacity: 1;
 }
 .controls .identity > .heart .icon { width: 19px; height: 19px; stroke-width: 1.65; }
-.controls .identity > .heart:hover { background: var(--hk-hover); }
+.controls .identity > .heart:hover {
+  background: var(--hv-surface);
+  box-shadow: var(--hv-ring-icon);
+}
 .controls .identity > .heart.is-on .icon { fill: currentColor; }
 .fav-btn.is-pop .icon { animation: heartPop 360ms cubic-bezier(0.22, 0.61, 0.36, 1); }
 @keyframes heartPop { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.16); } 70% { transform: scale(.98); } }
@@ -1275,7 +1376,11 @@ button:disabled { cursor: default; }
   color: var(--hk-muted);
   transition: background-color .14s ease, color .14s ease, transform .14s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
-.controls .transport > .icon-btn:hover { background: var(--hk-hover); color: var(--hk-text); }
+.controls .transport > .icon-btn:hover {
+  background: var(--hv-surface-strong);
+  color: var(--hk-text);
+  box-shadow: var(--hv-ring-strong);
+}
 .controls .transport > .icon-btn:active { transform: scale(0.96); }
 .controls .transport #prevBtn .icon,
 .controls .transport #nextBtn .icon { width: 20px; height: 20px; fill: currentColor; stroke-width: 1.3; }
@@ -1362,7 +1467,7 @@ button:disabled { cursor: default; }
 .text-btn[aria-pressed="true"] { color: var(--hk-accent); background: none; }
 .text-btn[aria-pressed="true"]:hover { background: var(--hk-hover); }
 
-/* 播放键：44px 圆钮；悬停微放大提亮，按压缩一点 */
+/* 播放键：44px 圆钮；悬停整体发光（主键一档更强的光），按压缩一点 */
 .controls .play-btn {
   position: relative;
   display: inline-flex;
@@ -1374,9 +1479,10 @@ button:disabled { cursor: default; }
   border-radius: 50%;
   background: var(--hk-accent);
   color: var(--hk-on-accent);
-  transition: transform 180ms cubic-bezier(0.22, 0.61, 0.36, 1), filter 180ms ease;
+  transition: transform 180ms cubic-bezier(0.22, 0.61, 0.36, 1), filter 180ms ease,
+              box-shadow 200ms ease;
 }
-.controls .play-btn:hover { transform: scale(1.025); filter: brightness(1.04); }
+.controls .play-btn:hover { box-shadow: var(--hv-ring-strong); filter: brightness(1.04); }
 .controls .play-btn:active { transform: scale(0.96); filter: brightness(0.95); }
 /* 播放/暂停两枚字形叠在同一位置交叉淡入淡出：圆与位置不跳，只换图形 */
 .controls .play-btn .play-glyph {

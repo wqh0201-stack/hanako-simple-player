@@ -254,7 +254,29 @@ app-data（`~/.hanako/app-data/hanako-audio-player/`：`playlist.json` /
   ⚠️ 电台是**播客长音频**（约 50 分钟/期），时长/歌词/频谱按歌设计，真机播放手感需单独验。
   接口实测矩阵（含哪些端点走不通）见知识库 `20-资料/网易云热门榜单与电台接口实测.md`。
   断言：`search-discover-three-blocks` / `search-chart-opens-tracks` / `search-radio-opens-programs`。
-- 无头验收：`node tools/verify-ui.mjs`（12/12 布局自检 + 4/4 窄卡 + **110/110** 断言 + 接线冒烟 + 迁移 + 跨文档生命周期（含「快照自带曲目」续播）+ 来源/真名/补齐/删除 + 红心/我的喜欢 + 环境色两态/兜底 + 动效五项 + 跨源安全/歌词兜底 + 搜索页/推荐区 + 涟漪 + 控制条对称/歌名 + 切换条溢出/跟随 + 音量浮层）
+- **悬停抬升（发光）**（2026-10-10，**已部署**，构建号 1003131622，罐头拍板）：罐头给了张截图（音量键悬停态），
+  要「像音量条那样发光」，不要现在那块 `--hk-hover` 灰底。新增一组 `--hv-*` token（定义在 `.player`，不是 `:root`——要吃作用域里的 `--hk-*`）：
+  ① **两档强度**：`--hv-surface`/`--hv-ring` 给辅助位；`--hv-surface-strong`/`--hv-ring-strong`
+     给中央三键与播放键（更强一档，焦点仍在播放键）。
+  ② **两种物理**（`.player[data-tone]` 切）：深底（默认）真发光——表面提亮并染一档强调色 + 同色外辉 + 内辉；
+     浅底用影——表面提到近白 + 同色柔光 + 软投影。**浅纸上的白光晕不成立**（比纸更亮就是白，加到极限也看不见），
+     所以浅底必须是「浮起来」而不是「亮起来」；手感一致，借的力不同。
+  ③ **光色 = `--hk-accent`，不跟封面**：控制条与队列是常驻面板不是沉浸区，封面换歌就换色的话按钮会跟着晃；
+     封面主色的撞色只留给 `--hl-accent` 那族（歌词当前句 / 红心描线）。
+  ④ **`data-tone` 按底色亮度算，不猜主题名**（`resolveTone()` 读 `--hk-surface` 算 WCAG 相对亮度，`>0.5`→light）：
+     宿主主题 id 有十来个（`high-contrast` 是浅色主题、名字里没有 light），`data-theme` 只有 light/dark 两种写法，靠名字判会误判。
+     接线在 `renderAll()` 开头 / `applyHostTheme()`（forced + 订阅回调，两个 setTimeout 盖异步拉样式表）/ boot 的 `sdkReady.then`，
+     另听 `matchMedia('(prefers-color-scheme: dark)')` 的 change（**没宿主主题时** macOS 切深浅不派主题事件）。
+  ⑤ **列表行只极轻提亮、不整行发光**（整行光会变成一条条亮带），光只给行内图标；
+     且队列容器有 `overflow` 裁切 → 行内图标走 `--hv-ring-icon`（以 inset 为主、外扩收一档）。
+  ⑥ **播放键不再缩放**：旧 hover 是 `transform: scale(1.025)`，改成只发光 —— 换位 FLIP（WAAPI）与红心 `heartPop`
+     都用 transform，hover 缩放会跟它们抢同一个属性。
+  搜索页的悬停**没动**（罐头明确说不用改）。断言新增 `tone-matches-surface-polarity` / `hover-glow-replaces-gray` /
+  `hover-glow-on-all-controls` / `hover-glow-two-tiers`，验收 **114/114**（布局 12/12、窄卡 4/4、零运行时错误）。
+  目视脚本 `node tools/shoot-hover.mjs`（真悬停＋按元素矩形裁图，深浅四种组合）。
+  交接：`docs/player-ui/REFINE-DONE-HOVER-GLOW.md`；原理与坑见知识库
+  `20-资料/深底用光浅底用影-悬停态在两种底色上.md`（含「伪类读不了 `getComputedStyle(el, ':hover')`，断言得扫样式表」）。
+- 无头验收：`node tools/verify-ui.mjs`（12/12 布局自检 + 4/4 窄卡 + **114/114** 断言 + 接线冒烟 + 迁移 + 跨文档生命周期（含「快照自带曲目」续播）+ 来源/真名/补齐/删除 + 红心/我的喜欢 + 环境色两态/兜底 + 动效五项 + 跨源安全/歌词兜底 + 搜索页/推荐区 + 涟漪 + 控制条对称/歌名 + 切换条溢出/跟随 + 音量浮层 + 悬停抬升）
 - 图标工具：`node tools/measure-icons.mjs`（量每个 symbol 在 24×24 里的实际内容外接框）。
   改控制面图标尺寸前先跑它 —— 图标「看起来多大」取决于内容外接框，不取决于 CSS 框宽。
 - 指针涟漪（2026-10-10，**已部署**，构建号 1003131586）：**旧「频谱」整层替换为 Canvas 2D 指针涟漪**。
