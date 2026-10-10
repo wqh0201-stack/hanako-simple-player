@@ -349,7 +349,7 @@ app-data（`~/.hanako/app-data/hanako-audio-player/`：`playlist.json` /
      罐头拍板选「本地 apply 脚本」而非自建中继。
   ④ **官方接口兜底**：无节点时网易云（官方搜索/直链/歌词）与 B站仍可用，
      QQ/酷狗无公共接口 → 回 `code:"NO_SOURCES_CONFIGURED"`；搜索页顶部给提示条 + 「导入音源」按钮。
-  ⑤ 顺手修：`normalizeTrack` 接 `name/artist` 别名（`api.qijieya.cn` 这类节点用它，
+  ⑤ 顺手修：`normalizeTrack` 接 `name/artist` 别名（部分节点用它而不用 `title/author`，
      不接则 QQ/酷狗搜出空白行）。
   验收：verify-backend 10/10、verify-ui **121/121**（新增 3 条），真机四平台搜索均通。
   ⚠️ **遗留**：4 个节点域名早已在公开 fork 上（旧 commit），清理需重写公开分支，待罐头确认。
