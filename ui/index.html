@@ -82,25 +82,35 @@
           <div class="rt-row">
             <label class="rt-label" for="rt_visualGain">整体强度<span class="rt-val" id="rtv_visualGain">1.60</span></label>
             <input class="range rt-range" id="rt_visualGain" type="range" min="0.5" max="3" step="0.05" value="1.6" aria-label="整体强度">
+            <p class="rt-hint">涟漪的明暗</p>
           </div>
           <div class="rt-row">
             <label class="rt-label" for="rt_bassDrive">低频推动<span class="rt-val" id="rtv_bassDrive">9.00</span></label>
             <input class="range rt-range" id="rt_bassDrive" type="range" min="1" max="20" step="0.5" value="9" aria-label="低频推动">
+            <p class="rt-hint">低音把水面推多高</p>
           </div>
           <div class="rt-row">
             <label class="rt-label" for="rt_onsetSens">敲击灵敏度<span class="rt-val" id="rtv_onsetSens">1.00</span></label>
             <input class="range rt-range" id="rt_onsetSens" type="range" min="0.5" max="2" step="0.05" value="1" aria-label="敲击灵敏度">
+            <p class="rt-hint">多大的敲击才出波</p>
+          </div>
+          <div class="rt-row">
+            <label class="rt-label" for="rt_midHighSens">中高频灵敏度<span class="rt-val" id="rtv_midHighSens">1.60</span></label>
+            <input class="range rt-range" id="rt_midHighSens" type="range" min="1" max="3" step="0.05" value="1.6" aria-label="中高频灵敏度">
+            <p class="rt-hint">军鼓、钢琴、踩镲也出波</p>
           </div>
           <div class="rt-row">
             <label class="rt-label" for="rt_maxAudioWaves">同屏波数上限<span class="rt-val" id="rtv_maxAudioWaves">3</span></label>
             <input class="range rt-range" id="rt_maxAudioWaves" type="range" min="1" max="6" step="1" value="3" aria-label="同屏波数上限">
+            <p class="rt-hint">最多同时几组波</p>
           </div>
           <div class="rt-row">
             <label class="rt-label" for="rt_onsetCooldown">落波间隔<span class="rt-val" id="rtv_onsetCooldown">380 ms</span></label>
             <input class="range rt-range" id="rt_onsetCooldown" type="range" min="120" max="900" step="20" value="380" aria-label="落波间隔">
+            <p class="rt-hint">两组波最短隔多久</p>
           </div>
           <button class="pop-item rt-reset" id="rtResetBtn" type="button"><span>重置为默认</span></button>
-          <p class="pop-note">整体强度只改观感，不影响声音。低频推动管低音把水面推多高；敲击灵敏度越高，越小的敲击也会出短波；同屏波数上限与落波间隔控制短波的密度。</p>
+          <p class="pop-note">只影响涟漪观感，不改声音；调完自动记住。</p>
         </div>
       </div>
 

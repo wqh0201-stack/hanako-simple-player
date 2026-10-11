@@ -1345,6 +1345,12 @@ body.is-shot .player[data-layout] .ripple-tool-btn { display: none; }
   margin-bottom: 2px;
 }
 .rt-val { color: var(--hk-text); font-variant-numeric: tabular-nums; }
+.rt-hint {
+  margin: 3px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--hk-faint);
+}
 .rt-range { width: 100%; }
 .ripple-tool-pop .rt-reset { justify-content: center; font-size: 12px; margin-top: 2px; }
 .ripple-tool-pop .pop-note { max-width: none; margin-top: 6px; }

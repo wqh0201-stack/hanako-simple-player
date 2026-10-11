@@ -57,6 +57,8 @@ const WAV_URL = `${API}/_fixture/audio.wav`;
  *   steady-bass : 6s 持续 80Hz（低音感强，无跳变）→ 应维持宽缓场、不持续生成短波
  *   kicks       : 6s 每秒 3 个 60Hz 短包（明显底鼓）→ 应产出有限细波
  *   mid-bursts  : 6s 每秒 3 个 1.2kHz 短包（中频敲击，低频门限之外）→ 起音路径应识别
+ *   hihats      : 6s 每秒 3 个多音色高频短包（4/5.2/6.5/7.6kHz，踩镲）→ 高频起音路径应识别
+ *   weak-mid    : 6s 每秒 3 个双音色弱短包（1/1.4kHz）→ 严格档不出波、调松后出波
  *   mixed       : 2s 80Hz 持续 + 之后每 0.5s 一个低频短脉冲
  *   silence     : 6s 真静音 → 不得伪造周期鼓点
  *   dense       : 3s 每秒 8 个短脉冲（密集）→ 经合并/限流后波包不超过预算
@@ -78,6 +80,14 @@ function synthSamples(kind) {
     for (let t = 0.2; t < secs - 0.2; t += 1 / 3) addTone(t, 0.12, 60, 0.5, 40);   // 60Hz 短包（底鼓）
   } else if (kind === 'mid-bursts') {
     for (let t = 0.2; t < secs - 0.2; t += 1 / 3) addTone(t, 0.08, 1200, 0.45, 55);  // 1.2kHz 敲击
+  } else if (kind === 'hihats') {
+    /* 踩镲：多音色短包（能量分散到多个 bin，抗 FFT 窗口对齐）。
+       包长 0.15s 而不是 0.07s：整套负载下 rAF 变慢时采样变疏，短包可能只被采到 1 个样本、
+       包络爬升不够而假性漏触（实测整套里会从 7 次掉到 1 次）；长包保证采到 3+ 样本。 */
+    for (let t = 0.2; t < secs - 0.2; t += 1 / 3) for (const hz of [4000, 5200, 6500, 7600]) addTone(t, 0.15, hz, 0.25, 30);
+  } else if (kind === 'weak-mid') {
+    /* 弱中频（灵敏度档位用）：包长同样取 0.15s，抗整套负载下的采样变疏。 */
+    for (let t = 0.2; t < secs - 0.2; t += 1 / 3) for (const hz of [1000, 1400]) addTone(t, 0.15, hz, 0.09, 30);
   } else if (kind === 'mixed') {
     addTone(0, 2, 80, 0.42, 0);
     for (let t = 2.3; t < secs - 0.2; t += 0.5) addTone(t, 0.14, 65, 0.42, 30);
@@ -101,7 +111,7 @@ function wavFromSamples(samples) {
   pcm.copy(out, 44);
   return out;
 }
-const SYNTH_KINDS = ['steady-bass', 'kicks', 'mid-bursts', 'mixed', 'silence', 'dense'];
+const SYNTH_KINDS = ['steady-bass', 'kicks', 'mid-bursts', 'hihats', 'weak-mid', 'mixed', 'silence', 'dense'];
 const SYNTH_WAV = {};
 for (const k of SYNTH_KINDS) SYNTH_WAV[k] = wavFromSamples(synthSamples(k));
 const synthUrl = (kind) => `${API}/_fixture/tone.wav?p=${kind}`;const COVER = `${API}/_fixture/cover.png`;
@@ -1627,7 +1637,7 @@ const rippleAudio = {};
     const t0 = performance.now();
     while (performance.now() - t0 < secs * 1000) {
       const a = D.rippleAudio(), st = D.rippleState();
-      S.push({ t: +((performance.now() - t0) / 1000).toFixed(2), env: a.envBass, onsets: a.onsets, waves: a.waves, audioWaves: a.audioWaves, field: a.bassField, ready: a.ready, analysing: a.analysing });
+      S.push({ t: +((performance.now() - t0) / 1000).toFixed(2), env: a.envBass, onsets: a.onsets, waves: a.waves, audioWaves: a.audioWaves, kinds: a.kinds, hFast: a.hFast, mFast: a.mFast, field: a.bassField, ready: a.ready, analysing: a.analysing });
       await new Promise((r) => setTimeout(r, 100));
     }
     audio.pause();
@@ -1636,31 +1646,32 @@ const rippleAudio = {};
   const agg = (r) => {
     const S = (r && r.S) || [];
     const max = (f) => S.length ? Math.max(...S.map(f)) : 0;
-    /* 「有界」判据要抗 bassField 的松弛振荡（注入到封顶→衰减→再注入，周期约 2～3s）：
-       ① 跳过爬坡期（t < 1.5s）；② 余下对半切，比**后半 vs 前半的中位数/均值**。
-       采样窗口仍为 5s（playSynth 的第二参）。本轮把预热线 1.2→1.5s，让对半切少落进
-       爬坡相位（t≥1.2 时曾出现中位数比 1.33 的假越线）。
-       3 次连跑实测：中位数比 0.88~1.03、均值比 0.78~1.16，落在 1.3 阈值内；
-       真有单调增长会立刻越线，不会退化成「没炸得太狠」。 */
+    /* 「有界」判据：用**绝对水平 + 峰值增长**，不用均值/中位数前后半比。
+       实测对照（拆掉封顶/阻尼的坏版本）：均值·中位数比值对坏版本**无区分力**
+       （坏版本 2s 内就饱和，比值仍≈1.0），且受负载影响会假越线（实测 1.34）。
+       绝对水平区分得很干净：正常 max 0.002~0.0033；拆封顶 0.0076；拆阻尼 0.0058~0.0095；
+       两者都拆 3.8。峰值增长（后半峰 vs 前半峰）则能抓住真正“越播越大”的无界增长。 */
     const settled = S.filter((x) => x.t >= 1.5).map((x) => x.field);
-    const mid = (a) => { if (!a.length) return 0; const b = [...a].sort((x, y) => x - y); return b[Math.floor(b.length / 2)]; };
-    const mean = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
     const half = Math.floor(settled.length / 2);
     const h1 = settled.slice(0, half), h2 = settled.slice(half);
     return {
       ready: S.length ? S[S.length - 1].ready : false,
       maxEnv: max((x) => x.env), lastEnv: S.length ? S[S.length - 1].env : 0,
       onsets: S.length ? S[S.length - 1].onsets : 0,
+      kinds: S.length ? S[S.length - 1].kinds : null,
+      maxHFast: max((x) => x.hFast || 0), maxMFast: max((x) => x.mFast || 0),
       maxWaves: max((x) => x.waves), maxAudioWaves: max((x) => x.audioWaves),
       maxField: max((x) => x.field),
-      fieldMedFirst: mid(h1), fieldMedLast: mid(h2),
-      fieldMeanFirst: mean(h1), fieldMeanLast: mean(h2),
+      halfMaxFirst: h1.length ? Math.max(...h1) : 0,
+      halfMaxLast: h2.length ? Math.max(...h2) : 0,
       settledN: settled.length
     };
   };
 
   // ① 持续 80Hz 低音：宽缓场持续在线，预热后不持续生成短波（连续 Bass 不调 drop）
-  const steady = agg(await playSynth('steady-bass', 5));
+  //    采 9s（不是 5s）：bassField 是周期 2~3s 的松弛振荡，5s 窗对半切只有 1.75s/半，
+  //    会落到不同相位而假越线（实测最坏中位数比 1.37）；9s 窗每半 >1 个周期，实测 0.91~1.12。
+  const steady = agg(await playSynth('steady-bass', 9));
   rippleAudio.steady = steady;
   assert('ripple-steady-bass-keeps-wide-field-without-waves',
     steady.ready === true && steady.maxEnv > 0.4 && steady.maxField > 1e-4 &&
@@ -1701,17 +1712,55 @@ const rippleAudio = {};
     dense.maxAudioWaves <= 3 && dense.onsets <= 9 && dense.onsets >= 3,
     JSON.stringify(dense));
 
+  // ⑥b 踩镲（5.2kHz 高频段）：高频起音路径能识别，出 high 类短波
+  const hihats = agg(await playSynth('hihats', 5));
+  rippleAudio.hihats = hihats;
+  assert('ripple-hihats-trigger-high-waves',
+    hihats.ready === true && hihats.kinds && hihats.kinds.high >= 3 && hihats.kinds.low === 0 && hihats.maxAudioWaves >= 1,
+    JSON.stringify(hihats));
+
+  // ⑥c 中高频灵敏度：弱中频在 1.0（旧严格度）不出波，调到 3.0 后出波
+  await page.evaluate(() => window.__playerDebug.rippleSetTune({ midHighSens: 1.0 }));
+  const weakStrict = agg(await playSynth('weak-mid', 4));
+  await page.evaluate(() => window.__playerDebug.rippleSetTune({ midHighSens: 3.0 }));
+  const weakLoose = agg(await playSynth('weak-mid', 4));
+  await page.evaluate(() => window.__playerDebug.rippleResetTune());
+  rippleAudio.midHighSens = { weakStrict: weakStrict.onsets, weakLoose: weakLoose.onsets };
+  assert('ripple-midhigh-sens-loosens-detection',
+    weakStrict.onsets === 0 && weakLoose.onsets >= 3,
+    JSON.stringify({ strict: weakStrict.onsets, loose: weakLoose.onsets }));
+
+  // ⑥d 最大灵敏度下仍不误触：稳态低音 / 静音零短波
+  await page.evaluate(() => window.__playerDebug.rippleSetTune({ midHighSens: 3.0 }));
+  const steadyMax = agg(await playSynth('steady-bass', 5));
+  const silenceMax = agg(await playSynth('silence', 3));
+  await page.evaluate(() => window.__playerDebug.rippleResetTune());
+  rippleAudio.maxSensQuiet = { steady: steadyMax.onsets, silence: silenceMax.onsets };
+  assert('ripple-max-midhigh-keeps-steady-and-silence-quiet',
+    steadyMax.onsets === 0 && steadyMax.maxAudioWaves === 0 &&
+    silenceMax.onsets === 0 && silenceMax.maxWaves === 0,
+    JSON.stringify({ steady: steadyMax.onsets, silence: silenceMax.onsets }));
+
+  // ⑥e 音频短波画 4 层环（与指针波同口径；主环 + 三层递淡回声）
+  const ringLayers = await page.evaluate(() => ({
+    low: window.__playerDebug.rippleRingLayers('low'),
+    mid: window.__playerDebug.rippleRingLayers('mid'),
+    high: window.__playerDebug.rippleRingLayers('high')
+  }));
+  rippleAudio.ringLayers = ringLayers;
+  assert('ripple-audio-waves-draw-four-rings',
+    ringLayers.low === 4 && ringLayers.mid === 4 && ringLayers.high === 4,
+    JSON.stringify(ringLayers));
+
   // ⑦ 连续低频长播：场能量有界，不随播放时间无限增长
-  //    判据看趋势：跳预热期后，后半段中位数不高于前半段中位数的 1.3 倍（实测 0.95~0.99，留余量）；
-  //    再加硬上限 maxField < 0.02（绝对有界，不受震荡影响）。
+  //    ① 绝对上限：正常 max 0.002~0.0033；拆封顶 0.0076；拆阻尼 0.0058~0.0095；两者都拆 3.8。
+  //    ② 峰值增长：后半段峰值不高于前半段峰值的 1.6 倍（实测正常 ≈0.9~1.2）。
   assert('ripple-continuous-bass-field-bounded',
     steady.settledN >= 8 &&
-    steady.fieldMedLast <= Math.max(steady.fieldMedFirst, 1e-4) * 1.3 &&
-    steady.fieldMeanLast <= Math.max(steady.fieldMeanFirst, 1e-4) * 1.3 &&
-    steady.maxField < 0.02,
-    JSON.stringify({ medFirst: steady.fieldMedFirst, medLast: steady.fieldMedLast,
-      meanFirst: steady.fieldMeanFirst, meanLast: steady.fieldMeanLast,
-      max: steady.maxField, settledN: steady.settledN }));
+    steady.maxField < 0.005 &&
+    steady.halfMaxLast <= Math.max(steady.halfMaxFirst, 1e-4) * 1.6,
+    JSON.stringify({ max: steady.maxField, halfMaxFirst: steady.halfMaxFirst,
+      halfMaxLast: steady.halfMaxLast, settledN: steady.settledN }));
 
   // ⑧ 倍率只改观感：不动音量、不参与起音路径（源码级守卫 §5 陷阱）
   const gainRuntime = await page.evaluate(() => {
@@ -1791,7 +1840,7 @@ const rippleTool = {};
   // 假宿主：拦 window.hana 赋值，给 storage.global 装一个可读可写的桩
   await page.evaluateOnNewDocument(() => {
     window.__storeCalls = { sets: [], gets: [] };
-    window.__preset = { visualGain: 2.2, bassDrive: 14, onsetSens: 1.5, maxAudioWaves: 5, onsetCooldown: 640 };
+    window.__preset = { visualGain: 2.2, bassDrive: 14, onsetSens: 1.5, midHighSens: 2.4, maxAudioWaves: 5, onsetCooldown: 640 };
     let _h;
     Object.defineProperty(window, 'hana', {
       configurable: true,
@@ -1897,8 +1946,8 @@ const rippleTool = {};
     return { changed, tune: t, defaults: d, out: document.getElementById('rtv_visualGain').textContent };
   });
   rippleTool.reset = resetInfo;
-  assert('ripple-tool-five-sliders-and-reset',
-    wide.ranges === 5 && wide.hasReset === true && wide.note.length > 20 &&
+  assert('ripple-tool-six-sliders-and-reset',
+    wide.ranges === 6 && wide.hasReset === true && wide.note.length > 12 &&
     resetInfo.changed === 2.8 &&
     JSON.stringify(resetInfo.tune) === JSON.stringify(resetInfo.defaults),
     JSON.stringify({ ranges: wide.ranges, hasReset: wide.hasReset, noteLen: wide.note.length, changed: resetInfo.changed, tune: resetInfo.tune }));
@@ -1919,7 +1968,7 @@ const rippleTool = {};
     gainLive.before.onsets === gainLive.after.onsets,
     JSON.stringify(gainLive));
 
-  // ⑦ 调「同屏波数上限」「落波间隔」真影响 tune（不重建链、不动音量）
+  // ⑦ 调「同屏波数上限」「落波间隔」「中高频灵敏度」真影响 tune（不重建链、不动音量）
   const tuneApply = await page.evaluate(async () => {
     const D = window.__playerDebug, audio = document.getElementById('audio');
     const volBefore = audio.volume;
@@ -1927,14 +1976,16 @@ const rippleTool = {};
     maxEl.value = '5'; maxEl.dispatchEvent(new Event('input', { bubbles: true }));
     const cdEl = document.getElementById('rt_onsetCooldown');
     cdEl.value = '700'; cdEl.dispatchEvent(new Event('input', { bubbles: true }));
+    const mhEl = document.getElementById('rt_midHighSens');
+    mhEl.value = '2.5'; mhEl.dispatchEvent(new Event('input', { bubbles: true }));
     await new Promise((r) => setTimeout(r, 60));
     const t = D.rippleTune();
     D.rippleResetTune();
-    return { max: t.maxAudioWaves, cd: t.onsetCooldown, volSame: audio.volume === volBefore };
+    return { max: t.maxAudioWaves, cd: t.onsetCooldown, mh: t.midHighSens, volSame: audio.volume === volBefore };
   });
   rippleTool.tuneApply = tuneApply;
   assert('ripple-tool-slider-affects-tuning',
-    tuneApply.max === 5 && tuneApply.cd === 700 && tuneApply.volSame === true,
+    tuneApply.max === 5 && tuneApply.cd === 700 && tuneApply.mh === 2.5 && tuneApply.volSame === true,
     JSON.stringify(tuneApply));
 
   // ⑧ 沉浸时随控制条淡出（data-controls-hidden 在 .player 上）
@@ -1972,12 +2023,12 @@ const rippleTool = {};
     shotInfo.before !== 'none' && shotInfo.shot === 'none' && shotInfo.after !== 'none',
     JSON.stringify(shotInfo));
 
-  // ⑩ 大白话命名：5 个 label 是中文，不出现内部名
+  // ⑩ 大白话命名：6 个 label 是中文，不出现内部名
   const plain = wide.labels.join('|');
   rippleTool.labels = wide.labels;
   assert('ripple-tool-names-plain-language',
-    wide.labels.length === 5 && /整体强度/.test(plain) && /低频推动/.test(plain) && /敲击灵敏度/.test(plain) &&
-    /同屏波数上限/.test(plain) && /落波间隔/.test(plain) &&
+    wide.labels.length === 6 && /整体强度/.test(plain) && /低频推动/.test(plain) && /敲击灵敏度/.test(plain) &&
+    /中高频灵敏度/.test(plain) && /同屏波数上限/.test(plain) && /落波间隔/.test(plain) &&
     !/BASS_DRIVE|ONSET|VISUAL_GAIN|MAX_AUDIO/.test(plain),
     JSON.stringify(wide.labels));
 
@@ -2005,7 +2056,7 @@ const rippleTool = {};
   // 假宿主：拦 window.hana 赋值，给 storage.global 装桩；player-ripple-tune 返回预置值
   await page.evaluateOnNewDocument(() => {
     window.__storeCalls = { sets: [], gets: [] };
-    window.__preset = { visualGain: 2.2, bassDrive: 14, onsetSens: 1.5, maxAudioWaves: 5, onsetCooldown: 640 };
+    window.__preset = { visualGain: 2.2, bassDrive: 14, onsetSens: 1.5, midHighSens: 2.4, maxAudioWaves: 5, onsetCooldown: 640 };
     let _h;
     Object.defineProperty(window, 'hana', {
       configurable: true,

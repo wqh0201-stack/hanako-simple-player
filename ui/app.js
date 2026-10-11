@@ -1727,12 +1727,15 @@
          （源码守卫 ripple-visual-gain-changes-look-only）
        · bassDrive   持续低频注入系数
        · onsetSens   起音灵敏度：门限 = 基准 / onsetSens（1.0 = 原基准，逐字节等效）
+       · midHighSens 中高频灵敏度（1.0 = 原严格度，越大越松）：一次松开中/高的四道门——
+                     绝对门限、归一化门限、包络比、通量比。低频段不参与（底鼓本就该出波）。
        · maxAudioWaves / onsetCooldown  短波数量上限 / 落波最小间隔
        ============================================================ */
     var RIPPLE_DEFAULTS = {
       visualGain: 1.6,
       bassDrive: 9,
       onsetSens: 1.0,
+      midHighSens: 1.6,
       maxAudioWaves: 3,
       onsetCooldown: 380
     };
@@ -1740,12 +1743,14 @@
       visualGain: RIPPLE_DEFAULTS.visualGain,
       bassDrive: RIPPLE_DEFAULTS.bassDrive,
       onsetSens: RIPPLE_DEFAULTS.onsetSens,
+      midHighSens: RIPPLE_DEFAULTS.midHighSens,
       maxAudioWaves: RIPPLE_DEFAULTS.maxAudioWaves,
       onsetCooldown: RIPPLE_DEFAULTS.onsetCooldown
     };
-    /* 起音门限基准（低/中）：原写死值，**只做除法包装**，不改常数与比较符。 */
-    var ONSET_BASE_BASS = 0.003, ONSET_BASE_MID = 0.0015;
-    var ONSET_NORM_BASS = 0.20, ONSET_NORM_MID = 0.16;
+    /* 起音门限基准（低/中/高）：低/中是原写死值，只做除法包装；
+       高是新增的踩镲路径，基准值与中频同档（实测校准）。 */
+    var ONSET_BASE_BASS = 0.003, ONSET_BASE_MID = 0.0015, ONSET_BASE_HIGH = 0.0015;
+    var ONSET_NORM_BASS = 0.20, ONSET_NORM_MID = 0.16, ONSET_NORM_HIGH = 0.16;
     var WARMUP_MS = 320;
     var tuneListeners = [];
     /* 合并一组参数并通知监听者（面板/存储）。传 null 即重置为默认。
@@ -1755,12 +1760,14 @@
         tune.visualGain = RIPPLE_DEFAULTS.visualGain;
         tune.bassDrive = RIPPLE_DEFAULTS.bassDrive;
         tune.onsetSens = RIPPLE_DEFAULTS.onsetSens;
+        tune.midHighSens = RIPPLE_DEFAULTS.midHighSens;
         tune.maxAudioWaves = RIPPLE_DEFAULTS.maxAudioWaves;
         tune.onsetCooldown = RIPPLE_DEFAULTS.onsetCooldown;
       } else {
         if (patch.visualGain != null && isFinite(patch.visualGain)) tune.visualGain = Math.max(0.2, Math.min(4, Number(patch.visualGain)));
         if (patch.bassDrive != null && isFinite(patch.bassDrive)) tune.bassDrive = Math.max(0.5, Math.min(30, Number(patch.bassDrive)));
         if (patch.onsetSens != null && isFinite(patch.onsetSens)) tune.onsetSens = Math.max(0.2, Math.min(4, Number(patch.onsetSens)));
+        if (patch.midHighSens != null && isFinite(patch.midHighSens)) tune.midHighSens = Math.max(1, Math.min(3, Number(patch.midHighSens)));
         if (patch.maxAudioWaves != null && isFinite(patch.maxAudioWaves)) tune.maxAudioWaves = Math.max(1, Math.min(8, Math.round(patch.maxAudioWaves)));
         if (patch.onsetCooldown != null && isFinite(patch.onsetCooldown)) tune.onsetCooldown = Math.max(60, Math.min(1500, Math.round(patch.onsetCooldown)));
       }
@@ -1772,7 +1779,7 @@
     function getTune() {
       return {
         visualGain: tune.visualGain, bassDrive: tune.bassDrive, onsetSens: tune.onsetSens,
-        maxAudioWaves: tune.maxAudioWaves, onsetCooldown: tune.onsetCooldown
+        midHighSens: tune.midHighSens, maxAudioWaves: tune.maxAudioWaves, onsetCooldown: tune.onsetCooldown
       };
     }
 
@@ -1888,6 +1895,7 @@
       fluxBg = { bass: 0, mid: 0, high: 0 };
       if (prevBins) prevBins.fill(0);
       onsetAt = -1e9; lastRead = 0; onsetCount = 0;
+      kindCounts.low = 0; kindCounts.mid = 0; kindCounts.high = 0;
       warmupUntil = now + WARMUP_MS;
       bassPhase = 0;
     }
@@ -1945,20 +1953,24 @@
       for (var i = 0; i < waves.length; i++) if (waves[i].origin === 'audio') n++;
       return n;
     }
+    /* 测试探针：各类型音频短波的累计起音数（重置分析时归零）。 */
+    var kindCounts = { low: 0, mid: 0, high: 0 };
+    var ringCalls = 0;   // 测试探针：上一次 draw() 里 ringPath 的调用次数
     function dropAudio(power, kind, x, y) {
       if (blocked()) return false;
       while (audioWaveCount() >= tune.maxAudioWaves) {
         for (var i = 0; i < waves.length; i++) if (waves[i].origin === 'audio') { waves.splice(i, 1); break; }
       }
       if (waves.length >= MAX_WAVES) waves.shift();
-      /* 低频占比高的瞬态稍宽厚；中频起音更轻薄、退得快。差异小而可感知。 */
-      var low = kind === 'low';
+      /* 低频占比高的瞬态稍宽厚；中频起音更轻薄、退得快；高频（踩镲）最轻最薄、寿命最短。 */
+      var low = kind === 'low', high = kind === 'high';
+      if (kindCounts[kind] != null) kindCounts[kind]++;
       waves.push({
         x: x, y: y, age: 0, power: power, origin: 'audio', kind: kind,
-        life: low ? (1.24 + power * 0.18) : (1.02 + power * 0.18),
+        life: low ? (1.24 + power * 0.18) : high ? (0.82 + power * 0.14) : (1.02 + power * 0.18),
         phase: Math.random() * 6.28
       });
-      inject(x, y, low ? 1.5 : 1.15, power * baseStrength() * (low ? 1.1 : 0.75));
+      inject(x, y, low ? 1.5 : high ? 0.85 : 1.15, power * baseStrength() * (low ? 1.1 : high ? 0.5 : 0.75));
       wake();
       return true;
     }
@@ -2031,13 +2043,19 @@
          门限 = 基准 / onsetSens（灵敏度高 → 门限低 → 更易触发）；onsetSens=1.0 时逐字节等效。 */
       if (now < warmupUntil) return;
       var sens = tune.onsetSens > 0 ? tune.onsetSens : 1;
+      /* 中高频灵敏度（mh，1.0 = 旧严格度）：一次松开中/高的四道门——
+         绝对门限、归一化门限、包络比、通量比。低频段不参与（底鼓本就该出波）。 */
+      var mh = tune.midHighSens > 0 ? tune.midHighSens : 1;
       var bassOn = eb.fast > ONSET_BASE_BASS / sens && normEnergy(eb.fast) > ONSET_NORM_BASS / sens && eb.fast > eb.slow * 1.5 && bf > fluxBg.bass * 1.6 + 1e-6;
-      var midOn = em.fast > ONSET_BASE_MID / sens && normEnergy(em.fast) > ONSET_NORM_MID / sens && em.fast > em.slow * 1.45 && mf > fluxBg.mid * 1.6 + 1e-7;
-      if (!bassOn && !midOn) return;
-      /* 同一瞬态同时出现在几个频段 → 只产一次敲击波。低频更厚，中频更薄。 */
-      var kind = bassOn ? 'low' : 'mid';
-      var p = kind === 'low' ? (0.55 + clamp01(normEnergy(be)) * 0.9) : (0.45 + clamp01(normEnergy(me)) * 0.7);
-      triggerOnset(Math.max(0.5, Math.min(1.9, p)), kind, now);
+      var midOn = em.fast > ONSET_BASE_MID / (sens * mh) && normEnergy(em.fast) > ONSET_NORM_MID / (sens * mh) && em.fast > em.slow * (1 + 0.45 / mh) && mf > fluxBg.mid * (1 + 0.6 / mh) + 1e-7;
+      var highOn = eh.fast > ONSET_BASE_HIGH / (sens * mh) && normEnergy(eh.fast) > ONSET_NORM_HIGH / (sens * mh) && eh.fast > eh.slow * (1 + 0.55 / mh) && hf > fluxBg.high * (1 + 0.7 / mh) + 1e-8;
+      if (!bassOn && !midOn && !highOn) return;
+      /* 同一瞬态同时出现在几个频段 → 只产一次敲击波。低频更厚，中频次之，高频（踩镲）最轻薄。 */
+      var kind = bassOn ? 'low' : (midOn ? 'mid' : 'high');
+      var p = kind === 'low' ? (0.55 + clamp01(normEnergy(be)) * 0.9)
+        : kind === 'mid' ? (0.45 + clamp01(normEnergy(me)) * 0.7)
+        : (0.38 + clamp01(normEnergy(he)) * 0.5);
+      triggerOnset(Math.max(kind === 'high' ? 0.35 : 0.5, Math.min(1.9, p)), kind, now);
     }
 
     function size() {
@@ -2188,6 +2206,7 @@
 
     /* 压扁的椭圆环（水面透视），形状带一点随机扰动。 */
     function ringPath(w, r, phase) {
+      ringCalls++;   // 测试探针：每次实际画一层环都计数
       var x = w.x * width, y = w.y * height;
       ctx.beginPath();
       for (var n = 0; n <= 88; n++) {
@@ -2201,6 +2220,7 @@
 
     function draw() {
       clear();
+      ringCalls = 0;   // 探针：本轮绘制实际画了几层环
       if (reduce && reduce.matches) return;
       computeAttMask();   // 歌词区衰减掩膜（布局/尺寸变化后重算，带 key 记忆）
       // CSS 负责解析 var() / color-mix()，Canvas 只接收计算后的颜色。
@@ -2216,15 +2236,17 @@
         var reach = Math.min(width, height) * (0.44 + w.power * 0.14);
         var radius = 8 + reach * (1 - Math.pow(1 - p, 2));
         var audio = w.origin === 'audio';
-        /* 音频短波：一主环 + 一淡回声（优先清晰度，不靠数量）。
-           指针波保留原有四层轮廓。 */
-        var layers = audio ? 2 : 4;
+        /* 音频短波与指针波同口径：四层同心环（「等高线一圈一圈」），
+           但主次分明 —— 主环最亮，回声逐层变淡（1 / .42 / .24 / .13）。
+           高频（踩镲）整体再压一档，保持「更轻更薄」。 */
+        var layers = 4;
+        var echo = [1, 0.42, 0.24, 0.13];
+        var kindMul = (audio && w.kind === 'high') ? 0.72 : 1;
         for (var k = 0; k < layers; k++) {
           var r = radius - k * (audio ? 9 : 10 + w.power * 5) * (1 - p * 0.45);
           if (r < 3) continue;
-          var base = audio ? 0.52 : (0.60 - k * 0.105);
-          var alpha = birth * end * base * vis * fade;
-          if (audio && k === 1) alpha *= 0.42;   // 回声更淡
+          var base = audio ? 0.52 * echo[k] : (0.60 - k * 0.105);
+          var alpha = birth * end * base * vis * fade * kindMul;
           ringPath(w, r, k * 0.3);
           ctx.lineWidth = k === 0 ? 5 : 2.5; ctx.globalAlpha = alpha * 0.075; ctx.stroke();
           ctx.lineWidth = k === 0 ? 1.25 : 0.7; ctx.globalAlpha = alpha; ctx.stroke();
@@ -2434,22 +2456,36 @@
           ready: audioReady, analysing: analysisOn, playing: playing,
           envBass: envBass, onsets: onsetCount, bassField: bassField,
           waves: waves.length, audioWaves: audioWaveCount(), gain: tune.visualGain,
+          kinds: { low: kindCounts.low, mid: kindCounts.mid, high: kindCounts.high },
+          midHighSens: tune.midHighSens,
           /* 起音内部量（调试/校准用）：快包络 / 慢背景 / 谱通量 / 通量背景 */
           eFast: envs ? envs.bass.fast : 0, eSlow: envs ? envs.bass.slow : 0,
           mFast: envs ? envs.mid.fast : 0, mSlow: envs ? envs.mid.slow : 0,
-          bf: fluxBg ? fluxBg.bass : 0, fb: fluxBg ? fluxBg.bass : 0
+          hFast: envs ? envs.high.fast : 0, hSlow: envs ? envs.high.slow : 0,
+          bf: fluxBg ? fluxBg.bass : 0, mf: fluxBg ? fluxBg.mid : 0, hf: fluxBg ? fluxBg.high : 0
         };
       },
       /* 旧签名兼容（单值 = 低频包络）；对象签名走新三路。 */
       audioPoke: function (level) { return readSignal(performance.now(), level == null ? 0.08 : level); },
-      pokeOnset: function (power, kind) { return triggerOnset(power == null ? 1.2 : power, kind === 'mid' ? 'mid' : 'low', performance.now()); },
+      pokeOnset: function (power, kind) { return triggerOnset(power == null ? 1.2 : power, kind === 'mid' ? 'mid' : (kind === 'high' ? 'high' : 'low'), performance.now()); },
+      /* 测试探针：单独画一个波，回报实际画了几层环（验证音频波 4 层）。 */
+      ringLayers: function (kind) {
+        var saved = waves.slice();
+        waves.length = 0; trail.length = 0;
+        waves.push({ x: 0.5, y: 0.5, age: 0.5, power: 1.0, origin: 'audio', kind: kind === 'high' ? 'high' : (kind === 'low' ? 'low' : 'mid'), life: 1.2, phase: 0 });
+        draw();
+        var n = ringCalls;
+        waves.length = 0;
+        for (var i = 0; i < saved.length; i++) waves.push(saved[i]);
+        return n;
+      },
       /* 旧名保留为 setTune 的薄封装（守卫 ripple-visual-gain-changes-look-only 靠它）。 */
       setGain: function (g) { return setTune({ visualGain: Number(g) }); },
       /* 面板可调参数的读写。 */
-      getTune: function () { return { visualGain: tune.visualGain, bassDrive: tune.bassDrive, onsetSens: tune.onsetSens, maxAudioWaves: tune.maxAudioWaves, onsetCooldown: tune.onsetCooldown }; },
+      getTune: function () { return { visualGain: tune.visualGain, bassDrive: tune.bassDrive, onsetSens: tune.onsetSens, midHighSens: tune.midHighSens, maxAudioWaves: tune.maxAudioWaves, onsetCooldown: tune.onsetCooldown }; },
       setTune: function (patch) { return setTune(patch); },
       resetTune: function () { return setTune(null); },
-      defaults: function () { return { visualGain: RIPPLE_DEFAULTS.visualGain, bassDrive: RIPPLE_DEFAULTS.bassDrive, onsetSens: RIPPLE_DEFAULTS.onsetSens, maxAudioWaves: RIPPLE_DEFAULTS.maxAudioWaves, onsetCooldown: RIPPLE_DEFAULTS.onsetCooldown }; },
+      defaults: function () { return { visualGain: RIPPLE_DEFAULTS.visualGain, bassDrive: RIPPLE_DEFAULTS.bassDrive, onsetSens: RIPPLE_DEFAULTS.onsetSens, midHighSens: RIPPLE_DEFAULTS.midHighSens, maxAudioWaves: RIPPLE_DEFAULTS.maxAudioWaves, onsetCooldown: RIPPLE_DEFAULTS.onsetCooldown }; },
       onTune: function (fn) { tuneListeners.push(fn); },
       resetAnalysis: function () { resetAnalysis(performance.now()); },
       /* 测试用：清场（波包 / 尾流 / 高度场 / 包络 / 起音历史）——夹具间彻底隔离。 */
@@ -2458,6 +2494,7 @@
         if (field) { field.fill(0); previous.fill(0); }
         fieldEnergy = 0; bassField = 0; drain = 0;
         envBass = 0; onsetAt = -1e9; onsetCount = 0; bassPhase = 0;
+        kindCounts.low = 0; kindCounts.mid = 0; kindCounts.high = 0;
         if (prevBins) prevBins.fill(0);
         attKey = ''; draw();
       },
@@ -4233,11 +4270,11 @@
       if (t) storeSet(RIPPLE_TUNE_KEY, t);
     }, 300);
   }
-  /* 把 5 个滑杆/输出同步到当前 tune（打开面板、重置、外部 setTune 后调）。 */
+  /* 把 6 个滑杆/输出同步到当前 tune（打开面板、重置、外部 setTune 后调）。 */
   function renderRippleTune() {
     var t = rippleTuneNow();
     if (!t || !rippleToolPop) return;
-    ['visualGain', 'bassDrive', 'onsetSens', 'maxAudioWaves', 'onsetCooldown'].forEach(function (k) {
+    ['visualGain', 'bassDrive', 'onsetSens', 'midHighSens', 'maxAudioWaves', 'onsetCooldown'].forEach(function (k) {
       var el = $('rt_' + k);
       if (el && String(el.value) !== String(t[k])) el.value = t[k];
       var out = $('rtv_' + k);
@@ -4265,6 +4302,7 @@
       visualGain: function (v) { return { visualGain: v }; },
       bassDrive: function (v) { return { bassDrive: v }; },
       onsetSens: function (v) { return { onsetSens: v }; },
+      midHighSens: function (v) { return { midHighSens: v }; },
       maxAudioWaves: function (v) { return { maxAudioWaves: v }; },
       onsetCooldown: function (v) { return { onsetCooldown: v }; }
     };
@@ -6697,6 +6735,8 @@
     rippleSetTune: function (patch) { return rippleHandle ? rippleHandle.setTune(patch) : null; },
     rippleResetTune: function () { return rippleHandle ? rippleHandle.resetTune() : null; },
     rippleTuneDefaults: function () { return rippleHandle ? rippleHandle.defaults() : null; },
+    /* 测试探针：单独画一个音频波，回报实际画了几层环（验证 4 层）。 */
+    rippleRingLayers: function (kind) { return rippleHandle ? rippleHandle.ringLayers(kind) : 0; },
     /* 跨源歌词兜底的匹配判定（测试用）：不依赖网络，直接喂结果集。 */
     pickLyricHit: pickLyricHit,
     lyricIsPlaceholder: lyricIsPlaceholder,
