@@ -53,10 +53,30 @@
   /* ---------- 后端 ----------
    * 页面由宿主从 /api/apps/<id>/ui/ 下发，路由挂在 /api/apps/<id>/routes/ 下：
    * 同源相对路径，plain fetch 即可（与旧 UI 一致，不需要 surface session）。 */
-  var API = (function () {
+  var APP_ID = (function () {
     var m = /^\/api\/apps\/([^/]+)\/ui(?:\/|$)/.exec(location.pathname || '');
-    return m ? '/api/apps/' + m[1] + '/routes' : '/api/apps/hanako-simple-player/routes';
+    return m ? m[1] : 'hanako-simple-player';
   })();
+  var API = '/api/apps/' + APP_ID + '/routes';
+
+  /* 旧包名迁移（改名留下的债）。
+   * 本 App 从 `hanako-audio-player` 改名成 `hanako-simple-player` 之后，磁盘上
+   * playlist.json 里存的是当初写死的**旧包名前缀**绝对路径
+   * （/api/apps/<旧id>/routes/…）。旧 app 已停用、路由不再注册，这些地址一律 404 ——
+   * 表现是「一点播放就 404，元素加载失败，却被提示成自动播放被拦」。
+   * 读时归一：把「任意 appId 的 /routes/ 前缀」改成当前 appId；只有真正指向某个
+   * app 路由前缀的才动，其余（本地媒体相对路径 / 外链）原样保留。
+   * ⚠️ 判据写成「appId ≠ 当前就归一」，别写死单个旧包名 —— 将来再改名照样能治。 */
+  var APP_ROUTE_RE = /^\/api\/apps\/([^/]+)\/routes(\/.*)?$/;
+  function normalizeAppUrl(url) {
+    var s = String(url || '');
+    var qi = s.indexOf('?');
+    var pathPart = qi >= 0 ? s.slice(0, qi) : s;
+    var query = qi >= 0 ? s.slice(qi) : '';
+    var m = APP_ROUTE_RE.exec(pathPart);
+    if (!m || m[1] === APP_ID) return s;
+    return '/api/apps/' + APP_ID + '/routes' + (m[2] || '') + query;
+  }
 
   var ENDPOINT = {
     playlist: API + '/widget/api/playlist',
@@ -139,7 +159,9 @@
 
   function normalizeTrack(raw) {
     var t = raw && typeof raw === 'object' ? raw : {};
-    var url = String(t.url || '');
+    /* 读时归一：旧包名（或任意非当前 appId）的 /routes/ 前缀改写成当前 appId，
+     * 保证改名前的历史曲目也能播。 */
+    var url = normalizeAppUrl(t.url || '');
     var mode = t.mode === '在线' ? '在线' : (t.mode === '本地' ? '本地' : (t.group === '在线音乐' ? '在线' : '本地'));
     var title = String(t.name || t.title || '').trim() || '未命名';
     var author = String(t.author || '').trim();
@@ -172,7 +194,9 @@
     out.id = t.id;
     out.list = t.list;
     out.name = t.title;
-    out.url = t.url;
+    /* 落盘也写归一后的地址：让 playlist.json 每次保存逐步自愈，
+     * 旧前缀化石自己变成新前缀，以后再改名不再留债。 */
+    out.url = normalizeAppUrl(t.url);
     out.mode = t.mode;
     out.dur = t.dur || 0;
     out.group = t.group;
@@ -2293,14 +2317,28 @@
   });
   window.addEventListener('pageshow', function () { unloading = false; });
 
+  /* play() 失败有两种完全不同的原因，别混为一谈：
+   *   · NotAllowedError —— 浏览器自动播放策略拦截（没有用户手势）。这才是
+   *     「继续播放」引导该管的事。
+   *   · 其它（NotSupportedError 等）—— 媒体本身加载失败（源 404 / 解码不了），
+   *     跟自动播放无关；真实原因由 audio 的 'error' 事件给出，这里不再冒充。
+   * 之前不分青红皂白一律报「自动播放被拦」：改名后旧前缀 404 全被说成「被拦」，
+   * 把排查方向带偏了。 */
   function onAutoplayBlocked(e) {
     if (e && e.name === 'AbortError') return;
-    // 不归零：保留进度与暂停态，给一个轻量的「继续播放」引导（而不是 toast 完就停死）
     state.playing = false;
-    state.needsResume = true;
+    if (e && e.name === 'NotAllowedError') {
+      // 不归零：保留进度与暂停态，给一个轻量的「继续播放」引导（而不是 toast 完就停死）
+      state.needsResume = true;
+      renderPlayState();
+      renderResume();
+      toast('自动播放被拦，点「继续播放」');
+      return;
+    }
+    // 加载/解码类失败：只收播放态，真相交给 audio 'error' 处理（不弹假的「被拦」）
+    state.needsResume = false;
     renderPlayState();
     renderResume();
-    toast('自动播放被拦，点「继续播放」');
   }
 
   /* 恢复进度：loadedmetadata 时媒体往往还不可 seek（seekable=[0,0]），此时赋
@@ -4768,6 +4806,9 @@
       discoverLoaded = true;
       renderHotSongs(); renderCharts(); renderRadios();
     },
-    searchState: function () { return { server: searchServer, scope: searchScope, results: searchResults.length, open: !!(searchPage && !searchPage.hidden), discoverVisible: discoverActive() }; }
+    searchState: function () { return { server: searchServer, scope: searchScope, results: searchResults.length, open: !!(searchPage && !searchPage.hidden), discoverVisible: discoverActive() }; },
+    /* 旧包名迁移（测试用）：纯函数，不依赖网络/真实磁盘。 */
+    normalizeAppUrl: normalizeAppUrl,
+    appId: function () { return APP_ID; }
   };
 })();

@@ -102,6 +102,10 @@ for (let i = 0; i < 3; i++) OLD_TRACKS.push({ name: `旧本地 ${i + 1}`, url: W
 for (let i = 0; i < 4; i++) OLD_TRACKS.push({ name: `鸣潮曲 ${i + 1}`, url: '', mode: '在线', dur: 0, group: '鸣潮', searchKey: `鸣潮 ${i + 1}`, searchServer: 'netease' });
 for (let i = 0; i < 3; i++) OLD_TRACKS.push({ name: `在线曲 ${i + 1}`, url: '', mode: '在线', dur: 0, group: '在线音乐', searchKey: `在线 ${i + 1}`, searchServer: 'netease' });
 for (let i = 0; i < 2; i++) OLD_TRACKS.push({ name: `未分类曲 ${i + 1}`, url: '', mode: '在线', dur: 0, group: '', searchKey: `未分类 ${i + 1}`, searchServer: 'netease' });
+/* 旧包名前缀（改名迁移债）：本 App 曾叫 hanako-audio-player，磁盘上留着该前缀的
+ * 绝对路径；旧 app 已停用、路由不再注册 → 一律 404。读时必须归一到当前 appId。 */
+const OLD_PKG = 'hanako-audio-player';
+for (let i = 0; i < 3; i++) OLD_TRACKS.push({ id: `netease:${810000 + i}`, name: `旧前缀曲 ${i + 1}`, url: `/api/apps/${OLD_PKG}/routes/widget/api/music/go/${810000 + i}?server=netease`, mode: '在线', dur: 0, group: '旧包名' });
 
 /* 假后端状态：POST /playlist 会落盘，GET 优先返回落盘值（测迁移幂等） */
 let fixtureMode = 'main';
@@ -2593,6 +2597,37 @@ let migration = {};
     secondCounts.total === firstCounts.total &&
     firstCounts.total === OLD_TRACKS.length;
 
+  /* 旧包名前缀迁移：读时归一成当前 appId（否则打到已停用的旧路由 → 404），
+   * 且保存后磁盘上的前缀自愈（不再留旧包名）。 */
+  migration.norm = await page.evaluate((oldPkg) => {
+    const d = window.__playerDebug;
+    const f = d.normalizeAppUrl;
+    const old = `/api/apps/${oldPkg}/routes/widget/api/music/go/123?server=netease`;
+    const cur = `/api/apps/${d.appId()}/routes/widget/api/music/go/123?server=netease`;
+    const local = `/api/apps/${d.appId()}/routes/widget/media/x.wav`;
+    const ext = 'https://m8.music.126.net/a.mp3';
+    return {
+      oldToNew: f(old),
+      curKept: f(cur),
+      localKept: f(local),
+      externalKept: f(ext),
+      appId: d.appId()
+    };
+  }, OLD_PKG);
+  migration.savedUrls = (persistedPlaylist || []).map((t) => t.url).filter((u) => /\/api\/apps\//.test(u));
+  migration.savedOldPrefixCount = migration.savedUrls.filter((u) => u.includes('/api/apps/' + OLD_PKG + '/')).length;
+  migration.savedNewPrefixCount = migration.savedUrls.filter((u) => u.includes('/api/apps/hanako-simple-player/')).length;
+
+  assert('old-appId-prefix-normalized-on-read',
+    migration.norm.oldToNew === migration.norm.curKept &&
+    migration.norm.curKept.includes('/api/apps/hanako-simple-player/routes/') &&
+    migration.norm.localKept.includes('/api/apps/hanako-simple-player/routes/widget/media/') &&
+    migration.norm.externalKept === 'https://m8.music.126.net/a.mp3',
+    JSON.stringify(migration.norm));
+  assert('old-appId-prefix-self-heals-on-save',
+    migration.savedOldPrefixCount === 0 && migration.savedNewPrefixCount >= 3,
+    JSON.stringify({ old: migration.savedOldPrefixCount, neu: migration.savedNewPrefixCount, sample: migration.savedUrls.slice(0, 3) }));
+
   report.migration = migration;
   await page.close();
 }
@@ -2786,14 +2821,17 @@ const wiringOk =
   report.wiring.rename.headerTitle === '我的歌单' && report.wiring.rename.tabTitle === '我的歌单' &&
   report.darkFallback.changed === true;
 const migrationOk = report.migration && report.migration.idempotent === true &&
-  report.migration.firstTabs.map((t) => t.label).join(',') === '我的喜欢,最近播放,本地,本地音乐,鸣潮,在线音乐,未分类' &&
+  report.migration.firstTabs.map((t) => t.label).join(',') === '我的喜欢,最近播放,本地,本地音乐,鸣潮,在线音乐,未分类,旧包名' &&
   report.migration.firstCounts.per['fav'] === 0 &&
   report.migration.firstCounts.per['recent'] === 0 &&
   report.migration.firstCounts.per['local'] === 0 &&
   report.migration.firstCounts.per['imp:1'] === 3 &&
   report.migration.firstCounts.per['imp:2'] === 4 &&
   report.migration.firstCounts.per['imp:3'] === 3 &&
-  report.migration.firstCounts.per['imp:4'] === 2;
+  report.migration.firstCounts.per['imp:4'] === 2 &&
+  report.migration.firstCounts.per['imp:5'] === 3 &&
+  report.migration.norm && report.migration.norm.oldToNew === report.migration.norm.curKept &&
+  report.migration.savedOldPrefixCount === 0 && report.migration.savedNewPrefixCount >= 3;
 const lifecycleOk = report.lifecycle && report.lifecycle.crossOk === true && report.lifecycle.blockedOk === true && report.lifecycle.snapshotTrackOk === true && report.lifecycle.seekFollowOk === true;
 
 fs.writeFileSync(path.join(outDir, 'verify.json'), JSON.stringify(report, null, 2));
