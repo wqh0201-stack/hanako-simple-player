@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "hanako-simple-player",
   "name": "小花音乐播放器",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "description": "小花音乐播放器（极简重构版）：本地音乐与在线音乐播放，含歌词横幅、环境色背景、歌词/频谱两态与指针涟漪。基于上游 openhanako-labs/openhanako-audio-player 的极简重构 fork。",
   "minAppVersion": "0.946.2",
   "entry": "index.js",
