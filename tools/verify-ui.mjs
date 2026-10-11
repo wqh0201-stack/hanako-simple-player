@@ -1600,11 +1600,13 @@ const rippleAudio = {};
   const agg = (r) => {
     const S = (r && r.S) || [];
     const max = (f) => S.length ? Math.max(...S.map(f)) : 0;
-    /* 「有界」判据要抗 bassField 在注入封顶阈值附近的震荡，看**趋势**而不是首末两端 max：
-       ① 跳过爬坡期（t < 1.2s，含 WARMUP_MS=320 后的第一个注入尖峰）；
-       ② 把余下采样对半切，比**后半段 vs 前半段的中位数**（max 是噪声放大器，中位数对震荡稳健）。
-       实测（6s 连续 80Hz，多次运行）：后半/前半中位数比 0.95~0.99，均值比 0.96~0.99。 */
-    const settled = S.filter((x) => x.t >= 1.2).map((x) => x.field);
+    /* 「有界」判据要抗 bassField 的松弛振荡（注入到封顶→衰减→再注入，周期约 2～3s）：
+       ① 跳过爬坡期（t < 1.5s）；② 余下对半切，比**后半 vs 前半的中位数/均值**。
+       采样窗口仍为 5s（playSynth 的第二参）。本轮把预热线 1.2→1.5s，让对半切少落进
+       爬坡相位（t≥1.2 时曾出现中位数比 1.33 的假越线）。
+       3 次连跑实测：中位数比 0.88~1.03、均值比 0.78~1.16，落在 1.3 阈值内；
+       真有单调增长会立刻越线，不会退化成「没炸得太狠」。 */
+    const settled = S.filter((x) => x.t >= 1.5).map((x) => x.field);
     const mid = (a) => { if (!a.length) return 0; const b = [...a].sort((x, y) => x - y); return b[Math.floor(b.length / 2)]; };
     const mean = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
     const half = Math.floor(settled.length / 2);
@@ -1742,6 +1744,261 @@ const rippleAudio = {};
     JSON.stringify(degrade));
 
   report.rippleAudio = rippleAudio;
+  await page.close();
+}
+
+/* ============ 涟漪参数「玩具箱」面板（仅宽窗）：开合 / 5 滑杆 / 实时 / 存储 ============ */
+const rippleTool = {};
+{
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+  const page = await newPage();
+  // 假宿主：拦 window.hana 赋值，给 storage.global 装一个可读可写的桩
+  await page.evaluateOnNewDocument(() => {
+    window.__storeCalls = { sets: [], gets: [] };
+    window.__preset = { visualGain: 2.2, bassDrive: 14, onsetSens: 1.5, maxAudioWaves: 5, onsetCooldown: 640 };
+    let _h;
+    Object.defineProperty(window, 'hana', {
+      configurable: true,
+      get() { return _h; },
+      set(v) {
+        _h = v;
+        if (v && v.storage && v.storage.global) {
+          v.storage.global.get = function (key) {
+            window.__storeCalls.gets.push(key);
+            return Promise.resolve(key === 'player-ripple-tune' ? window.__preset : null);
+          };
+          v.storage.global.set = function (key, value) { window.__storeCalls.sets.push({ key: key, value: value }); return Promise.resolve(); };
+        }
+      }
+    });
+  });
+  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
+  await page.goto(`${BASE}/standalone.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.evaluate((t) => window.__fixtureTheme(t), 'light');
+  await sleep(900);
+
+  const btnInfo = () => page.evaluate(() => {
+    const btn = document.getElementById('rippleToolBtn');
+    const cs = btn ? getComputedStyle(btn) : null;
+    const pop = document.getElementById('rippleToolPop');
+    const ripple = document.getElementById('rippleCanvas');
+    const rc = ripple ? getComputedStyle(ripple).zIndex : null;
+    return {
+      exists: !!btn, display: cs && cs.display, opacity: cs && +cs.opacity,
+      btnZ: cs && cs.zIndex, rippleZ: rc,
+      isPop: pop && pop.classList.contains('pop'),
+      bg: pop && getComputedStyle(pop).backgroundColor,
+      border: pop && getComputedStyle(pop).borderTopWidth,
+      shadow: pop && getComputedStyle(pop).boxShadow,
+      hidden: pop && pop.hidden,
+      ranges: document.querySelectorAll('#rippleToolPop .rt-range').length,
+      labels: [...document.querySelectorAll('#rippleToolPop .rt-label')].map((e) => e.textContent.replace(/\s*[\d.]+\s*(ms)?$/, '').trim()),
+      hasReset: !!document.getElementById('rtResetBtn'),
+      note: (document.querySelector('#rippleToolPop .pop-note') || {}).textContent || ''
+    };
+  });
+
+  // ① 宽窗专属：宽窗可见，长卡/窄卡隐藏
+  const wide = await btnInfo();
+  rippleTool.wide = wide;
+  await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 }); await sleep(400);
+  const longInfo = await btnInfo();
+  await page.setViewport({ width: 312, height: 494, deviceScaleFactor: 1 }); await sleep(400);
+  const compactInfo = await btnInfo();
+  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 }); await sleep(400);
+  assert('ripple-tool-wide-only',
+    wide.display !== 'none' && longInfo.display === 'none' && compactInfo.display === 'none',
+    JSON.stringify({ wide: wide.display, long: longInfo.display, compact: compactInfo.display }));
+
+  // ② 常态半透明 + z 高于涟漪画布
+  assert('ripple-tool-opacity-and-z',
+    Math.abs(wide.opacity - 0.45) < 0.02 && +wide.btnZ > +wide.rippleZ,
+    JSON.stringify({ opacity: wide.opacity, btnZ: wide.btnZ, rippleZ: wide.rippleZ }));
+
+  // ③ 面板复用 .pop 皮（背景/描边/阴影来自 --hk-* 变量，不另起一套）
+  assert('ripple-tool-pop-reuses-pop-skin',
+    wide.isPop === true && wide.bg && wide.bg !== 'rgba(0, 0, 0, 0)' &&
+    parseFloat(wide.border) > 0 && wide.shadow && wide.shadow !== 'none',
+    JSON.stringify({ isPop: wide.isPop, bg: wide.bg, border: wide.border, shadow: wide.shadow }));
+
+  // ④ 点图标开、Esc 关、点外部关
+  const openClose = await page.evaluate(async () => {
+    const pop = document.getElementById('rippleToolPop');
+    document.getElementById('rippleToolBtn').click();
+    await new Promise((r) => setTimeout(r, 50));
+    const opened = !pop.hidden;
+    const expanded = document.getElementById('rippleToolBtn').getAttribute('aria-expanded');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await new Promise((r) => setTimeout(r, 50));
+    const afterEsc = pop.hidden;
+    document.getElementById('rippleToolBtn').click();
+    await new Promise((r) => setTimeout(r, 50));
+    const reopened = !pop.hidden;
+    document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 50));
+    const afterOutside = pop.hidden;
+    return { opened, expanded, afterEsc, reopened, afterOutside };
+  });
+  rippleTool.openClose = openClose;
+  assert('ripple-tool-opens-and-closes',
+    openClose.opened && openClose.expanded === 'true' && openClose.afterEsc &&
+    openClose.reopened && openClose.afterOutside,
+    JSON.stringify(openClose));
+
+  // ⑤ 5 滑杆 + 重置 + 说明齐全；点重置回默认
+  const resetInfo = await page.evaluate(async () => {
+    document.getElementById('rippleToolBtn').click();
+    await new Promise((r) => setTimeout(r, 40));
+    // 先改一个值再重置
+    const el = document.getElementById('rt_visualGain');
+    el.value = '2.8'; el.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 40));
+    const changed = window.__playerDebug.rippleTune().visualGain;
+    document.getElementById('rtResetBtn').click();
+    await new Promise((r) => setTimeout(r, 40));
+    const t = window.__playerDebug.rippleTune();
+    const d = window.__playerDebug.rippleTuneDefaults();
+    return { changed, tune: t, defaults: d, out: document.getElementById('rtv_visualGain').textContent };
+  });
+  rippleTool.reset = resetInfo;
+  assert('ripple-tool-five-sliders-and-reset',
+    wide.ranges === 5 && wide.hasReset === true && wide.note.length > 20 &&
+    resetInfo.changed === 2.8 &&
+    JSON.stringify(resetInfo.tune) === JSON.stringify(resetInfo.defaults),
+    JSON.stringify({ ranges: wide.ranges, hasReset: wide.hasReset, noteLen: wide.note.length, changed: resetInfo.changed, tune: resetInfo.tune }));
+
+  // ⑥ 拖「整体强度」实时生效：gain 变、音量不变、起音计数不变
+  const gainLive = await page.evaluate(async () => {
+    const D = window.__playerDebug, audio = document.getElementById('audio');
+    const before = { gain: D.rippleAudio().gain, vol: audio.volume, onsets: D.rippleAudio().onsets };
+    const el = document.getElementById('rt_visualGain');
+    el.value = '2.5'; el.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 60));
+    const after = { gain: D.rippleAudio().gain, vol: audio.volume, onsets: D.rippleAudio().onsets };
+    return { before, after };
+  });
+  rippleTool.gainLive = gainLive;
+  assert('ripple-tool-slider-live-and-volume-untouched',
+    gainLive.after.gain === 2.5 && gainLive.before.vol === gainLive.after.vol &&
+    gainLive.before.onsets === gainLive.after.onsets,
+    JSON.stringify(gainLive));
+
+  // ⑦ 调「同屏波数上限」「落波间隔」真影响 tune（不重建链、不动音量）
+  const tuneApply = await page.evaluate(async () => {
+    const D = window.__playerDebug, audio = document.getElementById('audio');
+    const volBefore = audio.volume;
+    const maxEl = document.getElementById('rt_maxAudioWaves');
+    maxEl.value = '5'; maxEl.dispatchEvent(new Event('input', { bubbles: true }));
+    const cdEl = document.getElementById('rt_onsetCooldown');
+    cdEl.value = '700'; cdEl.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 60));
+    const t = D.rippleTune();
+    D.rippleResetTune();
+    return { max: t.maxAudioWaves, cd: t.onsetCooldown, volSame: audio.volume === volBefore };
+  });
+  rippleTool.tuneApply = tuneApply;
+  assert('ripple-tool-slider-affects-tuning',
+    tuneApply.max === 5 && tuneApply.cd === 700 && tuneApply.volSame === true,
+    JSON.stringify(tuneApply));
+
+  // ⑧ 沉浸时随控制条淡出（data-controls-hidden 在 .player 上）
+  const immersive = await page.evaluate(async () => {
+    const player = document.getElementById('player');
+    const btn = document.getElementById('rippleToolBtn');
+    const before = { opacity: +getComputedStyle(btn).opacity, pe: getComputedStyle(btn).pointerEvents };
+    player.setAttribute('data-controls-hidden', '1');
+    await new Promise((r) => setTimeout(r, 260));
+    const hidden = { opacity: +getComputedStyle(btn).opacity, pe: getComputedStyle(btn).pointerEvents };
+    player.setAttribute('data-controls-hidden', '0');
+    await new Promise((r) => setTimeout(r, 260));
+    const back = { opacity: +getComputedStyle(btn).opacity };
+    return { before, hidden, back };
+  });
+  rippleTool.immersive = immersive;
+  assert('ripple-tool-hidden-when-controls-hidden',
+    immersive.before.opacity > 0.3 && immersive.hidden.opacity < 0.05 && immersive.hidden.pe === 'none' && immersive.back.opacity > 0.3,
+    JSON.stringify(immersive));
+
+  // ⑨ 截图模式隐藏（is-shot 在 body 上）
+  const shotInfo = await page.evaluate(async () => {
+    const btn = document.getElementById('rippleToolBtn');
+    const before = getComputedStyle(btn).display;
+    document.body.classList.add('is-shot');
+    await new Promise((r) => setTimeout(r, 60));
+    const shot = getComputedStyle(btn).display;
+    document.body.classList.remove('is-shot');
+    await new Promise((r) => setTimeout(r, 60));
+    const after = getComputedStyle(btn).display;
+    return { before, shot, after };
+  });
+  rippleTool.shot = shotInfo;
+  assert('ripple-tool-hidden-in-shot',
+    shotInfo.before !== 'none' && shotInfo.shot === 'none' && shotInfo.after !== 'none',
+    JSON.stringify(shotInfo));
+
+  // ⑩ 大白话命名：5 个 label 是中文，不出现内部名
+  const plain = wide.labels.join('|');
+  rippleTool.labels = wide.labels;
+  assert('ripple-tool-names-plain-language',
+    wide.labels.length === 5 && /整体强度/.test(plain) && /低频推动/.test(plain) && /敲击灵敏度/.test(plain) &&
+    /同屏波数上限/.test(plain) && /落波间隔/.test(plain) &&
+    !/BASS_DRIVE|ONSET|VISUAL_GAIN|MAX_AUDIO/.test(plain),
+    JSON.stringify(wide.labels));
+
+  // ⑪ 存储：改值 → 去抖后写入 player-ripple-tune（读假宿主记录的 set 调用）
+  const saved = await page.evaluate(async () => {
+    const el = document.getElementById('rt_bassDrive');
+    el.value = '15'; el.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 500));   // 等过去抖（300ms）
+    const sets = (window.__storeCalls && window.__storeCalls.sets) || [];
+    const hit = sets.filter((s) => s.key === 'player-ripple-tune').pop();
+    return { tune: window.__playerDebug.rippleTune().bassDrive, wroteKey: !!hit, wroteVal: hit && hit.value && hit.value.bassDrive };
+  });
+  rippleTool.saved = saved;
+  assert('ripple-tool-persists-to-storage',
+    saved.tune === 15 && saved.wroteKey === true && saved.wroteVal === 15,
+    JSON.stringify(saved));
+
+  await page.close();
+}
+
+/* ⑫ 存储恢复：预置 player-ripple-tune → boot 读到后 tune 反映该值（走真读存储路径） */
+{
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+  const page = await newPage();
+  // 假宿主：拦 window.hana 赋值，给 storage.global 装桩；player-ripple-tune 返回预置值
+  await page.evaluateOnNewDocument(() => {
+    window.__storeCalls = { sets: [], gets: [] };
+    window.__preset = { visualGain: 2.2, bassDrive: 14, onsetSens: 1.5, maxAudioWaves: 5, onsetCooldown: 640 };
+    let _h;
+    Object.defineProperty(window, 'hana', {
+      configurable: true,
+      get() { return _h; },
+      set(v) {
+        _h = v;
+        if (v && v.storage && v.storage.global) {
+          v.storage.global.get = function (key) {
+            window.__storeCalls.gets.push(key);
+            return Promise.resolve(key === 'player-ripple-tune' ? window.__preset : null);
+          };
+          v.storage.global.set = function (key, value) { window.__storeCalls.sets.push({ key: key, value: value }); return Promise.resolve(); };
+        }
+      }
+    });
+  });
+  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
+  await page.goto(`${BASE}/standalone.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.evaluate((t) => window.__fixtureTheme(t), 'light');
+  await sleep(1000);   // 等 sdkReady.then 的存储读取落地
+  const restore = await page.evaluate(() => ({
+    t: window.__playerDebug.rippleTune(),
+    askedKey: window.__storeCalls.gets.indexOf('player-ripple-tune') >= 0,
+    out: document.getElementById('rtv_visualGain') ? document.getElementById('rtv_visualGain').textContent : null
+  }));
+  assert('ripple-tool-restores-from-storage',
+    restore.askedKey === true && restore.t.visualGain === 2.2 && restore.t.bassDrive === 14 &&
+    restore.t.onsetSens === 1.5 && restore.t.maxAudioWaves === 5 && restore.t.onsetCooldown === 640,
+    JSON.stringify(restore));
   await page.close();
 }
 

@@ -1681,11 +1681,61 @@
        数值对齐 docs/player-ui/ripple-lab.html 的「波澜」滑杆（0.5 比 lab 最低档 0.6 略轻）。
        它管「输入力度 / 场能量 / 环的基础 alpha」，**不是**最终可见倍率。 */
     function baseStrength() { return (player && player.getAttribute('data-haslyrics') === '1') ? 0.32 : 0.50; }
-    /* 最终可见倍率（罐头口头值 1.6）：**只在绘制阶段的 alpha 上乘一次**。
-       绝不乘进 inject() 的输入力，也绝不直接改 baseStrength() —— 当前 drop()/inject()
-       与 paintField() 已各乘一次基强度，直接乘会得到 1.6×1.6≈2.56（见 RIPPLE-AUDIO-PLAN §5）。
-       它只改观感：不参与音量、不参与起音计数、不参与波包预算。 */
-    var VISUAL_GAIN = 1.6;
+    /* ============================================================
+       可调参数（「玩具箱」面板）：默认值 = 原写死值，逐字节等效。
+       面板不动时 tune 恒等于旧行为；只有用户拖动才偏离。
+       · visualGain  **只在绘制阶段的 alpha 上乘一次**（见下），绝不进 inject()/readSignal()
+         （源码守卫 ripple-visual-gain-changes-look-only）
+       · bassDrive   持续低频注入系数
+       · onsetSens   起音灵敏度：门限 = 基准 / onsetSens（1.0 = 原基准，逐字节等效）
+       · maxAudioWaves / onsetCooldown  短波数量上限 / 落波最小间隔
+       ============================================================ */
+    var RIPPLE_DEFAULTS = {
+      visualGain: 1.6,
+      bassDrive: 9,
+      onsetSens: 1.0,
+      maxAudioWaves: 3,
+      onsetCooldown: 380
+    };
+    var tune = {
+      visualGain: RIPPLE_DEFAULTS.visualGain,
+      bassDrive: RIPPLE_DEFAULTS.bassDrive,
+      onsetSens: RIPPLE_DEFAULTS.onsetSens,
+      maxAudioWaves: RIPPLE_DEFAULTS.maxAudioWaves,
+      onsetCooldown: RIPPLE_DEFAULTS.onsetCooldown
+    };
+    /* 起音门限基准（低/中）：原写死值，**只做除法包装**，不改常数与比较符。 */
+    var ONSET_BASE_BASS = 0.003, ONSET_BASE_MID = 0.0015;
+    var ONSET_NORM_BASS = 0.20, ONSET_NORM_MID = 0.16;
+    var WARMUP_MS = 320;
+    var tuneListeners = [];
+    /* 合并一组参数并通知监听者（面板/存储）。传 null 即重置为默认。
+       只影响后续帧：不重建分析链、不动 audio.volume、不重置 onsetCount。 */
+    function setTune(patch) {
+      if (patch == null) {
+        tune.visualGain = RIPPLE_DEFAULTS.visualGain;
+        tune.bassDrive = RIPPLE_DEFAULTS.bassDrive;
+        tune.onsetSens = RIPPLE_DEFAULTS.onsetSens;
+        tune.maxAudioWaves = RIPPLE_DEFAULTS.maxAudioWaves;
+        tune.onsetCooldown = RIPPLE_DEFAULTS.onsetCooldown;
+      } else {
+        if (patch.visualGain != null && isFinite(patch.visualGain)) tune.visualGain = Math.max(0.2, Math.min(4, Number(patch.visualGain)));
+        if (patch.bassDrive != null && isFinite(patch.bassDrive)) tune.bassDrive = Math.max(0.5, Math.min(30, Number(patch.bassDrive)));
+        if (patch.onsetSens != null && isFinite(patch.onsetSens)) tune.onsetSens = Math.max(0.2, Math.min(4, Number(patch.onsetSens)));
+        if (patch.maxAudioWaves != null && isFinite(patch.maxAudioWaves)) tune.maxAudioWaves = Math.max(1, Math.min(8, Math.round(patch.maxAudioWaves)));
+        if (patch.onsetCooldown != null && isFinite(patch.onsetCooldown)) tune.onsetCooldown = Math.max(60, Math.min(1500, Math.round(patch.onsetCooldown)));
+      }
+      var snap = getTune();
+      for (var i = 0; i < tuneListeners.length; i++) { try { tuneListeners[i](snap); } catch (e) {} }
+      if (!blocked()) { draw(); wake(); }   // 改观感立即反映到画布
+      return snap;
+    }
+    function getTune() {
+      return {
+        visualGain: tune.visualGain, bassDrive: tune.bassDrive, onsetSens: tune.onsetSens,
+        maxAudioWaves: tune.maxAudioWaves, onsetCooldown: tune.onsetCooldown
+      };
+    }
 
     function shot() { return document.body.classList.contains('is-shot'); }
     function blocked() {
@@ -1724,10 +1774,7 @@
     var warmupUntil = 0;                // 换源/重建链后的预热，防首帧全亮被当强鼓点
     var bassPhase = 0;                  // 宽缓驱动的游移相位
     var bassField = 0;                  // 最近一次 stepField 的真实场能量（限注入用）
-    var MAX_AUDIO_WAVES = 3;
-    var ONSET_COOLDOWN = 380;           // 明显起音最小间隔（ms）——合并/l限流
-    var WARMUP_MS = 320;
-    var BASS_DRIVE = 9;                 // 持续低频注入系数（真实曲目校准起点）
+    /* maxAudioWaves / onsetCooldown 现在在 tune 里（面板可调），见上。 */
 
     function audioSupported() {
       return !!(window.AudioContext || window.webkitAudioContext) && !!(audio && audio.captureStream);
@@ -1853,7 +1900,7 @@
       }
       return f / Math.max(1, end - start);
     }
-    /* 落一个「音频短波」：一主环 + 一淡回声；同屏音频短波不超 MAX_AUDIO_WAVES。 */
+    /* 落一个「音频短波」：一主环 + 一淡回声；同屏音频短波不超 tune.maxAudioWaves。 */
     function audioWaveCount() {
       var n = 0;
       for (var i = 0; i < waves.length; i++) if (waves[i].origin === 'audio') n++;
@@ -1861,7 +1908,7 @@
     }
     function dropAudio(power, kind, x, y) {
       if (blocked()) return false;
-      while (audioWaveCount() >= MAX_AUDIO_WAVES) {
+      while (audioWaveCount() >= tune.maxAudioWaves) {
         for (var i = 0; i < waves.length; i++) if (waves[i].origin === 'audio') { waves.splice(i, 1); break; }
       }
       if (waves.length >= MAX_WAVES) waves.shift();
@@ -1878,7 +1925,7 @@
     }
     /* 统一起音事件：多频段合并一次、冷却限流、弱事件抑制。 */
     function triggerOnset(power, kind, now) {
-      if (now - onsetAt < ONSET_COOLDOWN) return false;
+      if (now - onsetAt < tune.onsetCooldown) return false;
       onsetAt = now; onsetCount++;
       /* 位置集中在封面附近的一小片，不满场跳。 */
       var ax = bassAnchorX() + (Math.random() - 0.5) * 0.18;
@@ -1902,7 +1949,7 @@
       bassPhase += dt * 0.12;
       var nx = bassAnchorX() + Math.sin(bassPhase) * 0.055;
       var ny = bassAnchorY() + Math.cos(bassPhase * 0.7) * 0.045;
-      var amount = env * BASS_DRIVE * Math.min(dt, 0.05);   // 按 dt 推进，不每帧无条件加固定能量
+      var amount = env * tune.bassDrive * Math.min(dt, 0.05);   // 按 dt 推进，不每帧无条件加固定能量
       inject(nx, ny, 3.4, amount);
       wake();
     }
@@ -1941,10 +1988,12 @@
       /* 低频包络（attack ~120ms / release ~500ms）→ 宽缓水面。 */
       envBass = approach(envBass, normEnergy(be), 0.12, 0.5, dt);
       if (envBass > 0.05 && playing) driveBass(envBass, dt);
-      /* 起音：快包络显著高于慢背景 + 谱通量超背景 + 绝对门限；预热期与冷却期不落波。 */
+      /* 起音：快包络显著高于慢背景 + 谱通量超背景 + 绝对门限；预热期与冷却期不落波。
+         门限 = 基准 / onsetSens（灵敏度高 → 门限低 → 更易触发）；onsetSens=1.0 时逐字节等效。 */
       if (now < warmupUntil) return;
-      var bassOn = eb.fast > 0.003 && normEnergy(eb.fast) > 0.20 && eb.fast > eb.slow * 1.5 && bf > fluxBg.bass * 1.6 + 1e-6;
-      var midOn = em.fast > 0.0015 && normEnergy(em.fast) > 0.16 && em.fast > em.slow * 1.45 && mf > fluxBg.mid * 1.6 + 1e-7;
+      var sens = tune.onsetSens > 0 ? tune.onsetSens : 1;
+      var bassOn = eb.fast > ONSET_BASE_BASS / sens && normEnergy(eb.fast) > ONSET_NORM_BASS / sens && eb.fast > eb.slow * 1.5 && bf > fluxBg.bass * 1.6 + 1e-6;
+      var midOn = em.fast > ONSET_BASE_MID / sens && normEnergy(em.fast) > ONSET_NORM_MID / sens && em.fast > em.slow * 1.45 && mf > fluxBg.mid * 1.6 + 1e-7;
       if (!bassOn && !midOn) return;
       /* 同一瞬态同时出现在几个频段 → 只产一次敲击波。低频更厚，中频更薄。 */
       var kind = bassOn ? 'low' : 'mid';
@@ -2076,12 +2125,12 @@
     }
 
     /* 流光：把高度场当水面法线，用「边缘 + 坡度」化成明暗，低分辨率放大 —— 波过处一片柔光漫开。
-       VISUAL_GAIN 在**此处（最终绘制）**只乘一次再限幅。 */
+       VISUAL_GAIN（tune.visualGain）在**此处（最终绘制）**只乘一次再限幅。 */
     function paintField(fade, s) {
       if (!pixels) return;
       var rgb = resolveRGB(getComputedStyle(canvas).color);
       var data = pixels.data;
-      var gain = s * VISUAL_GAIN;
+      var gain = s * tune.visualGain;
       for (var y = 1; y < rows - 1; y++) {
         for (var x = 1; x < cols - 1; x++) {
           var i = y * cols + x, o = i * 4;
@@ -2119,8 +2168,8 @@
       ctx.strokeStyle = getComputedStyle(canvas).color;
       var fade = drain > 0 ? Math.min(1, drain / 0.4) : 1;
       var s = baseStrength();
-      /* 最终可见倍率：流光、主环、回声、中心小圈、尾流共用同一次 VISUAL_GAIN（限幅）。 */
-      var vis = Math.min(1.5, s * VISUAL_GAIN);
+      /* 最终可见倍率：流光、主环、回声、中心小圈、尾流共用同一次 tune.visualGain（限幅）。 */
+      var vis = Math.min(1.5, s * tune.visualGain);
       if (fieldEnergy > 0.00001) paintField(fade, s);
       for (var i = 0; i < waves.length; i++) {
         var w = waves[i], p = w.age / w.life;
@@ -2335,7 +2384,7 @@
         return {
           waves: waves.length, trail: trail.length, field: fieldEnergy, playing: playing,
           raf: !!raf, w: width, h: height, cols: cols, rows: rows,
-          strength: baseStrength(), gain: VISUAL_GAIN, audioWaves: audioWaveCount(),
+          strength: baseStrength(), gain: tune.visualGain, audioWaves: audioWaveCount(),
           mask: attMask ? (function () { var m = 1; for (var i = 0; i < attMask.length; i++) if (attMask[i] < m) m = attMask[i]; return m; })() : null
         };
       },
@@ -2345,7 +2394,7 @@
         return {
           ready: audioReady, analysing: analysisOn, playing: playing,
           envBass: envBass, onsets: onsetCount, bassField: bassField,
-          waves: waves.length, audioWaves: audioWaveCount(), gain: VISUAL_GAIN,
+          waves: waves.length, audioWaves: audioWaveCount(), gain: tune.visualGain,
           /* 起音内部量（调试/校准用）：快包络 / 慢背景 / 谱通量 / 通量背景 */
           eFast: envs ? envs.bass.fast : 0, eSlow: envs ? envs.bass.slow : 0,
           mFast: envs ? envs.mid.fast : 0, mSlow: envs ? envs.mid.slow : 0,
@@ -2355,7 +2404,14 @@
       /* 旧签名兼容（单值 = 低频包络）；对象签名走新三路。 */
       audioPoke: function (level) { return readSignal(performance.now(), level == null ? 0.08 : level); },
       pokeOnset: function (power, kind) { return triggerOnset(power == null ? 1.2 : power, kind === 'mid' ? 'mid' : 'low', performance.now()); },
-      setGain: function (g) { VISUAL_GAIN = Math.max(0.2, Math.min(4, Number(g) || 1.6)); return VISUAL_GAIN; },
+      /* 旧名保留为 setTune 的薄封装（守卫 ripple-visual-gain-changes-look-only 靠它）。 */
+      setGain: function (g) { return setTune({ visualGain: Number(g) }); },
+      /* 面板可调参数的读写。 */
+      getTune: function () { return { visualGain: tune.visualGain, bassDrive: tune.bassDrive, onsetSens: tune.onsetSens, maxAudioWaves: tune.maxAudioWaves, onsetCooldown: tune.onsetCooldown }; },
+      setTune: function (patch) { return setTune(patch); },
+      resetTune: function () { return setTune(null); },
+      defaults: function () { return { visualGain: RIPPLE_DEFAULTS.visualGain, bassDrive: RIPPLE_DEFAULTS.bassDrive, onsetSens: RIPPLE_DEFAULTS.onsetSens, maxAudioWaves: RIPPLE_DEFAULTS.maxAudioWaves, onsetCooldown: RIPPLE_DEFAULTS.onsetCooldown }; },
+      onTune: function (fn) { tuneListeners.push(fn); },
       resetAnalysis: function () { resetAnalysis(performance.now()); },
       /* 测试用：清场（波包 / 尾流 / 高度场 / 包络 / 起音历史）——夹具间彻底隔离。 */
       clear: function () {
@@ -4115,10 +4171,86 @@
 
   function setNote(msg) { if (importNote) importNote.textContent = msg || ''; }
 
+  /* ============================================================
+     涟漪参数「玩具箱」面板（仅宽窗，左下角）
+     ------------------------------------------------------------
+     5 个滑杆 + 重置 + 说明；实时生效（改后续帧的观感，不重建分析链、不动音量）。
+     存储键 player-ripple-tune（跟 player-split 同路），SDK 就绪后读，读不到用默认。
+     面板皮复用 .pop；图标常态半透明，hover/聚焦/打开提亮；沉浸淡出、截图隐藏由 CSS 管。
+     ============================================================ */
+  var RIPPLE_TUNE_KEY = 'player-ripple-tune';
+  var rippleToolBtn = $('rippleToolBtn');
+  var rippleToolPop = $('rippleToolPop');
+  var rippleSaveTimer = 0;
+
+  function rippleTuneNow() { return rippleHandle ? rippleHandle.getTune() : null; }
+  function rippleSaveTune() {
+    clearTimeout(rippleSaveTimer);
+    rippleSaveTimer = setTimeout(function () {
+      rippleSaveTimer = 0;
+      var t = rippleTuneNow();
+      if (t) storeSet(RIPPLE_TUNE_KEY, t);
+    }, 300);
+  }
+  /* 把 5 个滑杆/输出同步到当前 tune（打开面板、重置、外部 setTune 后调）。 */
+  function renderRippleTune() {
+    var t = rippleTuneNow();
+    if (!t || !rippleToolPop) return;
+    ['visualGain', 'bassDrive', 'onsetSens', 'maxAudioWaves', 'onsetCooldown'].forEach(function (k) {
+      var el = $('rt_' + k);
+      if (el && String(el.value) !== String(t[k])) el.value = t[k];
+      var out = $('rtv_' + k);
+      if (out) out.textContent = (k === 'onsetCooldown') ? (t[k] + ' ms') : (k === 'maxAudioWaves' ? String(t[k]) : Number(t[k]).toFixed(2));
+    });
+  }
+  function openRippleTool() {
+    if (!rippleToolPop) return;
+    renderRippleTune();
+    rippleToolPop.hidden = false;
+    if (rippleToolBtn) rippleToolBtn.setAttribute('aria-expanded', 'true');
+  }
+  function closeRippleTool() {
+    if (!rippleToolPop || rippleToolPop.hidden) return;
+    rippleToolPop.hidden = true;
+    if (rippleToolBtn) rippleToolBtn.setAttribute('aria-expanded', 'false');
+  }
+  if (rippleToolBtn && rippleToolPop) {
+    rippleToolBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (rippleToolPop.hidden) { closePops(); openRippleTool(); } else closeRippleTool();
+    });
+    rippleToolPop.addEventListener('click', function (e) { e.stopPropagation(); });
+    var rtMap = {
+      visualGain: function (v) { return { visualGain: v }; },
+      bassDrive: function (v) { return { bassDrive: v }; },
+      onsetSens: function (v) { return { onsetSens: v }; },
+      maxAudioWaves: function (v) { return { maxAudioWaves: v }; },
+      onsetCooldown: function (v) { return { onsetCooldown: v }; }
+    };
+    Object.keys(rtMap).forEach(function (k) {
+      var el = $('rt_' + k);
+      if (!el) return;
+      el.addEventListener('input', function () {
+        if (!rippleHandle) return;
+        rippleHandle.setTune(rtMap[k](Number(el.value)));
+        renderRippleTune();
+        rippleSaveTune();
+      });
+    });
+    var rtReset = $('rtResetBtn');
+    if (rtReset) rtReset.addEventListener('click', function () {
+      if (!rippleHandle) return;
+      rippleHandle.resetTune();
+      renderRippleTune();
+      rippleSaveTune();
+    });
+  }
+
   function closePops() {
     morePop.hidden = true;
     importPop.hidden = true;
     if (listPop) listPop.hidden = true;
+    if (rippleToolPop) closeRippleTool();
     $('importBtn').setAttribute('aria-expanded', 'false');
     moreTargetUid = null;
     suppressTabId = '';
@@ -5573,7 +5705,7 @@
   }
 
   document.addEventListener('pointerdown', function (e) {
-    if (e.target.closest('.pop') || e.target.closest('.q-more') || e.target.closest('#importBtn')) return;
+    if (e.target.closest('.pop') || e.target.closest('.q-more') || e.target.closest('#importBtn') || e.target.closest('#rippleToolBtn')) return;
     closePops();
   });
 
@@ -5583,6 +5715,7 @@
     var lm = $('lyricMatchPop');
     if (lm && !lm.hidden) { closeLyricMatch(); return; }   // 手动匹配面板最上层
     if (volPopShown) { closeVolPop(); return; }   // 最瞬时的浮层先收
+    if (rippleToolPop && !rippleToolPop.hidden) { closeRippleTool(); return; }
     if (searchPage && !searchPage.hidden) { searchGoBack(); return; }   // 分层退：详情→推荐区→退出
     if (!morePop.hidden || !importPop.hidden) { closePops(); return; }
     if (player.getAttribute('data-layout') === 'wide' && state.drawer) closeDrawer();
@@ -5942,6 +6075,7 @@
     renderAll();
     applyLayout();
     rippleHandle = initRipples();   // 指针涟漪（不读音频；reduced-motion/截图内部自处理）
+    if (rippleHandle) rippleHandle.onTune(renderRippleTune);   // 参数变化时同步面板滑杆
 
     /* 拖进/拖出 = 新文档从零 boot，"静默"全落在这段。把与宿主 SDK 无关的事先发出去：
      * 播放列表 / 播放状态都走后端 HTTP 路由（票在 URL query 上），不必等 hana 落地。
@@ -5985,13 +6119,18 @@
       return sdkReady.then(function () {
         applyHostTheme();
         applyTone();                                   // 主题值落地后重判一次底色
-        return Promise.all([storeRead(LISTS_KEY), storeRead(LOCALDIR_KEY), storeRead(SPLIT_KEY)]);
+        return Promise.all([storeRead(LISTS_KEY), storeRead(LOCALDIR_KEY), storeRead(SPLIT_KEY), storeRead(RIPPLE_TUNE_KEY)]);
       });
     }).then(function (reads) {
-      var listsRead = reads[0], dirRead = reads[1], splitRead = reads[2];
+      var listsRead = reads[0], dirRead = reads[1], splitRead = reads[2], tuneRead = reads[3];
       if (dirRead.value) { state.localDir = String(dirRead.value); syncLocalFolder(false); }
       var sp = splitRead.value;
       if (typeof sp === 'number' && sp > 0 && sp < 1) setSplit(sp, false);
+      /* 涟漪参数：读到就套用（缺字段各自回落默认）；**读不到（ok:false）不覆盖**。 */
+      if (rippleHandle && tuneRead && tuneRead.ok && tuneRead.value && typeof tuneRead.value === 'object') {
+        rippleHandle.setTune(tuneRead.value);
+        renderRippleTune();
+      }
       if (listsRead.ok && state.tracks.length) {
         var before = listNamesKey();
         if (migrateLists(state.tracks, listsRead.value)) savePlaylist();
@@ -6271,6 +6410,11 @@
     rippleSetGain: function (g) { return rippleHandle ? rippleHandle.setGain(g) : 0; },
     rippleResetAnalysis: function () { return rippleHandle ? rippleHandle.resetAnalysis() : 0; },
     rippleClear: function () { return rippleHandle ? rippleHandle.clear() : 0; },
+    /* 涟漪可调参数（测试用）：读写 / 重置 / 默认值。 */
+    rippleTune: function () { return rippleHandle ? rippleHandle.getTune() : null; },
+    rippleSetTune: function (patch) { return rippleHandle ? rippleHandle.setTune(patch) : null; },
+    rippleResetTune: function () { return rippleHandle ? rippleHandle.resetTune() : null; },
+    rippleTuneDefaults: function () { return rippleHandle ? rippleHandle.defaults() : null; },
     /* 跨源歌词兜底的匹配判定（测试用）：不依赖网络，直接喂结果集。 */
     pickLyricHit: pickLyricHit,
     lyricIsPlaceholder: lyricIsPlaceholder,

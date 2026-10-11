@@ -1272,6 +1272,74 @@ button:disabled { cursor: default; }
 }
 
 /* ============================================================
+   涟漪参数「玩具箱」（仅宽窗/独立窗）
+   ------------------------------------------------------------
+   舞台左下角、盖在封面/涟漪之上（z 5 > 涟漪 3、歌词 4）；歌词阅读列从 --content-x 起，
+   左下角与它几何不重叠。常态半透明，hover/聚焦/面板打开提亮；无描边无阴影。
+   宽窗专属（与搜索入口同一套门控）；沉浸随控制条淡出（data-controls-hidden 在 .player 上）；
+   截图模式隐藏（免污染夹具截图）。面板皮复用 .pop（--hk-surface/--hk-hairline/--hk-pop-shadow）。
+   ============================================================ */
+.ripple-tool-btn {
+  display: none;
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 5;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: var(--radius-s, 5px);
+  color: var(--hk-muted);
+  opacity: 0.45;
+  cursor: pointer;
+  transition: opacity .16s ease, color .14s ease, background-color .14s ease;
+}
+.player[data-layout="wide"] .ripple-tool-btn { display: inline-flex; }
+.ripple-tool-btn .icon { width: 20px; height: 20px; stroke-width: 1.65; }
+.ripple-tool-btn:hover,
+.ripple-tool-btn:focus-visible { opacity: 1; color: var(--hk-text); }
+.ripple-tool-btn:active { transform: scale(0.96); }
+/* 面板打开时图标保持提亮（.is-open 由 aria-expanded 驱动更省事，用属性选择器） */
+.ripple-tool-btn[aria-expanded="true"] { opacity: 1; color: var(--hk-text); }
+/* 沉浸：随控制条一起淡出（属性挂在 .player 上；用 opacity 保住过渡，唤回有淡入） */
+.player[data-controls-hidden="1"] .ripple-tool-btn { opacity: 0; pointer-events: none; }
+/* 截图模式隐藏，免污染夹具截图（is-shot 挂在 body 上；特异性要压过宽窗显示规则） */
+body.is-shot .player[data-layout] .ripple-tool-btn { display: none; }
+
+.ripple-tool-pop {
+  left: 14px;
+  right: auto;
+  bottom: 56px;
+  top: auto;
+  min-width: 0;
+  width: 216px;
+  max-width: calc(100% - 28px);
+  /* 矮宽窗时别顶到 scene 上缘被裁（scene 是 overflow:hidden）：限高 + 内部滚动 */
+  max-height: calc(100% - 70px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.ripple-tool-pop .pop-title { margin-bottom: 8px; }
+.rt-row { padding: 2px 6px 6px; }
+.rt-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--hk-muted);
+  margin-bottom: 2px;
+}
+.rt-val { color: var(--hk-text); font-variant-numeric: tabular-nums; }
+.rt-range { width: 100%; }
+.ripple-tool-pop .rt-reset { justify-content: center; font-size: 12px; margin-top: 2px; }
+.ripple-tool-pop .pop-note { max-width: none; margin-top: 6px; }
+
+/* ============================================================
    底部播放控制 · 静听（连续布局）
    ------------------------------------------------------------
    一张控制面：常规高 100、特别窄 112；所有槽位绝对定位在面内。
@@ -2126,8 +2194,9 @@ body.is-shot *::after {
   /* 换层保留纯淡入淡出（去位移） */
   .player[data-lyrics] .lyric-wrap.is-swap-in { animation: panelFadeIn 0.2s ease both !important; }
   .player[data-lyrics] .lyric-wrap.is-swap-out { animation: panelFadeOut 0.2s ease both !important; }
-  /* 涟漪在 reduced-motion 下直接隐藏（JS 也会关掉调度，双保险） */
+  /* 涟漪在 reduced-motion 下直接隐藏（JS 也会关掉调度，双保险）；工具入口一并收起 */
   .ripple-canvas { display: none; }
+  .player[data-layout] .ripple-tool-btn { display: none; }
   /* 音量浮层：去位移/缩放，只留淡入淡出 */
   .vol-pop,
   .vol-group.is-open .vol-pop { transform: translate(-50%, 0) !important; }
