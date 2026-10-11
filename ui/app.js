@@ -1280,7 +1280,7 @@
       var l = state.lists[i];
       var label = listDisplayName(l);
       var active = l.id === state.activeList;
-      html += '<button class="list-tab' + (active ? ' is-active' : '') + '" type="button" role="tab"' +
+      html += '<button class="list-tab' + (active ? ' is-active' : '') + '" id="listTab' + i + '" type="button" role="tab"' +
         ' aria-selected="' + (active ? 'true' : 'false') + '" data-list="' + esc(l.id) + '"' +
         ' title="' + esc(l.name || label) + '">' + esc(label) + '</button>';
     }
@@ -1332,8 +1332,8 @@
     for (var i = 0; i < vis.length; i++) {
       var t = vis[i];
       var cur = t.uid === state.currentUid;
-      html += '<li class="q-row' + (cur ? ' is-current' : '') + '" data-id="' + esc(t.id) + '" data-uid="' + esc(t.uid) + '">' +
-        '<button class="q-hit" type="button" title="' + esc(t.title + (t.artist ? ' — ' + t.artist : '')) + '">' +
+      html += '<li class="q-row' + (cur ? ' is-current' : '') + '" id="qRow' + i + '" data-id="' + esc(t.id) + '" data-uid="' + esc(t.uid) + '">' +
+        '<button class="q-hit" id="qHit' + i + '" type="button" title="' + esc(t.title + (t.artist ? ' — ' + t.artist : '')) + '">' +
           '<span class="q-cover"></span>' +
           '<span class="q-meta">' +
             '<span class="q-title">' + esc(t.title) + '</span>' +
@@ -1346,8 +1346,8 @@
           '</svg></span>' +
           '<span class="q-dur">' + (t.dur ? fmtTime(t.dur) : '--:--') + '</span>' +
         '</button>' +
-        '<button class="q-fav' + (isFav(t.id) ? ' is-on' : '') + '" type="button" aria-pressed="' + (isFav(t.id) ? 'true' : 'false') + '" aria-label="' + (isFav(t.id) ? '取消喜欢' : '加入我的喜欢') + '" title="' + (isFav(t.id) ? '取消喜欢' : '加入我的喜欢') + '">' + icon('i-heart') + '</button>' +
-        '<button class="q-more" type="button" aria-label="更多操作：' + esc(t.title) + '">' + icon('i-more') + '</button>' +
+        '<button class="q-fav' + (isFav(t.id) ? ' is-on' : '') + '" id="qFav' + i + '" type="button" aria-pressed="' + (isFav(t.id) ? 'true' : 'false') + '" aria-label="' + (isFav(t.id) ? '取消喜欢' : '加入我的喜欢') + '" title="' + (isFav(t.id) ? '取消喜欢' : '加入我的喜欢') + '">' + icon('i-heart') + '</button>' +
+        '<button class="q-more" id="qMore' + i + '" type="button" aria-label="更多操作：' + esc(t.title) + '">' + icon('i-more') + '</button>' +
       '</li>';
     }
     if (!html) html = emptyGuide();
@@ -3525,7 +3525,7 @@
     var html = '';
     for (var i = 0; i < SEARCH_SERVERS.length; i++) {
       var s = SEARCH_SERVERS[i];
-      html += '<button class="search-server' + (s.id === searchServer ? ' is-active' : '') + '" type="button"' +
+      html += '<button class="search-server' + (s.id === searchServer ? ' is-active' : '') + '" id="searchServer_' + esc(s.id) + '" type="button"' +
         ' data-server="' + esc(s.id) + '" aria-pressed="' + (s.id === searchServer ? 'true' : 'false') + '">' +
         esc(s.label) + '</button>';
     }
@@ -3547,15 +3547,15 @@
       var title = String(r.title || r.name || '').trim() || '未命名';
       var author = String(r.author || '').trim();
       var favOn = isFav(deriveId(r, r.url));
-      html += '<li class="search-row" data-i="' + i + '">' +
-        '<button class="search-hit" type="button" data-i="' + i + '" aria-label="播放 ' + esc(title) + '">' +
+      html += '<li class="search-row" id="searchRow' + i + '" data-i="' + i + '">' +
+        '<button class="search-hit" id="searchHit' + i + '" type="button" data-i="' + i + '" aria-label="播放 ' + esc(title) + '">' +
           '<span class="q-cover"></span>' +
           '<span class="q-meta">' +
             '<span class="q-title">' + esc(title) + '</span>' +
             '<span class="q-artist">' + esc(author) + '</span>' +
           '</span>' +
         '</button>' +
-        '<button class="search-fav' + (favOn ? ' is-on' : '') + '" type="button" data-i="' + i + '"' +
+        '<button class="search-fav' + (favOn ? ' is-on' : '') + '" id="searchFav' + i + '" type="button" data-i="' + i + '"' +
           ' aria-pressed="' + (favOn ? 'true' : 'false') + '" aria-label="' + (favOn ? '取消喜欢' : '加入我的喜欢') + '" title="' + (favOn ? '取消喜欢' : '加入我的喜欢') + '">' +
           icon('i-heart', 'icon-sm') +
         '</button>' +
@@ -3714,13 +3714,13 @@
     for (var i = 0; i < n; i++) {
       var r = hotSongs[i];
       var favOn = isFav(deriveId(r, r.url));
-      html += '<li class="search-row" data-hot="' + i + '">' +
-        '<button class="search-hit" type="button" data-hot="' + i + '" aria-label="播放 ' + esc(String(r.title || '').trim()) + '">' +
+      html += '<li class="search-row" id="hotRow' + i + '" data-hot="' + i + '">' +
+        '<button class="search-hit" id="hotHit' + i + '" type="button" data-hot="' + i + '" aria-label="播放 ' + esc(String(r.title || '').trim()) + '">' +
           '<span class="q-cover"></span>' +
           '<span class="q-meta"><span class="q-title">' + esc(String(r.title || '').trim()) + '</span>' +
           '<span class="q-artist">' + esc(String(r.author || '').trim()) + '</span></span>' +
         '</button>' +
-        '<button class="search-fav' + (favOn ? ' is-on' : '') + '" type="button" data-hot="' + i + '"' +
+        '<button class="search-fav' + (favOn ? ' is-on' : '') + '" id="hotFav' + i + '" type="button" data-hot="' + i + '"' +
           ' aria-pressed="' + (favOn ? 'true' : 'false') + '" aria-label="' + (favOn ? '取消喜欢' : '加入我的喜欢') + '" title="' + (favOn ? '取消喜欢' : '加入我的喜欢') + '">' +
           icon('i-heart', 'icon-sm') +
         '</button></li>';
@@ -3741,7 +3741,7 @@
     var html = '';
     for (var i = 0; i < items.length; i++) {
       var c = items[i];
-      html += '<button class="discover-card" type="button" data-kind="' + c._kind + '" data-id="' + esc(c.id) + '" data-name="' + esc(c.name) + '">' +
+      html += '<button class="discover-card" id="chartCard' + i + '" type="button" data-kind="' + c._kind + '" data-id="' + esc(c.id) + '" data-name="' + esc(c.name) + '">' +
         '<span class="discover-card-cover"></span>' +
         '<span class="discover-card-name">' + esc(c.name) + '</span>' +
         (c.note ? '<span class="discover-card-note">' + esc(c.note) + '</span>' : '') +
@@ -3765,7 +3765,7 @@
     var html = '';
     for (var i = 0; i < discoverRadios.length; i++) {
       var r = discoverRadios[i];
-      html += '<button class="discover-card" type="button" data-radio="' + esc(r.id) + '" data-name="' + esc(r.name) + '">' +
+      html += '<button class="discover-card" id="radioCard' + i + '" type="button" data-radio="' + esc(r.id) + '" data-name="' + esc(r.name) + '">' +
         '<span class="discover-card-cover"></span>' +
         '<span class="discover-card-name">' + esc(r.name) + '</span>' +
         '<span class="discover-card-note">' + esc(r.category || '') + (r.programCount ? ' · ' + r.programCount + ' 期' : '') + '</span>' +
