@@ -58,6 +58,16 @@ const TOOLS_RUNTIME = new Set([
   "bind-banner.js",
 ]);
 
+/**
+ * assets/ 里允许「没有任何静态引用」的文件（空集＝全部必须被引用）。
+ * 默认不许有孤儿静态资源：上游遗留文件（如忘删的 icon.svg）会悄悄混进包，
+ * 既占体积又让人误以为是当前图标。真需要动态引用的，在这里显式登记并写明理由。
+ * （2026-10-11 踩过：上游 icon.svg 随初始快照带入、无任何引用，直到 1.0.1 才发现）
+ */
+const ALLOW_UNREFERENCED_ASSETS = new Set([
+  // "example.png",  // 例：运行时按后端返回的名字动态取，静态扫不到
+]);
+
 function parseArgs(argv) {
   const out = { out: "dist-release", publisher: "wqh0201-stack", keepTmp: false };
   for (let i = 0; i < argv.length; i++) {
@@ -142,6 +152,40 @@ function checkRuntimeImports(stageDir) {
   return missing;
 }
 
+/**
+ * 孤儿静态资源守卫：assets/ 下每个文件都必须在 manifest.json 或运行时文本文件里
+ * 被引用；未被引用且不在 ALLOW_UNREFERENCED_ASSETS 里的，直接拦下打包。
+ * 为什么：上游遗留文件（忘删的旧图标等）会随 copyRuntime 静静混进包，
+ * 体积小但语义错——用户与审阅者会把它当成当前图标。宁可打包时就报错。
+ * （2026-10-11 踩过：上游 icon.svg 混入 1.0.1 包）
+ */
+function checkOrphanAssets(stageDir) {
+  const assetsDir = path.join(stageDir, "assets");
+  if (!fs.existsSync(assetsDir)) return [];
+  // 收集「可引用的文本」：manifest.json + 所有 .js/.html/.css 内容
+  const corpus = [];
+  const collect = (d) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) { collect(p); continue; }
+      if (!/\.(js|json|html|css)$/.test(e.name)) continue;
+      corpus.push(fs.readFileSync(p, "utf8"));
+    }
+  };
+  collect(stageDir);
+  const hay = corpus.join("\n");
+  const orphans = [];
+  for (const e of fs.readdirSync(assetsDir, { withFileTypes: true })) {
+    if (!e.isFile()) continue;
+    const name = e.name;
+    if (ALLOW_UNREFERENCED_ASSETS.has(name)) continue;
+    // 文件名（含其在 assets/ 下的相对路径）在文本里出现过就算被引用
+    if (hay.includes(name) || hay.includes(`assets/${name}`)) continue;
+    orphans.push(name);
+  }
+  return orphans;
+}
+
 /** 统计目录体积 / 文件数（用于回报）。 */
 function measure(dir) {
   let bytes = 0;
@@ -175,6 +219,25 @@ function main() {
   const staged = measure(stageDir);
   console.log(`[pack-release] 暂存目录 ${stageDir}`);
   console.log(`[pack-release] 运行时文件：${staged.files} 个 / ${(staged.bytes / 1024).toFixed(1)} KB`);
+
+  // 包内 assets/ 清单（目视复核用：每个都应该是当前真正在用的；防上游遗留文件混入）
+  const assetsDir = path.join(stageDir, "assets");
+  if (fs.existsSync(assetsDir)) {
+    const names = fs.readdirSync(assetsDir).sort();
+    console.log(`[pack-release] 包内 assets/（${names.length}）：${names.join(", ")}`);
+  }
+
+  // 孤儿静态资源守卫：assets/ 里未被任何静态引用指向的文件直接拦下（防死文件混入）
+  const orphans = checkOrphanAssets(stageDir);
+  if (orphans.length) {
+    console.error("[pack-release] assets/ 里有未被引用的文件，中止打包：");
+    for (const o of orphans) console.error(`  - assets/${o}`);
+    console.error("  若它确实被运行时动态引用，请加入 ALLOW_UNREFERENCED_ASSETS 并写明理由；");
+    console.error("  若是上游遗留、已不再使用，请从仓库删除。");
+    process.exitCode = 1;
+    return;
+  }
+  console.log("[pack-release] assets/ 引用完整性：OK");
 
   // 完整性守卫：包内 .js 的相对 import 必须都在包里（防白名单切错）
   const missing = checkRuntimeImports(stageDir);
