@@ -1621,34 +1621,39 @@ button:disabled { cursor: default; }
   pointer-events: none;       /* 只让按钮可点，不挡涟漪/指针 */
 }
 .lyric-ask[hidden] { display: none; }
+/* 无词入口按钮：**不是控件，是歌词区里的一行字**。
+ * 常态 = 歌词「邻行」那一档（--lyric-near）；悬停 = 完全套用「当前句」那一行
+ * （--lyric-current + 600 + 同款发光 text-shadow）。用歌词的光替代控件的光 ——
+ * 不再有底、描边、圆角，也不用 --hv-ring-icon 那道灰环（那正是要去的「创可贴」）。 */
 .lyric-ask-btn {
   pointer-events: auto;
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  max-width: 100%;
+  /* 透明的 padding：撑住点击区，肉眼看不见 */
   padding: 7px 13px;
-  border: 1px solid var(--hk-hairline);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--hk-surface) 82%, transparent);
-  color: var(--cover-text-soft, var(--hk-muted));
+  max-width: 100%;
+  color: var(--lyric-near);
   font: inherit;
   font-size: 12px;
   line-height: 1.4;
   white-space: nowrap;        /* 窄卡里不能换行（否则行高变 50px、被列宽切成两行） */
   cursor: pointer;
-  transition: color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+  /* 与歌词同一套过渡：颜色 + 光 */
+  transition: color 0.25s ease, text-shadow 0.25s ease;
 }
 .lyric-ask-btn .ask-full { display: inline; }
 .lyric-ask-btn .ask-short { display: none; }
 /* 窄容器（长卡/窄卡）里歌名列很窄：换短文案，不让它撑破行 */
 .player:not([data-layout="wide"]) .lyric-ask-btn .ask-full { display: none; }
 .player:not([data-layout="wide"]) .lyric-ask-btn .ask-short { display: inline; }
-.lyric-ask-btn .icon { width: 14px; height: 14px; opacity: 0.8; }
+/* 图标跟文字同色（currentColor 继承），尺寸不变 */
+.lyric-ask-btn .icon { width: 14px; height: 14px; }
+/* 悬停 = 歌词当前句：同色 + 同粗 + 同光 */
 .lyric-ask-btn:hover {
-  color: var(--cover-text, var(--hk-text));
-  background: var(--hk-surface);
-  box-shadow: var(--hv-ring-icon, none);
+  color: var(--lyric-current);
+  font-weight: 600;
+  text-shadow: var(--lyric-shadow), var(--lyric-glow);
 }
 .lyric-ask-btn:active { transform: scale(0.97); }
 .lyric-ask-btn:focus-visible { outline: 2px solid var(--hl-accent); outline-offset: 2px; }

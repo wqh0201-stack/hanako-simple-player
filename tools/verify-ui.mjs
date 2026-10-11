@@ -1362,6 +1362,47 @@ const motion = {};
     lyricAsk.popOpen === true && lyricAsk.popClosed === true && lyricAsk.prefilled.length > 0,
     JSON.stringify(lyricAsk));
 
+  /* 无词入口按钮的视觉（罐头 2026-10-11 真机反馈：旧的胶囊「像个贴上去的创可贴」）。
+   * 改成「歌词区里的一行字」：常态 = 邻行色，悬停 = 当前句同款（颜色 + 600 + 同光），
+   * 不再有底/描边/圆角/灰环。伪类读不到 getComputedStyle，所以扫样式表。 */
+  const askStyle = await page.evaluate(() => {
+    const rules = [];
+    const sheets = document.styleSheets;
+    for (let i = 0; i < sheets.length; i++) {
+      const list = sheets[i].cssRules || [];
+      for (let j = 0; j < list.length; j++) {
+        const r = list[j];
+        if (!r.selectorText || !r.style) continue;
+        if (r.selectorText.indexOf('.lyric-ask-btn') < 0) continue;
+        rules.push({
+          sel: r.selectorText,
+          border: r.style.border || '',
+          radius: r.style.borderRadius || '',
+          background: r.style.background || r.style.backgroundColor || '',
+          boxShadow: r.style.boxShadow || '',
+          color: r.style.color || '',
+          fontWeight: r.style.fontWeight || '',
+          textShadow: r.style.textShadow || ''
+        });
+      }
+    }
+    const base = rules.filter((r) => r.sel === '.lyric-ask-btn')[0] || {};
+    const hover = rules.filter((r) => r.sel.indexOf(':hover') >= 0)[0] || {};
+    return { base, hover, count: rules.length };
+  });
+  assert('lyric-ask-is-a-lyric-line-not-a-pill',
+    // 常态：无底/无描边/无圆角，上邻行色
+    !askStyle.base.border && !askStyle.base.radius && !askStyle.base.background &&
+    /var\(--lyric-near\)/.test(askStyle.base.color || ''),
+    JSON.stringify(askStyle.base));
+  assert('lyric-ask-hover-uses-lyric-current-glow',
+    // 悬停：当前句色 + 600 + 同款光；不再有 surface 底 / hv-ring 灰环
+    /var\(--lyric-current\)/.test(askStyle.hover.color || '') &&
+    askStyle.hover.fontWeight === '600' &&
+    /var\(--lyric-shadow\),\s*var\(--lyric-glow\)/.test(askStyle.hover.textShadow || '') &&
+    !askStyle.hover.background && !/hv-ring/.test(askStyle.hover.boxShadow || ''),
+    JSON.stringify(askStyle.hover));
+
   /* 占位词识别：纯音乐占位句（「这似乎是一首纯音乐呢」等）当空处理，不占歌词层 */
   const placeholder = await page.evaluate(() => {
     const D = window.__playerDebug;
