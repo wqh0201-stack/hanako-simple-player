@@ -224,6 +224,7 @@ const server = http.createServer((req, res) => {
     const id = u.searchParams.get('id') || '';
     if (id === '900099') return text(res, 200, '', 'text/plain; charset=utf-8');  // 无词纯音乐
     if (id === '900098') return text(res, 200, '[00:00.00]这似乎是一首纯音乐呢，请尽情欣赏它吧！', 'text/plain; charset=utf-8');  // 占位词纯音乐
+    if (fixtureMode === 'align') return text(res, 200, '[offset:250]\n' + Array.from({ length: 12 }, (_, i) => `[00:${String(1 + i * 2).padStart(2, '0')}.00]校准试听 第 ${i + 1} 句`).join('\n'), 'text/plain; charset=utf-8');
     return text(res, 200, lrcFor('fixture'), 'text/plain; charset=utf-8');
   }
   if (p === API + '/widget/api/music/lrc-proxy') {
@@ -1430,6 +1431,115 @@ const motion = {};
     JSON.stringify({ usesCaptureStream: /\.captureStream\s*\(/.test(codeNoComments), callsOldApi: /createMediaElementSource\s*\(/.test(codeNoComments) }));
 
   report.four = w2;
+  await page.close();
+}
+
+/* ============ 歌词校准：真鼠标长按/拖动 + 真媒体时钟 + playlist 持久化 ============ */
+{
+  await fetch(`${BASE}${API}/__fixture/reset?mode=align&appSurfaceSession=fake-ticket`);
+  const page = await newPage();
+  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
+  const entry = `${BASE}/standalone.html?appSurfaceSession=fake-ticket`;
+  await page.goto(entry, { waitUntil: 'domcontentloaded' });
+  await page.evaluate(() => window.__fixtureTheme('light'));
+  const ready = () => page.waitForFunction(() => window.__playerDebug && window.__playerDebug.lyricAlignState().base === 250 && document.getElementById('audio').duration > 0);
+  await ready();
+  const info = () => page.evaluate(() => window.__playerDebug.lyricAlignState());
+  const hold = async () => {
+    const r = await page.$eval('#lyrics', (e) => { const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+    await page.mouse.move(r.x, r.y);
+    await page.mouse.down();
+    await sleep(520);
+    return r;
+  };
+  await page.evaluate(() => { const a = document.getElementById('audio'); a.pause(); a.currentTime = 3; });
+  await sleep(100);
+  const parsed = await page.evaluate(() => {
+    const d = window.__playerDebug;
+    const pos = d.parseLrcDocument('[offset: +750]\n[00:03.00]一句');
+    const neg = d.parseLrcDocument('[offset:250]\n[offset: -450]\n[00:03.00]一句');
+    return { pos: pos.advanceMs, neg: neg.advanceMs, missing: d.parseLrcDocument('[00:03.00]一句').advanceMs, base: d.lyricAlignState().base, t: pos.lines[0].t };
+  });
+  assert('lyric-align-parse-lrc-offset-tag', parsed.pos === 750 && parsed.neg === -450 && parsed.missing === 0 && parsed.t === 3, JSON.stringify(parsed));
+  assert('lyric-align-candidate-parse-does-not-change-current-source', parsed.base === 250, JSON.stringify(parsed));
+
+  const tapPoint = await page.$eval('#lyrics', (el) => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+  await page.mouse.move(tapPoint.x, tapPoint.y);
+  await page.mouse.down(); await sleep(80); await page.mouse.up();
+  assert('lyric-align-short-press-does-not-enter-or-save', !(await info()).active && (await info()).saved === 0, JSON.stringify(await info()));
+  await page.evaluate(() => { document.getElementById('audio').currentTime = 3; });
+  await sleep(100);
+  const r = await hold();
+  const entered = await info();
+  assert('lyric-align-long-press-enters', entered.active && entered.dragging && !entered.follow, JSON.stringify(entered));
+  await page.mouse.move(r.x, r.y - 48, { steps: 8 });
+  const dragged = await info();
+  assert('lyric-align-drag-changes-offset', dragged.draft > 0 && dragged.index > entered.index && dragged.saved === 0 && dragged.time > dragged.media + 0.25, JSON.stringify({ entered, dragged }));
+  const scrollBefore = await page.$eval('#lyrics', (el) => el.scrollTop);
+  await page.evaluate(() => document.getElementById('audio').play());
+  await sleep(3300); // 超过原浏览态的 3s 自动回归，也跨过歌词句界
+  const moving = await info();
+  const scrollAfter = await page.$eval('#lyrics', (el) => el.scrollTop);
+  assert('lyric-align-media-keeps-moving-without-offset-drift', moving.media > dragged.media + 2 && moving.draft === dragged.draft && moving.active && moving.dragging && scrollAfter > scrollBefore + 10, JSON.stringify({ dragged, moving, scrollBefore, scrollAfter }));
+  assert('lyric-align-draft-is-not-written-to-track', moving.copies.every((x) => x.offset === undefined), JSON.stringify(moving));
+  await page.mouse.up();
+  await sleep(500);
+  const released = await info();
+  assert('lyric-align-release-keeps-preview-and-fine-controls', released.active && !released.dragging && released.draft === dragged.draft && released.media > moving.media + 0.2, JSON.stringify(released));
+  await page.evaluate(() => document.getElementById('audio').pause());
+  assert('lyric-align-paused-preview-stops-frames', !(await info()).raf, JSON.stringify(await info()));
+  await sleep(220);
+  await page.screenshot({ path: path.join(outDir, 'lyric-align-light-1040x780.png') });
+  await page.evaluate(() => window.__fixtureTheme('dark'));
+  await sleep(220);
+  await page.screenshot({ path: path.join(outDir, 'lyric-align-dark-1040x780.png') });
+  await page.setViewport({ width: 312, height: 494, deviceScaleFactor: 1 });
+  await sleep(220);
+  const narrow = await page.evaluate(() => {
+    const el = document.getElementById('lyricAlignTools'), r = el.getBoundingClientRect(), p = document.getElementById('player').getBoundingClientRect();
+    const buttons = Array.from(el.querySelectorAll('button'));
+    return { inside: r.left >= p.left && r.right <= p.right + 1 && r.top >= p.top && r.bottom <= p.bottom, singleRow: Math.abs(buttons[0].getBoundingClientRect().top - buttons[3].getBoundingClientRect().top) < 1, hits: buttons.every((b) => { const r = b.getBoundingClientRect(); return b.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)); }) };
+  });
+  assert('lyric-align-controls-fit-and-hit-in-narrow-card', narrow.inside && narrow.hits && narrow.singleRow, JSON.stringify(narrow));
+  await page.screenshot({ path: path.join(outDir, 'lyric-align-dark-312x494.png') });
+  await page.keyboard.press('Escape');
+  const canceled = await info();
+  assert('lyric-align-escape-discards-draft', !canceled.active && canceled.saved === 0 && canceled.follow, JSON.stringify(canceled));
+
+  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
+  await sleep(100);
+  await hold(); await page.mouse.up();
+  await page.click('#lyricAlignEarlier');
+  assert('lyric-align-fine-step-is-50ms', (await info()).draft === 50 && (await info()).saved === 0, JSON.stringify(await info()));
+  await page.click('#lyricAlignDone');
+  await page.waitForFunction(() => !window.__playerDebug.lyricAlignState().active && window.__playerDebug.lyricAlignState().saved === 50);
+  const stored = (persistedPlaylist || []).filter((t) => t.id === 'netease:900000');
+  assert('lyric-align-persists-to-playlist-and-all-copies', stored.length >= 2 && stored.every((t) => t.lyricOffset === 50), JSON.stringify(stored.map((t) => ({ list: t.list, offset: t.lyricOffset }))));
+  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await ready();
+  const restored = await info();
+  assert('lyric-align-restores-across-documents-with-base-once', restored.saved === 50 && Math.abs(restored.time - restored.media - 0.3) < 0.001, JSON.stringify(restored));
+
+  await page.evaluate(() => document.getElementById('audio').pause());
+  await page.evaluate(() => document.querySelector('#lyrics [data-i="3"]').click());
+  await sleep(120);
+  const seeked = await info();
+  assert('lyric-align-click-seek-inverts-the-lyric-clock', Math.abs(seeked.media - 6.7) < 0.05 && seeked.index === 3, JSON.stringify(seeked));
+  const cancelR = await hold();
+  await page.mouse.move(cancelR.x, cancelR.y + 30);
+  await page.evaluate(() => document.getElementById('lyricWrap').dispatchEvent(new PointerEvent('pointercancel', { pointerId: 1, pointerType: 'mouse', bubbles: true })));
+  await page.mouse.up();
+  const pointerCanceled = await info();
+  assert('lyric-align-pointercancel-rolls-back-drag', pointerCanceled.active && !pointerCanceled.dragging && pointerCanceled.draft === 50 && pointerCanceled.saved === 50, JSON.stringify(pointerCanceled));
+  await page.click('#lyricAlignReset');
+  assert('lyric-align-reset-is-a-draft-and-retains-source-offset', (await info()).draft === 0 && (await info()).saved === 50 && (await info()).base === 250, JSON.stringify(await info()));
+  await page.keyboard.press('Escape');
+  await page.evaluate(() => { const d = window.__playerDebug; d.bindLyricMatch(d.currentTrack(), '校准试听', '', '校准试听'); });
+  await page.waitForFunction(() => window.__playerDebug.lyricAlignState().base === 250 && document.querySelectorAll('#lyrics .lyric-line').length === 12);
+  await sleep(100);
+  const rebound = await info();
+  const reboundStored = (persistedPlaylist || []).filter((t) => t.id === 'netease:900000');
+  assert('lyric-align-cleared-on-rebind-for-all-copies', rebound.saved === 0 && rebound.base === 250 && reboundStored.length >= 2 && reboundStored.every((t) => !Object.hasOwn(t, 'lyricOffset') && t.lyricMatch.keyword === '校准试听'), JSON.stringify(rebound));
   await page.close();
 }
 

@@ -210,6 +210,25 @@
     return out;
   }
 
+  /* 歌词设置属于音频，不属于歌单。喜欢/最近播放/导入列表可以各有一份副本。 */
+  function inheritLyricSettings(t) {
+    var src = findAnyById(t.id);
+    if (!src || !src.raw) return;
+    ['lyricOffset', 'lyricMatch'].forEach(function (key) {
+      if (!Object.prototype.hasOwnProperty.call(t.raw, key) &&
+          Object.prototype.hasOwnProperty.call(src.raw, key)) t.raw[key] = src.raw[key];
+    });
+  }
+  function setTrackLyricOffset(t, ms) {
+    var entries = state.tracks.filter(function (x) { return x.id === t.id; });
+    if (entries.indexOf(t) < 0) entries.push(t);
+    entries.forEach(function (x) {
+      if (!x.raw) x.raw = {};
+      if (ms === null) delete x.raw.lyricOffset;
+      else x.raw.lyricOffset = ms;
+    });
+  }
+
   /* ---------- 状态（接口约定的 playback-state 字段） ---------- */
   var state = {
     tracks: [],
@@ -729,6 +748,7 @@
     var added = 0;
     for (i = 0; i < incoming.length; i++) {
       var t = normalizeTrack(incoming[i]);
+      inheritLyricSettings(t);
       t.list = listId;
       t.uid = uidOf(t);
       if (index[t.uid] !== undefined) {
@@ -1955,6 +1975,7 @@
   }
 
   function renderChrome() {
+    if (lyricAlign && (state.page !== 'play' || state.drawer || (searchPage && !searchPage.hidden))) closeLyricAlign();
     player.setAttribute('data-page', state.page);
     player.setAttribute('data-drawer', state.drawer ? '1' : '0');
     player.setAttribute('data-search', (searchPage && !searchPage.hidden) ? '1' : '0');
@@ -1988,17 +2009,37 @@
      ============================================================ */
   var lyricIndex = -1;
   var lyricGen = 0;
+  var lyricBaseOffset = 0;     // 词源自带的提前量（ms）；绝不回写到用户调整
+  var lyricAlign = null;      // 草稿，只在「完成」时写 raw / playlist
+  var lyricPress = null;
+  var lyricAlignRaf = 0;
+  var lyricHintTimer = 0, lyricHintCount = 0;
+  var lyricSuppressClickUntil = 0;
+  var LYRIC_OFFSET_LIMIT = 600000;
+
+  function validLyricOffset(v) {
+    var n = typeof v === 'number' ? v : 0;
+    return isFinite(n) ? Math.max(-LYRIC_OFFSET_LIMIT, Math.min(LYRIC_OFFSET_LIMIT, Math.round(n))) : 0;
+  }
+  function savedLyricOffset(t) { return validLyricOffset(t && t.raw && t.raw.lyricOffset); }
+  function lyricTimeAt(mediaTime) {
+    var off = lyricAlign ? lyricAlign.draft : savedLyricOffset(currentTrack());
+    return mediaTime + (lyricBaseOffset + off) / 1000;
+  }
+  function describeLyricOffset(ms) {
+    return ms ? '歌词' + (ms > 0 ? '提前 ' : '延后 ') + (Math.abs(ms) / 1000).toFixed(2) + 's' : '原始节奏';
+  }
 
   function sizeLyricPad() {
     var h = lyricWrap.clientHeight;
     if (!h) return;
-    var pad = Math.max(28, Math.round(h / 2 - 26));
+    var pad = lyricAlign ? Math.round(h / 2) : Math.max(28, Math.round(h / 2 - 26));
     lyrics.style.paddingTop = pad + 'px';
     lyrics.style.paddingBottom = pad + 'px';
   }
 
   function centerCurrentLine(instant) {
-    if (!state.follow) return;
+    if (!state.follow || lyricAlign) return;
     var el = lyrics.querySelector('.lyric-line.is-current');
     if (!el) return;
     var target = el.offsetTop - lyrics.offsetTop - lyricWrap.clientHeight / 2 + el.offsetHeight / 2;
@@ -2007,8 +2048,9 @@
 
   function updateLyricIndex(instant) {
     var idx = -1;
+    var time = lyricTimeAt(liveProgress());
     for (var i = 0; i < state.lyricLines.length; i++) {
-      if (state.lyricLines[i].t <= state.progress + 0.01) idx = i; else break;
+      if (state.lyricLines[i].t <= time + 0.01) idx = i; else break;
     }
     if (idx === lyricIndex) return;
     lyricIndex = idx;
@@ -2028,10 +2070,11 @@
   function clearFollowTimer() { if (followTimer) { clearTimeout(followTimer); followTimer = 0; } }
   function scheduleResume() {
     clearFollowTimer();
-    if (state.follow) return;   // 本来就跟着，不需要回归
+    if (state.follow || lyricAlign || lyricPress) return;
     followTimer = setTimeout(function () { followTimer = 0; resumeFollow(); }, 3000);
   }
   function pauseFollow() {
+    if (lyricAlign) return;
     lyrics.classList.add('is-browsing');   // 3 行聚焦：滚动时全部行显形
     if (state.follow) state.follow = false;
     scheduleResume();
@@ -2043,15 +2086,227 @@
     centerCurrentLine(false);
   }
 
-  lyricWrap.addEventListener('wheel', pauseFollow, { passive: true });
+  /* 校准时用连续的「时间 → 行中心」插值，普通阅读仍按句居中。
+   * 播放时钟始终前进；鼠标只改变固定的提前量，停手/松手不会重新锚定音频时间。 */
+  function measureAlignLines() {
+    if (!lyricAlign) return;
+    var nodes = lyrics.querySelectorAll('.lyric-line');
+    lyricAlign.points = [];
+    for (var i = 0; i < nodes.length; i++) {
+      lyricAlign.points.push({ t: state.lyricLines[i].t, y: nodes[i].offsetTop - lyrics.offsetTop + nodes[i].offsetHeight / 2, node: nodes[i] });
+    }
+    lyricAlign.width = lyrics.clientWidth;
+    lyricAlign.height = lyrics.clientHeight;
+  }
+  function alignPosition(time) {
+    var pts = lyricAlign.points;
+    if (!pts.length) return 0;
+    if (time <= pts[0].t) return pts[0].y;
+    for (var i = 1; i < pts.length; i++) {
+      if (time < pts[i].t) {
+        var prev = pts[i - 1], next = pts[i];
+        return prev.y + (next.y - prev.y) * (time - prev.t) / (next.t - prev.t);
+      }
+    }
+    return pts[pts.length - 1].y;
+  }
+  function alignDragScale() {
+    var pts = lyricAlign.points, now = lyricTimeAt(liveProgress()), samples = [];
+    for (var i = 1; i < pts.length; i++) {
+      var dt = pts[i].t - pts[i - 1].t, dy = pts[i].y - pts[i - 1].y;
+      if (Math.abs(pts[i].t - now) <= 20 && dt >= 0.15 && dt <= 12 && dy > 0) samples.push(dt * 1000 / dy);
+    }
+    samples.sort(function (a, b) { return a - b; });
+    return Math.max(10, Math.min(250, samples.length ? samples[Math.floor(samples.length / 2)] : 80));
+  }
+  function paintLyricAlign() {
+    if (!lyricAlign) return;
+    if (lyricAlign.width !== lyrics.clientWidth || lyricAlign.height !== lyrics.clientHeight) measureAlignLines();
+    updateLyricIndex(true);
+    var position = alignPosition(lyricTimeAt(liveProgress()));
+    lyrics.scrollTo({ top: Math.max(0, position - lyrics.clientHeight / 2), behavior: 'instant' });
+    var nearest = null, distance = Infinity;
+    lyricAlign.points.forEach(function (p) {
+      var d = Math.abs(p.y - position);
+      if (d < distance) { nearest = p; distance = d; }
+    });
+    if (nearest !== lyricAlign.candidate) {
+      if (lyricAlign.candidate) lyricAlign.candidate.node.classList.remove('is-align-candidate');
+      if (nearest) nearest.node.classList.add('is-align-candidate');
+      lyricAlign.candidate = nearest;
+    }
+    var label = describeLyricOffset(lyricAlign.draft);
+    if ($('lyricAlignValue').textContent !== label) $('lyricAlignValue').textContent = label;
+  }
+  function stopAlignFrames() {
+    if (lyricAlignRaf) cancelAnimationFrame(lyricAlignRaf);
+    lyricAlignRaf = 0;
+  }
+  function startAlignFrames() {
+    if (!lyricAlign || lyricAlignRaf || document.hidden || audio.paused) return;
+    function frame() {
+      lyricAlignRaf = 0;
+      if (!lyricAlign || document.hidden) return;
+      paintLyricAlign();
+      if (!audio.paused) lyricAlignRaf = requestAnimationFrame(frame);
+    }
+    lyricAlignRaf = requestAnimationFrame(frame);
+  }
+  function hideLyricHint() {
+    clearTimeout(lyricHintTimer);
+    $('lyricAlignHint').hidden = true;
+  }
+  function openLyricAlign() {
+    if (lyricAlign) return true;
+    var t = currentTrack();
+    if (!t || lyricState !== 'ready' || !state.lyricLines.length || !lyricWrap.clientHeight || state.page !== 'play') return false;
+    lyricAlign = { uid: t.uid, gen: lyricGen, original: savedLyricOffset(t), draft: savedLyricOffset(t), points: [], saving: false };
+    clearFollowTimer(); hideLyricHint();
+    state.follow = false;
+    lyrics.classList.remove('is-browsing');
+    lyricWrap.classList.add('is-aligning');
+    $('lyricAlignTools').hidden = false;
+    $('lyricAlignGuide').hidden = false;
+    // 上下都留足半屏：首句/末句也能到现在线，不受普通阅读 padding 的限制。
+    lyrics.style.paddingTop = lyrics.clientHeight / 2 + 'px';
+    lyrics.style.paddingBottom = lyrics.clientHeight / 2 + 'px';
+    measureAlignLines(); paintLyricAlign(); startAlignFrames();
+    return true;
+  }
+  function clearLyricPress(rollback) {
+    var p = lyricPress;
+    if (!p) return;
+    clearTimeout(p.timer);
+    lyricPress = null;
+    if (p.dragging) lyricSuppressClickUntil = Date.now() + 350;
+    lyricWrap.classList.remove('is-align-dragging');
+    if (rollback && p.dragging && lyricAlign) { lyricAlign.draft = p.original; paintLyricAlign(); }
+    try { if (lyricWrap.hasPointerCapture(p.id)) lyricWrap.releasePointerCapture(p.id); } catch (e) {}
+    if (!lyricAlign) scheduleResume();
+  }
+  function closeLyricAlign() {
+    clearLyricPress(false); stopAlignFrames();
+    lyricAlign = null;
+    lyricWrap.classList.remove('is-aligning', 'is-align-dragging');
+    $('lyricAlignTools').hidden = true;
+    $('lyricAlignGuide').hidden = true;
+    lyrics.querySelectorAll('.is-align-candidate').forEach(function (el) { el.classList.remove('is-align-candidate'); });
+    sizeLyricPad();
+    lyricIndex = -1;
+    state.follow = true;
+    clearFollowTimer();
+    lyrics.classList.remove('is-browsing');
+    updateLyricIndex(true);
+  }
+  function changeLyricOffset(amount) {
+    if (!lyricAlign || lyricAlign.saving) return;
+    lyricAlign.draft = validLyricOffset(amount === null ? 0 : lyricAlign.draft + amount);
+    paintLyricAlign();
+  }
+  function commitLyricAlign() {
+    var edit = lyricAlign, t = currentTrack();
+    if (!edit || edit.saving || !t || t.uid !== edit.uid || lyricGen !== edit.gen) return;
+    edit.saving = true;
+    var originals = state.tracks.filter(function (x) { return x.id === t.id; }).map(function (x) {
+      return { track: x, present: Object.prototype.hasOwnProperty.call(x.raw, 'lyricOffset'), value: x.raw.lyricOffset };
+    });
+    setTrackLyricOffset(t, edit.draft);
+    $('lyricAlignDone').disabled = true;
+    savePlaylist().then(function (res) {
+      $('lyricAlignDone').disabled = false;
+      if (!res || !res.ok) {
+        originals.forEach(function (x) { if (x.present) x.track.raw.lyricOffset = x.value; else delete x.track.raw.lyricOffset; });
+        edit.saving = false;
+        toast('歌词调整暂未保存，请重试');
+        return;
+      }
+      if (lyricAlign === edit) closeLyricAlign();
+      persistNow();
+      toast(edit.draft ? describeLyricOffset(edit.draft).replace('歌词', '歌词已') : '歌词已恢复原始节奏');
+    });
+  }
+  function beginAlignDrag(p) {
+    if (!openLyricAlign() || lyricAlign.saving) return;
+    p.dragging = true;
+    p.original = lyricAlign.draft;
+    p.scale = alignDragScale();  // 一次拖动只量一次，播放经过间奏也不改尺子
+    lyricWrap.classList.add('is-align-dragging');
+    try { lyricWrap.setPointerCapture(p.id); } catch (e) {}
+    var selection = window.getSelection();
+    if (selection) selection.removeAllRanges();
+  }
+  lyricWrap.addEventListener('wheel', function (e) {
+    if (lyricAlign) { e.preventDefault(); return; }
+    pauseFollow();
+    if (lyricState === 'ready' && lyricHintCount < 3) {
+      lyricHintCount++;
+      hideLyricHint(); $('lyricAlignHint').hidden = false;
+      lyricHintTimer = setTimeout(hideLyricHint, 2500);
+    }
+  }, { passive: false });
   lyricWrap.addEventListener('touchstart', pauseFollow, { passive: true });
   lyricWrap.addEventListener('touchmove', function () { scheduleResume(); }, { passive: true });
-  lyricWrap.addEventListener('pointerdown', pauseFollow);
-  /* 只认触摸/笔：桌面鼠标悬停移动不算「在浏览」，否则 3s 自动回归会被无限重置 */
-  lyricWrap.addEventListener('pointermove', function (e) {
-    if (e.pointerType !== 'mouse' && !state.follow) scheduleResume();
+  lyricWrap.addEventListener('pointerdown', function (e) {
+    if (e.button !== 0 || e.pointerType !== 'mouse' || e.target.closest('.lyric-align-tools')) return;
+    if (lyricState !== 'ready' || !state.lyricLines.length || (lyricAlign && lyricAlign.saving)) return;
+    // 保留原生滚动条的拖拽，别把滚动条长按识别成歌词校准。
+    if (e.clientX >= lyrics.getBoundingClientRect().right - 10) { pauseFollow(); return; }
+    clearLyricPress(true);
+    pauseFollow(); clearFollowTimer();
+    var p = lyricPress = { id: e.pointerId, x: e.clientX, y: e.clientY, dragging: false, timer: 0 };
+    if (lyricAlign) { beginAlignDrag(p); e.preventDefault(); }
+    else p.timer = setTimeout(function () { if (lyricPress === p) beginAlignDrag(p); }, 450);
   });
+  lyricWrap.addEventListener('pointermove', function (e) {
+    var p = lyricPress;
+    if (!p || p.id !== e.pointerId) return;
+    if (!p.dragging) {
+      if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > 6) clearTimeout(p.timer);
+      return;
+    }
+    e.preventDefault();
+    lyricAlign.draft = validLyricOffset(p.original - (e.clientY - p.y) * p.scale);
+    paintLyricAlign();
+  });
+  // 松手只停止拖动，绝不拿松手时刻重算偏移；工具保留，能继续试听/微调。
+  lyricWrap.addEventListener('pointerup', function () { clearLyricPress(false); });
+  lyricWrap.addEventListener('pointercancel', function () { clearLyricPress(true); });
+  lyricWrap.addEventListener('lostpointercapture', function () { clearLyricPress(true); });
+  lyricWrap.addEventListener('pointerleave', function () { if (lyricPress && !lyricPress.dragging) clearLyricPress(false); });
+  window.addEventListener('pointerup', function () { clearLyricPress(false); });
+  window.addEventListener('blur', function () { clearLyricPress(true); });
   lyrics.addEventListener('scroll', function () { if (!state.follow) scheduleResume(); }, { passive: true });
+  lyrics.addEventListener('click', function (e) {
+    if (lyricAlign || Date.now() < lyricSuppressClickUntil) return;
+    var line = e.target.closest('.lyric-line');
+    if (line) seekLyricLine(Number(line.getAttribute('data-i')));
+  });
+  function seekLyricLine(i) {
+    var line = state.lyricLines[i], t = currentTrack();
+    if (!line || !t) return;
+    var time = Math.max(0, line.t - (lyricBaseOffset + savedLyricOffset(t)) / 1000);
+    if (isFinite(audio.duration) && audio.duration > 0) time = Math.min(time, audio.duration);
+    try { audio.currentTime = time; } catch (e) { return; }
+    state.progress = time;
+    resumeFollow(); updateLyricIndex(true); renderProgress(); persistNow();
+  }
+  $('lyricAlignEarlier').addEventListener('click', function () { changeLyricOffset(50); });
+  $('lyricAlignLater').addEventListener('click', function () { changeLyricOffset(-50); });
+  $('lyricAlignReset').addEventListener('click', function () { changeLyricOffset(null); });
+  $('lyricAlignDone').addEventListener('click', commitLyricAlign);
+  audio.addEventListener('play', startAlignFrames);
+  audio.addEventListener('pause', function () { stopAlignFrames(); paintLyricAlign(); });
+  audio.addEventListener('seeked', paintLyricAlign);
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) { clearLyricPress(true); if (lyricAlign) closeLyricAlign(); }
+  });
+
+  /* 纯解析：候选歌词也会过 parseLrc，不能在这里改正在显示的词源偏移。 */
+  function parseLrcDocument(text) {
+    var re = /\[offset\s*:\s*([+-]?\d+)\s*\]/gi, match, offset = 0;
+    while ((match = re.exec(String(text || '')))) offset = validLyricOffset(Number(match[1]));
+    return { lines: parseLrc(text), advanceMs: offset };
+  }
 
   /* LRC：[mm:ss.xx] 行级时间戳，一行可带多个 */
   /* 占位词识别：有些纯音乐曲目，歌词源会回一句「这似乎是一首纯音乐呢」「纯音乐，请欣赏」之类，
@@ -2314,7 +2569,10 @@
   /* 降级链：离线库 → 绑定的关键词 → music/lrc → lrc-proxy → ttml(404 退空) → **跨源兜底**。
    * 每次带代次，迟到响应不许覆盖新歌。 */
   function loadLyrics(t) {
+    if (lyricAlign) closeLyricAlign();
+    clearLyricPress(false); hideLyricHint();
     var gen = ++lyricGen;
+    lyricBaseOffset = 0;
     state.lyricLines = [];
     lyricIndex = -1;
     lyricState = 'loading';     // 三态之一：只有最终确实无词才亮入口（防每次换曲闪一下）
@@ -2323,17 +2581,22 @@
     sizeLyricPad();
     if (!t || !t.title) { lyricState = 'none'; renderAsk(); return; }
 
-    function done(lines, cacheText) {
+    function done(lines, cacheText, baseOffset) {
       if (gen !== lyricGen) return;
       // 占位词（「这似乎是一首纯音乐呢」等）当空处理：不占歌词层，回到封面 + 涟漪。
       // 不落盘这句，免得下次读离线库又当它有词。
       if (lyricIsPlaceholder(lines)) { lines = []; cacheText = null; }
       state.lyricLines = lines;
+      lyricBaseOffset = validLyricOffset(baseOffset);
       lyricIndex = -1;
       renderLyrics();
       sizeLyricPad();
       updateLyricIndex(true);
       if (cacheText) apiPostJson(ENDPOINT.lrcSave, { name: t.title, lrc: cacheText }).catch(function () {});
+    }
+    function doneLrc(text, cacheText) {
+      var doc = parseLrcDocument(text);
+      return done(doc.lines, cacheText, doc.advanceMs);
     }
     function ttmlTry() {
       if (gen !== lyricGen) return Promise.resolve();
@@ -2355,7 +2618,7 @@
       if (id) {
         return apiText(ENDPOINT.musicLrc + '?id=' + encodeURIComponent(id) + '&server=' + encodeURIComponent(onlineServerOf(t))).then(function (r) {
           if (gen !== lyricGen) return;
-          if (r.ok && r.text && !/^lyric fetch failed/.test(r.text)) return done(parseLrc(r.text), r.text);
+          if (r.ok && r.text && !/^lyric fetch failed/.test(r.text)) return doneLrc(r.text, r.text);
           return proxy();
         }).catch(function () { return proxy(); });
       }
@@ -2367,7 +2630,7 @@
         if (!(t.lrcUrl && /^https?:/i.test(t.lrcUrl))) return ttmlTry();
         return apiText(ENDPOINT.lrcProxy + '?url=' + encodeURIComponent(t.lrcUrl)).then(function (r) {
           if (gen !== lyricGen) return;
-          if (r.ok && r.text && !/^lyric fetch failed/.test(r.text)) return done(parseLrc(r.text), r.text);
+          if (r.ok && r.text && !/^lyric fetch failed/.test(r.text)) return doneLrc(r.text, r.text);
           return ttmlTry();
         }).catch(function () { return ttmlTry(); });
       }
@@ -2405,7 +2668,7 @@
             if (gen !== lyricGen) return;
             if (r.ok && r.text && !/^lyric fetch failed/.test(r.text)) {
               var lines = parseLrc(r.text);
-              if (lines.length) return done(lines, r.text);   // 标题对上了才落盘
+              if (lines.length) return doneLrc(r.text, r.text);   // 标题对上了才落盘
             }
             return next(i + 1);
           }).catch(function () { return next(i + 1); });
@@ -2429,7 +2692,7 @@
           if (gen0 !== lyricGen) return true;
           if (r.ok && r.text && !/^lyric fetch failed/.test(r.text)) {
             var lines = parseLrc(r.text);
-            if (lines.length) { done(lines, r.text); return true; }
+            if (lines.length) { doneLrc(r.text, r.text); return true; }
           }
           return false;
         }).catch(function () { return false; });
@@ -2438,7 +2701,7 @@
 
     apiGetJson(ENDPOINT.lrcLoad + '?name=' + encodeURIComponent(t.title)).then(function (res) {
       if (gen !== lyricGen) return;
-      if (res.ok && res.body && res.body.ok && res.body.lrc) return done(parseLrc(res.body.lrc), null);
+      if (res.ok && res.body && res.body.ok && res.body.lrc) return doneLrc(res.body.lrc, null);
       // 离线库没有：先试用户绑定的关键词，再走常规链
       return runBoundFirst().then(function (bound) { if (bound || gen !== lyricGen) return; return online(); });
     }).catch(function () { return online(); })
@@ -2547,6 +2810,9 @@
   function bindLyricMatch(t, song, artist, keyword) {
     if (!t.raw || typeof t.raw !== 'object') t.raw = {};
     t.raw.lyricMatch = { song: song || '', artist: artist || '', keyword: keyword || '', at: Date.now() };
+    // 换词源后旧校准不再成立；同音频的所有歌单副本一起更新。
+    state.tracks.forEach(function (x) { if (x.id === t.id) x.raw.lyricMatch = t.raw.lyricMatch; });
+    setTrackLyricOffset(t, null);
     savePlaylist();
     // 重跑一次歌词链（loadLyrics 会先认绑定），立即显示上线
     if (t.uid === state.currentUid) loadLyrics(t);
@@ -3002,6 +3268,7 @@
     var t = trackByUid(uid);
     if (!t) return;
     var changed = uid !== state.currentUid;
+    if (changed && lyricAlign) closeLyricAlign();
     state.currentUid = uid;
     /* 记入「最近播放」（任何来源播的歌都记，最近在前）。
      * 不记 detached 的临时条目（那是列表被删后只够播完的残体）。
@@ -4544,6 +4811,7 @@
 
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
+    if (lyricAlign && !lyricAlign.saving) { e.preventDefault(); closeLyricAlign(); return; }
     var lm = $('lyricMatchPop');
     if (lm && !lm.hidden) { closeLyricMatch(); return; }   // 手动匹配面板最上层
     if (volPopShown) { closeVolPop(); return; }   // 最瞬时的浮层先收
@@ -4628,6 +4896,7 @@
     updateStageMetrics();
     sizeLyricPad();
     updateLyricIndex(true);
+    if (lyricAlign) { measureAlignLines(); paintLyricAlign(); }
     positionSplitHandle();
   }
   if (window.ResizeObserver) {
@@ -5239,6 +5508,16 @@
     lyricQueryOf: lyricQueryOf,
     pickByQuery: pickByQuery,
     lyricMatchOf: lyricMatchOf,
+    parseLrcDocument: parseLrcDocument,
+    lyricAlignState: function () {
+      return { active: !!lyricAlign, dragging: !!(lyricPress && lyricPress.dragging),
+        draft: lyricAlign ? lyricAlign.draft : null, saved: savedLyricOffset(currentTrack()),
+        base: lyricBaseOffset, time: lyricTimeAt(liveProgress()), index: lyricIndex,
+        media: liveProgress(), follow: state.follow, raf: !!lyricAlignRaf,
+        copies: state.tracks.filter(function (t) { return currentTrack() && t.id === currentTrack().id; }).map(function (t) { return { uid: t.uid, offset: t.raw.lyricOffset }; }) };
+    },
+    bindLyricMatch: bindLyricMatch,
+    currentTrack: currentTrack,
     lyricAskState: function () { return { state: lyricState, hidden: $('lyricAsk') ? $('lyricAsk').hidden : null, popHidden: $('lyricMatchPop') ? $('lyricMatchPop').hidden : null }; },
     openLyricMatch: openLyricMatch,
     closeLyricMatch: closeLyricMatch,

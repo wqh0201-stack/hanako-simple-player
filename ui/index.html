@@ -38,6 +38,17 @@
 
         <div class="lyric-wrap" id="lyricWrap">
           <div class="lyrics" id="lyrics"></div>
+          <div class="lyric-align-guide" id="lyricAlignGuide" hidden aria-hidden="true"><span>现在</span></div>
+          <div class="lyric-align-tools" id="lyricAlignTools" hidden role="group" aria-label="调整歌词节奏">
+            <output id="lyricAlignValue">原始节奏</output>
+            <div class="lyric-align-actions">
+              <button id="lyricAlignEarlier" type="button" title="歌词提前 50 毫秒">提前</button>
+              <button id="lyricAlignLater" type="button" title="歌词延后 50 毫秒">延后</button>
+              <button id="lyricAlignReset" type="button" title="清除用户调整，保留歌词原始节奏">还原</button>
+              <button id="lyricAlignDone" type="button">完成</button>
+            </div>
+          </div>
+          <p class="lyric-align-hint" id="lyricAlignHint" hidden>长按拖动可对齐节奏</p>
         </div>
 
         <!-- 无词入口：只在「当前曲目确实没有歌词」时出现（加载中/有词都不显）。
@@ -352,7 +363,7 @@
 </defs></svg>
 
 <script src="app.js" defer></script>
-<script>window.__HANA_BUILD = "1003131639";</script>
+<script>window.__HANA_BUILD = "1003131640";</script>
 <script type="module">
   import { hana } from "./sdk.js";
   window.hana = hana;

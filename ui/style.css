@@ -737,6 +737,79 @@ button:disabled { cursor: default; }
   padding-top: 14px;
 }
 
+/* 桌面歌词校准：临时显影的刻度和工具，平时不占版面。
+ * 工具在滚动 mask 外；短刻度放左侧，不横穿歌词文字。 */
+.lyric-align-guide[hidden], .lyric-align-tools[hidden], .lyric-align-hint[hidden] { display: none; }
+.lyric-align-guide {
+  position: absolute;
+  top: 50%;
+  left: -9px;
+  width: 4px;
+  height: 1px;
+  background: var(--hl-accent);
+  pointer-events: none;
+}
+.lyric-align-guide span {
+  position: absolute;
+  left: 0;
+  bottom: 9px;
+  color: var(--lyric-near);
+  font-size: 11px;
+  writing-mode: vertical-rl;
+}
+.lyric-align-tools {
+  position: absolute;
+  left: 0;
+  bottom: 8px;
+  max-width: 100%;
+  padding: 8px;
+  border: 1px solid var(--hk-hairline);
+  border-radius: 8px;
+  background: var(--hk-surface);
+  color: var(--hk-text);
+  box-shadow: var(--hk-pop-shadow);
+  animation: lyricAlignIn 0.18s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+@keyframes lyricAlignIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.lyric-align-tools output {
+  display: block;
+  padding: 0 4px 5px;
+  font-size: 11px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.lyric-align-actions { display: flex; gap: 2px; flex-wrap: wrap; }
+.lyric-align-actions button {
+  min-height: 28px;
+  padding: 4px 4px;
+  color: var(--hk-muted);
+  font-size: 11px;
+  border-radius: 4px;
+}
+.lyric-align-actions button:hover { color: var(--hk-text); background: var(--hv-surface); box-shadow: var(--hv-ring-icon); }
+.lyric-align-actions #lyricAlignDone { color: var(--hk-accent); }
+.lyric-align-hint {
+  position: absolute;
+  left: 0;
+  bottom: 12px;
+  margin: 0;
+  color: var(--lyric-near);
+  text-shadow: var(--lyric-shadow);
+  font-size: 11px;
+  pointer-events: none;
+}
+.lyric-wrap.is-aligning .lyrics { cursor: grab; user-select: none; }
+.lyric-wrap.is-align-dragging .lyrics { cursor: grabbing; }
+.player .lyric-wrap.is-aligning .lyric-line { opacity: 0.65; color: var(--lyric-near); font-weight: 400; }
+.player .lyric-wrap.is-aligning .lyric-line.is-align-candidate {
+  opacity: 1;
+  color: var(--lyric-current);
+  font-weight: 600;
+  text-shadow: var(--lyric-shadow), var(--lyric-glow);
+}
+@media (prefers-reduced-motion: reduce) { .lyric-align-tools { animation: none; } }
+
 /* ============================================================
    播放队列
    ============================================================ */
