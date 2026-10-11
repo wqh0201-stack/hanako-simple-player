@@ -14,12 +14,12 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const NAME = "audio_play";
+const NAME = "hana_simple_play";
 
 const DESCRIPTION =
   "播放音乐：把音频加入播放器列表，并在当前会话投递一张播放卡片。" +
   "source 要是真实存在的本地音频文件绝对路径，或可访问的在线音频 URL（http/https）。" +
-  "不支持歌名、歌手、随机等口语描述——这些无法播放。若用户想随机播放，先调用 audio_list_music 查看曲目，" +
+  "不支持歌名、歌手、随机等口语描述——这些无法播放。若用户想随机播放，先调用 hana_simple_list_music 查看曲目，" +
   "再把返回的 source 原样传给本工具。";
 
 const PARAMETERS = {
@@ -70,7 +70,7 @@ export function makePlayTool(ctx, state) {
         list = JSON.parse(fs.readFileSync(playlistPath, "utf-8"));
       }
     } catch (err) {
-      ctx.logger?.warn?.(`audio_play: 读取播放列表失败 ${err?.message || err}`);
+      ctx.logger?.warn?.(`hana_simple_play: 读取播放列表失败 ${err?.message || err}`);
     }
     if (!Array.isArray(list)) list = [];
 
@@ -81,7 +81,7 @@ export function makePlayTool(ctx, state) {
     try {
       fs.writeFileSync(playlistPath, JSON.stringify(list, null, 2), "utf-8");
     } catch (err) {
-      ctx.logger?.warn?.(`audio_play: 写入播放列表失败 ${err?.message || err}`);
+      ctx.logger?.warn?.(`hana_simple_play: 写入播放列表失败 ${err?.message || err}`);
     }
   }
 

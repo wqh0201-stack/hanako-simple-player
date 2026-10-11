@@ -71,7 +71,7 @@ GET {API}/widget/api/playlist
 // 工具侧状态（当前曲目 + 队列）
 GET {API}/api/state
 // → 200 { ok:true, data:{ track:{...}|null, queue:[...] } }
-// 数据源是 ctx.storage.global 的 "player-state" 键，由 audio_play / 音频工具驱动，
+// 数据源是 ctx.storage.global 的 "player-state" 键，由 hana_simple_play / 音频工具驱动，
 // 与 playlist.json 是两份东西（见 §9）。
 ```
 

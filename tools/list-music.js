@@ -12,11 +12,11 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const NAME = "audio_list_music";
+const NAME = "hana_simple_list_music";
 
 const DESCRIPTION =
   "列出音频播放器音乐库中的可播曲目（名称 + 可播地址）。" +
-  "播放前先调用本工具查找真实存在的曲目，再把返回的 source 原样传给 audio_play。" +
+  "播放前先调用本工具查找真实存在的曲目，再把返回的 source 原样传给 hana_simple_play。" +
   "支持按关键词、分组过滤。";
 
 const PARAMETERS = {
@@ -66,7 +66,7 @@ export function makeListMusicTool(ctx) {
           tracks = JSON.parse(fs.readFileSync(playlistPath, "utf-8"));
         }
       } catch (err) {
-        ctx.logger?.warn?.(`audio_list_music: 读取播放列表失败 ${err?.message || err}`);
+        ctx.logger?.warn?.(`hana_simple_list_music: 读取播放列表失败 ${err?.message || err}`);
       }
       if (!Array.isArray(tracks)) tracks = [];
 

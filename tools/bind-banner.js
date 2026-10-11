@@ -18,7 +18,7 @@
  * 无播放副作用：不动 audio、不动卡片、不动队列。
  */
 
-const NAME = "audio_bind_banner";
+const NAME = "hana_simple_bind_banner";
 
 const DESCRIPTION =
   "切换歌词横幅的目标会话。之后插件会把当前播放的歌词推到你指定的会话输入框上方。" +
