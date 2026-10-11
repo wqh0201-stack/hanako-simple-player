@@ -36,7 +36,22 @@
 - `node tools/verify-backend.mjs` **10/10**
 - `node tools/verify-ui.mjs`（新增 `first-run-notice-shows-once`；搜源那 3 条已随外置一并撤）
 
-## 为什么撤销外置
+## 7.6 修 flaky：段落间夹具没隔离（2026-10-11，隔壁会话报告）
+
+**症状**：`artist-line-inert-without-artist` 偶发失败 —— 期待夹具曲目「无歌手」，
+却读到上一段落 2c 的「点播歌手」（首跑命中，重跑就没）。
+
+**根因**（已坐实）：`page.close()` / 换页会触发页面内 `pagehide`，旧页面用
+`sendBeacon` / `keepalive fetch` **异步** 投递一个 playback-state 快照；投递可能**晚于下一段落的
+`__fixture/reset`** 到达，于是下一段落一进页读到的不是空列表，而是上一段落的当前曲目。
+探针实测：`page.close()` 确实发出 beacon（`/beacon-pagehide` + `/fetch-keepalive`）。
+
+**修法**（确定性，不用 sleep 调概率）：`newPage()` 默认拦掉**卸载专用通道**——
+覆盖 `navigator.sendBeacon` + 拦带 `keepalive` 的 `fetch`。这两条正是卸载落盘专用的；
+常规落盘走无 keepalive 的 fetch，不受影响。第 7 段（专测「卸载落盘→续播」）
+传 `newPage({ teardown: true })` 关闭拦截。
+
+**验证**：连跑 3 次 119/119 全绿（修复前同一份代码首跑会命中）。
 
 外置的防护收益被高估了：地址在上游开源仓本就公开，我们重写只影响自己的 fork，
 而代价是**每个装的人都得多跑一次脚本 + reload + 批审核卡**。回内置换回开箱即用，

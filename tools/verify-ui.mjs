@@ -333,8 +333,26 @@ function assert(name, ok, detail) {
  * 切歌/卸载时 <audio> 主动 abort 媒体请求的 ERR_ABORTED。不计入致命错误，但逐条留档。 */
 const EXPECTED_PROBE = /\/(widget\/api\/lrc\/load|widget\/api\/music\/ttml)(\?|$)/;
 
-async function newPage() {
+async function newPage(opts) {
   const page = await browser.newPage();
+  /* 段落间夹具隔离：**默认拦掉「页面卸载时的落盘」**。
+   * 为什么：page.close() / 换页会触发 pagehide → 旧页面用 sendBeacon / keepalive fetch
+   * 异步投递一个 playback-state 快照；它可能**晚于下一段落的 __fixture/reset** 到达，
+   * 于是下一段落一进页读到的不是空列表，而是上一段落的当前曲目（实测 flaky：
+   * 2d 的 artist-line-inert-without-artist 偶发读到 2c 的「点播歌手」）。
+   * 拦法精确：只拦 sendBeacon 与 keepalive fetch —— 这两条正是卸载专用通道；
+   * 常规落盘走无 keepalive 的 fetch，不受影响（第 7 段还有该跑的验证）。
+   * 第 7 段专测「跨文档落盘→续播」，传 { teardown: true } 关闭拦截。 */
+  const allowTeardown = !!(opts && opts.teardown);
+  await page.evaluateOnNewDocument((allow) => {
+    if (allow) return;
+    try { Object.defineProperty(navigator, 'sendBeacon', { value: () => true, configurable: true, writable: true }); } catch (e) {}
+    const origFetch = window.fetch;
+    window.fetch = function (u, o) {
+      if (o && o.keepalive) return Promise.resolve(new Response('{}'));
+      return origFetch.apply(this, arguments);
+    };
+  }, allowTeardown);
   page.on('pageerror', (e) => report.runtimeErrors.push('pageerror: ' + String(e)));
   page.on('console', (m) => {
     if (m.type() !== 'error') return;
@@ -2563,7 +2581,8 @@ let migration = {};
 let lifecycle = {};
 {
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
-  const page = await newPage();
+  // 本段专测「卸载落盘 → 新文档续播」，必须开启 teardown（默认被拦）
+  const page = await newPage({ teardown: true });
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
   await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await page.evaluate((t) => window.__fixtureTheme(t), 'light');
