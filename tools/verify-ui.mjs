@@ -274,6 +274,16 @@ const server = http.createServer((req, res) => {
       ];
       return json(res, 200, { ok: true, results, host: 'mock', total: 2 });
     }
+    /* 长标题夹具：尾行红心被挤出主行的回归守（关键词含「长标题」）。
+       一条超长 no-wrap 标题 + 两条普通行，比对行高与红心是否同行。 */
+    if (kw.indexOf('长标题') >= 0) {
+      const results = [
+        { id: 'netease:880001', title: '超长标题'.repeat(60), author: '长标题歌手', url: goUrl(880001), pic: '', lrc: '' },
+        { id: 'netease:880002', title: '普通标题甲', author: '歌手甲', url: goUrl(880002), pic: '', lrc: '' },
+        { id: 'netease:880003', title: '普通标题乙', author: '歌手乙', url: goUrl(880003), pic: '', lrc: '' },
+      ];
+      return json(res, 200, { ok: true, results, host: 'mock', total: 3 });
+    }
     /* 分页夹具：关键词含「分页」时回一套可翻页的数据集（共 75 条，每页 30），
      * 供无限滚动断言；其余关键词保持原来的单条返回（backfill / 跨源歌词等用）。 */
     if (kw.indexOf('分页') >= 0) {
@@ -2075,6 +2085,17 @@ const motion = {};
   assert('bili-parts-list-scrolls',
     /px$/.test(s.biliOpen.capped) && parseFloat(s.biliOpen.capped) > 0,
     s.biliOpen.capped);
+  // 分集子列表不得有竖向导引线（曾有一条 ::before hairline，挂在滚动容器上只能盖首屏、滚下去就断）
+  s.biliGuide = await page.evaluate(() => {
+    const pl = document.querySelector('#searchList .bili-plist');
+    if (!pl) return { exists: false };
+    const cs = getComputedStyle(pl, '::before');
+    return { exists: true, content: cs.content, width: cs.width, bg: cs.backgroundColor };
+  });
+  assert('bili-parts-no-guide-line',
+    s.biliGuide.exists === true &&
+    (s.biliGuide.content === 'none' || s.biliGuide.content === 'normal' || s.biliGuide.content === '""'),
+    JSON.stringify(s.biliGuide));
   // Bug B：分P继承主行封面（子行缩略图吃到主行 pic；pagelist 本身不给图）
   assert('bili-parts-inherit-cover',
     /cover\.png/.test(s.biliOpen.thumbBg),
@@ -2153,6 +2174,33 @@ const motion = {};
     s.biliImport.tabs === s.biliBefore + 1 && s.biliImport.queueRows === 12 &&
     s.biliImport.firstQueue === '分集曲 1',
     JSON.stringify(s.biliImport));
+
+  /* 长标题回归守（罐头真机抓到：「超长标题把行尾红心挤到下一行、行变高」）。
+   * 根因：.search-hit 用 flex:1 1 auto（basis 取 max-content），而 .search-row 是 flex-wrap，
+   * 换行先按 hypothetical size 分行 → 长标题独占第 1 行、红心掉到第 2 行。basis 改 0 后不会。
+   * 锁死：超长标题行的红心与行主体**同一行**（top 差 ≈ 0），且行高与相邻普通行一致。
+   * 与 B站/分P无关 —— 任何「内容宽 > 容器」的长标题都适用。 */
+  await page.evaluate(() => { window.__playerDebug.openSearch(); window.__playerDebug.setServer('netease'); window.__playerDebug.setKeyword('长标题'); window.__playerDebug.doSearch(); });
+  await page.waitForFunction(() => document.querySelectorAll('#searchList .search-row').length === 3, { timeout: 4000, polling: 50 }).catch(() => {});
+  s.longTitle = await page.evaluate(() => {
+    const rows = document.querySelectorAll('#searchList .search-row');
+    const pick = (i) => {
+      const r = rows[i];
+      const hit = r.querySelector('.search-hit');
+      const fav = r.querySelector('.search-fav');
+      const rb = r.getBoundingClientRect();
+      const hb = hit.getBoundingClientRect();
+      const fb = fav.getBoundingClientRect();
+      return { rowH: Math.round(rb.height), hitTop: Math.round(hb.top), favTop: Math.round(fb.top), hitW: Math.round(hb.width), rowW: Math.round(rb.width) };
+    };
+    return { long: pick(0), normal: pick(1), longTitleLen: (rows[0].querySelector('.q-title') || {}).textContent.length };
+  });
+  assert('search-long-title-keeps-fav-inline',
+    s.longTitle.longTitleLen > 100 &&
+    Math.abs(s.longTitle.long.hitTop - s.longTitle.long.favTop) <= 2 &&   // 红心与主体同行
+    s.longTitle.long.hitW < s.longTitle.long.rowW &&                     // 主体没独占整行
+    Math.abs(s.longTitle.long.rowH - s.longTitle.normal.rowH) <= 2,      // 行高与普通行一致
+    JSON.stringify(s.longTitle));
 
   // 歌词手动匹配面板里的静态对齐提示（罐头补充：绑定后还能长按歌词调对齐）
   s.lmHint = await page.evaluate(() => {

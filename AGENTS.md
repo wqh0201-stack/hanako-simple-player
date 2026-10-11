@@ -564,8 +564,18 @@ app-data（`~/.hanako/app-data/hanako-simple-player/`：`playlist.json` /
   ③ **交互（罐头定稿）**：**有分P的行点行/标题 = 展开·收起（不播放）**，无分P行点= 播放（`isMultiPartRow`
      按「已探到 >1」分流，探测在途不接管）；**「分集 N」= 纯静态提示**（去掉 role/tabindex/hover/箭头，
      `pointer-events:none`）；标题 `ellipsis` 限长 + 红心 `flex:0 0 auto` 不被挤出主行（`flex-wrap` 只给树换行）。
-  验收：verify-backend 22/22、verify-ui **165/165**（新增 6 条：纯提示/多点展开/单点播放/nocover 不丢封面/
-     分P继承封面/红心不换行）。交接：`docs/player-ui/BILI-PARTS-FIX.md`。
+  验收：verify-backend 22/22、verify-ui **167/167**（新增 6 条：纯提示/多点展开/单点播放/nocover 不丢封面/
+     分P继承封面/红心不换行；再补 2 条：长标题不断行/无导引线）。
+     **续（同日两轮，构建号 1003131646）**：
+     ④ **长标题把红心挤下一行**：`.search-hit` 的 `flex:1 1 auto` → **`flex:1 1 0`**。
+        flex-wrap 换行是**先按 flex-basis 分行再压缩**，basis:auto 取内容 max-content 宽，
+        长标题（nowrap）撑出巨大原始宽 → 主体独占第1行、红心掉第2行（与标题长短无关，
+        只要内容宽 > 容器就触发）。basis:0 后主体只拿剩余宽，标题 ellipsis，红心恒同行。
+        断言 `search-long-title-keeps-fav-inline`。
+     ⑤ **分集子行竖向导引线删掉**（罐头：「滚一下 p6 就没这条线了」）：`.bili-plist::before`
+        是 absolute 挂在滚动容器上的，`top:0;bottom:4px` 撑的是**可视高**非内容总高，
+        只盖首屏 —— 本来就画不了全程。断言 `bili-parts-no-guide-line`。
+  交接：`docs/player-ui/BILI-PARTS-FIX.md`。
 - 待办：独立窗/小卡音频不中断（pagehide/beacon 落盘 + 续播，2026-10-10 两轮：快照自带曲目 +
   换曲即落盘 + 进度护栏 + 媒体时钟进度 + seek 落点前不起播 + boot 提速，构建号 1003131614，
   **真机已复核（2026-10-10，罐头确认「ok 了」）**；剩余「一小段静默」是换文档重连媒体的固有代价，

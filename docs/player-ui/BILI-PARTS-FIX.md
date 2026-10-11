@@ -54,6 +54,34 @@ pagelist 接口本就不返回图，同一支视频共一张封面。**选前端
 主行主体（封面 + 标题 + 红心）恒定一行；标题自身 `ellipsis` 限长，红心 `flex: 0 0 auto`
 永不被挤到下一行。断言用几何校验（红心仍在主行主体纵向范围内）。
 
+### E 补修（2026-10-11 第二轮，罐头真机抓到「长标题把红心挤下一行」）
+
+**E 第一版只修了一半。** 根因在 `.search-hit` 的 `flex: 1 1 auto`：
+
+`.search-row` 是 `flex-wrap: wrap`（为分集树独占整行而加），而 flex 换行是
+**先按 hypothetical size（即 flex-basis）分行、再在行内压缩**。`basis: auto` 取内容的
+**max-content 宽**，一条长标题（`white-space: nowrap`）会撑出巨大原始宽 → `.search-hit`
+独自占满第 1 行 → 行尾红心被挤到第 2 行（截图里那颗孤 ❤），该行因此变高、与邻行不齐。
+**与标题长短无关**，只要「内容宽 > 容器」就触发（普通长标题也会中，不止 B站）。
+
+**改法（一处）**：`.search-hit { flex: 1 1 0 }`（原 `1 1 auto`）。`basis: 0` 后主体只占
+「容器 − 封面 − 红心 − 间距」的剩余宽，标题在里面 `ellipsis`，**红心恒在同一行**。
+这正是罐头要的「宽度限制匹配当前界面宽度」—— 不写死 px，跟着面板走。
+`q-line1 .q-title { flex: 1 1 auto; min-width: 0 }` 保持不动（标题在行内让位给分集提示）。
+
+回归守：`search-long-title-keeps-fav-inline`（超长标题行：红心与主体 top 差 ≤ 2px、行高与邻行一致）。
+
+## 交互 F｜删掉分集子行的竖向导引线（2026-10-11 第三轮，罐头反馈）
+
+`.bili-plist::before` 那条 `left:60px` 的 hairline（上一轮当「树的躯干」加的）**整个删除**。
+
+**为什么滚一下就断**（不是偶发）：它是 `position: absolute` 挂在**滚动容器** `.bili-plist` 上的，
+`top: 0; bottom: 4px` 撑的只是**容器可视高度**（232px），不是内容总高 —— 所以只覆盖首屏那几行，
+滚下去自然没有。**它本来就画不了全程。**
+
+树的层次靠缩进已经够，不需要这根线。`.bili-phit` 的列结构不变。
+回归守：`bili-parts-no-guide-line`（子列表 `::before` 的 `content` 必须是 none/normal）。
+
 ## 改动文件
 
 - `ui/style.css`：删 `.player.nocover .q-cover`；`.bili-mark` 改纯提示（去按钮样）；
@@ -68,7 +96,7 @@ pagelist 接口本就不返回图，同一支视频共一张封面。**选前端
 ## 验收
 
 - `verify-backend` **22/22**（未动）
-- `verify-ui` **165/165**（12/12 布局、4/4 窄卡、零运行时错误）
+- `verify-ui` **167/167**（12/12 布局、4/4 窄卡、零运行时错误）
 
 本次新增断言：
 - `bili-mark-is-passive-hint`（纯提示：span、无 role/tabindex/data、pe:none、无箭头）

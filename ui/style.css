@@ -2326,9 +2326,14 @@ body.is-shot *::after {
   transition: background-color 0.16s ease;
 }
 .search-row:hover { background: var(--hk-hover); }
-/* 行主体（封面 + 标题/歌手）= 点一下直接播；行尾红心是独立按钮 */
+/* 行主体（封面 + 标题/歌手）= 点一下直接播；行尾红心是独立按钮。
+   ⚠️ flex-basis 必须是 0，不能是 auto：.search-row 是 flex-wrap（分集树要独占整行），
+   flex 换行是**先按 hypothetical size（即 basis）分行、再压缩**。basis:auto 取内容 max-content，
+   一条长标题（white-space:nowrap）会撑出巨大原始宽 → 主体独占第一行，行尾红心被挤到第二行、行变高。
+   basis:0 后主体只拿「容器 − 封面 − 红心 − 间距」的剩余宽，标题在里面 ellipsis，红心恒在同一行。
+   与标题长短无关：只要内容宽 > 容器就触发（普通长标题也会中）。 */
 .search-hit {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-width: 0;
   display: flex;
   align-items: center;
@@ -2419,7 +2424,10 @@ body.is-shot *::after {
 .bili-tbtn.primary:hover { background: var(--hk-hover); }
 .bili-count { margin-left: auto; padding-right: 2px; font-size: 11px; color: var(--hk-faint); }
 
-/* 分集列表：限高滚动（134 P 会 4000+ px）+ 一条竖向导引线 */
+/* 分集列表：限高滚动（134 P 会 4000+ px）。
+   曾有一条 `.bili-plist::before` 竖向导引线（当「树的躯干」）—— 已删：它是 absolute 挂在
+   滚动容器上的，`top:0; bottom:4px` 撑的是**容器可视高**而非内容总高，所以只覆盖首屏几行，
+   滚下去就断（不是偶发）。树的层次靠缩进已经够，不需要这根线。 */
 .bili-plist {
   list-style: none;
   margin: 0;
@@ -2427,15 +2435,6 @@ body.is-shot *::after {
   max-height: 232px;
   overflow-y: auto;
   position: relative;
-}
-.bili-plist::before {
-  content: "";
-  position: absolute;
-  left: 60px;
-  top: 0;
-  bottom: 4px;
-  width: 1px;
-  background: var(--hk-hairline);
 }
 .bili-prow { display: flex; align-items: center; gap: 6px; border-radius: var(--radius-s, 5px); }
 .bili-prow:hover { background: var(--hk-hover); }
