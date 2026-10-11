@@ -132,7 +132,7 @@
   /* 封面右缘 mask 淡出的起止位置（px），由 JS 按封面显示宽写入 */
   --cover-fade-a: 100%;
   --cover-fade-b: 100%;
-  /* 右侧内容列起点：JS 按封面实际显示宽算出 px 写进来（--cover-w 同理） */
+  /* 阅读列由窗口宽度决定；封面画幅只决定 --cover-w，不推挤文字。 */
   --content-x: 34%;
   /* 默认（无 data-ambient / 无封面）：吃主题字色 + 一条轻量顶渐变 */
   --cover-text: var(--hk-text);
@@ -438,9 +438,18 @@ button:disabled { cursor: default; }
   overflow: hidden;
 }
 
+/* 全高背景与前景分离；隐藏底栏只改变工具层，不改变画幅。 */
+.player-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
 /* 顶部局部渐变（标题可读底色）。
  * 底部**不再有渐隐** —— 曾试过「让封面底缘化进环境色」（.scene::after，吃 --ambient-color），
- * 2026-10-09 罐头拍板撤掉：舞台底边直接硬切到控制条，全屏只留歌词那侧往左的淡入（.lyric-scrim）。 */
+ * 2026-10-09 罐头拍板撤掉；ETE 继续保持无底部渐隐，让背景贯通底栏。 */
 .scene::before {
   content: "";
   position: absolute;
@@ -488,7 +497,7 @@ button:disabled { cursor: default; }
 .player.ambient-ok .cover-haze { display: none; }
 
 /* 封面本体：锚定「左 / 上 / 下」三边 —— 贴左、满高（top:0 bottom:0），
- * 宽度由 JS 按画幅比写成 --cover-w（方图就是方的），溢出的交给 scene 裁。
+ * 宽度由 JS 按全高背景与画幅比写成 --cover-w，溢出交给 player-backdrop 裁。
  * 右缘用 --seam/--band 做向右淡出（网易式镜像双羽化的一半）。 */
 .cover {
   position: absolute;
@@ -1278,9 +1287,37 @@ button:disabled { cursor: default; }
   position: relative;
   flex: 0 0 auto;
   height: 100px;
+  /* 稳定的层叠上下文：其中音量浮层整体高过舞台抽屉(30)/搜索(22)，
+   * 不会因玻璃/opacity 新建上下文而被困在它们下面。匹配/首次提示(40+)仍在其上。 */
+  z-index: 35;
+  background: transparent;
+  transition: height 340ms cubic-bezier(0.22, 0.61, 0.36, 1), opacity 100ms ease-out;
+}
+.controls::before {
+  content: "";
+  position: absolute;
+  inset: 0;
   background: var(--hk-surface);
   border-top: 1px solid var(--hk-hairline);
-  transition: height 340ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  pointer-events: none;
+}
+.player[data-immersive="1"] .controls::before {
+  /* 字色与强调色仍吃宿主主题；足够的主题底色保证任意封面上的对比度。 */
+  background: color-mix(in srgb, var(--hk-surface) 82%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(1.12);
+  backdrop-filter: blur(20px) saturate(1.12);
+}
+.player[data-controls-hidden="1"] .controls {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: height 340ms cubic-bezier(0.22, 0.61, 0.36, 1),
+              opacity 200ms ease, visibility 0s linear 200ms;
+}
+/* visibility:hidden 后整层不绘制，连玻璃模糊也停止；恢复不移动控件。 */
+@media (prefers-reduced-motion: reduce) {
+  .controls,
+  .player[data-controls-hidden="1"] .controls { transition: none; }
 }
 .player[data-layout="wide"] .controls { --ctl-pad: 24px; }
 .player[data-ctl="narrow"] .controls { height: 112px; }
@@ -1364,11 +1401,8 @@ button:disabled { cursor: default; }
 .controls .queue-btn { right: var(--ctl-pad); }
 /* 音量组：外层是参与响应式排列的实体盒（.vol-group 自带 position:relative，
    这里提为绝对定位；内部结构/交互/动效一律不动）。
-   ⚠️ 外层**不能**给 z-index：一旦给了，它就成 stacking context，里面的 .vol-pop
-   即使写 40 也只在罩内算数（出罩只剩外层的号），会被搜索页(22)/遮罩(28)/抽屉(30)
-   盖住 —— 而浮层是往上长进舞台区的，正好几何重叠，滑条就拖不动了。
-   不给 z-index（z-index:auto 的定位元素不创建 stacking context），浮层自己的 40
-   直接参与 .player 的层叠，与改造前一致。 */
+   音量组不另建低层叠上下文；ETE 的控制层整体为 35，高过搜索(22)/遮罩(28)/抽屉(30)。
+   浮层在控制层内为 40，向上长进舞台也能命中。不可把控制层降到抽屉下面。 */
 .controls .volume-wrap {
   position: absolute;
   left: calc(50% + 90px);
@@ -1967,6 +2001,7 @@ button:disabled { cursor: default; }
 .player[data-layout="compact"] .scene,
 .player[data-layout="compact"] .queue { flex: 1 1 auto; }
 .player[data-layout="compact"] .queue { border-top: 0; }
+.player[data-ete="1"][data-layout="compact"] .queue { padding-top: 40px; }
 /* 队列页呼出/收回：从右滑入 + 淡入（可打断，只动 transform/opacity）。
  * display 不能过渡 → 用 .is-entering/.is-leaving 状态类 + 延迟卸载（见 app.js）。 */
 .player[data-layout="compact"][data-page="play"] .queue { display: none; }
@@ -2180,6 +2215,8 @@ body.is-shot *::after {
   flex-wrap: wrap;
 }
 .search-head .back-btn { flex: 0 0 auto; }
+/* ETE 宿主操作悬浮在顶部：整页留出 40px，头部自身行高/排布保持原样。 */
+.player[data-ete="1"] .search-page { padding-top: 40px; }
 .search-bar {
   flex: 1 1 auto;
   min-width: 160px;

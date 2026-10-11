@@ -12,14 +12,17 @@
 <div class="frame" id="frame">
   <div class="player" id="player" data-layout="long" data-page="play" data-drawer="0" data-lyrics="1" data-ambient="none">
 
-    <section class="stage" id="stage">
-      <!-- 舞台：环境色（封面右缘色铺满）+ 封面（贴左不裁切）+ 歌词/频谱 -->
-      <div class="scene" id="scene">
-        <div class="stage-ambient" id="stageAmbient" aria-hidden="true"></div>
-        <div class="cover-haze" id="coverHaze" aria-hidden="true"></div>
-        <div class="cover" id="cover" aria-hidden="true"></div>
-        <div class="lyric-scrim" id="lyricScrim" aria-hidden="true"></div>
+    <!-- 一张贯通背景：不随工具层显隐重排，底栏与舞台共用封面的尺寸/位置。 -->
+    <div class="player-backdrop" id="playerBackdrop" aria-hidden="true">
+      <div class="stage-ambient" id="stageAmbient"></div>
+      <div class="cover-haze" id="coverHaze"></div>
+      <div class="cover" id="cover"></div>
+      <div class="lyric-scrim" id="lyricScrim"></div>
+    </div>
 
+    <section class="stage" id="stage">
+      <!-- 前景：标题、歌词与涟漪。队列/搜索以主题表面盖在连续背景上。 -->
+      <div class="scene" id="scene">
         <div class="scene-top" id="sceneTop">
           <h1 class="track-title" id="trackTitle">风经过的地方</h1>
           <!-- 歌手名 = 搜索入口：点一下用这位歌手去搜（搜索页三种布局都能开）。
@@ -369,7 +372,7 @@
 </defs></svg>
 
 <script src="app.js" defer></script>
-<script>window.__HANA_BUILD = "1003131645";</script>
+<script>window.__HANA_BUILD = "1003131647";</script>
 <script type="module">
   import { hana } from "./sdk.js";
   window.hana = hana;

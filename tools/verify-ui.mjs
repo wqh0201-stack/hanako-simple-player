@@ -77,6 +77,7 @@ function makeTracks() {
   out[4].pic = COVER_LIGHT;    // 真·浅底封面（整张浅，走「浅纱+墨字」）
   out[5] = { id: 'netease:900099', name: '无词纯音乐', url: goUrl(900099), mode: '在线', dur: 0, group: '在线音乐', list: 'imp:1', pic: COVER_DARK };  // 无歌词曲目（假后端对其返回空 LRC）；配深色封面，供「无词 + 深底」验证
   out[6] = { id: 'netease:900098', name: '占位词纯音乐', url: goUrl(900098), mode: '在线', dur: 0, group: '在线音乐', list: 'imp:1', pic: COVER_LIGHT };  // 歌词源回「这似乎是一首纯音乐」占位句，应被当无词
+  out[7].pic = `${API}/_fixture/cover-portrait.svg`; // 竖图：阅读轴不能随画幅变化
   for (let i = 0; i < 3; i++) {
     out.push({
       id: `netease:${900000 + i}`, name: `在线曲目 ${i + 1}`, url: goUrl(900000 + i),
@@ -242,6 +243,9 @@ const server = http.createServer((req, res) => {
   if (p === API + '/_fixture/cover-square.png') {
     res.setHeader('content-type', 'image/png');
     return fs.createReadStream(COVER_SQUARE_FILE).pipe(res);
+  }
+  if (p === API + '/_fixture/cover-portrait.svg') {
+    return text(res, 200, '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="800"><rect width="400" height="800" fill="#18364a"/><circle cx="180" cy="320" r="140" fill="#537d96"/></svg>', 'image/svg+xml');
   }
   if (p === API + '/_fixture/cover-dark.png') {
     res.setHeader('content-type', 'image/png');
@@ -2786,6 +2790,7 @@ const AMBIENT_PROBE = async () => {
   };
 
   const sb = scene.getBoundingClientRect();
+  const pb = player.getBoundingClientRect();
   const ab = ambient.getBoundingClientRect();
   const cb = scrim.getBoundingClientRect();
   return {
@@ -2795,6 +2800,7 @@ const AMBIENT_PROBE = async () => {
     ambientColor: ambColor,
     scene: [Math.round(sb.width), Math.round(sb.height)],
     ambient: [Math.round(ab.width), Math.round(ab.height)],
+    player: [Math.round(pb.width), Math.round(pb.height)],
     coverHasUrl,
     scrim: getComputedStyle(scrim).display,
     scrimTop: Math.round(cb.top - sb.top),
@@ -2803,10 +2809,10 @@ const AMBIENT_PROBE = async () => {
     lyricTop: Math.round(parseFloat(pcs.getPropertyValue('--lyric-top')) || 0),
     coverW: pcs.getPropertyValue('--cover-w').trim(),
     coverBox: (() => { const r = cover.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; })(),
-    /* 封面三边锚定：left/top/bottom 都贴 scene 边（允许宽出被裁） */
+    /* ETE 封面三边锚定完整 player（允许宽出被裁），底栏不另缩放一份图。 */
     coverAnchored: (() => {
       const r = cover.getBoundingClientRect();
-      return Math.abs(r.left - sb.left) <= 1 && Math.abs(r.top - sb.top) <= 1 && Math.abs(r.bottom - sb.bottom) <= 1;
+      return Math.abs(r.left - pb.left) <= 1 && Math.abs(r.top - pb.top) <= 1 && Math.abs(r.bottom - pb.bottom) <= 1;
     })(),
     seam: pcs.getPropertyValue('--seam').trim(),
     band: pcs.getPropertyValue('--band').trim(),
@@ -2937,8 +2943,9 @@ let ambient = {};
     ambient.dark.frameBg.every((v, i) => Math.abs(v - ambient.dark.surfaceRGB[i]) <= 2),
     JSON.stringify({ frameBg: ambient.dark.frameBg, surface: ambient.dark.surfaceRGB }));
   assert('ambient-fills-scene',
-    ambient.dark.ambient[0] === ambient.dark.scene[0] && ambient.dark.ambient[1] === ambient.dark.scene[1],
-    JSON.stringify({ a: ambient.dark.ambient, s: ambient.dark.scene }));
+    ambient.dark.ambient[0] === ambient.dark.player[0] && ambient.dark.ambient[1] === ambient.dark.player[1] &&
+    ambient.dark.ambient[1] > ambient.dark.scene[1],
+    JSON.stringify({ a: ambient.dark.ambient, s: ambient.dark.scene, p: ambient.dark.player }));
   assert('ambient-dark-lyric-readable',
     ambient.dark.contrastMid.current >= 4.5 && ambient.dark.contrastMid.near >= 4.5,
     JSON.stringify({ mid: ambient.dark.contrastMid }));
@@ -3473,6 +3480,202 @@ let lifecycle = {};
   await seekPage.close();
 
   report.lifecycle = lifecycle;
+}
+
+/* ============ ETE：真实画幅、整窗边界、计时与操作保护 ============ */
+{
+  const manifest = JSON.parse(fs.readFileSync(path.join(repo, 'manifest.json'), 'utf8'));
+  const card = manifest.contributes.cards.find((c) => c.id === 'player');
+  assert('ete-manifest-presentation-and-min-version', card.cardForm === 'edge-to-edge' && card.titleMode === 'hide' &&
+    !('titlebar' in card) && manifest.minAppVersion === '0.1017.0' && manifest.network.allowedHosts.includes('*.mountaintoys.cn'));
+  const index = fs.readFileSync(path.join(uiDir, 'index.html'), 'utf8');
+  const standalone = fs.readFileSync(path.join(uiDir, 'standalone.html'), 'utf8');
+  assert('ete-html-twins-synchronized', index.replace('data-shell="card"', 'data-shell="window"') === standalone);
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+  const page = await newPage();
+  // 首轮用真实 5 秒；保护/竞态用同一个 5000ms 队列可控推进，音频/动画仍用真实时钟。
+  await page.evaluateOnNewDocument(() => {
+    const schedule = window.setTimeout, cancel = window.clearTimeout;
+    const clock = window.__eteClock = { fast: false, pending: new Map(), next: -1, requests: [] };
+    window.setTimeout = function (fn, delay, ...args) {
+      if (!clock.fast || delay !== 5000) return schedule(fn, delay, ...args);
+      const id = clock.next--;
+      clock.requests.push(delay);
+      clock.pending.set(id, () => fn(...args));
+      return id;
+    };
+    window.clearTimeout = function (id) { if (id < 0) clock.pending.delete(id); else cancel(id); };
+    window.__eteTick = () => { const jobs = [...clock.pending.values()]; clock.pending.clear(); jobs.forEach((fn) => fn()); };
+  });
+  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
+  await page.goto(`${BASE}/index.html?assert=1&shot=1&appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.evaluate((t) => window.__fixtureTheme(t), 'light');
+  await clickTab(page, 'imp:1');
+  const playRow = async (i) => {
+    await page.evaluate((idx) => document.querySelectorAll('#queueList .q-row')[idx].querySelector('.q-hit').click(), i);
+    await sleep(500);
+    await page.evaluate(() => { document.getElementById('audio').loop = true; });
+  };
+  const probe = () => page.evaluate(() => {
+    const p = document.getElementById('player'), c = document.getElementById('controls');
+    const rect = (id) => { const r = document.getElementById(id).getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; };
+    const g = getComputedStyle(c, '::before');
+    return { immersive: p.dataset.immersive, hidden: p.dataset.controlsHidden, opacity: +getComputedStyle(c).opacity,
+      inert: c.inert, glass: g.backdropFilter, bg: g.backgroundColor, theme: getComputedStyle(p).getPropertyValue('--hk-surface').trim(),
+      cover: rect('cover'), backdrop: rect('playerBackdrop'), lyrics: rect('lyricWrap'), title: rect('sceneTop'),
+      pending: window.__eteClock.pending.size };
+  });
+  const axis = [];
+  for (const [w, h] of [[1040, 780], [910, 600], [465, 930], [312, 494]]) {
+    await page.setViewport({ width: w, height: h, deviceScaleFactor: 1 });
+    const samples = [];
+    for (const i of [0, 1, 7]) { await playRow(i); samples.push(await probe()); }
+    const x = samples[0].lyrics[0], width = samples[0].lyrics[2];
+    assert(`ete-reading-axis-stable-${w}x${h}`, samples.every((s) => s.lyrics[0] === x && s.lyrics[2] === width &&
+      s.title[0] === x && width > w * 0.37 && s.lyrics[0] + s.lyrics[2] <= w), JSON.stringify(samples));
+    axis.push({ w, h, samples });
+  }
+  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
+  await playRow(0);
+  await page.mouse.move(30, 200);
+  await sleep(5200);
+  const inside = await probe();
+  assert('ete-stationary-pointer-inside-keeps-controls', inside.hidden === '0' && inside.immersive === '1', JSON.stringify(inside));
+  assert('ete-single-background-full-height-with-glass', inside.backdrop[3] === 780 && inside.cover[3] === 780 &&
+    /blur\(20px\)/.test(inside.glass), JSON.stringify(inside));
+  await page.screenshot({ path: path.join(outDir, 'ete-square-glass-1040x780-light.png') });
+  await page.mouse.move(-20, 200);
+  await sleep(4600);
+  assert('ete-leave-keeps-controls-before-five-seconds', (await probe()).hidden === '0');
+  await sleep(750);
+  const hidden = await probe();
+  assert('ete-leave-hides-after-five-seconds', hidden.hidden === '1' && hidden.opacity === 0 && hidden.inert, JSON.stringify(hidden));
+  assert('ete-hide-does-not-reflow-cover-or-lyrics', JSON.stringify(hidden.cover) === JSON.stringify(inside.cover) &&
+    JSON.stringify(hidden.lyrics) === JSON.stringify(inside.lyrics) && JSON.stringify(hidden.backdrop) === JSON.stringify(inside.backdrop));
+  const hit = await page.evaluate(() => {
+    const r = document.getElementById('playBtn').getBoundingClientRect(), el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+    return !!el && !el.closest('#controls');
+  });
+  assert('ete-hidden-controls-do-not-intercept-pointer', hit);
+  await page.screenshot({ path: path.join(outDir, 'ete-hidden-1040x780-light.png') });
+  await page.mouse.move(30, 200);
+  assert('ete-pointer-enter-wakes-immediately', (await probe()).hidden === '0' && !(await probe()).inert);
+  await page.evaluate(() => { window.__eteClock.fast = true; });
+  const leave = () => page.mouse.move(-20, 200);
+  const enter = () => page.mouse.move(30, 200);
+  const tick = async () => { await page.evaluate(() => window.__eteTick()); await sleep(230); };
+  await leave();
+  await enter(); await tick();
+  assert('ete-enter-cancels-old-deadline', (await probe()).hidden === '0' && (await probe()).pending === 0);
+  await leave(); await tick();
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  assert('ete-window-focus-wakes-controls', (await probe()).hidden === '0' && (await probe()).pending === 1);
+  await tick();
+  await page.evaluate(() => document.getElementById('player').dispatchEvent(new PointerEvent('pointerdown',
+    { bubbles: true, pointerId: 45, pointerType: 'mouse', clientX: 20, clientY: 100 })));
+  assert('ete-window-click-wakes-controls', (await probe()).hidden === '0');
+  await page.evaluate(() => document.dispatchEvent(new PointerEvent('pointerup',
+    { bubbles: true, pointerId: 45, pointerType: 'mouse', clientX: 20, clientY: 100 })));
+  await enter();
+  // 在视口内部被宿主悬浮控件接管 pointer，不能误触发隐藏。
+  await page.evaluate(() => document.documentElement.dispatchEvent(new PointerEvent('pointerleave', { clientX: 1000, clientY: 18 })));
+  await tick();
+  assert('ete-host-overlay-interior-leave-is-not-window-exit', (await probe()).hidden === '0' && (await probe()).pending === 0);
+
+  await leave();
+  await page.evaluate(() => {
+    window.__eteStaleTimer = [...window.__eteClock.pending.values()][0];
+    document.getElementById('audio').pause();
+  });
+  await sleep(60);
+  await page.evaluate(() => { if (window.__eteStaleTimer) window.__eteStaleTimer(); });
+  await tick();
+  assert('ete-pause-and-stale-timer-keep-controls', (await probe()).hidden === '0' && (await probe()).pending === 0);
+  await page.evaluate(() => document.getElementById('audio').play());
+  await sleep(80);
+  assert('ete-resume-outside-starts-fresh-five-seconds', (await probe()).pending === 1 && (await probe()).hidden === '0');
+  await enter();
+
+  // 真实拖进度到视口之外：按住期间不隐藏；结束后另计满五秒。
+  const seekRect = await page.$eval('#seek', (el) => { const r = el.getBoundingClientRect(); return { x: r.x + r.width * .25, y: r.y + r.height / 2 }; });
+  await page.mouse.move(seekRect.x, seekRect.y); await page.mouse.down(); await leave(); await tick();
+  const dragging = await probe();
+  await page.mouse.up(); await sleep(60);
+  assert('ete-seek-drag-guards-and-restarts-deadline', dragging.hidden === '0' && dragging.pending === 0 && (await probe()).pending === 1, JSON.stringify({ dragging, released: await probe() }));
+  await enter();
+  await page.hover('#muteBtn'); await sleep(240);
+  await page.evaluate(() => document.documentElement.dispatchEvent(new PointerEvent('pointerleave', { clientX: -20, clientY: 200 })));
+  await tick();
+  assert('ete-volume-pop-keeps-controls-visible', (await probe()).hidden === '0' && (await probe()).pending === 0);
+  await enter();
+  await page.evaluate(() => window.__playerDebug.openLyricAlign()); await leave(); await tick();
+  assert('ete-lyric-alignment-keeps-controls-visible', (await probe()).hidden === '0' && (await probe()).pending === 0);
+  await page.evaluate(() => window.__playerDebug.closeLyricAlign()); await sleep(60);
+  assert('ete-operation-end-outside-restarts-five-seconds', (await probe()).pending === 1);
+  await enter();
+  await page.keyboard.press('Tab');
+  await page.evaluate(() => document.getElementById('playBtn').focus()); await leave(); await tick();
+  assert('ete-keyboard-focus-keeps-controls-visible', (await probe()).hidden === '0' && (await probe()).pending === 0);
+  await page.evaluate(() => document.activeElement.blur()); await sleep(60);
+  await tick();
+  await page.keyboard.press('Tab');
+  assert('ete-keyboard-wakes-hidden-controls', (await probe()).hidden === '0' && !(await probe()).inert);
+  await page.evaluate(() => document.activeElement.blur());
+  await enter();
+  await page.click('#queueBtn'); await leave(); await tick();
+  assert('ete-open-drawer-keeps-controls-visible', (await probe()).hidden === '0' && (await probe()).pending === 0);
+  await page.evaluate(() => document.getElementById('drawerCloseBtn').click());
+  await enter();
+  await page.evaluate(() => window.__playerDebug.openSearch()); await sleep(330); await leave(); await tick();
+  const search = await probe();
+  assert('ete-search-restores-solid-theme-controls', search.hidden === '0' && search.immersive === '0' && search.glass === 'none', JSON.stringify(search));
+  const searchSafety = await page.evaluate(() => {
+    const head = document.querySelector('.search-head');
+    const buttons = [...head.querySelectorAll('button, input')].filter((el) => el.getBoundingClientRect().width > 0);
+    return buttons.every((el) => el.getBoundingClientRect().top >= 40);
+  });
+  assert('ete-search-header-clears-floating-host-controls', searchSafety);
+  await page.screenshot({ path: path.join(outDir, 'ete-search-solid-1040x780-light.png') });
+  await page.evaluate(() => window.__playerDebug.closeSearch()); await sleep(100);
+  const exiting = await probe();
+  assert('ete-search-exit-retains-theme-through-animation', exiting.immersive === '0' && exiting.glass === 'none' && exiting.hidden === '0');
+  // 收起途中再点可恢复，旧退场回调不能卸载重开的页。
+  await page.evaluate(() => window.__playerDebug.openSearch()); await sleep(330);
+  assert('ete-search-exit-is-interruptible', !(await page.$eval('#searchPage', (el) => el.hidden)) && (await probe()).immersive === '0');
+  await page.evaluate(() => window.__playerDebug.closeSearch()); await sleep(340);
+  assert('ete-search-exit-restores-immersion-at-completion', (await probe()).immersive === '1' && (await probe()).pending === 1);
+  await enter();
+  await playRow(1);
+  await page.evaluate((t) => window.__fixtureTheme(t), 'dark'); await sleep(200);
+  await page.screenshot({ path: path.join(outDir, 'ete-landscape-glass-1040x780-dark.png') });
+  await playRow(7);
+  await page.screenshot({ path: path.join(outDir, 'ete-portrait-glass-1040x780-dark.png') });
+  await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+  await leave(); await tick();
+  assert('ete-reduced-motion-hides-without-animation', await page.$eval('#controls', (el) =>
+    getComputedStyle(el).transitionDuration === '0s' && getComputedStyle(el).visibility === 'hidden'));
+  await enter();
+  await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
+  // 长卡的队列常驻：只打开菜单也必须守住底栏，不能依赖 drawer 标记。
+  await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
+  await sleep(400);
+  await page.click('#queueList .q-more'); await leave(); await tick();
+  assert('ete-menu-in-permanent-queue-keeps-controls', (await probe()).hidden === '0' && (await probe()).pending === 0 &&
+    !(await page.$eval('#morePop', (el) => el.hidden)));
+  await enter();
+  await page.setViewport({ width: 312, height: 494, deviceScaleFactor: 1 }); await sleep(400);
+  await page.click('#queueBtn'); await sleep(320);
+  const backSafety = await page.$eval('#backBtn', (el) => {
+    const r = el.getBoundingClientRect(), hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+    return r.top >= 40 && !!hit && (hit === el || hit.closest('#backBtn') === el);
+  });
+  assert('ete-compact-queue-back-clears-host-controls-and-hits', backSafety);
+  await page.click('#backBtn'); await sleep(320);
+  await playRow(3); await leave(); await tick();
+  assert('ete-no-cover-keeps-theme-controls-visible', (await probe()).hidden === '0' && (await probe()).immersive === '0' && (await probe()).glass === 'none');
+  assert('ete-operation-deadlines-are-all-five-seconds', await page.evaluate(() => window.__eteClock.requests.length > 5 && window.__eteClock.requests.every((d) => d === 5000)));
+  report.ete = { axis, inside, hidden, search, exiting };
+  await page.close();
 }
 
 await browser.close();

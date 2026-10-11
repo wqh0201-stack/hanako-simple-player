@@ -780,6 +780,112 @@
   var toastEl = $('toast');
   var audio = $('audio');
 
+  /* 沉浸工具层：只在鼠标离开整个可见视口后计 5 秒，窗内静止不隐藏。
+   * ETE 宿主按钮可能盖住 iframe：视口内部的 pointerleave 不能误算出窗。
+   * 公开 SDK 尚无原生窗口指针通知；覆盖按钮后直接出窗的边界需宿主真机验收。 */
+  var controls = $('controls');
+  var immersivePointerInside = true;
+  var immersivePointers = new Set();
+  var immersiveKeyboard = false;
+  var immersiveHideTimer = 0;
+  var IMMERSIVE_HIDE_MS = 5000;
+  var immersiveFullPlayer = new URLSearchParams(location.search).get('view') !== 'compact';
+  player.setAttribute('data-ete', immersiveFullPlayer ? '1' : '0');
+
+  function searchIsVisible() {
+    return !$('searchPage').hidden || player.classList.contains('is-s-leaving');
+  }
+  function immersiveIsBlocked() {
+    var focused = document.activeElement;
+    return !state.playing || state.page !== 'play' || state.drawer || searchIsVisible() ||
+      immersivePointers.size > 0 || lyricAlign ||
+      (volGroup && volGroup.classList.contains('is-open')) ||
+      !!player.querySelector('.pop:not([hidden]), .lyric-match:not([hidden]), .first-run:not([hidden])') ||
+      (immersiveKeyboard && focused && player.contains(focused) &&
+        focused.matches('button, input, [tabindex]'));
+  }
+  function setControlsHidden(hidden) {
+    var value = hidden ? '1' : '0';
+    if (player.getAttribute('data-controls-hidden') !== value) player.setAttribute('data-controls-hidden', value);
+    controls.inert = hidden;
+    if (hidden) controls.setAttribute('aria-hidden', 'true');
+    else controls.removeAttribute('aria-hidden');
+  }
+  function refreshImmersiveControls() {
+    var immersive = !player.classList.contains('nocover') && state.page === 'play' && !searchIsVisible();
+    // 浓缩聊天工具卡保留自己的承载形态，不参与完整播放器的沉浸工具层。
+    immersive = immersive && immersiveFullPlayer;
+    var value = immersive ? '1' : '0';
+    if (player.getAttribute('data-immersive') !== value) player.setAttribute('data-immersive', value);
+    if (!immersive || immersivePointerInside || immersiveIsBlocked() || document.hidden) {
+      clearTimeout(immersiveHideTimer); immersiveHideTimer = 0;
+      setControlsHidden(false);
+      return;
+    }
+    if (immersiveHideTimer || player.getAttribute('data-controls-hidden') === '1') return;
+    immersiveHideTimer = setTimeout(function () {
+      immersiveHideTimer = 0;
+      if (!immersivePointerInside && !document.hidden && !immersiveIsBlocked() &&
+          player.getAttribute('data-immersive') === '1') setControlsHidden(true);
+      else refreshImmersiveControls();
+    }, IMMERSIVE_HIDE_MS);
+  }
+  function wakeImmersiveControls() {
+    clearTimeout(immersiveHideTimer); immersiveHideTimer = 0;
+    setControlsHidden(false);
+  }
+  function pointerInViewport(e) {
+    return e.clientX >= 0 && e.clientY >= 0 && e.clientX < innerWidth && e.clientY < innerHeight;
+  }
+  document.documentElement.addEventListener('pointerenter', function () {
+    immersivePointerInside = true; wakeImmersiveControls();
+  });
+  document.documentElement.addEventListener('pointerleave', function (e) {
+    if (pointerInViewport(e)) return; // 宿主覆盖层切换，仍在窗口内部
+    immersivePointerInside = false; refreshImmersiveControls();
+  });
+  document.addEventListener('pointermove', function (e) {
+    var inside = pointerInViewport(e);
+    if (inside === immersivePointerInside) return;
+    immersivePointerInside = inside;
+    if (inside) wakeImmersiveControls(); else refreshImmersiveControls();
+  }, { passive: true });
+  document.addEventListener('pointerdown', function (e) {
+    immersiveKeyboard = false;
+    immersivePointerInside = pointerInViewport(e);
+    immersivePointers.add(e.pointerId);
+    wakeImmersiveControls();
+  }, true);
+  function endImmersivePointer(e) {
+    immersivePointers.delete(e.pointerId);
+    immersivePointerInside = pointerInViewport(e);
+    refreshImmersiveControls();
+  }
+  document.addEventListener('pointerup', endImmersivePointer);
+  document.addEventListener('pointercancel', endImmersivePointer);
+  document.addEventListener('keydown', function () {
+    immersiveKeyboard = true; wakeImmersiveControls(); refreshImmersiveControls();
+  }, true);
+  document.addEventListener('focusin', refreshImmersiveControls);
+  document.addEventListener('focusout', function () { queueMicrotask(refreshImmersiveControls); });
+  window.addEventListener('focus', function () { wakeImmersiveControls(); refreshImmersiveControls(); });
+  window.addEventListener('blur', function () {
+    immersivePointers.clear();
+    // 焦点变化不能推断鼠标是否在原生窗口里，保留最后一次可确认的边界状态。
+    refreshImmersiveControls();
+  });
+  document.addEventListener('visibilitychange', refreshImmersiveControls);
+  window.addEventListener('pagehide', function () { clearTimeout(immersiveHideTimer); });
+  // 菜单、歌词校准、音量浮层都有既有显隐入口。仅观察其状态，不另改业务生命周期。
+  var immersiveObserver = new MutationObserver(refreshImmersiveControls);
+  immersiveObserver.observe(player, {
+    attributes: true, attributeFilter: ['class', 'data-playing', 'data-page', 'data-drawer']
+  });
+  // 不观察逐字高亮/歌词行的每帧 class 更新，避免装饰动效不断触发控制层检查。
+  player.querySelectorAll('.pop, .lyric-match, .first-run, .vol-group, #lyricWrap, #searchPage').forEach(function (el) {
+    immersiveObserver.observe(el, { attributes: true, attributeFilter: ['hidden', 'class'] });
+  });
+
   /* ---------- 工具 ---------- */
   function icon(id, cls) {
     return '<svg class="icon ' + (cls || '') + '" aria-hidden="true"><use href="#' + id + '"></use></svg>';
@@ -1107,15 +1213,14 @@
     img.src = ambientUrl(pic);
   }
 
-  /* 舞台指标（纯呈现）：封面锚定「左/上/下」三边、满高贴左；
-   * 宽度 = 舞台高 × 画幅比（方图就是方的），溢出交给 scene 裁。
-   * 过渡：封面右缘与歌词底层共用同一个「接缝」--seam 和「带宽」--band，
-   * 在一个水平带里做镜像 alpha mask（网易式）——两边严丝合缝交汇。 */
+  /* 舞台指标（纯呈现）：封面锚定全高背景「左/上/下」三边、满高贴左；
+   * 宽度 = 播放器高 × 画幅比；阅读列只跟窗口宽走，不依赖封面画幅。
+   * 过渡：封面右缘用 --seam 羽化，薄纱在阅读列起点变满；共用 --band 带宽。 */
   function updateStageMetrics() {
     var sceneEl = $('scene');
     if (!sceneEl) return;
     var w = sceneEl.clientWidth;
-    var h = sceneEl.clientHeight;
+    var h = $('playerBackdrop').clientHeight;
     if (!(w > 0) || !(h > 0)) return;
     var ar = coverAR > 0 ? coverAR : 1;
     var coverW = Math.max(96, h * ar);
@@ -1125,8 +1230,8 @@
      * 元素边界还没淡完，就会被硬切一刀（那条接缝）。留 8px 余量，末端落在封面宽
      * 的 ~94% 处（与高手做法一致：淡出在封面内部就结束，末尾一段全透）。 */
     var seam = coverW - band * 0.5 - 8;
-    /* 但也不能太靠左：夹在舞台宽的 32%~58% */
-    seam = Math.max(w * 0.32, Math.min(seam, w * 0.58));
+    /* 竖图的淡出仍须在图片内部结束；阅读列不再依赖这条接缝。 */
+    seam = Math.max(0, Math.min(seam, w * 0.58));
     /* 歌词列起点：宽窗下跟随面板宽度线性右移（网易式：右缘锚定，左缘占面板宽的比
    * 随宽度缓慢上升）—— 封面固定三边、不跟随；窄卡仍叠进过渡带，与封面右缘重叠。
    * 线性系数由网易两档实测反推：911px→0.513、1253px→0.526。 */
@@ -1135,11 +1240,10 @@
       var ratio = 0.478 + 0.000038 * w;
       ratio = Math.max(0.48, Math.min(ratio, 0.56));
       contentX = w * ratio;
-      /* 下限：不落进封面实体中部（贴在封面右缘的羽化带里）；上限：留最小列宽 */
-      contentX = Math.max(contentX, coverW * 0.72);
       contentX = Math.min(contentX, w - 210);
     } else {
-      contentX = Math.max(w * 0.30, seam - band * 0.30);
+      // 卡片同样不跟横图变窄，保留约六成可读宽度。
+      contentX = w * 0.38;
     }
     player.style.setProperty('--cover-w', Math.round(coverW) + 'px');
     player.style.setProperty('--seam', Math.round(seam) + 'px');
@@ -4536,7 +4640,7 @@
   var searchLeaveTimer = 0;
 
   function openSearch() {
-    if (!searchPage || !searchPage.hidden) return;   // 已开就不重复开
+    if (!searchPage || (!searchPage.hidden && !player.classList.contains('is-s-leaving'))) return;
     clearTimeout(searchLeaveTimer); searchLeaveTimer = 0;
     player.classList.remove('is-s-leaving');
     searchPage.hidden = false;
@@ -4555,20 +4659,21 @@
     if (searchInput) setTimeout(function () { try { searchInput.focus(); } catch (e) {} }, 30);
   }
   function closeSearch() {
-    if (!searchPage || searchPage.hidden) return;
+    if (!searchPage || searchPage.hidden || player.classList.contains('is-s-leaving')) return;
     clearTimeout(searchLeaveTimer); searchLeaveTimer = 0;
     searchLoadingMore = false;   // 关页时若正翻页，别把「正在加载…」尾巴留到下次重开
     searchPage.classList.remove('is-anim');
     player.classList.add('is-s-leaving');
-    renderChrome();                                   // data-search 立即转 0
+    renderChrome();                                   // 退场期间保持主题控制条
     searchLeaveTimer = setTimeout(function () {
       player.classList.remove('is-s-leaving');
       searchPage.hidden = true;
       searchLeaveTimer = 0;
+      renderChrome();
     }, 290);
   }
   function toggleSearch() {
-    if (searchPage && !searchPage.hidden) closeSearch(); else openSearch();
+    if (searchPage && !searchPage.hidden && !player.classList.contains('is-s-leaving')) closeSearch(); else openSearch();
   }
 
   /* 点歌手名：以这位歌手为关键词直接搜歌手 —— 关键词预填、范围切「搜歌手」、立刻出结果。
