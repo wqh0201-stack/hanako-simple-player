@@ -3493,12 +3493,12 @@ let lifecycle = {};
   assert('ete-html-twins-synchronized', index.replace('data-shell="card"', 'data-shell="window"') === standalone);
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
   const page = await newPage();
-  // 首轮用真实 5 秒；保护/竞态用同一个 5000ms 队列可控推进，音频/动画仍用真实时钟。
+  // 首轮用真实 3 秒；保护/竞态用同一个 3000ms 队列可控推进，音频/动画仍用真实时钟。
   await page.evaluateOnNewDocument(() => {
     const schedule = window.setTimeout, cancel = window.clearTimeout;
     const clock = window.__eteClock = { fast: false, pending: new Map(), next: -1, requests: [] };
     window.setTimeout = function (fn, delay, ...args) {
-      if (!clock.fast || delay !== 5000) return schedule(fn, delay, ...args);
+      if (!clock.fast || delay !== 3000) return schedule(fn, delay, ...args);
       const id = clock.next--;
       clock.requests.push(delay);
       clock.pending.set(id, () => fn(...args));
@@ -3538,18 +3538,18 @@ let lifecycle = {};
   await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
   await playRow(0);
   await page.mouse.move(30, 200);
-  await sleep(5200);
+  await sleep(3200);
   const inside = await probe();
   assert('ete-stationary-pointer-inside-keeps-controls', inside.hidden === '0' && inside.immersive === '1', JSON.stringify(inside));
   assert('ete-single-background-full-height-with-glass', inside.backdrop[3] === 780 && inside.cover[3] === 780 &&
     /blur\(20px\)/.test(inside.glass), JSON.stringify(inside));
   await page.screenshot({ path: path.join(outDir, 'ete-square-glass-1040x780-light.png') });
   await page.mouse.move(-20, 200);
-  await sleep(4600);
-  assert('ete-leave-keeps-controls-before-five-seconds', (await probe()).hidden === '0');
+  await sleep(2600);
+  assert('ete-leave-keeps-controls-before-three-seconds', (await probe()).hidden === '0');
   await sleep(750);
   const hidden = await probe();
-  assert('ete-leave-hides-after-five-seconds', hidden.hidden === '1' && hidden.opacity === 0 && hidden.inert, JSON.stringify(hidden));
+  assert('ete-leave-hides-after-three-seconds', hidden.hidden === '1' && hidden.opacity === 0 && hidden.inert, JSON.stringify(hidden));
   assert('ete-hide-does-not-reflow-cover-or-lyrics', JSON.stringify(hidden.cover) === JSON.stringify(inside.cover) &&
     JSON.stringify(hidden.lyrics) === JSON.stringify(inside.lyrics) && JSON.stringify(hidden.backdrop) === JSON.stringify(inside.backdrop));
   const hit = await page.evaluate(() => {
@@ -3582,6 +3582,16 @@ let lifecycle = {};
   await tick();
   assert('ete-host-overlay-interior-leave-is-not-window-exit', (await probe()).hidden === '0' && (await probe()).pending === 0);
 
+  // 原生窗口 leave 不保证坐标越界；最后一个内容区坐标与归零坐标都必须启动计时。
+  for (const [name, point] of [['last-content-position', { clientX: 30, clientY: 200 }],
+    ['zero-position', { screenX: 400, screenY: 500 }]]) {
+    await page.evaluate((position) => document.documentElement.dispatchEvent(new PointerEvent('pointerleave', position)), point);
+    assert(`ete-native-leave-${name}-starts-deadline`, (await probe()).hidden === '0' && (await probe()).pending === 1);
+    await tick();
+    assert(`ete-native-leave-${name}-hides-controls`, (await probe()).hidden === '1' && (await probe()).inert);
+    await page.evaluate(() => document.documentElement.dispatchEvent(new PointerEvent('pointerenter', { clientX: 30, clientY: 200 })));
+  }
+
   await leave();
   await page.evaluate(() => {
     window.__eteStaleTimer = [...window.__eteClock.pending.values()][0];
@@ -3593,10 +3603,10 @@ let lifecycle = {};
   assert('ete-pause-and-stale-timer-keep-controls', (await probe()).hidden === '0' && (await probe()).pending === 0);
   await page.evaluate(() => document.getElementById('audio').play());
   await sleep(80);
-  assert('ete-resume-outside-starts-fresh-five-seconds', (await probe()).pending === 1 && (await probe()).hidden === '0');
+  assert('ete-resume-outside-starts-fresh-three-seconds', (await probe()).pending === 1 && (await probe()).hidden === '0');
   await enter();
 
-  // 真实拖进度到视口之外：按住期间不隐藏；结束后另计满五秒。
+  // 真实拖进度到视口之外：按住期间不隐藏；结束后另计满三秒。
   const seekRect = await page.$eval('#seek', (el) => { const r = el.getBoundingClientRect(); return { x: r.x + r.width * .25, y: r.y + r.height / 2 }; });
   await page.mouse.move(seekRect.x, seekRect.y); await page.mouse.down(); await leave(); await tick();
   const dragging = await probe();
@@ -3611,7 +3621,7 @@ let lifecycle = {};
   await page.evaluate(() => window.__playerDebug.openLyricAlign()); await leave(); await tick();
   assert('ete-lyric-alignment-keeps-controls-visible', (await probe()).hidden === '0' && (await probe()).pending === 0);
   await page.evaluate(() => window.__playerDebug.closeLyricAlign()); await sleep(60);
-  assert('ete-operation-end-outside-restarts-five-seconds', (await probe()).pending === 1);
+  assert('ete-operation-end-outside-restarts-three-seconds', (await probe()).pending === 1);
   await enter();
   await page.keyboard.press('Tab');
   await page.evaluate(() => document.getElementById('playBtn').focus()); await leave(); await tick();
@@ -3621,6 +3631,12 @@ let lifecycle = {};
   await page.keyboard.press('Tab');
   assert('ete-keyboard-wakes-hidden-controls', (await probe()).hidden === '0' && !(await probe()).inert);
   await page.evaluate(() => document.activeElement.blur());
+  await enter();
+  await page.keyboard.press('Tab');
+  await page.evaluate(() => document.getElementById('playBtn').focus());
+  await page.mouse.move(60, 200); // 用户回到鼠标操作，保留焦点也不应无限锁住底栏。
+  await leave(); await tick();
+  assert('ete-mouse-after-keyboard-releases-stale-focus-guard', (await probe()).hidden === '1' && (await probe()).inert);
   await enter();
   await page.click('#queueBtn'); await leave(); await tick();
   assert('ete-open-drawer-keeps-controls-visible', (await probe()).hidden === '0' && (await probe()).pending === 0);
@@ -3673,7 +3689,7 @@ let lifecycle = {};
   await page.click('#backBtn'); await sleep(320);
   await playRow(3); await leave(); await tick();
   assert('ete-no-cover-keeps-theme-controls-visible', (await probe()).hidden === '0' && (await probe()).immersive === '0' && (await probe()).glass === 'none');
-  assert('ete-operation-deadlines-are-all-five-seconds', await page.evaluate(() => window.__eteClock.requests.length > 5 && window.__eteClock.requests.every((d) => d === 5000)));
+  assert('ete-operation-deadlines-are-all-three-seconds', await page.evaluate(() => window.__eteClock.requests.length > 5 && window.__eteClock.requests.every((d) => d === 3000)));
   report.ete = { axis, inside, hidden, search, exiting };
   await page.close();
 }

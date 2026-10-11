@@ -780,15 +780,16 @@
   var toastEl = $('toast');
   var audio = $('audio');
 
-  /* 沉浸工具层：只在鼠标离开整个可见视口后计 5 秒，窗内静止不隐藏。
-   * ETE 宿主按钮可能盖住 iframe：视口内部的 pointerleave 不能误算出窗。
+  /* 沉浸工具层：只在鼠标离开整个可见视口后计 3 秒，窗内静止不隐藏。
+   * 原生 leave 的坐标可能仍在视口内或被归零，不能据此吞掉整个离开事件。
+   * ETE 顶部 40px 的宿主覆盖层交接单独保护，不把所有内部坐标都当宿主按钮。
    * 公开 SDK 尚无原生窗口指针通知；覆盖按钮后直接出窗的边界需宿主真机验收。 */
   var controls = $('controls');
   var immersivePointerInside = true;
   var immersivePointers = new Set();
   var immersiveKeyboard = false;
   var immersiveHideTimer = 0;
-  var IMMERSIVE_HIDE_MS = 5000;
+  var IMMERSIVE_HIDE_MS = 3000;
   var immersiveFullPlayer = new URLSearchParams(location.search).get('view') !== 'compact';
   player.setAttribute('data-ete', immersiveFullPlayer ? '1' : '0');
 
@@ -841,12 +842,17 @@
     immersivePointerInside = true; wakeImmersiveControls();
   });
   document.documentElement.addEventListener('pointerleave', function (e) {
-    if (pointerInViewport(e)) return; // 宿主覆盖层切换，仍在窗口内部
+    // 只有顶部的有效坐标可能是宿主 Chrome。全零事件没有可用位置，按 leave 处理。
+    var hasPosition = e.clientX !== 0 || e.clientY !== 0;
+    if (hasPosition && pointerInViewport(e) && e.clientY < 40) return;
     immersivePointerInside = false; refreshImmersiveControls();
   });
   document.addEventListener('pointermove', function (e) {
     var inside = pointerInViewport(e);
-    if (inside === immersivePointerInside) return;
+    // 鼠标回到内容区后结束旧的键盘操作保护，否则按钮残留焦点会永久挡住出窗计时。
+    var keyboardEnded = inside && immersiveKeyboard;
+    if (inside) immersiveKeyboard = false;
+    if (inside === immersivePointerInside && !keyboardEnded) return;
     immersivePointerInside = inside;
     if (inside) wakeImmersiveControls(); else refreshImmersiveControls();
   }, { passive: true });

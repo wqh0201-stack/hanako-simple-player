@@ -1,9 +1,9 @@
 {
-  "build": "1003131647",
-  "baseline": "be18200",
+  "build": "1003131649",
+  "baseline": "f9a7161",
   "assertions": {
-    "passed": 207,
-    "total": 207
+    "passed": 212,
+    "total": 212
   },
   "layout": {
     "passed": 12,
@@ -866,5 +866,38 @@
       "errors": 0,
       "warnings": 1
     }
+  },
+  "autoHideMs": 3000,
+  "autoHideRegression": [
+    {
+      "name": "ete-native-leave-last-content-position-starts-deadline",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "ete-native-leave-last-content-position-hides-controls",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "ete-native-leave-zero-position-starts-deadline",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "ete-native-leave-zero-position-hides-controls",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "ete-mouse-after-keyboard-releases-stale-focus-guard",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "eteTargeted": {
+    "assertions": "41/41",
+    "failures": [],
+    "runtimeErrors": []
   }
 }
