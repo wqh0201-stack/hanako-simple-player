@@ -1211,6 +1211,16 @@ button:disabled { cursor: default; }
   max-width: 190px;
 }
 .pop-note:empty { display: none; }
+/* 移动目标（二级浮层）：列表限高滚动，行数多时不至于竖出屏外 */
+.pop-move { min-width: 156px; }
+.pop-move-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 224px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.pop-move-list:empty { display: none; }
 /* 在线链接：输入框 + 添加 */
 .pop-link {
   display: flex;

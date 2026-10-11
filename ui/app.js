@@ -539,11 +539,22 @@
     return addFav(stableId);
   }
 
-  /* 「最近播放」：任何来源播过的歌都自动记进去，最近在前。
+  /* 「最近播放」：任何来源播过的歌都自动记进去，**最近在前**（存储顺序 = 显示顺序）。
    * 按**稳定 id** 去重（同曲不同列表的副本只记一条）；已在则移到最前（重播更新顺序）。
    * 不是收藏，所以**不看红心**；也不落 detached 的临时条目。
-   * 上限 RECENT_MAX 条，超出丢最旧。写盘交给调用方（playTrack 里已 persistNow）。 */
+   * 上限 RECENT_MAX 条，超出丢**最旧**（末尾）。写盘交给调用方（playTrack 里已 persistNow）。 */
   var RECENT_MAX = 100;
+  /* recent 列表里一条曲目在 state.tracks 中的「首条 / 末条」下标（只关心 recent 项）。
+   * 没找到返回 -1。插入/丢弃都靠它，避免把「列表内顺序」和「全局下标」搞混。 */
+  function recentBounds() {
+    var first = -1, last = -1;
+    for (var i = 0; i < state.tracks.length; i++) {
+      if (state.tracks[i].list !== 'recent') continue;
+      if (first < 0) first = i;
+      last = i;
+    }
+    return { first: first, last: last };
+  }
   function recordRecent(t) {
     if (!t || !t.id) return;
     ensureList('recent', '最近播放');
@@ -552,31 +563,40 @@
     for (var i = 0; i < state.tracks.length; i++) {
       if (state.tracks[i].list === 'recent' && state.tracks[i].id === id) { existing = state.tracks[i]; break; }
     }
+    var fresh;
     if (existing) {
-      // 已在最近播放：若内容有更新（封面/歌手/时长补齐）就刷新，顺序不用改（本来就在最后）。
+      /* 已在最近播放：若内容有更新（封面/歌手/时长补齐）就刷新，保留原 uid。 */
       var src = toStoredTrack(t);
       src.list = 'recent';
-      var fresh = normalizeTrack(src);
+      fresh = normalizeTrack(src);
       fresh.uid = existing.uid;
-      var idx = state.tracks.indexOf(existing);
-      if (idx >= 0) state.tracks[idx] = fresh;
-      // 移到该列表末尾（visibleTracks 按 state.tracks 顺序，末尾 = 最新）
-      state.tracks.splice(idx, 1);
-      state.tracks.push(fresh);
+      state.tracks.splice(state.tracks.indexOf(existing), 1);
     } else {
       var stored = toStoredTrack(t);
       stored.list = 'recent';
-      state.tracks.push(normalizeTrack(stored));
+      fresh = normalizeTrack(stored);
     }
-    // 超限：从最旧的（recent 里最靠前的）开始丢
-    var recents = [];
-    for (var j = 0; j < state.tracks.length; j++) if (state.tracks[j].list === 'recent') recents.push(j);
-    var over = recents.length - RECENT_MAX;
+    /* 插到 recent 段的最前一条之前 = 最近的在最上。
+     * 没有 recent 项时（first<0）追加到末尾（此后它就是唯一一条，位置无所谓）。 */
+    var b = recentBounds();
+    if (b.first >= 0) state.tracks.splice(b.first, 0, fresh);
+    else state.tracks.push(fresh);
+    /* 超限：从**最旧**（recent 段末尾）开始丢，不能丢掉正在播的那首。 */
+    var over = countRecent() - RECENT_MAX;
     for (var k = 0; k < over; k++) {
-      // 不能丢掉正在播的那首（丢了 currentTrack 会找不到）
-      var dropIdx = recents[k];
-      if (state.tracks[dropIdx] && state.tracks[dropIdx].uid !== state.currentUid) state.tracks.splice(dropIdx, 1);
+      var bb = recentBounds();
+      if (bb.last < 0) break;
+      var dropIdx = bb.last;
+      /* 末尾两条都可能是正在播的（顺序可能反）；从后往前找第一条非当前项删。 */
+      while (dropIdx >= bb.first && state.tracks[dropIdx] && state.tracks[dropIdx].uid === state.currentUid) dropIdx--;
+      if (dropIdx < bb.first) break;   // 整段只剩正在播的那条：本轮不再丢
+      state.tracks.splice(dropIdx, 1);
     }
+  }
+  function countRecent() {
+    var n = 0;
+    for (var i = 0; i < state.tracks.length; i++) if (state.tracks[i].list === 'recent') n++;
+    return n;
   }
 
   /* 把一颗红心按当前状态刷成「亮/灭」。按钮可复用（队列行、播放页各一个）。 */
@@ -4164,7 +4184,9 @@
 
   /* ---------- 队列行 / 浮层 ---------- */
   var moreTargetUid = null;
+  var moreAnchor = null;      // 「⋯」菜单打开时的锚（移动浮层定位用）
   var morePop = $('morePop');
+  var movePop = $('movePop');
   var importPop = $('importPop');
   var listPop = $('listPop');
   var importNote = $('importNote');
@@ -4251,12 +4273,15 @@
     morePop.hidden = true;
     importPop.hidden = true;
     if (listPop) listPop.hidden = true;
+    if (movePop) movePop.hidden = true;
     if (rippleToolPop) closeRippleTool();
     $('importBtn').setAttribute('aria-expanded', 'false');
     moreTargetUid = null;
+    moreAnchor = null;
     suppressTabId = '';
   }
 
+  /* 把浮层定位到锚点下方（越界就翻到上方）；锚在 .q-more 图标按钮上。 */
   function placePop(pop, anchor) {
     var pr = queue.getBoundingClientRect();
     var ar = anchor.getBoundingClientRect();
@@ -4296,9 +4321,15 @@
       e.stopPropagation();
       var row = more.closest('.q-row');
       moreTargetUid = row.getAttribute('data-uid');
+      moreAnchor = more;
       var t = trackByUid(moreTargetUid);
       $('moreTitle').textContent = t ? t.title + ' — ' + t.artist : '';
+      /* 「移动到…」只给真歌单（fav + imp:）显示 —— 本地/最近播放不出入口。
+       * 本地移动会破坏「本地严格=文件夹」不变式；最近播放想收藏直接点红心。 */
+      var mv = $('moveBtn');
+      if (mv) mv.hidden = !moveTargetAllowed(t);
       importPop.hidden = true;
+      if (movePop) movePop.hidden = true;
       placePop(morePop, more);
       return;
     }
@@ -4518,6 +4549,134 @@
     }).catch(rollback);
   });
 
+  /* ============================================================
+     队列行「⋯」菜单：移动到… / 复制歌名
+     ------------------------------------------------------------
+     移动语义：同一首歌在两个歌单是**两条独立记录**（uid = list|id），所以「移动」
+     = 从原歌单摘 + 往目标歌单树（目标已有同 id 则去重），移动 ≠ 复制。
+     正在播的那首被移走时**转播放指针**（目标里的副本），不断播；移动场景必定留副本，
+     所以不会出现 detached（那条只留给 removeFav/deleteList 的「全库无副本」情形）。
+     ============================================================ */
+
+  /* 「移动到…」入口是否显示：只有真歌单才能当移动的源/目标。
+   * fav + imp: 可展示；local（严格=固定文件夹）与 recent（历史流，想收藏直接点心）不出入口。 */
+  function moveTargetAllowed(t) {
+    var id = t && t.list;
+    return !!id && id !== 'local' && id !== 'recent';
+  }
+
+  /* 可移动到的目标：fav + 所有 imp: 列表，排除 local / recent，排除当前所在列表。 */
+  function moveTargetsFor(srcList) {
+    var out = [];
+    for (var i = 0; i < state.lists.length; i++) {
+      var l = state.lists[i];
+      if (!l || !l.id) continue;
+      if (l.id === 'local' || l.id === 'recent') continue;   // 本地/最近播放不能当目标
+      if (l.id === srcList) continue;                        // 移到自己 = 无操作
+      out.push(l);
+    }
+    return out;
+  }
+
+  /* 从原歌单移到目标歌单。返回 true 表示真移了。 */
+  function moveTrackTo(uid, dstList) {
+    var t = trackByUid(uid);
+    if (!t || !dstList || dstList === t.list) return false;
+    if (!findList(dstList)) return false;
+    var srcUid = uid;
+    var wasCurrent = uid === state.currentUid;
+    /* 目标已有同 id 副本 → 不新建；否则用回写形状落一份（raw 里的歌词设置随之带走）。 */
+    var dstCopy = null;
+    for (var i = 0; i < state.tracks.length; i++) {
+      if (state.tracks[i].list === dstList && state.tracks[i].id === t.id) { dstCopy = state.tracks[i]; break; }
+    }
+    if (!dstCopy) {
+      var stored = toStoredTrack(t);
+      stored.list = dstList;
+      dstCopy = normalizeTrack(stored);
+      state.tracks.push(dstCopy);
+    }
+    /* 摘掉原记录（移动 ≠ 复制：原歌单不留副本）。 */
+    state.tracks = state.tracks.filter(function (x) { return x.uid !== srcUid; });
+    /* 正在播的那首被移走 → 把指针转到目标副本（音频源同一个 url，不断播）。 */
+    if (wasCurrent) {
+      state.currentUid = dstCopy.uid;
+      var trailN = shuffleTrail.length;
+      if (trailN && shuffleTrail[trailN - 1] === srcUid) shuffleTrail[trailN - 1] = dstCopy.uid;   // 栈顶永远是当前曲目
+    }
+    savePlaylist();
+    renderQueue();
+    renderTrack();
+    renderProgress();
+    persistNow();
+    var l = findList(dstList);
+    toast('已移到《' + ((l && l.name) || defaultListName(dstList)) + '》');
+    return true;
+  }
+
+  /* 移动浮层：列出目标，空则给明确提示。 */
+  var moveTargetList = null;   // 打开浮层时快照的目标列表（点击处理器用）
+  function openMovePop() {
+    if (!movePop) return;
+    var t = trackByUid(moreTargetUid);
+    if (!t) return;
+    moveTargetList = moveTargetsFor(t.list);
+    var host = $('moveList');
+    var note = $('moveNote');
+    if (!moveTargetList.length) {
+      if (host) host.innerHTML = '';
+      if (note) note.textContent = '没有可移动到的歌单（先新建一个歌单，或直接加入《我的喜欢》）';
+    } else {
+      if (note) note.textContent = '';
+      var html = '';
+      for (var i = 0; i < moveTargetList.length; i++) {
+        var l = moveTargetList[i];
+        var label = listDisplayName(l) || defaultListName(l.id);
+        html += '<button class="pop-item" type="button" data-move-to="' + esc(l.id) + '">' +
+          icon('i-list', 'icon-sm') + '<span>' + esc(label) + '</span></button>';
+      }
+      if (host) host.innerHTML = html;
+    }
+    /* 定位到「移动到…」那一行下方；拿不到锚（浮层由脚本开）就沿用原菜单位置。 */
+    var anchor = $('moveBtn') || moreAnchor;
+    if (anchor) placePop(movePop, anchor);
+    else movePop.hidden = false;
+    morePop.hidden = true;
+  }
+
+  if ($('moveBtn')) $('moveBtn').addEventListener('click', function (e) {
+    e.stopPropagation();
+    openMovePop();
+  });
+  if ($('moveList')) $('moveList').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-move-to]');
+    if (!b) return;
+    e.stopPropagation();
+    var dst = b.getAttribute('data-move-to');
+    var uid = moreTargetUid;
+    closePops();
+    if (uid) moveTrackTo(uid, dst);
+  });
+
+  /* 复制歌名（**只歌名**，不带歌手）。走 SDK 剪贴板；能力缺失/失败都 toast，不让 Promise 裸奔。 */
+  if ($('copyNameBtn')) $('copyNameBtn').addEventListener('click', function (e) {
+    e.stopPropagation();
+    var t = trackByUid(moreTargetUid);
+    var uid = moreTargetUid;
+    closePops();
+    if (!t) return;
+    var name = String(t.title || '').trim();
+    if (!name) { toast('这首歌没有歌名'); return; }
+    var clip = window.hana && window.hana.clipboard;
+    if (!clip || typeof clip.writeText !== 'function') { toast('当前环境不支持复制'); return; }
+    Promise.resolve(clip.writeText(name)).then(function () {
+      toast('已复制歌名');
+    }).catch(function () {
+      toast('复制失败');
+      void uid;
+    });
+  });
+
   $('importBtn').addEventListener('click', function (e) {
     e.stopPropagation();
     var open = importPop.hidden;
@@ -4554,9 +4713,11 @@
     return id;
   }
 
-  /* 单曲 / 本地文件的归处（拍板 1）：归到**当前激活列表**；
+  /* 单曲 / 本地文件的归处（拍板 1，**仅本地文件那条路**）：归到**当前激活列表**；
    * 当前页是本地列表时（本地严格等于固定文件夹，塞不进去）退化为新建/复用
-   * 一个名为 nameIfLocal 的导入列表（复用同名列表，避免越建越多），并切过去。 */
+   * 一个名为 nameIfLocal 的导入列表（复用同名列表，避免越建越多），并切过去。
+   * ⚠️ 链接导入（网易云单曲 / B站视频）**不再走这里** —— 它改用 resolveLinkTarget()
+   * 直落「我的喜欢」（见下），否则在 fav/recent/local 页粘链接会偷偷长出一个「单曲」歌单。 */
   function resolveImportTarget(nameIfLocal) {
     if (/^imp:/.test(state.activeList) && findList(state.activeList)) return state.activeList;
     for (var i = 0; i < state.lists.length; i++) {
@@ -4570,6 +4731,30 @@
     saveLists();
     state.activeList = id;
     return id;
+  }
+
+  /* 链接导入的落点（拍板）：**直落「我的喜欢」**，不新建列表、不切激活列表。
+   * 与红心 / 搜索结果「加入」同一心智 —— 导入 = 收藏。原来只认 `imp:`，
+   * 在 fav/recent/local 页粘链接会跳过它、去 `resolveImportTarget` 新建一个
+   * 名为「单曲」的歌单（用户莫名多出一个列表），这里把它封掉。 */
+  function resolveLinkTarget() {
+    ensureList('fav', '我的喜欢');
+    return 'fav';
+  }
+
+  /* 链接导入落 fav 后的收尾：落盘 + 重渲染 + toast。
+   * added > 0 → 新增；= 0 → 已在「我的喜欢」里（不能说「新增 0 首」）。 */
+  function afterImportToFav(added) {
+    renderQueue();
+    renderTrack();
+    if (added > 0) {
+      savePlaylist();
+      toast('已加入《我的喜欢》');
+      setNote('已加入《我的喜欢》');
+    } else {
+      toast('《我的喜欢》里已有这首');
+      setNote('已在《我的喜欢》里');
+    }
   }
 
   /* 链接分流：只做**路由**（该走哪条导入路），不做解析权威。
@@ -4591,7 +4776,8 @@
 
   /* B站链接导入（「添加曲目」面板的链接框）：整段原文丢给后端 bili-resolve，
    * 后端回一条与搜索结果同形的曲目，这里只负责落列表。
-   * 落点沿用单曲口径：归入当前激活列表（当前是本地列表时新建/复用「单曲」导入列表）。 */
+   * 落点：**直落「我的喜欢」**（与红心/搜索结果加入同一心智），不新建「单曲」歌单、
+   * 也不切激活列表。 */
   function importBiliLink(raw) {
     setNote('正在解析…');
     apiGetJson(ENDPOINT.biliResolve + '?url=' + encodeURIComponent(raw)).then(function (res) {
@@ -4603,9 +4789,9 @@
       /* ⚠️ 必须显式补 mode/group：normalizeTrack 在无 mode/group 时把曲目当「本地」——
        *  ① 来源标错；② 跨源歌词兜底的 `t.mode !== '在线'` 守卫会把 B站曲目直接跳过。 */
       var item = Object.assign({}, b.track, { mode: '在线', group: '在线音乐' });
-      var added = mergeTracks([item], resolveImportTarget('单曲'));
+      var added = mergeTracks([item], resolveLinkTarget());
       var multi = !!b.multi && Number(b.parts) > 1;
-      afterImport(added, 'B站视频');
+      afterImportToFav(added);
       if (multi) {
         // 多 P 只声明事实，不在这里长出展开树：整条合集导入归搜索页（那边有分P上下文）。
         setNote('该视频共 ' + b.parts + ' 集，已加入第 ' + (item.page || 1) + ' 集');
@@ -4619,7 +4805,7 @@
 
   /* 在线链接导入：单曲 / 歌单 / B站视频
    *  · 歌单 → 新建一个导入列表（按导入顺序编号，名「歌单 N」，可重命名），并切过去
-   *  · 单曲 → 归入当前激活列表；当前是本地列表时新建/复用名为「单曲」的导入列表
+   *  · 单曲 → **直落「我的喜欢」**（与红心/搜索加入同一心智），不新建「单曲」歌单、不切列表
    *  · B站 → 先分流给 bili-resolve（它认链接/裸 BV 号/av 号/整段分享文案） */
   function importLink(raw) {
     var v = String(raw || '').trim();
@@ -4644,7 +4830,7 @@
         return;
       }
       var list = isPlaylist ? (res.body.tracks || []) : (res.body.track ? [res.body.track] : []);
-      var targetId = isPlaylist ? newImportList('歌单') : resolveImportTarget('单曲');
+      var targetId = isPlaylist ? newImportList('歌单') : resolveLinkTarget();
       /* 歌单真名（netease 官方接口给的 meta.name）：写进列表元数据，切换条显示压缩名。
        * 后端取不到时 meta 缺失，列表保持自动名「歌单 N」（切换条退回编号）。 */
       if (isPlaylist) {
@@ -4660,7 +4846,8 @@
         }
       }
       var added = mergeTracks(list, targetId);
-      afterImport(added, isPlaylist ? '在线歌单' : '在线单曲');
+      if (isPlaylist) afterImport(added, '在线歌单');
+      else afterImportToFav(added);
       var input = $('linkInput');
       if (input) input.value = '';
     }).catch(function () { setNote('解析失败：网络错误'); });
@@ -5770,7 +5957,7 @@
     if (volPopShown) { closeVolPop(); return; }   // 最瞬时的浮层先收
     if (rippleToolPop && !rippleToolPop.hidden) { closeRippleTool(); return; }
     if (searchPage && !searchPage.hidden) { searchGoBack(); return; }   // 分层退：详情→推荐区→退出
-    if (!morePop.hidden || !importPop.hidden) { closePops(); return; }
+    if (!morePop.hidden || !importPop.hidden || (movePop && !movePop.hidden)) { closePops(); return; }
     if (player.getAttribute('data-layout') === 'wide' && state.drawer) closeDrawer();
   });
 
@@ -6508,6 +6695,28 @@
     /* 链接分流（测试用）：纯函数，不依赖网络。 */
     detectLinkKind: detectLinkKind,
     importLink: importLink,
+    /* 歌单管理（测试用）：最近播放记录 / 移动落点，不经 UI 直接驱动控制流。 */
+    recordRecent: recordRecent,
+    recentState: function () {
+      return state.tracks.filter(function (t) { return t.list === 'recent'; })
+        .map(function (t) { return { uid: t.uid, id: t.id, title: t.title }; });
+    },
+    resolveLinkTarget: resolveLinkTarget,
+    moveTargetsFor: function (uid) {
+      var t = trackByUid(uid);
+      if (!t) return [];
+      return moveTargetsFor(t.list).map(function (l) { return l.id; });
+    },
+    moveTrackTo: moveTrackTo,
+    listIds: function () { return state.lists.map(function (l) { return l.id; }); },
+    listsInfo: function () { return state.lists.map(function (l) { return { id: l.id, name: l.name }; }); },
+    listTracks: function (listId) {
+      return state.tracks.filter(function (t) { return t.list === listId; })
+        .map(function (t) { return { uid: t.uid, id: t.id, title: t.title, artist: t.artist }; });
+    },
+    activeList: function () { return state.activeList; },
+    currentUid: function () { return state.currentUid; },
+    hasUid: function (uid) { return !!trackByUid(uid); },
     /* 曲目读数（测试用）：按 uid 取归一后的 mode/source/来源行文本，验「B站曲目落成在线」。 */
     kindOf: function (uid) {
       var t = trackByUid(uid);

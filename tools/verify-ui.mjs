@@ -807,15 +807,29 @@ for (const [name, w, h, file] of CASES) {
   };
   await page.screenshot({ path: path.join(outDir, 'rename-465x930-light.png') });
 
-  // 导入在线单曲 → 归入当前激活列表（当前是刚导入的歌单）
+  /* 导入在线单曲 → 落「我的喜欢」。
+   * ⚠️ 产品行为变更（2026-10-11）：链接导入 = 收藏，与红心 / 搜索结果「加入」同一心智，
+   * 直落 fav、不新建「单曲」歌单、不切激活列表。旧行为是「归入当前激活列表」，
+   * 本组断言随之**有意修正观察位置**（从当前列表改到 fav）—— 不是放宽，是产品变了。 */
   const beforeSingle = await rowCount(page);
+  const tabsBeforeSingle = (await tabLabels(page)).length;
+  const activeBeforeSingle = await activeTab(page);
   await page.evaluate(() => {
     document.getElementById('importBtn').click();
     document.getElementById('linkInput').value = 'https://music.163.com/#/song?id=1234567';
     document.getElementById('linkAddBtn').click();
   });
   await sleep(600);
-  w.importSingle = { before: beforeSingle, after: await rowCount(page), active: await activeTab(page) };
+  w.importSingle = {
+    before: beforeSingle,
+    after: await rowCount(page),
+    active: await activeTab(page),
+    activeBefore: activeBeforeSingle,
+    tabsBefore: tabsBeforeSingle,
+    tabsAfter: (await tabLabels(page)).length,
+    favRows: await page.evaluate(() => window.__playerDebug.listTracks('fav').length),
+    hasUnitList: await page.evaluate(() => window.__playerDebug.listsInfo().some((l) => l.name === '单曲'))
+  };
 
   // 删除最后一首
   const n0 = await rowCount(page);
@@ -2759,31 +2773,42 @@ const rippleTool = {};
     s.linkKind.netease === 'num' && s.linkKind.plainNum === 'num' && s.linkKind.junk === 'unknown',
     JSON.stringify(s.linkKind));
 
-  // 罐头那条原文（整段分享文案）丢进去 → 真的落成一条在线曲目
-  const beforeBili = await page.evaluate(() => document.querySelectorAll('#queueList .q-row').length);
+  // 罐头那条原文（整段分享文案）丢进去 → 真的落成一条在线曲目。
+  // ⚠️ 落点变更（2026-10-11）：链接导入直落「我的喜欢」，不再留在当前列表；
+  // 观察位置随之改到 fav 页（断言口径从「当前行数 +1」改为「fav 里能找到这首」）。
+  await clickTab(page, 'imp:1');
+  await sleep(200);
+  const beforeBili = await page.evaluate(() => window.__playerDebug.listTracks('imp:1').length);
+  const beforeFavBili = await page.evaluate(() => window.__playerDebug.listTracks('fav').length);
   const beforeResolveHits = biliResolveHits;
   await page.evaluate(() => {
     const inp = document.getElementById('linkInput');
     inp.value = '【在百万豪装录音棚大声听 杨丞琳《雨爱》【Hi-res】】 https://www.bilibili.com/video/BV118411B7XU/?share_source=copy_web&vd_source=fe48fd0e530457bfa813705dfcc26a93';
     document.getElementById('linkAddBtn').click();
   });
-  await page.waitForFunction((n) => document.querySelectorAll('#queueList .q-row').length > n, { timeout: 4000, polling: 50 }, beforeBili).catch(() => {});
-  s.biliPaste = await page.evaluate(() => {
+  await page.waitForFunction((n) => window.__playerDebug.listTracks('fav').length > n, { timeout: 4000, polling: 50 }, beforeFavBili).catch(() => {});
+  await clickTab(page, 'fav');
+  await sleep(250);
+  s.biliPaste = await page.evaluate((imp1Before) => {
     const rows = [...document.querySelectorAll('#queueList .q-row')];
     const hit = rows.find((r) => (r.querySelector('.q-title') || {}).textContent.indexOf('雨爱') >= 0);
     return {
-      added: rows.length,
+      favRows: window.__playerDebug.listTracks('fav').length,
+      imp1Rows: window.__playerDebug.listTracks('imp:1').length,
+      imp1Before: imp1Before,
       title: hit ? hit.querySelector('.q-title').textContent : '',
       artist: hit ? (hit.querySelector('.q-artist') || {}).textContent : '',
       note: document.getElementById('importNote').textContent,
-      inputCleared: document.getElementById('linkInput').value === ''
+      inputCleared: document.getElementById('linkInput').value === '',
+      active: document.querySelector('#listTabs .list-tab.is-active').getAttribute('data-list')
     };
-  });
+  }, beforeBili);
   assert('import-link-bili-paste-adds-track',
-    s.biliPaste.added === beforeBili + 1 && s.biliPaste.title.indexOf('雨爱') >= 0 &&
+    s.biliPaste.favRows === beforeFavBili + 1 && s.biliPaste.imp1Rows === beforeBili &&
+    s.biliPaste.title.indexOf('雨爱') >= 0 &&
     s.biliPaste.artist === 'JLRS-LeoFM' && s.biliPaste.inputCleared === true &&
-    /已加入/.test(s.biliPaste.note) && biliResolveHits === beforeResolveHits + 1,
-    JSON.stringify({ ...s.biliPaste, beforeBili, resolveHits: biliResolveHits - beforeResolveHits }));
+    biliResolveHits === beforeResolveHits + 1,
+    JSON.stringify({ ...s.biliPaste, beforeFavBili, resolveHits: biliResolveHits - beforeResolveHits }));
   /* 来源/歌词兜底的根：B站曲目必须落成「在线」。
      normalizeTrack 在无 mode/group 时把曲目判本地 → ① 来源标错；
      ② 跨源歌词兜底的 `t.mode !== '在线'` 守卫会直接跳过 B站曲目。 */
@@ -4453,6 +4478,223 @@ let lifecycle = {};
   await page.close();
 }
 
+/* ============ 8) 歌单管理改造（2026-10-11）
+   导入落 fav / 队列行「移动到…·复制歌名」/ 「最近播放」倒序 ============ */
+{
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+  const page = await newPage();
+  /* 假宿主：桩 clipboard.writeText 记录调用（验「复制歌名」真的走了 SDK 且入参只有歌名）。 */
+  await page.evaluateOnNewDocument(() => {
+    window.__clipCalls = [];
+    let _h;
+    Object.defineProperty(window, 'hana', {
+      configurable: true,
+      get() { return _h; },
+      set(v) {
+        _h = v;
+        if (v && v.clipboard) {
+          v.clipboard.writeText = function (text) { window.__clipCalls.push(text); return Promise.resolve({ ok: true }); };
+        }
+      }
+    });
+  });
+  await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
+  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.evaluate((t) => window.__fixtureTheme(t), 'light');
+  await sleep(800);
+
+  const g = {};
+  const D = (fn, arg) => page.evaluate(fn, arg);
+
+  /* ---- (a) 导入落点：粘链接落 fav、不新建「单曲」歌单、不切激活列表 ---- */
+  await clickTab(page, 'imp:1');
+  await sleep(200);
+  const favBefore = await D(() => window.__playerDebug.listTracks('fav').length);
+  const tabsBefore = await D(() => document.querySelectorAll('#listTabs .list-tab').length);
+  const activeBefore = await activeTab(page);
+  const listsBefore = await D(() => window.__playerDebug.listIds());
+  await D(() => {
+    document.getElementById('importBtn').click();
+    document.getElementById('linkInput').value = 'https://music.163.com/#/song?id=666001';
+    document.getElementById('linkAddBtn').click();
+  });
+  await page.waitForFunction((n) => window.__playerDebug.listTracks('fav').length > n, { timeout: 4000, polling: 50 }, favBefore).catch(() => {});
+  g.importFav = await D((n) => ({
+    favRows: window.__playerDebug.listTracks('fav').length,
+    tabs: document.querySelectorAll('#listTabs .list-tab').length,
+    active: document.querySelector('#listTabs .list-tab.is-active').getAttribute('data-list'),
+    lists: window.__playerDebug.listIds(),
+    hasUnitList: window.__playerDebug.listsInfo().some((l) => l.name === '单曲')
+  }), favBefore);
+  assert('import-link-lands-in-fav',
+    g.importFav.favRows === favBefore + 1 && g.importFav.tabs === tabsBefore &&
+    g.importFav.active === activeBefore && g.importFav.hasUnitList === false &&
+    g.importFav.lists.join(',') === listsBefore.join(','),
+    JSON.stringify({ ...g.importFav, favBefore, tabsBefore, activeBefore, listsBefore }));
+  // 同一口径验 B站链接（整段分享文案 → bili-resolve）
+  const favBeforeBili = await D(() => window.__playerDebug.listTracks('fav').length);
+  await D(() => { window.__playerDebug.importLink('https://www.bilibili.com/video/BV118411B7XU'); });
+  await page.waitForFunction((n) => window.__playerDebug.listTracks('fav').length > n, { timeout: 4000, polling: 50 }, favBeforeBili).catch(() => {});
+  g.importFavBili = await D((n) => ({
+    favRows: window.__playerDebug.listTracks('fav').length,
+    active: document.querySelector('#listTabs .list-tab.is-active').getAttribute('data-list'),
+    hasUnitList: window.__playerDebug.listsInfo().some((l) => l.name === '单曲')
+  }), favBeforeBili);
+  assert('import-bili-lands-in-fav',
+    g.importFavBili.favRows === favBeforeBili + 1 && g.importFavBili.active === activeBefore &&
+    g.importFavBili.hasUnitList === false,
+    JSON.stringify({ ...g.importFavBili, favBeforeBili }));
+
+  /* ---- (b) 队列行「⋯」菜单三项齐全 ---- */
+  await clickTab(page, 'imp:1');
+  await sleep(250);
+  await D(() => document.querySelectorAll('#queueList .q-row')[0].querySelector('.q-more').click());
+  await sleep(150);
+  g.menu = await D(() => ({
+    hidden: document.getElementById('morePop').hidden,
+    items: [...document.querySelectorAll('#morePop .pop-item')].map((b) => b.textContent.trim()),
+    moveHidden: document.getElementById('moveBtn').hidden
+  }));
+  assert('queue-menu-three-actions',
+    g.menu.hidden === false && g.menu.items.join('|') === '从队列移除|移动到…|复制歌名' && g.menu.moveHidden === false,
+    JSON.stringify(g.menu));
+
+  /* ---- (c) 移动目标：只含真歌单（fav + imp:），排除 local/recent/源列表 ---- */
+  await D(() => document.getElementById('moveBtn').click());
+  await sleep(150);
+  g.moveTargets = await D(() => ({
+    popHidden: document.getElementById('movePop').hidden,
+    targets: [...document.querySelectorAll('#moveList [data-move-to]')].map((b) => b.getAttribute('data-move-to'))
+  }));
+  assert('move-targets-exclude-local-recent',
+    g.moveTargets.popHidden === false && g.moveTargets.targets.join(',') === 'fav,imp:2',
+    JSON.stringify(g.moveTargets));
+  await D(() => window.__playerDebug && document.getElementById('movePop'));
+
+  /* ---- (d) 移动 A→B：A 少一、B 多一、源不留副本 ---- */
+  const imp1Before = await D(() => window.__playerDebug.listTracks('imp:1').length);
+  const imp2Before = await D(() => window.__playerDebug.listTracks('imp:2').length);
+  const pickUid = await D(() => {
+    const rows = document.querySelectorAll('#queueList .q-row');
+    return rows[3] ? rows[3].getAttribute('data-uid') : rows[0].getAttribute('data-uid');   // 索引 3 = imp:1 独有 id（前 3 首与 imp:2 重复）
+  });
+  await D((uid) => window.__playerDebug.moveTrackTo(uid, 'imp:2'), pickUid);
+  await sleep(300);
+  g.moveBetween = await D((uid) => ({
+    imp1: window.__playerDebug.listTracks('imp:1').length,
+    imp2: window.__playerDebug.listTracks('imp:2').length,
+    movedInB: window.__playerDebug.listTracks('imp:2').some((t) => t.id === uid.split('|')[1]),
+    goneFromA: !window.__playerDebug.hasUid(uid)
+  }), pickUid);
+  assert('move-between-lists',
+    g.moveBetween.imp1 === imp1Before - 1 && g.moveBetween.imp2 === imp2Before + 1 &&
+    g.moveBetween.movedInB === true && g.moveBetween.goneFromA === true,
+    JSON.stringify({ ...g.moveBetween, imp1Before, imp2Before, pickUid }));
+
+  /* ---- (e) 移动目标已有同 id → 去重（两边都不出现重复行） ---- */
+  const imp1BeforeDup = await D(() => window.__playerDebug.listTracks('imp:1').length);
+  const imp2BeforeDup = await D(() => window.__playerDebug.listTracks('imp:2').length);
+  const dupUid = await D(() => document.querySelectorAll('#queueList .q-row')[0].getAttribute('data-uid'));  // 在线曲目 1，imp:2 亦有一份
+  await D((uid) => window.__playerDebug.moveTrackTo(uid, 'imp:2'), dupUid);
+  await sleep(300);
+  g.moveDedup = await D(() => ({
+    imp1: window.__playerDebug.listTracks('imp:1').length,
+    imp2: window.__playerDebug.listTracks('imp:2').length,
+    dup: (function () { const seen = {}, d = []; document.querySelectorAll('#queueList .q-row').forEach((r) => { const u = r.getAttribute('data-uid'); if (seen[u]) d.push(u); else seen[u] = 1; }); return d; })()
+  }));
+  assert('move-dedupes-target',
+    g.moveDedup.imp1 === imp1BeforeDup - 1 && g.moveDedup.imp2 === imp2BeforeDup && g.moveDedup.dup.length === 0,
+    JSON.stringify({ ...g.moveDedup, imp1BeforeDup, imp2BeforeDup, dupUid }));
+
+  /* ---- (f) 移动**正在播**的那首：播放不断、指针转到目标副本 ---- */
+  await D(() => document.querySelectorAll('#queueList .q-row')[4].querySelector('.q-hit').click());
+  await page.waitForFunction(() => document.getElementById('player').getAttribute('data-playing') === '1' &&
+    document.getElementById('audio').paused === false, { timeout: 5000, polling: 100 }).catch(() => {});
+  const playUid = await D(() => window.__playerDebug.currentUid());
+  const favBeforePlay = await D(() => window.__playerDebug.listTracks('fav').length);
+  await D((uid) => window.__playerDebug.moveTrackTo(uid, 'fav'), playUid);
+  await sleep(400);
+  await clickTab(page, 'fav');
+  await sleep(250);
+  g.movePlaying = await D((oldUid) => ({
+    playing: document.getElementById('player').getAttribute('data-playing'),
+    paused: document.getElementById('audio').paused,
+    currentUid: window.__playerDebug.currentUid(),
+    oldGone: !window.__playerDebug.hasUid(oldUid),
+    favRows: window.__playerDebug.listTracks('fav').length,
+    currentRow: (function () { const r = document.querySelector('#queueList .q-row.is-current'); return r ? r.getAttribute('data-uid') : ''; })()
+  }), playUid);
+  assert('move-playing-keeps-playback',
+    g.movePlaying.playing === '1' && g.movePlaying.paused === false &&
+    g.movePlaying.currentUid === 'fav|' + playUid.split('|')[1] &&
+    g.movePlaying.oldGone === true && g.movePlaying.currentRow === g.movePlaying.currentUid &&
+    g.movePlaying.favRows === favBeforePlay + 1,
+    JSON.stringify({ ...g.movePlaying, playUid, favBeforePlay }));
+
+  /* ---- (g) 复制歌名：调 clipboard.writeText 且入参 = 歌名（不带歌手） ---- */
+  await clickTab(page, 'imp:1');
+  await sleep(250);
+  const copyTitle = await D(() => document.querySelectorAll('#queueList .q-row')[0].querySelector('.q-title').textContent);
+  await D(() => { document.querySelectorAll('#queueList .q-row')[0].querySelector('.q-more').click(); });
+  await sleep(150);
+  await D(() => document.getElementById('copyNameBtn').click());
+  await sleep(250);
+  g.copyName = await D(() => ({ calls: window.__clipCalls.slice(), toast: document.getElementById('toast').textContent, toastHidden: document.getElementById('toast').hidden }));
+  assert('copy-song-name-writes-clipboard',
+    g.copyName.calls.length === 1 && g.copyName.calls[0] === copyTitle && g.copyName.toastHidden === false,
+    JSON.stringify({ ...g.copyName, copyTitle }));
+
+  /* ---- (h) 最近播放：连播 A→B→C → C,B,A；重播 A → A 到最前 ---- */
+  await D(() => {
+    const Dbg = window.__playerDebug;
+    Dbg.recordRecent({ id: 'netease:aaa', title: 'A', list: 'imp:1' });
+    Dbg.recordRecent({ id: 'netease:bbb', title: 'B', list: 'imp:1' });
+    Dbg.recordRecent({ id: 'netease:ccc', title: 'C', list: 'imp:1' });
+  });
+  g.recentOrder = await D(() => window.__playerDebug.recentState().map((t) => t.title));
+  assert('recent-order-newest-first',
+    g.recentOrder.slice(0, 3).join(',') === 'C,B,A',
+    JSON.stringify(g.recentOrder));
+  await D(() => window.__playerDebug.recordRecent({ id: 'netease:aaa', title: 'A', list: 'imp:1' }));
+  g.recentReplay = await D(() => window.__playerDebug.recentState().map((t) => t.title));
+  assert('recent-replay-moves-to-front',
+    g.recentReplay.slice(0, 3).join(',') === 'A,C,B',
+    JSON.stringify(g.recentReplay));
+
+  /* ---- (i) 超限：丢最旧（末尾）、不丢正在播 ---- */
+  await D(() => {
+    const Dbg = window.__playerDebug;
+    for (let i = 0; i < 120; i++) Dbg.recordRecent({ id: 'netease:o' + i, title: 'O' + i, list: 'imp:1' });
+  });
+  g.recentOverflow = await D(() => {
+    const st = window.__playerDebug.recentState();
+    return { len: st.length, first: st[0].title, last: st[st.length - 1].title, hasO0: st.some((t) => t.title === 'O0'), hasO20: st.some((t) => t.title === 'O20') };
+  });
+  assert('recent-overflow-drops-oldest',
+    g.recentOverflow.len === 100 && g.recentOverflow.first === 'O119' &&
+    g.recentOverflow.hasO0 === false && g.recentOverflow.hasO20 === true,
+    JSON.stringify(g.recentOverflow));
+
+  /* ---- (j) recent 行的菜单：不显示「移动到…」，但移除 + 复制仍在（不改旧行为） ---- */
+  await clickTab(page, 'recent');
+  await sleep(250);
+  await D(() => { const r = document.querySelector('#queueList .q-row'); if (r) r.querySelector('.q-more').click(); });
+  await sleep(150);
+  g.recentMenu = await D(() => ({
+    rows: document.querySelectorAll('#queueList .q-row').length,
+    moveHidden: document.getElementById('moveBtn').hidden,
+    removeExists: !!document.getElementById('removeBtn'),
+    copyExists: !!document.getElementById('copyNameBtn')
+  }));
+  assert('recent-row-hides-move-keeps-remove-copy',
+    g.recentMenu.rows > 0 && g.recentMenu.moveHidden === true &&
+    g.recentMenu.removeExists === true && g.recentMenu.copyExists === true,
+    JSON.stringify(g.recentMenu));
+
+  report.lists = g;
+  await page.close();
+}
+
 await browser.close();
 server.closeAllConnections();
 server.close();
@@ -4471,7 +4713,13 @@ const wiringOk =
   report.wiring.localAfterPick && report.wiring.localAfterPick.rows === 3 &&
   report.wiring.localAfterPick.dup.length === 0 &&
   report.wiring.importPlaylist && report.wiring.importPlaylist.tabsAfter === report.wiring.importPlaylist.tabsBefore + 1 &&
-  report.wiring.importSingle && report.wiring.importSingle.after === report.wiring.importSingle.before + 1 &&
+  /* ⚠️ importSingle 断言 2026-10-11 有意修正：链接单曲不再落当前列表，改落 fav。
+   * 旧断言（after === before + 1）编码的是旧落点行为；新断言锁新行为：
+   * 当前列表不变、不新增列表、fav 多一条。 */
+  report.wiring.importSingle && report.wiring.importSingle.favRows === 1 &&
+  report.wiring.importSingle.active === report.wiring.importSingle.activeBefore &&
+  report.wiring.importSingle.tabsAfter === report.wiring.importSingle.tabsBefore &&
+  report.wiring.importSingle.hasUnitList === false &&
   report.wiring.removed === 1 &&
   report.wiring.rename && report.wiring.rename.hasInput === true &&
   report.wiring.rename.headerTitle === '我的歌单' && report.wiring.rename.tabTitle === '我的歌单' &&
