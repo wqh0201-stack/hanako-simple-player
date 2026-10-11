@@ -520,11 +520,12 @@ button:disabled { cursor: default; }
   -webkit-mask-image: none;
   mask-image: none;
 }
-.player.nocover .q-cover {
-  background-image: var(--cover-fallback);
-  background-size: cover;
-  background-position: center;
-}
+/* ⚠️ 曾有一条 `.player.nocover .q-cover { background-image: var(--cover-fallback) }`：
+   它是早期写的，当时 `.q-cover` 自己还没有 `var(--cover-image)`。后来队列/搜索行改成
+   按 CSS 变量取图，这条 (0,2,1) 就会压过 `.q-cover` 的 (0,1,0)，把**所有列表封面**的
+   真图整片清掉 —— 播一首无 pic 的曲子（分P正是 pic:""）就给 .player 挂上 nocover，
+   于是整个搜索界面封面全消失。`.q-cover` 本身已带 `var(--cover-image), var(--cover-fallback)`
+   兜底，这条多余且有害，已删。队列行走 inline background-image，从来不吃它。 */
 
 /* 歌词薄纱：只罩阅读列。左缘在「过渡带」（--fade-w 宽）里从 0 淡入，
  * 与封面右缘的淡出对齐/镜像 —— 两边在同一个带里均匀交汇。
@@ -2364,44 +2365,29 @@ body.is-shot *::after {
 .search-fav.is-on .icon { fill: currentColor; }
 .search-fav .icon { width: 16px; height: 16px; }
 
-/* ── 搜索结果里的 B站分集（多 P 视频） ──────────────────────────
-   标题后跟一枚「分集 N」，点开在行下长出分集树。列表 flex-wrap，树占满一整行。 */
-.search-row { flex-wrap: wrap; }
+/* 搜索结果行：主体（封面+标题+红心）恒定一行等高，分集树整行铺开在下方。
+   flex-wrap 只允许「树」这一项换行（flex-basis 100%），主体永不换行。 */
+.search-row { flex-wrap: wrap; align-items: stretch; }
 .search-row.is-open { background: var(--hk-hover); }
 .search-row .q-line1 { display: flex; align-items: center; gap: 7px; min-width: 0; }
-/* 标题先让位：分集标记 flex:none 永远完整，标题自己缩成省略号 */
+/* 标题先让位：分集提示 flex:none 永远完整，标题自己缩成省略号 */
 .search-row .q-line1 .q-title { flex: 1 1 auto; min-width: 0; }
+/* 有分P的行：整行主体 = 展开/收起开关（不播放）；指针语言提示可点 */
+.search-row.has-parts .search-hit { cursor: pointer; }
 
+/* 「分集 N」：纯静态提示器（不可点、无按钮样、柔和）。展开靠点标题。 */
 .bili-mark {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 3px;
-  height: 18px;
-  padding: 0 6px;
-  border: 1px solid var(--hk-hairline);
-  border-radius: var(--radius-s, 5px);
-  background: none;
-  color: var(--hk-muted);
-  font: inherit;
-  font-size: 10px;
-  line-height: 1;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 18px;
+  color: var(--hk-faint);
   white-space: nowrap;
-  cursor: pointer;
-  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+  pointer-events: none;   /* 纯提示，不响应任何点击 —— 点击交给行主体 */
 }
-.bili-mark:hover { background: var(--hk-hover); color: var(--hk-text); }
-.bili-mark .bili-n { font-variant-numeric: tabular-nums; position: relative; top: 0.5px; }
-.bili-mark .bili-arrow {
-  width: 10px;
-  height: 10px;
-  display: block;
-  transform: rotate(180deg);   /* i-chevron-left 转成右向 */
-  transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-.search-row.is-open .bili-mark { border-color: var(--hl-accent); color: var(--hl-accent); }
-.search-row.is-open .bili-mark .bili-arrow { transform: rotate(90deg); }
+.bili-mark .bili-n { font-variant-numeric: tabular-nums; }
 
 /* 分集树：整行铺开 */
 .bili-tree {
@@ -2445,7 +2431,7 @@ body.is-shot *::after {
 .bili-plist::before {
   content: "";
   position: absolute;
-  left: 46px;
+  left: 60px;
   top: 0;
   bottom: 4px;
   width: 1px;
@@ -2457,10 +2443,10 @@ body.is-shot *::after {
   flex: 1 1 auto;
   min-width: 0;
   display: grid;
-  grid-template-columns: 26px minmax(0, 1fr) auto;
+  grid-template-columns: 24px 26px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 9px;
-  padding: 4px 2px 4px 0;
+  gap: 8px;
+  padding: 4px 2px 4px 4px;
   background: none;
   border: 0;
   color: inherit;
@@ -2468,7 +2454,9 @@ body.is-shot *::after {
   text-align: left;
   cursor: pointer;
 }
-.bili-pidx { text-align: right; font-size: 10.5px; color: var(--hk-faint); font-variant-numeric: tabular-nums; padding-left: 6px; }
+/* 分集缩略图：继承主行封面（同一支视频共一张图） */
+.bili-pcover { width: 24px; height: 24px; border-radius: 4px; }
+.bili-pidx { text-align: right; font-size: 10.5px; color: var(--hk-faint); font-variant-numeric: tabular-nums; }
 .bili-pname { min-width: 0; font-size: 12px; color: var(--hk-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bili-pdur { font-size: 11px; color: var(--hk-faint); font-variant-numeric: tabular-nums; }
 .bili-prow .search-fav { width: 28px; height: 28px; }

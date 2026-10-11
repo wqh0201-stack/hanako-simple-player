@@ -4211,6 +4211,17 @@
     return m ? m[1] : '';
   }
 
+  /* 分P继承主行封面：pagelist 不返回图，同一支视频共一张封面，所以把主行的 pic 盖到每个分P上。
+   * 子行缩略图与「播该P时的舞台封面」都吃这张图（playSearchHit → track.pic → applyCovers）。 */
+  function stampPartsPic(list, pic) {
+    var p = String(pic || '').trim();
+    if (!p || !Array.isArray(list)) return list;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] && !String(list[i].pic || '').trim()) list[i].pic = p;
+    }
+    return list;
+  }
+
   /* 探测一批结果里哪些是多 P（每行各自独立，不阻塞渲染）。只在「本轮还剩额度」时发起。 */
   function probeBiliParts(list) {
     if (!list || !list.length) return;
@@ -4223,17 +4234,17 @@
       if (biliProbesLeft <= 0) break;                         // 本轮额度用完
       biliProbesLeft--;
       biliProbe[bv] = -1;
-      (function (bvid) {
+      (function (bvid, pic) {
         apiGetJson(ENDPOINT.biliParts + '?bvid=' + encodeURIComponent(bvid)).then(function (res) {
           var n = (res.ok && res.body && res.body.ok && Array.isArray(res.body.results)) ? res.body.results.length : 0;
           biliProbe[bvid] = n;
-          if (res.ok && res.body && res.body.ok) biliPartsCache[bvid] = res.body.results;   // 顺手缓存，点开不再请求
+          if (res.ok && res.body && res.body.ok) biliPartsCache[bvid] = stampPartsPic(res.body.results, pic);   // 缓存，点开不再请求
           renderSearchResults();
         }).catch(function () {
           biliProbe[bvid] = 0;
           renderSearchResults();
         });
-      })(bv);
+      })(bv, r.pic);
     }
   }
 
@@ -4246,9 +4257,10 @@
     if (Array.isArray(biliPartsCache[bv])) { renderSearchResults(); return; }
     biliPartsCache[bv] = 'loading';
     renderSearchResults();
+    var pic = r && r.pic;
     apiGetJson(ENDPOINT.biliParts + '?bvid=' + encodeURIComponent(bv)).then(function (res) {
       var list2 = (res.ok && res.body && res.body.ok && Array.isArray(res.body.results)) ? res.body.results : [];
-      biliPartsCache[bv] = list2;
+      biliPartsCache[bv] = stampPartsPic(list2, pic);
       if (list2.length) biliProbe[bv] = list2.length;
       renderSearchResults();
     }).catch(function () {
@@ -4329,8 +4341,13 @@
       var p = parts[i];
       var pid = deriveId(p, p.url);
       var on = isFav(pid);
+      var thumb = String(p.pic || '').trim();
+      var thumbStyle = thumb
+        ? ' style="--cover-image:url(&quot;' + esc(withSession(thumb)).replace(/"/g, '') + '&quot;);--cover-fallback:none"'
+        : '';
       h += '<li class="bili-prow">'
         + '<button class="bili-phit" type="button" data-bili-p="' + i + '" data-bili-row="' + idx + '" title="' + esc(String(p.title || '')) + '">'
+          + '<span class="q-cover bili-pcover"' + thumbStyle + '></span>'
           + '<span class="bili-pidx">P' + esc(String(p.page || (i + 1))) + '</span>'
           + '<span class="bili-pname">' + esc(String(p.title || ('P' + (i + 1)))) + '</span>'
           + '<span class="bili-pdur">' + (Number(p.dur) > 0 ? fmtTime(p.dur) : '--:--') + '</span>'
@@ -4348,6 +4365,13 @@
     if (!isBiliTrack(r)) return false;
     var n = biliProbe[biliBvid(r)];
     return n === -1 || n > 1;             // 在途或确为多 P 才挂入口
+  }
+
+  /* 该行是否已是「确实多P」（已探到 >1）—— 点击分流用它。
+   * 探测在途（-1）或 1 集时不接管点击，避免还没探完就把播放点了。 */
+  function isMultiPartRow(r, i) {
+    if (!showPartsFor(r, i)) return false;
+    return Number(biliProbe[biliBvid(r)]) > 1;
   }
 
   /* 搜索结果行：封面 + 标题/歌手 + 行尾红心（收藏到我的喜欢）。
@@ -4372,13 +4396,14 @@
       var mark = '';
       if (showParts) {
         var cnt = pn > 1 ? String(pn) : '';
-        mark = '<span class="bili-mark' + (open ? ' is-open' : '') + '" role="button" tabindex="0" data-bili-mark="' + i + '" aria-expanded="' + (open ? 'true' : 'false') + '" aria-label="' + (open ? '收起' : '展开') + '分集">'
-          + '<span>分集</span>' + (cnt ? '<span class="bili-n">' + cnt + '</span>' : '')
-          + '<svg class="icon bili-arrow" aria-hidden="true"><use href="#i-chevron-left"></use></svg>'
-        + '</span>';
+        /* 纯提示器：不可点、无按钮语言。展开靠点行主体/标题（见点击分流）。 */
+        mark = '<span class="bili-mark">分集' + (cnt ? ' <span class="bili-n">' + cnt + '</span>' : '') + '</span>';
       }
+      /* 有分P的行：标题行换成展开/收起（点击交给行主体分流），不播放；
+       * 无分P：正常播放。aria-label 跟着变，给读屏一个真语义。 */
+      var hint = showParts ? (open ? '收起分集：' : '展开分集：') + title : '播放 ' + title;
       html += '<li class="search-row' + (open ? ' is-open' : '') + (showParts ? ' has-parts' : '') + '" id="searchRow' + i + '" data-i="' + i + '">' +
-        '<button class="search-hit" id="searchHit' + i + '" type="button" data-i="' + i + '" aria-label="播放 ' + esc(title) + '">' +
+        '<button class="search-hit" id="searchHit' + i + '" type="button" data-i="' + i + '" aria-label="' + esc(hint) + '">' +
           '<span class="q-cover"></span>' +
           '<span class="q-meta">' +
             '<span class="q-line1"><span class="q-title">' + esc(title) + '</span>' + mark + '</span>' +
@@ -4411,7 +4436,7 @@
       if (!cov || !r) continue;
       var pic = String(r.pic || '').trim();
       if (pic) {
-        cov.style.setProperty('--cover-image', 'url("' + pic.replace(/"/g, '') + '")');
+        cov.style.setProperty('--cover-image', 'url("' + withSession(pic).replace(/"/g, '') + '")');
         cov.style.setProperty('--cover-fallback', 'none');
       } else {
         cov.style.removeProperty('--cover-image');
@@ -4529,7 +4554,7 @@
     if (!el) return;
     pic = String(pic || '').trim();
     if (pic) {
-      el.style.setProperty('--cover-image', 'url("' + pic.replace(/"/g, '') + '")');
+      el.style.setProperty('--cover-image', 'url("' + withSession(pic).replace(/"/g, '') + '")');
       el.style.setProperty('--cover-fallback', 'none');
     } else {
       el.style.removeProperty('--cover-image');
@@ -4934,9 +4959,7 @@
   }
   if (searchList) {
     searchList.addEventListener('click', function (e) {
-      /* 分集相关先于通用处理（标记与行主体嵌套，得先拦住） */
-      var mark = e.target.closest('.bili-mark');
-      if (mark) { e.stopPropagation(); toggleBiliParts(searchResults[Number(mark.getAttribute('data-bili-mark'))]); return; }
+      /* 分集面板内的交互先于通用分支 */
       var all = e.target.closest('[data-bili-all]');
       if (all) { favAllBiliParts(searchResults[Number(all.getAttribute('data-bili-all'))] || null); return; }
       var imp = e.target.closest('[data-bili-imp]');
@@ -4956,7 +4979,12 @@
         return;
       }
       var play = e.target.closest('.search-hit');
-      if (play) { playSearchHit(searchResults[Number(play.getAttribute('data-i'))]); return; }
+      if (play) {
+        var pi = Number(play.getAttribute('data-i'));
+        /* 多 P 行：点行/标题 = 展开·收起（不播放、不加入喜欢）；其余行 = 播放（不变） */
+        if (isMultiPartRow(searchResults[pi], pi)) { toggleBiliParts(searchResults[pi]); return; }
+        playSearchHit(searchResults[pi]); return;
+      }
       var btn = e.target.closest('.search-fav');
       if (!btn) return;
       toggleSearchFav(searchResults[Number(btn.getAttribute('data-i'))]);

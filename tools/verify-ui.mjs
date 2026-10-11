@@ -269,7 +269,7 @@ const server = http.createServer((req, res) => {
      * 一条单P（短片，不该出现分集入口）。id 形状与真实后端一致。 */
     if (server === 'bilibili' && kw.indexOf('多P') >= 0) {
       const results = [
-        { id: 'bilibili:BV1Multi', title: 'B站合集 多P', author: '合集UP', pic: '', dur: 6489 * 60, url: `${API}/widget/api/music/go/BV1Multi?server=bilibili`, lrc: '' },
+        { id: 'bilibili:BV1Multi', title: 'B站合集 多P', author: '合集UP', pic: `${API}/_fixture/cover.png`, dur: 6489 * 60, url: `${API}/widget/api/music/go/BV1Multi?server=bilibili`, lrc: '' },
         { id: 'bilibili:BV1Single', title: 'B站单曲', author: '单曲UP', pic: '', dur: 270, url: `${API}/widget/api/music/go/BV1Single?server=bilibili`, lrc: '' },
       ];
       return json(res, 200, { ok: true, results, host: 'mock', total: 2 });
@@ -2005,8 +2005,31 @@ const motion = {};
     s.biliProbe.state.probe.BV1Single === undefined,   // 短片不探（不预取）
     JSON.stringify(s.biliProbe));
 
-  // 点分集标记 → 就地展开分集树（12 集），树长在主行与下一条结果之间
-  await page.evaluate(() => document.querySelector('#searchList .bili-mark').click());
+  // 「分集 N」是纯静态提示器：不可点、无按钮语言（罐头定稿：展开靠点标题，它本身不点）
+  s.biliMark = await page.evaluate(() => {
+    const m = document.querySelector('#searchList .bili-mark');
+    if (!m) return { exists: false };
+    const cs = getComputedStyle(m);
+    return {
+      exists: true,
+      tag: m.tagName,
+      role: m.getAttribute('role'),
+      tabindex: m.getAttribute('tabindex'),
+      dataMark: m.hasAttribute('data-bili-mark'),
+      pe: cs.pointerEvents,
+      hasArrow: !!m.querySelector('svg'),
+      bg: cs.backgroundColor
+    };
+  });
+  assert('bili-mark-is-passive-hint',
+    s.biliMark.exists === true && s.biliMark.tag === 'SPAN' && s.biliMark.role === null &&
+    s.biliMark.tabindex === null && s.biliMark.dataMark === false &&
+    s.biliMark.pe === 'none' && s.biliMark.hasArrow === false,
+    JSON.stringify(s.biliMark));
+
+  // 多P 行：点行主体/标题 = 展开·收起（不播放）。点之前先确认没在播
+  const multiHitSel = () => '#searchList .search-row[data-i="0"] .search-hit';
+  await page.evaluate((sel) => document.querySelector(sel).click(), multiHitSel());
   await page.waitForFunction(() => document.querySelectorAll('#searchList .bili-prow').length === 12, { timeout: 4000, polling: 50 }).catch(() => {});
   s.biliOpen = await page.evaluate(() => {
     const row = document.querySelector('#searchList .search-row');
@@ -2015,6 +2038,7 @@ const motion = {};
     const hit = document.querySelector('#searchList .search-hit');
     const rows = document.querySelectorAll('#searchList .search-row');
     const trect = tree ? tree.getBoundingClientRect() : null;
+    const heart = document.querySelector('#searchList .search-row[data-i="0"] .search-fav');
     return {
       open: row.classList.contains('is-open'),
       treeInRow: !!tree,
@@ -2025,7 +2049,17 @@ const motion = {};
       hitBottom: Math.round(hit.getBoundingClientRect().bottom),
       nextRowTop: rows[1] ? Math.round(rows[1].getBoundingClientRect().top) : 0,
       capped: plist ? getComputedStyle(plist).maxHeight : '',
-      discover: window.__playerDebug.searchState().discoverVisible
+      discover: window.__playerDebug.searchState().discoverVisible,
+      playing: document.getElementById('player').getAttribute('data-playing'),
+      title: document.getElementById('trackTitle').textContent,
+      // E：主行主体（封面+标题+红心）必须恒定一行、等高；分集树另起一行不撑主行
+      heartTop: Math.round(heart.getBoundingClientRect().top),
+      heartBottom: Math.round(heart.getBoundingClientRect().bottom),
+      hitTop: Math.round(hit.getBoundingClientRect().top),
+      hitBottomMain: Math.round(hit.getBoundingClientRect().bottom),
+      favTop: Math.round(document.querySelector('#searchList .search-row[data-i="0"] .search-fav').getBoundingClientRect().top),
+      // Bug B：分集缩略图继承主行封面（封面写在 --cover-image 上，读计算样式）
+      thumbBg: (() => { const t = document.querySelector('#searchList .bili-pcover'); return t ? (t.style.getPropertyValue('--cover-image') || getComputedStyle(t).backgroundImage || '') : ''; })()
     };
   });
   assert('bili-parts-expand-in-place',
@@ -2035,10 +2069,58 @@ const motion = {};
     (s.biliOpen.nextRowTop === 0 || s.biliOpen.treeTop <= s.biliOpen.nextRowTop + 3) &&
     s.biliOpen.discover === false,
     JSON.stringify(s.biliOpen));
+  assert('bili-multi-row-click-toggles',
+    s.biliOpen.title !== 'B站合集 多P',   // 展开 ≠ 播放（点行没有把这行播起来）
+    JSON.stringify({ title: s.biliOpen.title }));
   assert('bili-parts-list-scrolls',
     /px$/.test(s.biliOpen.capped) && parseFloat(s.biliOpen.capped) > 0,
     s.biliOpen.capped);
+  // Bug B：分P继承主行封面（子行缩略图吃到主行 pic；pagelist 本身不给图）
+  assert('bili-parts-inherit-cover',
+    /cover\.png/.test(s.biliOpen.thumbBg),
+    s.biliOpen.thumbBg);
+  // E：标题限长 + 红心不换行 + 主行主体等高（红心仍在主行主体的纵向范围内）
+  assert('bili-row-keeps-one-line-with-heart',
+    s.biliOpen.favTop < s.biliOpen.hitBottomMain &&
+    (s.biliOpen.hitBottomMain - s.biliOpen.hitTop) < 60,
+    JSON.stringify({ hitTop: s.biliOpen.hitTop, hitBottom: s.biliOpen.hitBottomMain, favTop: s.biliOpen.favTop, heartTop: s.biliOpen.heartTop }));
   await page.screenshot({ path: path.join(outDir, 'search-bili-parts-1040x780-light.png') });
+
+  // 再点一次标题 → 收起（树消失）
+  await page.evaluate((sel) => document.querySelector(sel).click(), multiHitSel());
+  await sleep(300);
+  s.biliClose = await page.evaluate(() => ({
+    open: document.querySelector('#searchList .search-row').classList.contains('is-open'),
+    prows: document.querySelectorAll('#searchList .bili-prow').length
+  }));
+  assert('bili-multi-row-click-collapses',
+    s.biliClose.open === false && s.biliClose.prows === 0,
+    JSON.stringify(s.biliClose));
+
+  // 未展开时再点开一次（后面的 fav / 导入断言要用）
+  await page.evaluate((sel) => document.querySelector(sel).click(), multiHitSel());
+  await page.waitForFunction(() => document.querySelectorAll('#searchList .bili-prow').length === 12, { timeout: 4000, polling: 50 }).catch(() => {});
+
+  // 单P 行：点 = 播放（现状不变）—— 副带验 Bug A（无 pic 曲目起播后，
+  // 搜索页其它行的封面不能被 .player.nocover 整片清掉）
+  await page.evaluate(() => document.querySelector('#searchList .search-row[data-i="1"] .search-hit').click());
+  await page.waitForFunction(() => document.getElementById('player').getAttribute('data-playing') === '1', { timeout: 5000, polling: 100 }).catch(() => {});
+  s.biliSingle = await page.evaluate(() => {
+    const cover = document.querySelector('#searchList .search-row[data-i="0"] .q-cover');
+    const bg = getComputedStyle(cover).backgroundImage;
+    return {
+      playing: document.getElementById('player').getAttribute('data-playing'),
+      title: document.getElementById('trackTitle').textContent,
+      nocover: document.getElementById('player').classList.contains('nocover'),
+      multiCoverBg: bg
+    };
+  });
+  assert('bili-single-row-click-plays',
+    s.biliSingle.playing === '1' && s.biliSingle.title === 'B站单曲',
+    JSON.stringify(s.biliSingle));
+  assert('bili-cover-survives-nocover',
+    s.biliSingle.nocover === true && /cover\.png/.test(s.biliSingle.multiCoverBg),
+    JSON.stringify({ nocover: s.biliSingle.nocover, bg: s.biliSingle.multiCoverBg }));
 
   // 分集行尾红心 = 收藏到「我的喜欢」（与主行红心同一语义）
   await page.evaluate(() => document.querySelector('#searchList .bili-prow .search-fav').click());
@@ -2056,7 +2138,7 @@ const motion = {};
   // 整单导入 → 新建歌单（imp:N），不塞「我的喜欢」
   await page.evaluate(() => { window.__playerDebug.openSearch(); window.__playerDebug.setServer('bilibili'); window.__playerDebug.setKeyword('多P'); window.__playerDebug.doSearch(); });
   await page.waitForFunction(() => document.querySelectorAll('#searchList .bili-mark').length === 1, { timeout: 4000, polling: 50 }).catch(() => {});
-  await page.evaluate(() => document.querySelector('#searchList .bili-mark').click());
+  await page.evaluate((sel) => document.querySelector(sel).click(), multiHitSel());
   await page.waitForFunction(() => document.querySelectorAll('#searchList .bili-prow').length === 12, { timeout: 4000, polling: 50 }).catch(() => {});
   s.biliBefore = await page.evaluate(() => document.querySelectorAll('#listTabs .list-tab').length);
   await page.evaluate(() => document.querySelector('#searchList [data-bili-imp]').click());

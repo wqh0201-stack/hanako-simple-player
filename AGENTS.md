@@ -552,6 +552,20 @@ app-data（`~/.hanako/app-data/hanako-simple-player/`：`playlist.json` /
      **不复用会被动态改写的 `#lmNote`**）。
   验收：verify-backend **22/22**、verify-ui **158/158**（12/12 布局、4/4 窄卡、零运行时错误）。
   交接：`docs/player-ui/BILI-PARTS-DONE.md`。
+- **B站分P 真机验收修复**（2026-10-11，构建号 1003131643，罐头真机 5 条）：
+  ① **Bug A · 播某一P后整个搜索界面封面全消失**：`.player.nocover .q-cover { background-image: var(--cover-fallback) }`
+     这条 (0,2,1) 压过 `.q-cover` 自己的 (0,1,0)，把**所有**列表封面的真图整片清掉（播无 pic 的分P
+     就给 .player 挂 nocover）。该规则写在极简版早期（当时 `.q-cover` 还没有 `var(--cover-image)`），
+     后来列表改成按变量取图就成了元凶 —— **直接删掉**（`.q-cover` 自带 fallback 兜底）。
+  ② **Bug B · 分P不继承总封面**：pagelist 不给图，同一支视频共一张。选**前端继承**：
+     `stampPartsPic()` 把主行 pic 盖到每个分P（探测缓存/现拉两处都调），子行新增 `.bili-pcover` 缩略图吃它。
+     顺带修：搜索/热门/榜单行的 `--cover-image` 原本**没走 `withSession`**（生产是跨源 CDN 所以没暴露，
+     同源图会 403）。**本轮没动 lib/**（选前端方案），部署只同步 `ui/`。
+  ③ **交互（罐头定稿）**：**有分P的行点行/标题 = 展开·收起（不播放）**，无分P行点= 播放（`isMultiPartRow`
+     按「已探到 >1」分流，探测在途不接管）；**「分集 N」= 纯静态提示**（去掉 role/tabindex/hover/箭头，
+     `pointer-events:none`）；标题 `ellipsis` 限长 + 红心 `flex:0 0 auto` 不被挤出主行（`flex-wrap` 只给树换行）。
+  验收：verify-backend 22/22、verify-ui **165/165**（新增 6 条：纯提示/多点展开/单点播放/nocover 不丢封面/
+     分P继承封面/红心不换行）。交接：`docs/player-ui/BILI-PARTS-FIX.md`。
 - 待办：独立窗/小卡音频不中断（pagehide/beacon 落盘 + 续播，2026-10-10 两轮：快照自带曲目 +
   换曲即落盘 + 进度护栏 + 媒体时钟进度 + seek 落点前不起播 + boot 提速，构建号 1003131614，
   **真机已复核（2026-10-10，罐头确认「ok 了」）**；剩余「一小段静默」是换文档重连媒体的固有代价，
