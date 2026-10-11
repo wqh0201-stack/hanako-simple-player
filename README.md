@@ -7,6 +7,43 @@
 
 自有图标与名称，包 id 为 `hanako-simple-player`，**与上游 `hanako-audio-player` 不同名，可同时安装**。
 
+## 截图
+
+> 点任意缩略图看原图。这里展示的是它在 Hana 三种承载形态下的实际样子（浅色 / 深色主题都跟随宿主）。
+
+<table>
+<tr>
+<td width="50%" align="center">
+<a href="docs/showcase/01-window-light-lyrics.png"><img src="docs/showcase/thumb/01-window-light-lyrics.png" width="100%" alt="独立窗口 · 浅色 · 歌词态"></a>
+<br><sub><b>独立窗口</b> · 浅色 · 歌词态</sub>
+</td>
+<td width="50%" align="center">
+<a href="docs/showcase/02-card-light-lyrics.png"><img src="docs/showcase/thumb/02-card-light-lyrics.png" width="100%" alt="聊天卡片 · 浅色 · 歌词态"></a>
+<br><sub><b>聊天卡片</b> · 浅色 · 歌词态</sub>
+</td>
+</tr>
+<tr>
+<td width="50%" align="center">
+<a href="docs/showcase/03-card-square-dark.png"><img src="docs/showcase/thumb/03-card-square-dark.png" width="100%" alt="方卡 · 深色"></a>
+<br><sub><b>嵌入式方卡</b> · 深色</sub>
+</td>
+<td width="50%" align="center">
+<a href="docs/showcase/04-card-long-dark.png"><img src="docs/showcase/thumb/04-card-long-dark.png" width="100%" alt="长条卡 · 深色 · 歌单"></a>
+<br><sub><b>嵌入长条卡</b> · 深色 · 歌单</sub>
+</td>
+</tr>
+<tr>
+<td width="50%" align="center">
+<a href="docs/showcase/05-frosted-controls.png"><img src="docs/showcase/thumb/05-frosted-controls.png" width="100%" alt="毛玻璃控制栏"></a>
+<br><sub><b>毛玻璃控制栏</b> · 独立窗半透明</sub>
+</td>
+<td width="50%" align="center">
+<a href="docs/showcase/06-immersive-dark.png"><img src="docs/showcase/thumb/06-immersive-dark.png" width="100%" alt="沉浸式大卡"></a>
+<br><sub><b>沉浸式大卡</b> · 歌词全屏</sub>
+</td>
+</tr>
+</table>
+
 ## 特色
 
 **能把网易云、QQ、B站 的歌收进收藏。** 搜到就能点进「我的喜欢」。
