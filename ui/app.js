@@ -68,6 +68,7 @@
    * app 路由前缀的才动，其余（本地媒体相对路径 / 外链）原样保留。
    * ⚠️ 判据写成「appId ≠ 当前就归一」，别写死单个旧包名 —— 将来再改名照样能治。 */
   var APP_ROUTE_RE = /^\/api\/apps\/([^/]+)\/routes(\/.*)?$/;
+  var appUrlRewrote = false;   // 归一是否真的改过东西（boot 时据此触发一次全量回写自愈）
   function normalizeAppUrl(url) {
     var s = String(url || '');
     var qi = s.indexOf('?');
@@ -75,6 +76,7 @@
     var query = qi >= 0 ? s.slice(qi) : '';
     var m = APP_ROUTE_RE.exec(pathPart);
     if (!m || m[1] === APP_ID) return s;
+    appUrlRewrote = true;
     return '/api/apps/' + APP_ID + '/routes' + (m[2] || '') + query;
   }
 
@@ -3511,6 +3513,12 @@
   var searchResults = [];
   var searchBusy = false;
   var searchSeq = 0;   // 代次：连打两次搜索，旧响应不许覆盖新结果
+  var SEARCH_PAGE = 30;         // 每页条数（前后端同口径；后端默认也是 30）
+  var searchKeyword = '';       // 本次搜索的关键词（翻页沿用，避免翻到一半改了输入框）
+  var searchTotal = 0;          // 结果总数（后端 total；缺失/0 时退化为已载入条数）
+  var searchLoadingMore = false; // 翻页在途闸：滚动事件很密，防重复触发
+  var searchScrollBound = false; // 无限滚动监听只绑一次
+  var searchPaginated = false;   // 当前结果区是否属于「搜索层」（可翻页）。详情层（榜单/电台）为 false
   var discoverLoaded = false;   // 推荐区是否已拉过
   var hotSongs = [];            // 热门推荐（歌曲）
   var discoverCharts = [];      // 榜单
@@ -3599,6 +3607,11 @@
         '</button>' +
       '</li>';
     }
+    // 翻页尾巴：仅在「搜索层 + 还有下一页」时出现（详情层不挂，见 searchPaginated）
+    if (searchPaginated && searchResults.length < searchTotal) {
+      html += '<li class="search-more" id="searchMore">' +
+        (searchLoadingMore ? '正在加载…' : '') + '</li>';
+    }
     searchList.innerHTML = html;
     applySearchCovers();
   }
@@ -3634,6 +3647,7 @@
     renderSearchServers();
     renderSearchScope();
     renderSearchResults();
+    bindSearchScroll();   // 无限滚动：结果列表触底加载下一页（只绑一次）
     if (!String((searchInput && searchInput.value) || '').trim()) loadDiscover();   // 空白页预置推荐
     // 从左侧滑入（与队列抽屉同一套语言；reduced-motion 下退为淡入）
     searchPage.classList.remove('is-anim');
@@ -3646,6 +3660,7 @@
   function closeSearch() {
     if (!searchPage || searchPage.hidden) return;
     clearTimeout(searchLeaveTimer); searchLeaveTimer = 0;
+    searchLoadingMore = false;   // 关页时若正翻页，别把「正在加载…」尾巴留到下次重开
     searchPage.classList.remove('is-anim');
     player.classList.add('is-s-leaving');
     renderChrome();                                   // data-search 立即转 0
@@ -3824,6 +3839,8 @@
     setDiscoverVisible(false);
     setSearchSection(name || '榜单');
     searchBusy = true;
+    searchPaginated = false;   // 详情层不翻页（罐头拍板：只有搜索层挂翻页）
+    searchTotal = 0;
     var gen = ++searchSeq;
     searchResults = [];
     renderSearchResults();
@@ -3833,6 +3850,7 @@
       searchBusy = false;
       var list = (res.ok && res.body && res.body.ok && Array.isArray(res.body.results)) ? res.body.results : [];
       searchResults = list;
+      searchTotal = list.length;
       renderSearchResults();
       setSearchNote(list.length ? ('共 ' + list.length + ' 首') : '这个榜单暂时取不到曲目');
     }).catch(function () {
@@ -3850,6 +3868,8 @@
     setDiscoverVisible(false);
     setSearchSection(name || '电台');
     searchBusy = true;
+    searchPaginated = false;   // 详情层不翻页
+    searchTotal = 0;
     var gen = ++searchSeq;
     searchResults = [];
     renderSearchResults();
@@ -3859,6 +3879,7 @@
       searchBusy = false;
       var list = (res.ok && res.body && res.body.ok && Array.isArray(res.body.results)) ? res.body.results : [];
       searchResults = list;
+      searchTotal = list.length;
       renderSearchResults();
       setSearchNote(list.length ? ('共 ' + list.length + ' 期（每期是可播的长音频）') : '这档电台暂时取不到节目');
     }).catch(function () {
@@ -3870,39 +3891,103 @@
     });
   }
 
+  /* 一次搜索请求（首屏 / 翻页共用）。带代次守卫：在途时改了关键词，旧响应自动丢弃。
+   * offset/limit 是可选的请求参数（后端缺省即第一页）；返回体形状与不分页时一致，只是 total 现在有意义。 */
+  function fetchSearchPage(gen, kw, server, offset, onDone, onFail) {
+    apiGetJson(ENDPOINT.search + '?keyword=' + encodeURIComponent(kw) + '&server=' + encodeURIComponent(server) +
+        '&offset=' + offset + '&limit=' + SEARCH_PAGE)
+      .then(function (res) {
+        if (gen !== searchSeq) return;
+        var list = (res.ok && res.body && res.body.ok && Array.isArray(res.body.results)) ? res.body.results : [];
+        var total = Number(res.body && res.body.total);
+        onDone(list, total > 0 ? total : 0);
+      })
+      .catch(function () { if (gen !== searchSeq) return; onFail(); });
+  }
+
   function doSearch() {
     if (searchBusy) return;
     var kw = searchInput ? String(searchInput.value || '').trim() : '';
     if (!kw) { setSearchNote('先输入关键词'); return; }
     searchBusy = true;
     var gen = ++searchSeq;
+    searchKeyword = kw;          // 翻页沿用这次的关键词（中途改输入框不影响在途翻页）
+    searchPaginated = true;      // 搜索层可翻页（详情层不置这面旗）
+    searchLoadingMore = false;
+    searchTotal = 0;
+    if (searchList) searchList.scrollTop = 0;
     setDiscoverVisible(false);
     setSearchSection(searchScope === 'artist' ? '歌手结果' : '歌曲结果');
     setSearchNote('正在搜索…');
     searchResults = [];
     renderSearchResults();
-    apiGetJson(ENDPOINT.search + '?keyword=' + encodeURIComponent(kw) + '&server=' + encodeURIComponent(searchServer))
-      .then(function (res) {
-        if (gen !== searchSeq) return;
-        searchBusy = false;
-        var list = (res.ok && res.body && res.body.ok && Array.isArray(res.body.results)) ? res.body.results : [];
-        if (!list.length) {
-          searchResults = [];
-          renderSearchResults();
-          setSearchNote('没搜到「' + kw + '」，换个关键词或平台试试');
-          return;
-        }
-        searchResults = list;
-        renderSearchResults();
-        setSearchNote('共 ' + list.length + ' 条 · 来自' + serverLabel(searchServer));
-      })
-      .catch(function () {
-        if (gen !== searchSeq) return;
-        searchBusy = false;
+    fetchSearchPage(gen, kw, searchServer, 0, function (list, total) {
+      searchBusy = false;
+      // total 缺失/为 0（如老响应）→ 退化为本页条数，不报假数也不拦死翻页
+      searchTotal = total > 0 ? total : list.length;
+      if (!list.length) {
         searchResults = [];
         renderSearchResults();
-        setSearchNote('搜索失败：网络错误');
-      });
+        setSearchNote('没搜到「' + kw + '」，换个关键词或平台试试');
+        return;
+      }
+      searchResults = list;
+      renderSearchResults();
+      setSearchNote('共 ' + searchTotal + ' 条 · 来自' + serverLabel(searchServer));
+    }, function () {
+      searchBusy = false;
+      searchResults = [];
+      renderSearchResults();
+      setSearchNote('搜索失败：网络错误');
+    });
+  }
+
+  /* 触底加载下一页（无限滚动）。
+   * 三重护栏：仅搜索层、非在途、未到 total。
+   * 代次沿用当前 searchSeq（不新开）：同一关键词的下一页，中途发新搜索会自动作废旧页。 */
+  function loadMoreSearch() {
+    if (!searchPaginated || searchBusy || searchLoadingMore) return;
+    if (!searchKeyword) return;
+    if (searchResults.length >= searchTotal) return;   // 已到 total，没有下一页
+    searchLoadingMore = true;
+    var gen = searchSeq;
+    var offset = searchResults.length;
+    var kw = searchKeyword, server = searchServer;
+    renderSearchResults();   // 进入「正在加载…」尾巴
+    fetchSearchPage(gen, kw, server, offset, function (list, total) {
+      searchLoadingMore = false;
+      // 追加去重：按稳定 id，防源在翻页边界重复回上一页末尾
+      var seen = {};
+      for (var i = 0; i < searchResults.length; i++) seen[deriveId(searchResults[i], searchResults[i].url)] = 1;
+      var added = 0;
+      for (var j = 0; j < list.length; j++) {
+        var id = deriveId(list[j], list[j].url);
+        if (!id || seen[id]) continue;
+        seen[id] = 1;
+        searchResults.push(list[j]);
+        added++;
+      }
+      // 源到底（回空 / 全是重复，如 B站 1000 截顶）：把 total 收敛为已载入数，尾巴消失
+      if (!list.length || !added) searchTotal = searchResults.length;
+      else if (total > 0 && total > searchTotal) searchTotal = total;
+      renderSearchResults();
+      setSearchNote('共 ' + searchTotal + ' 条 · 来自' + serverLabel(server));
+    }, function () {
+      searchLoadingMore = false;
+      renderSearchResults();   // 失败就收起尾巴，下次滚动再试
+    });
+  }
+
+  /* 无限滚动：结果列表触底 → 加载下一页。
+   * 监听对象就 .search-list（它自己 overflow-y:auto，页身不滚 —— 所以触底判定用自己这层）。 */
+  function onSearchListScroll() {
+    if (!searchList || searchList.hidden || !searchPaginated) return;
+    if (searchList.scrollTop + searchList.clientHeight >= searchList.scrollHeight - 120) loadMoreSearch();
+  }
+  function bindSearchScroll() {
+    if (searchScrollBound || !searchList) return;
+    searchScrollBound = true;
+    searchList.addEventListener('scroll', onSearchListScroll, { passive: true });
   }
 
   /* 清空搜索：回到推荐区 */
@@ -3910,6 +3995,10 @@
     if (searchInput) searchInput.value = '';
     searchSeq++;
     searchBusy = false;
+    searchLoadingMore = false;
+    searchPaginated = false;
+    searchTotal = 0;
+    searchKeyword = '';
     searchResults = [];
     renderSearchResults();
     setSearchSection('');
@@ -4485,6 +4574,10 @@
         var needsAssign = migrateLists(tracks, null);
         applyTracks(tracks);                             // 先落 state.tracks
         if (needsAssign) savePlaylist();                 // 再回写（savePlaylist 读的是 state.tracks）
+        /* 旧包名叫名迁移：本次读时若有前缀被归一（改名留下的债），
+         * 立即全量回写一次，让 playlist.json 首次启动就把化石洗成活字；
+         * 之后不再改（appUrlRewrote 已不置位）。不污染不拖到“何时才保存”。 */
+        else if (appUrlRewrote) savePlaylist();
       } else {
         state.lists = [{ id: 'local', name: '本地' }];
       }
@@ -4788,7 +4881,17 @@
     /* 搜索页（测试用）：不依赖真实网络，直接喂结果验证渲染/落库。 */
     openSearch: openSearch,
     closeSearch: closeSearch,
-    renderResults: function (list) { searchSeq++; searchBusy = false; setDiscoverVisible(false); searchResults = list || []; renderSearchResults(); },
+    renderResults: function (list) { searchSeq++; searchBusy = false; searchPaginated = false; searchTotal = (list || []).length; searchLoadingMore = false; setDiscoverVisible(false); searchResults = list || []; renderSearchResults(); },
+    /* 翻页（测试用）：真走 doSearch / loadMoreSearch 的控制流，只是不依赖键盘与滚动事件。 */
+    setKeyword: function (kw) { if (searchInput) searchInput.value = kw || ''; },
+    doSearch: doSearch,
+    loadMore: loadMoreSearch,
+    setPaginated: function (on) { searchPaginated = !!on; },
+    scrollListToBottom: function () {
+      if (!searchList) return 0;
+      searchList.scrollTop = searchList.scrollHeight;
+      return searchList.scrollTop;
+    },
     setScope: function (sc) { searchScope = sc; renderSearchScope(); },
     /* 首次提示（测试用）：直接喂一个 read 结果，验弹/不弹的条件。
      * 每次先复位 hidden，避免上一次调用残留状态影响判定。 */
@@ -4806,7 +4909,7 @@
       discoverLoaded = true;
       renderHotSongs(); renderCharts(); renderRadios();
     },
-    searchState: function () { return { server: searchServer, scope: searchScope, results: searchResults.length, open: !!(searchPage && !searchPage.hidden), discoverVisible: discoverActive() }; },
+    searchState: function () { return { server: searchServer, scope: searchScope, results: searchResults.length, total: searchTotal, paginated: searchPaginated, loadingMore: searchLoadingMore, keyword: searchKeyword, open: !!(searchPage && !searchPage.hidden), discoverVisible: discoverActive() }; },
     /* 旧包名迁移（测试用）：纯函数，不依赖网络/真实磁盘。 */
     normalizeAppUrl: normalizeAppUrl,
     appId: function () { return APP_ID; }

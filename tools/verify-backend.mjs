@@ -36,8 +36,42 @@ const netFetch = async (url) => {
       })
     };
   }
-  // Meting 节点：回一个最小可用的曲目数组
-  return { ok: true, json: async () => ([{ id: '1', title: 't', author: 'a', url: 'http://node/1', pic: '', lrc: '' }]) };
+  // 网易云官方搜索（分页）：回 cloudsearch 形状，字段名与 Meting 节点完全不同
+  if (url.includes('music.163.com/api/cloudsearch/pc')) {
+    return {
+      ok: true,
+      json: async () => ({
+        code: 200,
+        result: {
+          songCount: 274,
+          songs: [
+            { id: 509781655, name: '想你就写信 (Live)', ar: [{ name: '周杰伦' }, { name: '李硕' }], al: { picUrl: 'http://p1.music.126.net/a.jpg' }, dt: 238698 },
+            { id: 210049, name: '布拉格广场', ar: [{ name: '蔡依林' }, { name: '周杰伦' }], al: { picUrl: 'http://p1.music.126.net/b.jpg' }, dt: 245000 },
+          ],
+        },
+      })
+    };
+  }
+  // B站搜索：回 data.result 形状（numResults 为近似上限）
+  if (url.includes('api.bilibili.com') && url.includes('/search/type')) {
+    return {
+      ok: true,
+      json: async () => ({
+        code: 0,
+        data: {
+          numResults: 1000,
+          numPages: 34,
+          page: 1,
+          result: [
+            { bvid: 'BV1FPjy6TEiE', title: '<em class="keyword">周杰伦</em> 测试', author: 'UP主甲', pic: '//i2.hdslb.com/a.jpg', duration: '4:30' },
+            { bvid: 'BV16XpM6EEtF', title: '第二首', author: 'UP主乙', pic: '//i2.hdslb.com/b.jpg', duration: '3:12' },
+          ],
+        },
+      })
+    };
+  }
+  // 其余（Meting 节点）：回一个最小可用的曲目数组（url 带 id，好让 metingStableId 能取到）
+  return { ok: true, json: async () => ([{ id: '1', title: 't', author: 'a', url: 'http://node/1?server=tencent&type=url&id=1', pic: '', lrc: '' }]) };
 };
 
 const ctx = { dataDir, logger: { warn() {}, info() {}, error() {} }, resources: {}, storage: { global: {} }, tools: {}, network: { fetch: netFetch } };
@@ -50,6 +84,7 @@ const handler = (method, p) => {
 };
 const POST_PLAYLIST = handler('POST', '/widget/api/playlist');
 const GET_PLAYLIST = handler('GET', '/widget/api/music/playlist');
+const GET_SEARCH = handler('GET', '/widget/api/music/search');
 const DELETE_TRACK = handler('DELETE', '/api/track');
 const GET_PLAYBACK = handler('GET', '/api/playback-state');
 const POST_PLAYBACK = handler('POST', '/api/playback-state');
@@ -141,6 +176,62 @@ check('playlist-meta-skip-non-netease',
   plRes.body.ok === true && plRes.body.meta === undefined &&
   !netCalls.some((u) => u.includes('music.163.com')),
   JSON.stringify({ body: plRes.body, netCalls }));
+
+/* 10) 在线搜索·网易云：改走官方分页接口，但**对外形状必须与走节点时一致**
+ *     （results[].{id,title,author,pic,url,lrc} + total）。这是与下游（歌词跨源兜底）的硬约定。 */
+netCalls = [];
+let sRes = await GET_SEARCH(fakeC({ query: { keyword: '周杰伦', server: 'netease', offset: '0', limit: '30' } }));
+check('search-netease-shape',
+  sRes.body.ok === true && Array.isArray(sRes.body.results) && sRes.body.results.length === 2 &&
+  sRes.body.results[0].title === '想你就写信 (Live)' &&
+  sRes.body.results[0].author === '周杰伦 / 李硕' &&
+  sRes.body.results[0].pic === 'http://p1.music.126.net/a.jpg' &&
+  typeof sRes.body.results[0].url === 'string' && sRes.body.results[0].url.indexOf('music/go/') >= 0 &&
+  sRes.body.results[0].lrc === '' &&
+  sRes.body.results[0].id === 'netease:509781655',
+  JSON.stringify(sRes.body));
+check('search-netease-official-endpoint',
+  netCalls.some((u) => u.includes('music.163.com/api/cloudsearch/pc')) &&
+  !netCalls.some((u) => u.includes('meting')),   // 网易云不再打 Meting 节点
+  JSON.stringify(netCalls));
+check('search-netease-total-precise', sRes.body.total === 274, String(sRes.body.total));
+
+/* 11) 分页参数透传：offset 换成官方 offset（缺省即第一页） */
+netCalls = [];
+sRes = await GET_SEARCH(fakeC({ query: { keyword: '周杰伦', server: 'netease', offset: '30', limit: '30' } }));
+check('search-netease-offset-passthrough',
+  netCalls.some((u) => /[?&]offset=30(&|$)/.test(u)),
+  JSON.stringify(netCalls));
+
+/* 12) B站：offset/limit 换算成 page/page_size；total = numResults（近似上限） */
+netCalls = [];
+sRes = await GET_SEARCH(fakeC({ query: { keyword: '周杰伦', server: 'bilibili', offset: '0', limit: '30' } }));
+check('search-bili-shape',
+  sRes.body.ok === true && sRes.body.results.length === 2 &&
+  sRes.body.results[0].id === 'bilibili:BV1FPjy6TEiE' &&
+  sRes.body.results[0].title === '周杰伦 测试' &&   // 去了 <em> 标签
+  sRes.body.results[0].url.indexOf('music/go/BV1FPjy6TEiE') >= 0,
+  JSON.stringify(sRes.body));
+check('search-bili-first-page',
+  netCalls.some((u) => /[?&]page=1(&|$)/.test(u)) && netCalls.some((u) => /[?&]page_size=30(&|$)/.test(u)),
+  JSON.stringify(netCalls));
+check('search-bili-total-approx', sRes.body.total === 1000, String(sRes.body.total));
+
+/* 13) B站第二页：offset=30&limit=30 → page=2 */
+netCalls = [];
+sRes = await GET_SEARCH(fakeC({ query: { keyword: '周杰伦', server: 'bilibili', offset: '30', limit: '30' } }));
+check('search-bili-page-from-offset',
+  netCalls.some((u) => /[?&]page=2(&|$)/.test(u)),
+  JSON.stringify(netCalls));
+
+/* 14) 非网易云/非B站（如 tencent）：仍走 Meting 节点，形状不变 */
+netCalls = [];
+sRes = await GET_SEARCH(fakeC({ query: { keyword: '周杰伦', server: 'tencent', limit: '30' } }));
+check('search-meting-untouched',
+  sRes.body.ok === true && Array.isArray(sRes.body.results) && sRes.body.results.length === 1 &&
+  sRes.body.results[0].id === 'tencent:1' &&
+  netCalls.some((u) => u.includes('server=tencent')),
+  JSON.stringify({ body: sRes.body, netCalls }));
 
 fs.rmSync(dataDir, { recursive: true, force: true });
 

@@ -2177,6 +2177,17 @@ body.is-shot *::after {
   font-size: 12px;
   line-height: 1.7;
 }
+/* 无限滚动尾巴：仅在「还有下一页」时存在（滚动到底把它触进视口，也作为加载态的落点）。
+   占位高度固定，避免「加载中→无」时列表抽搐。 */
+.search-more {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--hk-faint);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
 .search-note {
   flex: 0 0 auto;
   margin: 0;

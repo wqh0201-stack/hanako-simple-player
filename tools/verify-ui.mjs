@@ -107,6 +107,15 @@ for (let i = 0; i < 2; i++) OLD_TRACKS.push({ name: `未分类曲 ${i + 1}`, url
 const OLD_PKG = 'hanako-audio-player';
 for (let i = 0; i < 3; i++) OLD_TRACKS.push({ id: `netease:${810000 + i}`, name: `旧前缀曲 ${i + 1}`, url: `/api/apps/${OLD_PKG}/routes/widget/api/music/go/${810000 + i}?server=netease`, mode: '在线', dur: 0, group: '旧包名' });
 
+/* 纯旧前缀夹具：曲目已带 list 字段（不需要列表迁移），只有 url 是旧包名前缀。
+ * 用来单独验证 boot 时的“读时归一 → 立即全量回写自愈”分支（不靠迁移顺带触发）。 */
+const OLDPREFIX_TRACKS = [
+  { id: 'netease:820001', name: '旧前缀甲', url: `/api/apps/${OLD_PKG}/routes/widget/api/music/go/820001?server=netease`, mode: '在线', dur: 0, group: '在线音乐', list: 'imp:1' },
+  { id: 'netease:820002', name: '旧前缀乙', url: `/api/apps/${OLD_PKG}/routes/widget/api/music/go/820002?server=netease`, mode: '在线', dur: 0, group: '在线音乐', list: 'imp:1' },
+  // 对照组：本地媒体新前缀 + 外链，都不能被误伤
+  { id: 'keep.wav', name: '本地保留', url: `/api/apps/hanako-simple-player/routes/widget/media/keep.wav`, mode: '本地', dur: 0, group: '本地音乐', list: 'local' }
+];
+
 /* 假后端状态：POST /playlist 会落盘，GET 优先返回落盘值（测迁移幂等） */
 let fixtureMode = 'main';
 let persistedPlaylist = null;
@@ -183,7 +192,7 @@ const server = http.createServer((req, res) => {
       });
       return;
     }
-    const tracks = persistedPlaylist || (fixtureMode === 'migrate' ? OLD_TRACKS : (fixtureMode === 'empty' ? [] : TRACKS));
+    const tracks = persistedPlaylist || (fixtureMode === 'migrate' ? OLD_TRACKS : (fixtureMode === 'oldprefix' ? OLDPREFIX_TRACKS : (fixtureMode === 'empty' ? [] : TRACKS)));
     return json(res, 200, { ok: true, tracks, count: tracks.length });
   }
   if (p === API + '/__fixture/reset') {
@@ -252,6 +261,19 @@ const server = http.createServer((req, res) => {
   if (p === API + '/widget/api/music/search') {
     searchHits++;
     const kw = u.searchParams.get('keyword') || '';
+    const offset = Math.max(0, Number(u.searchParams.get('offset')) || 0);
+    const limit = Math.max(1, Number(u.searchParams.get('limit')) || 30);
+    /* 分页夹具：关键词含「分页」时回一套可翻页的数据集（共 75 条，每页 30），
+     * 供无限滚动断言；其余关键词保持原来的单条返回（backfill / 跨源歌词等用）。 */
+    if (kw.indexOf('分页') >= 0) {
+      const TOTAL = 75;
+      const n = Math.max(0, Math.min(limit, TOTAL - offset));
+      const results = Array.from({ length: n }, (_, i) => {
+        const idx = offset + i;
+        return { id: `netease:${790000 + idx}`, title: `分页曲目 ${idx + 1}`, author: '分页歌手', url: goUrl(790000 + idx), pic: '', lrc: '' };
+      });
+      return json(res, 200, { ok: true, results, host: 'mock', total: TOTAL });
+    }
     return json(res, 200, { ok: true, results: [{ id: `netease:${770000 + kw.length}`, title: `命中 ${kw}`, author: '搜索歌手', url: goUrl(770000 + kw.length), pic: '', lrc: 'http://mock/lrc/' + encodeURIComponent(kw) }], host: 'mock', total: 1 });
   }
   if (p === API + '/widget/api/music/hot') {
@@ -1722,6 +1744,83 @@ const motion = {};
     s.radioOpen.rows === 2 && s.radioOpen.first === '电台节目 1',
     JSON.stringify(s.radioOpen));
 
+  /* 无限滚动翻页（罐头拍板：滚到底自动加载）。
+   * 假后端对「分页」关键词回 75 条、每页 30（见 _fixture 的 music/search）。
+   * 三条：①触底续接 ②到底收尾（尾巴消失） ③详情层不挂翻页。 */
+  await page.evaluate(() => { window.__playerDebug.clearSearch(); });
+  await sleep(300);
+  await page.evaluate(() => {
+    window.__playerDebug.openSearch();
+    window.__playerDebug.setKeyword('分页');
+    window.__playerDebug.doSearch();
+  });
+  await page.waitForFunction(() => window.__playerDebug.searchState().results === 30, { timeout: 4000, polling: 50 }).catch(() => {});
+  s.page1 = await page.evaluate(() => ({
+    rows: document.querySelectorAll('#searchList .search-row').length,
+    total: window.__playerDebug.searchState().total,
+    paginated: window.__playerDebug.searchState().paginated,
+    note: document.getElementById('searchNote').textContent,
+    more: !!document.getElementById('searchMore')
+  }));
+  assert('search-pagination-first-page',
+    s.page1.rows === 30 && s.page1.total === 75 && s.page1.paginated === true &&
+    s.page1.more === true && /共 75 条/.test(s.page1.note),
+    JSON.stringify(s.page1));
+
+  // 滚到底 → 自动加载第 2 页（30 → 60）
+  await page.evaluate(() => window.__playerDebug.scrollListToBottom());
+  await page.evaluate(() => document.getElementById('searchList').dispatchEvent(new Event('scroll')));
+  await page.waitForFunction(() => window.__playerDebug.searchState().results === 60, { timeout: 4000, polling: 50 }).catch(() => {});
+  s.page2 = await page.evaluate(() => ({
+    rows: document.querySelectorAll('#searchList .search-row').length,
+    first: (document.querySelector('#searchList .q-title') || {}).textContent,
+    last: (document.querySelectorAll('#searchList .q-title')[59] || {}).textContent,
+    more: !!document.getElementById('searchMore')
+  }));
+  assert('search-pagination-appends',
+    s.page2.rows === 60 && s.page2.first === '分页曲目 1' && s.page2.last === '分页曲目 60' && s.page2.more === true,
+    JSON.stringify(s.page2));
+
+  // 再滚到底 → 第 3 页（60 → 75，到底）
+  await page.evaluate(() => window.__playerDebug.scrollListToBottom());
+  await page.evaluate(() => document.getElementById('searchList').dispatchEvent(new Event('scroll')));
+  await page.waitForFunction(() => window.__playerDebug.searchState().results === 75, { timeout: 4000, polling: 50 }).catch(() => {});
+  s.page3 = await page.evaluate(() => ({
+    rows: document.querySelectorAll('#searchList .search-row').length,
+    last: (document.querySelectorAll('#searchList .q-title')[74] || {}).textContent,
+    more: !!document.getElementById('searchMore'),
+    note: document.getElementById('searchNote').textContent
+  }));
+  assert('search-pagination-exhausts',
+    s.page3.rows === 75 && s.page3.last === '分页曲目 75' && s.page3.more === false && /共 75 条/.test(s.page3.note),
+    JSON.stringify(s.page3));
+
+  // 到底后再滚：不发新请求、不重复行（在途闸 + total 护栏）
+  const hitsAtEnd = searchHits;
+  await page.evaluate(() => window.__playerDebug.scrollListToBottom());
+  await page.evaluate(() => document.getElementById('searchList').dispatchEvent(new Event('scroll')));
+  await sleep(400);
+  s.atEnd = await page.evaluate(() => ({ rows: document.querySelectorAll('#searchList .search-row').length, hits: 0 }));
+  s.atEnd.hits = searchHits - hitsAtEnd;
+  assert('search-pagination-stops-at-total',
+    s.atEnd.rows === 75 && s.atEnd.hits === 0,
+    JSON.stringify(s.atEnd));
+  await page.screenshot({ path: path.join(outDir, 'search-pagination-1040x780-light.png') });
+
+  // 详情层不挂翻页：点榜单进结果区 → paginated=false、无尾巴
+  await page.evaluate(() => window.__playerDebug.clearSearch());
+  await sleep(300);
+  await page.evaluate(() => document.querySelector('#chartsGrid .discover-card').click());
+  await sleep(400);
+  s.detailNoPaginate = await page.evaluate(() => ({
+    rows: document.querySelectorAll('#searchList .search-row').length,
+    paginated: window.__playerDebug.searchState().paginated,
+    more: !!document.getElementById('searchMore')
+  }));
+  assert('search-pagination-not-on-detail-layer',
+    s.detailNoPaginate.rows === 2 && s.detailNoPaginate.paginated === false && s.detailNoPaginate.more === false,
+    JSON.stringify(s.detailNoPaginate));
+
   /* 控制面断点边界：719/720/721（形态 long↔wide）与 399/400/401（密度 normal↔narrow）。
      只证几何：三键恒 44×44 / 中心距 52、播放中心贴控制面中心、无横向溢出、data-ctl 正确翻转。
      连续换位只动周边槽位（模式/音量/红心），中央三键不做 FLIP —— 所以动画中量也不漂。 */
@@ -2632,6 +2731,29 @@ let migration = {};
   await page.close();
 }
 
+/* ============ 6b) 纯旧前缀：boot 读时归一 → 立即全量回写自愈（不靠列表迁移顺带） ============ */
+{
+  await fetch(`${BASE}${API}/__fixture/reset?mode=oldprefix&appSurfaceSession=fake-ticket`);
+  const page = await newPage();
+  await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
+  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.evaluate((t) => window.__fixtureTheme(t), 'light');
+  // 等 boot 的 dataReady.then 跑完（读列表 → 归一置位 → 回写）
+  await sleep(1200);
+
+  const saved = (persistedPlaylist || []).map((t) => t.url);
+  const oldLeft = saved.filter((u) => u.includes('/api/apps/' + OLD_PKG + '/')).length;
+  const newCount = saved.filter((u) => u.includes('/api/apps/hanako-simple-player/routes/widget/api/music/go/')).length;
+  const localKept = saved.filter((u) => u.includes('/routes/widget/media/keep.wav')).length;
+
+  assert('oldprefix-boot-writes-back-full-self-heal',
+    oldLeft === 0 && newCount === 2 && localKept === 1,
+    JSON.stringify({ oldLeft, newCount, localKept, saved }));
+
+  report.oldprefix = { saved, oldLeft, newCount, localKept };
+  await page.close();
+}
+
 /* ============ 7) 拖拽生命周期：pagehide 落盘 → reload 恢复 + 续播 ============ */
 let lifecycle = {};
 {
@@ -2851,6 +2973,7 @@ console.log(JSON.stringify({
   wiring: report.wiring,
   four: report.four,
   migration: report.migration,
+  oldprefix: report.oldprefix,
   lifecycle: report.lifecycle,
   ambient: report.ambient,
   darkFallback: report.darkFallback,
