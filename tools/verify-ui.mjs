@@ -4483,9 +4483,22 @@ let lifecycle = {};
 {
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
   const page = await newPage();
-  /* 假宿主：桩 clipboard.writeText 记录调用（验「复制歌名」真的走了 SDK 且入参只有歌名）。 */
+  /* 假宿主：桩 clipboard.writeText 记录调用；同时桩 document.execCommand('copy')
+   * 并记录写入的文本（同步优先链路要验）。默认 execCommand 返 true（同步成功），
+   * 需要验兜底时用 window.__forceExecFalse 把它推成 false。 */
   await page.evaluateOnNewDocument(() => {
     window.__clipCalls = [];
+    window.__execCalls = [];
+    window.__forceExecFalse = false;
+    const origExec = document.execCommand.bind(document);
+    document.execCommand = function (cmd) {
+      if (cmd === 'copy') {
+        const ta = document.querySelector('textarea');
+        window.__execCalls.push({ cmd, text: ta ? ta.value : null });
+        return !window.__forceExecFalse;
+      }
+      return origExec.apply(document, arguments);
+    };
     let _h;
     Object.defineProperty(window, 'hana', {
       configurable: true,
@@ -4631,18 +4644,59 @@ let lifecycle = {};
     g.movePlaying.favRows === favBeforePlay + 1,
     JSON.stringify({ ...g.movePlaying, playUid, favBeforePlay }));
 
-  /* ---- (g) 复制歌名：调 clipboard.writeText 且入参 = 歌名（不带歌手） ---- */
+  /* ---- (g) 复制歌名：优先同步 execCommand，入参 = 歌名（不带歌手） ----
+   * ⚠️ 2026-10-11 复制改同步 execCommand 优先（产品行为变更，非放宽）：
+   * 旧断言只验 clipboard.writeText 被调；新链路手势内同步 execCommand 优先，
+   * 同步成功就不再走 SDK。因而改验 execCommand 被调、文本=歌名、writeText 未被调。 */
   await clickTab(page, 'imp:1');
   await sleep(250);
   const copyTitle = await D(() => document.querySelectorAll('#queueList .q-row')[0].querySelector('.q-title').textContent);
+  await D(() => { window.__execCalls = []; window.__clipCalls = []; window.__forceExecFalse = false; });
   await D(() => { document.querySelectorAll('#queueList .q-row')[0].querySelector('.q-more').click(); });
   await sleep(150);
   await D(() => document.getElementById('copyNameBtn').click());
   await sleep(250);
-  g.copyName = await D(() => ({ calls: window.__clipCalls.slice(), toast: document.getElementById('toast').textContent, toastHidden: document.getElementById('toast').hidden }));
+  g.copyName = await D(() => ({ exec: window.__execCalls.slice(), calls: window.__clipCalls.slice(), toast: document.getElementById('toast').textContent, toastHidden: document.getElementById('toast').hidden }));
   assert('copy-song-name-writes-clipboard',
-    g.copyName.calls.length === 1 && g.copyName.calls[0] === copyTitle && g.copyName.toastHidden === false,
+    g.copyName.exec.length === 1 && g.copyName.exec[0].text === copyTitle &&
+    g.copyName.exec[0].text.indexOf('—') < 0 && g.copyName.calls.length === 0 &&
+    g.copyName.toastHidden === false,
     JSON.stringify({ ...g.copyName, copyTitle }));
+
+  /* ---- (g2) 同步失败 → 退异步兜底：execCommand 返 false，clipboard.writeText 接手 ---- */
+  const copyTitle2 = await D(() => document.querySelectorAll('#queueList .q-row')[1].querySelector('.q-title').textContent);
+  await D(() => { window.__execCalls = []; window.__clipCalls = []; window.__forceExecFalse = true; });
+  await D(() => { document.querySelectorAll('#queueList .q-row')[1].querySelector('.q-more').click(); });
+  await sleep(150);
+  await D(() => document.getElementById('copyNameBtn').click());
+  await sleep(300);
+  g.copyFallback = await D(() => ({ exec: window.__execCalls.slice(), calls: window.__clipCalls.slice(), toast: document.getElementById('toast').textContent, toastHidden: document.getElementById('toast').hidden }));
+  assert('copy-song-name-sync-fallback',
+    g.copyFallback.exec.length === 1 && g.copyFallback.exec[0].text === copyTitle2 &&
+    g.copyFallback.calls.length === 1 && g.copyFallback.calls[0] === copyTitle2 &&
+    g.copyFallback.toastHidden === false && g.copyFallback.toast === '已复制歌名',
+    JSON.stringify({ ...g.copyFallback, copyTitle2 }));
+
+  /* ---- (g3) coverSrc 纯函数：B站图床转同源代理，其余原样 ---- */
+  g.coverSrc = await D(() => {
+    const f = window.__playerDebug.coverSrc;
+    return {
+      hdslb: f('https://i1.hdslb.com/bfs/archive/rain.jpg'),
+      hdslbSub: f('https://i2.hdslb.com/a.jpg'),
+      netease: f('https://p1.music.126.net/abc/x.jpg?param=200y200'),
+      selfRoute: f('/api/apps/hanako-simple-player/routes/_fixture/cover.png'),
+      relative: f('docs/x.png'),
+      empty: f('')
+    };
+  });
+  assert('cover-src-proxies-hdslb',
+    /\/widget\/api\/music\/cover\?url=/.test(g.coverSrc.hdslb) &&
+    decodeURIComponent(g.coverSrc.hdslb.split('url=')[1]) === 'https://i1.hdslb.com/bfs/archive/rain.jpg' &&
+    /\/widget\/api\/music\/cover\?url=/.test(g.coverSrc.hdslbSub) &&
+    g.coverSrc.netease === 'https://p1.music.126.net/abc/x.jpg?param=200y200' &&
+    g.coverSrc.selfRoute === '/api/apps/hanako-simple-player/routes/_fixture/cover.png' &&
+    g.coverSrc.relative === 'docs/x.png' && g.coverSrc.empty === '',
+    JSON.stringify(g.coverSrc));
 
   /* ---- (h) 最近播放：连播 A→B→C → C,B,A；重播 A → A 到最前 ---- */
   await D(() => {

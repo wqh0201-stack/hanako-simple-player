@@ -1010,17 +1010,33 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
+  /* 封面源：B站图床（*.hdslb.com）有**防盗链** —— 只认空 Referer 或自家域名。
+   * 浏览器加载任何子资源都会自动带当前页 Referer，于是 B站封面全被 403
+   * （数据没丢，playlist.json 里 pic 有值，只是加载被拒）。
+   * 修法：B站图床改走本 App 的同源代理 /widget/api/music/cover（代理内部带
+   * bilibili Referer）；其余源（网易云等）原样返回，别多绕。
+   * ⚠️ 返回值**不带** surface session，由调用点既有 withSession() 统一贴（对照 msArtwork）。 */
+  function coverSrc(pic) {
+    var url = String(pic || '').trim();
+    if (!url) return '';
+    if (!/^https?:\/\//i.test(url)) return url;                     // 只代理 http(s) 绝对地址
+    if (url.indexOf(API + '/') === 0 || url.indexOf('/api/apps/') === 0) return url;   // 别双重代理
+    var host = '';
+    try { host = new URL(url, location.href).hostname; } catch (e) { return url; }
+    if (!/(^|\.)hdslb\.com$/i.test(host)) return url;             // 只拦 B站图床，网易云等原样
+    return API + '/widget/api/music/cover?url=' + encodeURIComponent(url);
+  }
   /* 封面：有 pic 就用在线封面，没有（或加载失败）就露兜底渐变 */
   function coverImage(url) {
-    return url ? 'url(' + JSON.stringify(withSession(url)) + '), var(--cover-fallback)' : 'var(--cover-fallback)';
+    return url ? 'url(' + JSON.stringify(withSession(coverSrc(url))) + '), var(--cover-fallback)' : 'var(--cover-fallback)';
   }
   /* 舞台封面专用：不叠兜底层 —— contain 的留白要让底下的环境色透出来，
    * 而不是盖一块纸（队列行的小封面仍用 coverImage，那里留白小、叠兜底更稳）。 */
   function coverStageImage(url) {
-    return url ? 'url(' + JSON.stringify(withSession(url)) + ')' : 'var(--cover-fallback)';
+    return url ? 'url(' + JSON.stringify(withSession(coverSrc(url))) + ')' : 'var(--cover-fallback)';
   }
   function coverUrlOnly(url) {
-    return url ? 'url(' + JSON.stringify(withSession(url)) + ')' : 'none';
+    return url ? 'url(' + JSON.stringify(withSession(coverSrc(url))) + ')' : 'none';
   }
 
   /* ============================================================
@@ -1239,9 +1255,11 @@
     if (!player.classList.contains('nocover')) player.setAttribute('data-ambient', themePolarity());
   }
 
-  /* 取色用小图：网易云封面支持 ?param=100y100（约 25KB），省流量也快 */
+  /* 取色用小图：网易云封面支持 ?param=100y100（约 25KB），省流量也快。
+   * B站图床走的是本 App 同源代理（coverSrc）—— 代理 URL 里没有 .music.126.net，
+   * 所以 param 不会被误加；同源后 getImageData 也必然不 taint。 */
   function ambientUrl(url) {
-    var u = withSession(url);
+    var u = withSession(coverSrc(url));
     if (/\.music\.126\.net/.test(u) && u.indexOf('param=') < 0) {
       u += (u.indexOf('?') > -1 ? '&' : '?') + 'param=100y100';
     }
@@ -1360,7 +1378,7 @@
       coverAR = 0;
       updateStageMetrics();
     };
-    img.src = withSession(pic);
+    img.src = withSession(coverSrc(pic));
   }
   function applyCovers() {
     var t = currentTrack();
@@ -4658,22 +4676,46 @@
     if (uid) moveTrackTo(uid, dst);
   });
 
-  /* 复制歌名（**只歌名**，不带歌手）。走 SDK 剪贴板；能力缺失/失败都 toast，不让 Promise 裸奔。 */
+  /* 手势内同步复制：Chromium 要求剪贴板写入**由用户手势直接触发**。
+   * hana.clipboard.writeText 是 iframe → postMessage → 宿主 renderer 的异步往返，
+   * 等宿主真执行时用户激活已过期，请求被拒（真机就是「复制失败」）。
+   * 所以同步优先：execCommand 必须在**任何 await 之前**跑，否则手势没了、它也失效。
+   * 返回 boolean（无头/真机返回不一定可靠 → 失败就退异步兜底）。
+   * ⚠️ 临时 textarea 用 position:absolute（沙箱禁 fixed）。 */
+  function copyTextSync(text) {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = String(text);
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:absolute;left:-9999px;top:0;opacity:0';   // 别用 position:fixed（沙箱禁）
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, ta.value.length);
+      var ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e) { return false; }
+  }
+
+  /* 复制歌名（**只歌名**，不带歌手）。
+   * ⚠️ 2026-10-11 复制改同步 execCommand 优先：同步成功即 return；失败才退异步兜底。
+   * 同步那一步必须钉在手势第一行 —— 用户激活是一次性的，任何前面的 await / DOM 操作
+   * 都可能吃掉它（将来在中间插一个 await，同一个 bug 会以更隐蔽的方式回来）。 */
   if ($('copyNameBtn')) $('copyNameBtn').addEventListener('click', function (e) {
     e.stopPropagation();
     var t = trackByUid(moreTargetUid);
-    var uid = moreTargetUid;
-    closePops();
     if (!t) return;
     var name = String(t.title || '').trim();
     if (!name) { toast('这首歌没有歌名'); return; }
+    /* ★ 同步复制最先跑（先于任何 DOM 操作），成功即收工。 */
+    if (copyTextSync(name)) { closePops(); toast('已复制歌名'); return; }
+    closePops();
     var clip = window.hana && window.hana.clipboard;
     if (!clip || typeof clip.writeText !== 'function') { toast('当前环境不支持复制'); return; }
     Promise.resolve(clip.writeText(name)).then(function () {
       toast('已复制歌名');
     }).catch(function () {
       toast('复制失败');
-      void uid;
     });
   });
 
@@ -5234,7 +5276,7 @@
       var on = isFav(pid);
       var thumb = String(p.pic || '').trim();
       var thumbStyle = thumb
-        ? ' style="--cover-image:url(&quot;' + esc(withSession(thumb)).replace(/"/g, '') + '&quot;);--cover-fallback:none"'
+        ? ' style="--cover-image:url(&quot;' + esc(withSession(coverSrc(thumb))).replace(/"/g, '') + '&quot;);--cover-fallback:none"'
         : '';
       h += '<li class="bili-prow">'
         + '<button class="bili-phit" type="button" data-bili-p="' + i + '" data-bili-row="' + idx + '" title="' + esc(String(p.title || '')) + '">'
@@ -5327,7 +5369,7 @@
       if (!cov || !r) continue;
       var pic = String(r.pic || '').trim();
       if (pic) {
-        cov.style.setProperty('--cover-image', 'url("' + withSession(pic).replace(/"/g, '') + '")');
+        cov.style.setProperty('--cover-image', 'url("' + withSession(coverSrc(pic)).replace(/"/g, '') + '")');
         cov.style.setProperty('--cover-fallback', 'none');
       } else {
         cov.style.removeProperty('--cover-image');
@@ -5446,7 +5488,7 @@
     if (!el) return;
     pic = String(pic || '').trim();
     if (pic) {
-      el.style.setProperty('--cover-image', 'url("' + withSession(pic).replace(/"/g, '') + '")');
+      el.style.setProperty('--cover-image', 'url("' + withSession(coverSrc(pic)).replace(/"/g, '') + '")');
       el.style.setProperty('--cover-fallback', 'none');
     } else {
       el.style.removeProperty('--cover-image');
@@ -6702,6 +6744,10 @@
         .map(function (t) { return { uid: t.uid, id: t.id, title: t.title }; });
     },
     resolveLinkTarget: resolveLinkTarget,
+    /* 封面源代理（测试用）：纯函数，验 B站图床转同源。 */
+    coverSrc: coverSrc,
+    /* 剪贴板同步复制（测试用）：纯函数（execCommand 由测试桩控制）。 */
+    copyTextSync: copyTextSync,
     moveTargetsFor: function (uid) {
       var t = trackByUid(uid);
       if (!t) return [];
