@@ -780,21 +780,32 @@
   var toastEl = $('toast');
   var audio = $('audio');
 
-  /* 沉浸工具层：只在鼠标离开整个可见视口后计 3 秒，窗内静止不隐藏。
-   * 原生 leave 的坐标可能仍在视口内或被归零，不能据此吞掉整个离开事件。
-   * ETE 顶部 40px 的宿主覆盖层交接单独保护，不把所有内部坐标都当宿主按钮。
-   * 公开 SDK 尚无原生窗口指针通知；覆盖按钮后直接出窗的边界需宿主真机验收。 */
+  /* 沉浸工具层：播放态自动隐藏底栏，任一交互立即唤回。两种承载里指针事件的可达性
+   * 不同，触发源因此分形态：
+   *  · 卡片（body[data-shell="card"]）：指针移出可见面能收到 pointerleave，沿用出窗判据，
+   *    窗内静止不隐藏。
+   *  · 独立窗口（body[data-shell="window"]）：iframe 铺满原生窗口，指针移出窗口时
+   *    pointerleave 不派发；改用「无指针活动」计时——移出后收不到事件本身就是静止证据。
+   *    代价：窗内静止不动超过阈值同样隐藏，与涟漪「不动则静」的语义一致。
+   * 公开 SDK 没有原生窗口指针进出通知；独立窗口的判据由此绕开那个缺口。 */
   var controls = $('controls');
   var immersivePointerInside = true;
   var immersivePointers = new Set();
   var immersiveKeyboard = false;
   var immersiveHideTimer = 0;
+  var immersiveIdleTimer = 0;
   var IMMERSIVE_HIDE_MS = 3000;
   var immersiveFullPlayer = new URLSearchParams(location.search).get('view') !== 'compact';
+  var immersiveShellWindow = !!(document.body && document.body.getAttribute('data-shell') === 'window');
   player.setAttribute('data-ete', immersiveFullPlayer ? '1' : '0');
 
   function searchIsVisible() {
     return !$('searchPage').hidden || player.classList.contains('is-s-leaving');
+  }
+  function immersiveCandidate() {
+    // 长卡下方是常驻队列与主题底栏；只在没有上下分区的播放形态启用底部沉浸。
+    return !player.classList.contains('nocover') && state.page === 'play' && !searchIsVisible() &&
+      immersiveFullPlayer && player.getAttribute('data-layout') !== 'long';
   }
   function immersiveIsBlocked() {
     var focused = document.activeElement;
@@ -812,12 +823,30 @@
     if (hidden) controls.setAttribute('aria-hidden', 'true');
     else controls.removeAttribute('aria-hidden');
   }
+  function immersiveArmIdle() {
+    if (!immersiveShellWindow) return;
+    clearTimeout(immersiveIdleTimer);
+    immersiveIdleTimer = setTimeout(function () {
+      immersiveIdleTimer = 0;
+      if (immersiveCandidate() && !immersiveIsBlocked() && !document.hidden &&
+          player.getAttribute('data-immersive') === '1') setControlsHidden(true);
+      else refreshImmersiveControls();
+    }, IMMERSIVE_HIDE_MS);
+  }
   function refreshImmersiveControls() {
-    var immersive = !player.classList.contains('nocover') && state.page === 'play' && !searchIsVisible();
-    // 长卡下方是常驻队列与主题底栏；只在没有上下分区的播放形态启用底部沉浸。
-    immersive = immersive && immersiveFullPlayer && player.getAttribute('data-layout') !== 'long';
+    var immersive = immersiveCandidate();
     var value = immersive ? '1' : '0';
     if (player.getAttribute('data-immersive') !== value) player.setAttribute('data-immersive', value);
+    if (immersiveShellWindow) {
+      // 独立窗口：隐藏交给空闲计时；这里只在「不该隐藏」时显示并停表。
+      if (!immersive || immersiveIsBlocked() || document.hidden) {
+        clearTimeout(immersiveIdleTimer); immersiveIdleTimer = 0;
+        setControlsHidden(false);
+        return;
+      }
+      immersiveArmIdle();
+      return;
+    }
     if (!immersive || immersivePointerInside || immersiveIsBlocked() || document.hidden) {
       clearTimeout(immersiveHideTimer); immersiveHideTimer = 0;
       setControlsHidden(false);
@@ -834,38 +863,52 @@
   function wakeImmersiveControls() {
     clearTimeout(immersiveHideTimer); immersiveHideTimer = 0;
     setControlsHidden(false);
+    immersiveArmIdle();
   }
   function pointerInViewport(e) {
     return e.clientX >= 0 && e.clientY >= 0 && e.clientX < innerWidth && e.clientY < innerHeight;
   }
-  document.documentElement.addEventListener('pointerenter', function () {
-    immersivePointerInside = true; wakeImmersiveControls();
-  });
-  document.documentElement.addEventListener('pointerleave', function (e) {
-    // 只有顶部的有效坐标可能是宿主 Chrome。全零事件没有可用位置，按 leave 处理。
-    var hasPosition = e.clientX !== 0 || e.clientY !== 0;
-    if (hasPosition && pointerInViewport(e) && e.clientY < 40) return;
-    immersivePointerInside = false; refreshImmersiveControls();
-  });
-  document.addEventListener('pointermove', function (e) {
-    var inside = pointerInViewport(e);
-    // 鼠标回到内容区后结束旧的键盘操作保护，否则按钮残留焦点会永久挡住出窗计时。
-    var keyboardEnded = inside && immersiveKeyboard;
-    if (inside) immersiveKeyboard = false;
-    if (inside === immersivePointerInside && !keyboardEnded) return;
-    immersivePointerInside = inside;
-    if (inside) wakeImmersiveControls(); else refreshImmersiveControls();
-  }, { passive: true });
-  document.addEventListener('pointerdown', function (e) {
-    immersiveKeyboard = false;
-    immersivePointerInside = pointerInViewport(e);
-    immersivePointers.add(e.pointerId);
-    wakeImmersiveControls();
-  }, true);
+  if (immersiveShellWindow) {
+    /* 独立窗口：指针一旦不再产生活动，就视同已经离开窗口。 */
+    document.addEventListener('pointermove', function () {
+      immersiveKeyboard = false; wakeImmersiveControls();
+    }, { passive: true });
+    document.addEventListener('pointerdown', function (e) {
+      immersiveKeyboard = false;
+      immersivePointers.add(e.pointerId);
+      wakeImmersiveControls();
+    }, true);
+  } else {
+    /* 卡片：判「指针是否离开本可见面」。 */
+    document.documentElement.addEventListener('pointerenter', function () {
+      immersivePointerInside = true; wakeImmersiveControls();
+    });
+    document.documentElement.addEventListener('pointerleave', function (e) {
+      // 只有顶部的有效坐标可能是宿主 Chrome。全零事件没有可用位置，按 leave 处理。
+      var hasPosition = e.clientX !== 0 || e.clientY !== 0;
+      if (hasPosition && pointerInViewport(e) && e.clientY < 40) return;
+      immersivePointerInside = false; refreshImmersiveControls();
+    });
+    document.addEventListener('pointermove', function (e) {
+      var inside = pointerInViewport(e);
+      // 鼠标回到内容区后结束旧的键盘操作保护，否则按钮残留焦点会永久挡住出窗计时。
+      var keyboardEnded = inside && immersiveKeyboard;
+      if (inside) immersiveKeyboard = false;
+      if (inside === immersivePointerInside && !keyboardEnded) return;
+      immersivePointerInside = inside;
+      if (inside) wakeImmersiveControls(); else refreshImmersiveControls();
+    }, { passive: true });
+    document.addEventListener('pointerdown', function (e) {
+      immersiveKeyboard = false;
+      immersivePointerInside = pointerInViewport(e);
+      immersivePointers.add(e.pointerId);
+      wakeImmersiveControls();
+    }, true);
+  }
   function endImmersivePointer(e) {
     immersivePointers.delete(e.pointerId);
-    immersivePointerInside = pointerInViewport(e);
-    refreshImmersiveControls();
+    if (immersiveShellWindow) wakeImmersiveControls();
+    else { immersivePointerInside = pointerInViewport(e); refreshImmersiveControls(); }
   }
   document.addEventListener('pointerup', endImmersivePointer);
   document.addEventListener('pointercancel', endImmersivePointer);
@@ -881,7 +924,7 @@
     refreshImmersiveControls();
   });
   document.addEventListener('visibilitychange', refreshImmersiveControls);
-  window.addEventListener('pagehide', function () { clearTimeout(immersiveHideTimer); });
+  window.addEventListener('pagehide', function () { clearTimeout(immersiveHideTimer); clearTimeout(immersiveIdleTimer); });
   // 菜单、歌词校准、音量浮层都有既有显隐入口。仅观察其状态，不另改业务生命周期。
   var immersiveObserver = new MutationObserver(refreshImmersiveControls);
   immersiveObserver.observe(player, {

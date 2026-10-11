@@ -3729,6 +3729,72 @@ let lifecycle = {};
   await page.close();
 }
 
+/* ============ ETE·独立窗口：无指针活动计时（不依赖 pointerleave） ============
+ * 独立窗口（standalone.html / body[data-shell="window"]）里 iframe 铺满原生窗口，
+ * 指针移出窗口时 pointerleave 不派发；判据改为「无指针活动」。本块专门覆盖这条分支，
+ * 确保不靠 pointerleave 也能隐藏，且仅凭一次 pointermove 立刻唤回。 */
+{
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+  const page = await newPage();
+  await page.evaluateOnNewDocument(() => {
+    const schedule = window.setTimeout, cancel = window.clearTimeout;
+    const clock = window.__eteClock = { fast: false, pending: new Map(), next: -1, requests: [] };
+    window.setTimeout = function (fn, delay, ...args) {
+      if (!clock.fast || delay !== 3000) return schedule(fn, delay, ...args);
+      const id = clock.next--;
+      clock.requests.push(delay);
+      clock.pending.set(id, () => fn(...args));
+      return id;
+    };
+    window.clearTimeout = function (id) { if (id < 0) clock.pending.delete(id); else cancel(id); };
+    window.__eteTick = () => { const jobs = [...clock.pending.values()]; clock.pending.clear(); jobs.forEach((fn) => fn()); };
+  });
+  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
+  await page.goto(`${BASE}/standalone.html?assert=1&shot=1&appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.evaluate((t) => window.__fixtureTheme(t), 'light');
+  await clickTab(page, 'imp:1');
+  const wPlayRow = async (i) => {
+    await page.evaluate((idx) => document.querySelectorAll('#queueList .q-row')[idx].querySelector('.q-hit').click(), i);
+    await sleep(500);
+    await page.evaluate(() => { document.getElementById('audio').loop = true; });
+  };
+  const wProbe = () => page.evaluate(() => {
+    const p = document.getElementById('player'), c = document.getElementById('controls');
+    return { immersive: p.dataset.immersive, hidden: p.dataset.controlsHidden, inert: c.inert,
+      shell: document.body.getAttribute('data-shell'), pending: window.__eteClock.pending.size };
+  });
+  const wMove = (x, y) => page.evaluate(([mx, my]) => document.getElementById('player').dispatchEvent(new PointerEvent('pointermove',
+    { bubbles: true, pointerId: 9, pointerType: 'mouse', clientX: mx, clientY: my })), [x, y]);
+  const wTick = async () => { await page.evaluate(() => window.__eteTick()); await sleep(230); };
+
+  await wPlayRow(0);
+  assert('ete-window-shell-uses-idle-judgement', (await wProbe()).shell === 'window');
+  await page.evaluate(() => { window.__eteClock.fast = true; });
+  // 一次指针活动即排一个空闲倒计时；推进后隐藏。
+  await wMove(300, 400);
+  assert('ete-window-pointer-activity-arms-idle-deadline', (await wProbe()).pending === 1 && (await wProbe()).hidden === '0');
+  await wTick();
+  assert('ete-window-idle-hides-controls-without-leave', (await wProbe()).hidden === '1' && (await wProbe()).inert);
+  // 仅仅一次 pointermove（模拟鼠标移回窗口）就立刻唤回。
+  await wMove(320, 420);
+  assert('ete-window-pointer-move-wakes-immediately', (await wProbe()).hidden === '0' && !(await wProbe()).inert);
+  // 窗内静止不再豁免：维持不动，下一个空闲倒计时照常隐藏（与卡片分支相反）。
+  await wTick();
+  assert('ete-window-stationary-inside-still-hides', (await wProbe()).hidden === '1' && (await wProbe()).inert);
+  // 按住不放松（如拖进度）不得隐藏。
+  await wMove(300, 400); await wTick();
+  await page.evaluate(() => document.getElementById('player').dispatchEvent(new PointerEvent('pointerdown',
+    { bubbles: true, pointerId: 11, pointerType: 'mouse', clientX: 300, clientY: 400 })));
+  await wTick();
+  assert('ete-window-pointer-down-guards-idle', (await wProbe()).hidden === '0');
+  await page.evaluate(() => document.getElementById('player').dispatchEvent(new PointerEvent('pointerup',
+    { bubbles: true, pointerId: 11, pointerType: 'mouse', clientX: 300, clientY: 400 })));
+  await wTick();
+  assert('ete-window-pointer-up-restarts-idle', (await wProbe()).hidden === '1' && (await wProbe()).inert);
+  report.eteWindow = { shell: 'window' };
+  await page.close();
+}
+
 await browser.close();
 server.closeAllConnections();
 server.close();
