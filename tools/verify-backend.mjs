@@ -12,6 +12,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { registerRoutes } from '../lib/register-routes.js';
+import { parseBiliInput } from '../lib/bilibili.js';
 
 const routes = [];
 const app = {
@@ -84,6 +85,26 @@ const netFetch = async (url) => {
       })
     };
   }
+  // B站 view（视频元信息）：bili-resolve 走这条。
+  //   aid 或 BV1CAxaeHEeH → 多P（149 集，验证点名分P与合成 id）；其余 → 单P。
+  if (url.includes('api.bilibili.com') && url.includes('/web-interface/view')) {
+    if (/[?&]aid=\d+/.test(url) || url.includes('BV1CAxaeHEeH')) {
+      const pages = Array.from({ length: 149 }, (_, i) => ({ cid: 26000000000 + i, page: i + 1, part: `第 ${i + 1} 讲`, duration: 600 + i }));
+      return {
+        ok: true,
+        json: async () => ({ code: 0, data: { bvid: 'BV1CAxaeHEeH', aid: 233268574, videos: 149, cid: pages[0].cid,
+          title: '《高等数学》全程教学视频 2.0版【宋浩老师】', owner: { name: '宋浩老师官方' }, pic: '//i2.hdslb.com/bfs/archive/abc.jpg',
+          duration: 2076, pages } })
+      };
+    }
+    return {
+      ok: true,
+      json: async () => ({ code: 0, data: { bvid: 'BV118411B7XU', aid: 233268574, videos: 1, cid: 1262792384,
+        title: '在百万豪装录音棚大声听 杨丞琳《雨爱》【Hi-res】', owner: { name: 'JLRS-LeoFM' },
+        pic: '//i1.hdslb.com/bfs/archive/rain.jpg', duration: 263,
+        pages: [{ cid: 1262792384, page: 1, part: '在百万豪装录音棚大声听 杨丞琳《雨爱》【Hi-res】', duration: 263 }] } })
+    };
+  }
   // 其余（Meting 节点）：回一个最小可用的曲目数组（url 带 id，好让 metingStableId 能取到）
   return { ok: true, json: async () => ([{ id: '1', title: 't', author: 'a', url: 'http://node/1?server=tencent&type=url&id=1', pic: '', lrc: '' }]) };
 };
@@ -100,6 +121,7 @@ const POST_PLAYLIST = handler('POST', '/widget/api/playlist');
 const GET_PLAYLIST = handler('GET', '/widget/api/music/playlist');
 const GET_SEARCH = handler('GET', '/widget/api/music/search');
 const GET_BILI_PARTS = handler('GET', '/widget/api/music/bili-parts');
+const GET_BILI_RESOLVE = handler('GET', '/widget/api/music/bili-resolve');
 const DELETE_TRACK = handler('DELETE', '/api/track');
 const GET_PLAYBACK = handler('GET', '/api/playback-state');
 const POST_PLAYBACK = handler('POST', '/api/playback-state');
@@ -267,6 +289,78 @@ check('bili-parts-endpoint',
 /* 16) 非法 bvid 被拒（防把任意字符串透传给 B站） */
 let badParts = await GET_BILI_PARTS(fakeC({ query: { bvid: '../etc' } }));
 check('bili-parts-reject-invalid', badParts.status === 400, JSON.stringify(badParts));
+
+/* 17) 粘贴 B站链接 → 曲目（bili-resolve）。模拟罐头分享的那段原文：
+ *     「【标题】 https://…video/BV…/?share_source=copy_web&vd_source=<40位hex>」。
+ *     断言：抠出 BV、形状与搜索结果一条曲目一致、url 走 go 跳板、单 P 落裸 bvid。 */
+netCalls = [];
+const BILI_SHARE_TEXT = '【在百万豪装录音棚大声听 杨丞琳《雨爱》【Hi-res】】 https://www.bilibili.com/video/BV118411B7XU/?share_source=copy_web&vd_source=fe48fd0e530457bfa813705dfcc26a93';
+let brRes = await GET_BILI_RESOLVE(fakeC({ query: { url: BILI_SHARE_TEXT } }));
+check('bili-resolve-shape',
+  brRes.body.ok === true && brRes.body.track &&
+  brRes.body.track.id === 'bilibili:BV118411B7XU' &&
+  brRes.body.track.title === '在百万豪装录音棚大声听 杨丞琳《雨爱》【Hi-res】' &&
+  brRes.body.track.author === 'JLRS-LeoFM' &&
+  brRes.body.track.pic === 'https://i1.hdslb.com/bfs/archive/rain.jpg' &&   // //→https、http→https
+  brRes.body.track.dur === 263 &&
+  brRes.body.track.url.indexOf('music/go/BV118411B7XU') >= 0 &&
+  brRes.body.multi === false && brRes.body.parts === 1,
+  JSON.stringify(brRes.body));
+check('bili-resolve-share-text-endpoint',
+  netCalls.some((u) => u.includes('/web-interface/view') && u.includes('bvid=BV118411B7XU')),
+  JSON.stringify(netCalls));
+
+/* 18) 裸 BV 号（不用完整链接）同样能认 */
+brRes = await GET_BILI_RESOLVE(fakeC({ query: { url: 'BV118411B7XU' } }));
+check('bili-resolve-bare-bv',
+  brRes.body.ok === true && brRes.body.track && brRes.body.track.id === 'bilibili:BV118411B7XU',
+  JSON.stringify(brRes.body));
+
+/* 19) av 号（走 aid 查询）+ 多 P：默认拿 P1。
+ *     裸 bvid ≡ P1，所以默认落裸 bvid（与搜索页那条同 id，不会生成重复副本）。 */
+brRes = await GET_BILI_RESOLVE(fakeC({ query: { url: 'av233268574' } }));
+check('bili-resolve-av',
+  brRes.body.ok === true && brRes.body.track && brRes.body.track.id === 'bilibili:BV1CAxaeHEeH' &&
+  brRes.body.multi === true && brRes.body.parts === 149,
+  JSON.stringify({ id: brRes.body.track && brRes.body.track.id, multi: brRes.body.multi, parts: brRes.body.parts, netCalls }));
+
+/* 20) 分P链接（?p=6）：标题取第 6 讲的 part，id 落 `bvid_cid`（否则 149 集会塔成 1 条） */
+brRes = await GET_BILI_RESOLVE(fakeC({ query: { url: 'https://www.bilibili.com/video/BV1CAxaeHEeH?p=6' } }));
+check('bili-resolve-multi-pick',
+  brRes.body.ok === true && brRes.body.track &&
+  brRes.body.track.id === 'bilibili:BV1CAxaeHEeH_26000000005' &&
+  brRes.body.track.title === '第 6 讲' &&
+  brRes.body.track.page === 6 && brRes.body.parts === 149,
+  JSON.stringify(brRes.body.track));
+
+/* 21) 认不出的文本：400 且提示可读（不把没有 BV 的串透传给 B站） */
+netCalls = [];
+let badResolve = await GET_BILI_RESOLVE(fakeC({ query: { url: '随便一段没有 BV 号的文字' } }));
+check('bili-resolve-reject-unknown',
+  badResolve.status === 400 && /BV/.test(badResolve.body.error) &&
+  !netCalls.some((u) => u.includes('api.bilibili.com')),
+  JSON.stringify({ res: badResolve, netCalls }));
+
+/* 22) b23.tv 短链本轮不支持：给可行动提示，且**不发起网络请求**（b23.tv 没在白名单）。
+ *     真实的 b23 短链是 base62 随机段，**不带 BV**，所以本地认不出。 */
+netCalls = [];
+let shortRes = await GET_BILI_RESOLVE(fakeC({ query: { url: 'https://b23.tv/2JdKxY9' } }));
+check('bili-resolve-b23-explicit-hint',
+  shortRes.status === 400 && /b23\.tv/.test(shortRes.body.error) &&
+  !netCalls.some((u) => u.includes('api.bilibili.com')),
+  JSON.stringify({ res: shortRes, netCalls }));
+
+/* 23) parseBiliInput 纯函数边界（不联网）：完整链接 / 裸号 / 文案夹取 / p=N */
+const pb = parseBiliInput;
+check('parse-bili-input-boundaries',
+  pb('https://www.bilibili.com/video/BV118411B7XU/?t=1').bvid === 'BV118411B7XU' &&
+  pb('【标题】 BV118411B7XU 分享给你').bvid === 'BV118411B7XU' &&
+  pb('av123456').aid === 123456 && pb('av123456').bvid === '' &&
+  pb('https://www.bilibili.com/video/BV1CAxaeHEeH?p=3').page === 3 &&
+  pb('BV118411B7XU') !== null && pb('') === null &&
+  pb('这是一段普通文字') === null &&
+  pb('aabbccddeeff1122334455667788') === null,   // 40 位 hex 不得被误当 BV
+  JSON.stringify([pb('BV118411B7XU'), pb('av123456'), pb('普通文字')]));
 
 fs.rmSync(dataDir, { recursive: true, force: true });
 

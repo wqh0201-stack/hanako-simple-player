@@ -98,6 +98,7 @@
     radios: API + '/widget/api/music/radios',
     radioPrograms: API + '/widget/api/music/radio-programs',
     biliParts: API + '/widget/api/music/bili-parts',
+    biliResolve: API + '/widget/api/music/bili-resolve',
     importFile: API + '/widget/api/import-file',
     scanFolder: API + '/widget/api/scan-folder',
     playbackState: API + '/api/playback-state'
@@ -4571,12 +4572,64 @@
     return id;
   }
 
-  /* 在线链接导入：单曲 / 歌单
+  /* 链接分流：只做**路由**（该走哪条导入路），不做解析权威。
+   * B站的抠号（BV / av / 整段文案 / ?p=N）全在后端 parseBiliInput —— 前端不重复实现，
+   * 避免两处口径漂移；这里只判「像不像 B站」以及「有没有数字 id」。
+   *
+   * 为什么 bili 排在 num 前面：B站链接会夹 `vd_source=<40位hex>` 这类参数，
+   * 先判 B站能避免误伤；而裸数字与 BV/av 互不重叠，无歧义。
+   * 返回 'bili' | 'num' | 'unknown'。 */
+  function detectLinkKind(v) {
+    var s = String(v || '').trim();
+    if (!s) return 'unknown';
+    if (/bilibili\.com|b23\.tv/i.test(s)) return 'bili';
+    if (/(?:^|[^0-9A-Za-z])[Bb][Vv][0-9A-Za-z]{10}(?![0-9A-Za-z])/.test(s)) return 'bili';
+    if (/(?:^|[^0-9A-Za-z])[Aa][Vv]\d{1,12}(?![0-9A-Za-z])/.test(s)) return 'bili';
+    if (/[?&]id=\d+/.test(s) || /^\d+$/.test(s)) return 'num';
+    return 'unknown';
+  }
+
+  /* B站链接导入（「添加曲目」面板的链接框）：整段原文丢给后端 bili-resolve，
+   * 后端回一条与搜索结果同形的曲目，这里只负责落列表。
+   * 落点沿用单曲口径：归入当前激活列表（当前是本地列表时新建/复用「单曲」导入列表）。 */
+  function importBiliLink(raw) {
+    setNote('正在解析…');
+    apiGetJson(ENDPOINT.biliResolve + '?url=' + encodeURIComponent(raw)).then(function (res) {
+      if (!res.ok || !res.body || !res.body.ok || !res.body.track) {
+        setNote('解析失败：' + ((res.body && res.body.error) || res.status));
+        return;
+      }
+      var b = res.body;
+      /* ⚠️ 必须显式补 mode/group：normalizeTrack 在无 mode/group 时把曲目当「本地」——
+       *  ① 来源标错；② 跨源歌词兜底的 `t.mode !== '在线'` 守卫会把 B站曲目直接跳过。 */
+      var item = Object.assign({}, b.track, { mode: '在线', group: '在线音乐' });
+      var added = mergeTracks([item], resolveImportTarget('单曲'));
+      var multi = !!b.multi && Number(b.parts) > 1;
+      afterImport(added, 'B站视频');
+      if (multi) {
+        // 多 P 只声明事实，不在这里长出展开树：整条合集导入归搜索页（那边有分P上下文）。
+        setNote('该视频共 ' + b.parts + ' 集，已加入第 ' + (item.page || 1) + ' 集');
+      } else {
+        setNote('已加入：' + (item.title || 'B站视频'));
+      }
+      var input = $('linkInput');
+      if (input) input.value = '';
+    }).catch(function () { setNote('解析失败：网络错误'); });
+  }
+
+  /* 在线链接导入：单曲 / 歌单 / B站视频
    *  · 歌单 → 新建一个导入列表（按导入顺序编号，名「歌单 N」，可重命名），并切过去
-   *  · 单曲 → 归入当前激活列表；当前是本地列表时新建/复用名为「单曲」的导入列表 */
+   *  · 单曲 → 归入当前激活列表；当前是本地列表时新建/复用名为「单曲」的导入列表
+   *  · B站 → 先分流给 bili-resolve（它认链接/裸 BV 号/av 号/整段分享文案） */
   function importLink(raw) {
     var v = String(raw || '').trim();
     if (!v) { setNote('请先粘贴链接'); return; }
+    var kind = detectLinkKind(v);
+    if (kind === 'bili') { importBiliLink(v); return; }
+    if (kind === 'unknown') {
+      setNote('认不出这个链接：支持网易云歌曲 / 歌单，或 B站视频链接 / BV 号');
+      return;
+    }
     var isPlaylist = /playlist|toplist|album|discover\/toplist/i.test(v) || /\/album\?/.test(v);
     var idm = /[?&]id=(\d+)/.exec(v);
     var id = idm ? idm[1] : (/^\d+$/.test(v) ? v : '');
@@ -6452,6 +6505,15 @@
     closeLyricAlign: closeLyricAlign,
     /* 搜索页（测试用）：不依赖真实网络，直接喂结果验证渲染/落库。 */
     openSearch: openSearch,
+    /* 链接分流（测试用）：纯函数，不依赖网络。 */
+    detectLinkKind: detectLinkKind,
+    importLink: importLink,
+    /* 曲目读数（测试用）：按 uid 取归一后的 mode/source/来源行文本，验「B站曲目落成在线」。 */
+    kindOf: function (uid) {
+      var t = trackByUid(uid);
+      if (!t) return null;
+      return { mode: t.mode, source: t.source, metaText: metaLine(t), title: t.title, id: t.id };
+    },
     closeSearch: closeSearch,
     renderResults: function (list) { searchSeq++; searchBusy = false; searchPaginated = false; searchTotal = (list || []).length; searchLoadingMore = false; setDiscoverVisible(false); searchResults = list || []; renderSearchResults(); },
     /* 翻页（测试用）：真走 doSearch / loadMoreSearch 的控制流，只是不依赖键盘与滚动事件。 */

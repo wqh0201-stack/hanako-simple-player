@@ -178,6 +178,8 @@ let persistedPlaylist = null;
 let playbackState = null;
 /* 搜索请求计数（测歌手补齐的次数 / 幂等） */
 let searchHits = 0;
+/* bili-resolve 请求计数：守「认不出的输入不发无谓请求」 */
+let biliResolveHits = 0;
 /* 歌单真名夹具：导入歌单时假后端附带 meta.name（模拟后端问网易云官方接口） */
 const PLAYLIST_META = { name: 'Can_0201喜欢的音乐', creator: 'Can_0201', cover: '', trackCount: 905 };
 
@@ -289,6 +291,26 @@ const server = http.createServer((req, res) => {
   if (p === API + '/widget/api/music/song') {
     const id = u.searchParams.get('id') || '0';
     return json(res, 200, { ok: true, track: { id: `netease:${id}`, title: `在线单曲 ${id}`, author: '测试歌手', url: goUrl(id), pic: '', lrc: '' }, host: 'mock' });
+  }
+  /* 粘贴 B站链接导入（bili-resolve）：回一条与搜索结果同形的曲目 + parts/multi。
+     与真实后端同口径：按**正文内容**判（真实后端看链接里的 ?p=N / view 的 pages）。
+     正文含「多P」→ 回多 P（149 集），否则单 P。 */
+  if (p === API + '/widget/api/music/bili-resolve') {
+    biliResolveHits++;
+    const raw = u.searchParams.get('url') || '';
+    const multi = raw.indexOf('多P') >= 0 || /[?&]p=\d/.test(raw);
+    const trackId = multi ? 'BV1CAxaeHEeH_26000000005' : 'BV118411B7XU';
+    const track = {
+      id: `bilibili:${trackId}`,
+      title: multi ? '第 6 讲' : '在百万豪装录音棚大声听 杨丞琳《雨爱》【Hi-res】',
+      author: multi ? '宋浩老师官方' : 'JLRS-LeoFM',
+      pic: `${API}/_fixture/cover.png`,
+      dur: multi ? 615 : 263,
+      page: multi ? 6 : 1,
+      cid: multi ? 26000000005 : 1262792384,
+      url: `${API}/widget/api/music/go/${trackId}?server=bilibili`,
+    };
+    return json(res, 200, { ok: true, track, parts: multi ? 149 : 1, multi, bvid: multi ? 'BV1CAxaeHEeH' : 'BV118411B7XU', host: 'mock' });
   }
   if (p === API + '/_fixture/cover.png') {
     res.setHeader('content-type', 'image/png');
@@ -2712,6 +2734,125 @@ const rippleTool = {};
     s.biliImport.tabs === s.biliBefore + 1 && s.biliImport.queueRows === 12 &&
     s.biliImport.firstQueue === '分集曲 1',
     JSON.stringify(s.biliImport));
+
+  /* ── 粘贴 B站链接导入（罐头需求：「添加曲目」面板里粘贴 B站分享链接）──
+   * 前情：importLink 写死了 `[?&]id=(\d+)`（只认数字 id），B站链接丢进去走到
+   * 「无法从链接里识别歌曲 / 歌单 id」—— 本组断言锁死新分流不再犯。 */
+  await page.evaluate(() => window.__playerDebug.closeSearch());
+  await sleep(300);
+  // 先打开「添加曲目」面板（导入入口），模拟 UI 路径而不是直接调函数
+  await page.evaluate(() => document.getElementById('importBtn').click());
+  await sleep(200);
+  s.linkKind = await page.evaluate(() => {
+    const D = window.__playerDebug;
+    return {
+      shareText: D.detectLinkKind('【在百万豪装录音棚大声听 杨丞琳《雨爱》【Hi-res】】 https://www.bilibili.com/video/BV118411B7XU/?share_source=copy_web&vd_source=fe48fd0e530457bfa813705dfcc26a93'),
+      bareBv: D.detectLinkKind('BV118411B7XU'),
+      avNum: D.detectLinkKind('av233268574'),
+      netease: D.detectLinkKind('https://music.163.com/#/song?id=1234567'),
+      plainNum: D.detectLinkKind('1234567'),
+      junk: D.detectLinkKind('随便一段文字')   // 40 位 vd_source 不得被当 BV
+    };
+  });
+  assert('import-link-kind-routing',
+    s.linkKind.shareText === 'bili' && s.linkKind.bareBv === 'bili' && s.linkKind.avNum === 'bili' &&
+    s.linkKind.netease === 'num' && s.linkKind.plainNum === 'num' && s.linkKind.junk === 'unknown',
+    JSON.stringify(s.linkKind));
+
+  // 罐头那条原文（整段分享文案）丢进去 → 真的落成一条在线曲目
+  const beforeBili = await page.evaluate(() => document.querySelectorAll('#queueList .q-row').length);
+  const beforeResolveHits = biliResolveHits;
+  await page.evaluate(() => {
+    const inp = document.getElementById('linkInput');
+    inp.value = '【在百万豪装录音棚大声听 杨丞琳《雨爱》【Hi-res】】 https://www.bilibili.com/video/BV118411B7XU/?share_source=copy_web&vd_source=fe48fd0e530457bfa813705dfcc26a93';
+    document.getElementById('linkAddBtn').click();
+  });
+  await page.waitForFunction((n) => document.querySelectorAll('#queueList .q-row').length > n, { timeout: 4000, polling: 50 }, beforeBili).catch(() => {});
+  s.biliPaste = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll('#queueList .q-row')];
+    const hit = rows.find((r) => (r.querySelector('.q-title') || {}).textContent.indexOf('雨爱') >= 0);
+    return {
+      added: rows.length,
+      title: hit ? hit.querySelector('.q-title').textContent : '',
+      artist: hit ? (hit.querySelector('.q-artist') || {}).textContent : '',
+      note: document.getElementById('importNote').textContent,
+      inputCleared: document.getElementById('linkInput').value === ''
+    };
+  });
+  assert('import-link-bili-paste-adds-track',
+    s.biliPaste.added === beforeBili + 1 && s.biliPaste.title.indexOf('雨爱') >= 0 &&
+    s.biliPaste.artist === 'JLRS-LeoFM' && s.biliPaste.inputCleared === true &&
+    /已加入/.test(s.biliPaste.note) && biliResolveHits === beforeResolveHits + 1,
+    JSON.stringify({ ...s.biliPaste, beforeBili, resolveHits: biliResolveHits - beforeResolveHits }));
+  /* 来源/歌词兜底的根：B站曲目必须落成「在线」。
+     normalizeTrack 在无 mode/group 时把曲目判本地 → ① 来源标错；
+     ② 跨源歌词兜底的 `t.mode !== '在线'` 守卫会直接跳过 B站曲目。 */
+  s.biliMode = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll('#queueList .q-row')];
+    const hit = rows.find((r) => (r.querySelector('.q-title') || {}).textContent.indexOf('雨爱') >= 0);
+    if (!hit) return { found: false };
+    const uid = hit.getAttribute('data-uid');
+    const t = window.__playerDebug.kindOf(uid);
+    return { found: true, mode: t && t.mode, source: t && t.source, meta: t && t.metaText };
+  });
+  assert('import-link-bili-marks-online',
+    s.biliMode.found === true && s.biliMode.mode === '在线' && s.biliMode.source === 'online' &&
+    /来源/.test(String(s.biliMode.meta)),
+    JSON.stringify(s.biliMode));
+
+  // 多 P 视频：提示「共 N 集」，且已加入第几集（不是直接开分P树）
+  await page.evaluate(() => document.getElementById('importBtn').click());
+  await sleep(150);
+  await page.evaluate(() => {
+    document.getElementById('linkInput').value = 'https://www.bilibili.com/video/BV1CAxaeHEeH?p=6';
+    document.getElementById('linkAddBtn').click();
+  });
+  await page.waitForFunction(() => /共 .* 集/.test(document.getElementById('importNote').textContent), { timeout: 4000, polling: 50 }).catch(() => {});
+  s.biliMulti = await page.evaluate(() => ({
+    note: document.getElementById('importNote').textContent,
+    hasPartsTree: !!document.querySelector('#queueList .bili-plist'),
+    titles: [...document.querySelectorAll('#queueList .q-title')].map((e) => e.textContent)
+  }));
+  assert('import-link-bili-multi-note',
+    /共 149 集/.test(s.biliMulti.note) && /第 6 集/.test(s.biliMulti.note) &&
+    s.biliMulti.hasPartsTree === false &&
+    s.biliMulti.titles.indexOf('第 6 讲') >= 0,
+    JSON.stringify(s.biliMulti));
+
+  // 认不出的输入：给可读提示，且**不发无谓请求**（守「先判后发」）
+  await page.evaluate(() => document.getElementById('importBtn').click());
+  await sleep(150);
+  const beforeJunkResolve = biliResolveHits;
+  await page.evaluate(() => {
+    document.getElementById('linkInput').value = '随便一段没有链接的文字';
+    document.getElementById('linkAddBtn').click();
+  });
+  await sleep(300);
+  s.biliJunk = await page.evaluate(() => ({ note: document.getElementById('importNote').textContent }));
+  assert('import-link-unknown-note-no-request',
+    /认不出/.test(s.biliJunk.note) && biliResolveHits === beforeJunkResolve,
+    JSON.stringify({ note: s.biliJunk.note, delta: biliResolveHits - beforeJunkResolve }));
+
+  // 网易云老路不被破：数字 id 仍走 song / playlist（分流不得误伤）
+  await page.evaluate(() => document.getElementById('importBtn').click());
+  await sleep(150);
+  const beforeNumRows = await page.evaluate(() => document.querySelectorAll('#queueList .q-row').length);
+  const beforeNumResolve = biliResolveHits;
+  await page.evaluate(() => {
+    document.getElementById('linkInput').value = 'https://music.163.com/#/song?id=1234567';
+    document.getElementById('linkAddBtn').click();
+  });
+  await page.waitForFunction((n) => document.querySelectorAll('#queueList .q-row').length > n, { timeout: 4000, polling: 50 }, beforeNumRows).catch(() => {});
+  s.numStill = await page.evaluate(() => ({
+    rows: document.querySelectorAll('#queueList .q-row').length,
+    hasOnlineSingle: [...document.querySelectorAll('#queueList .q-title')].some((e) => /在线单曲/.test(e.textContent))
+  }));
+  assert('import-link-netease-still-works',
+    s.numStill.rows === beforeNumRows + 1 && s.numStill.hasOnlineSingle === true &&
+    biliResolveHits === beforeNumResolve,
+    JSON.stringify({ ...s.numStill, resolveDelta: biliResolveHits - beforeNumResolve }));
+  await page.evaluate(() => document.querySelector('#queueList .q-hit') && document.getElementById('importBtn').click());
+  await sleep(150);
 
   /* 长标题回归守（罐头真机抓到：「超长标题把行尾红心挤到下一行、行变高」）。
    * 根因：.search-hit 用 flex:1 1 auto（basis 取 max-content），而 .search-row 是 flex-wrap，
