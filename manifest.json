@@ -1,9 +1,9 @@
 {
   "manifestVersion": 2,
-  "id": "hanako-audio-player",
-  "name": "音频播放器",
+  "id": "hanako-simple-player",
+  "name": "小花音乐播放器",
   "version": "0.8.0",
-  "description": "音频播放器：本地音乐与在线音乐播放，含歌词横幅、配色主题、音频反应与背景动效。从 v1 插件迁移而来。",
+  "description": "小花音乐播放器（极简重构版）：本地音乐与在线音乐播放，含歌词横幅、环境色背景、歌词/频谱两态与指针涟漪。基于上游 openhanako-labs/openhanako-audio-player 的极简重构 fork。",
   "minAppVersion": "0.946.2",
   "entry": "index.js",
   "icon": "assets/icon.png",
@@ -40,7 +40,7 @@
     "cards": [
       {
         "id": "player",
-        "title": "音频播放器",
+        "title": "小花音乐播放器",
         "description": "播放当前曲目、查看队列与歌词。",
         "route": "/index.html",
         "face": {

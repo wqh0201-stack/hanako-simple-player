@@ -1,5 +1,5 @@
 {
-  "name": "hanako-audio-player",
+  "name": "hanako-simple-player",
   "version": "0.8.0",
   "private": true,
   "type": "module"

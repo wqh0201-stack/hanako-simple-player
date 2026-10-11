@@ -26,7 +26,7 @@ const CHROME = process.env.CHROME_BIN || '/Applications/Google Chrome.app/Conten
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const uiDir = path.join(repo, 'ui');
 const outDir = process.env.OUT_DIR || '/tmp/hap-verify';
-const API = '/api/apps/hanako-audio-player/routes';
+const API = '/api/apps/hanako-simple-player/routes';
 const COVER_FILE = path.join(repo, 'docs/player-ui/assets/demo-cover.png');
 const COVER_SQUARE_FILE = path.join(repo, 'docs/player-ui/assets/demo-cover-square.png');
 /* 深色封面夹具：右缘确实深，用来验证「深底 → 浅字」那条分支。
@@ -299,8 +299,8 @@ const server = http.createServer((req, res) => {
   if (p.startsWith(API + '/')) return json(res, 200, { ok: true });
 
   // ui/ 静态文件
-  if (p.startsWith('/api/apps/hanako-audio-player/ui/')) {
-    const rel = decodeURIComponent(p.slice('/api/apps/hanako-audio-player/ui/'.length)) || 'index.html';
+  if (p.startsWith('/api/apps/hanako-simple-player/ui/')) {
+    const rel = decodeURIComponent(p.slice('/api/apps/hanako-simple-player/ui/'.length)) || 'index.html';
     const f = path.join(uiDir, rel);
     if (!f.startsWith(uiDir) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.statusCode = 404; return res.end('not found'); }
     res.setHeader('content-type', f.endsWith('.js') ? 'text/javascript; charset=utf-8' : f.endsWith('.json') ? 'application/json' : f.endsWith('.css') ? 'text/css' : 'text/html; charset=utf-8');
@@ -1519,7 +1519,7 @@ const motion = {};
     window.__playerDebug.renderDiscover({ hot: [], charts: [], sheets: [], radios: [] });
     window.__playerDebug.openSearch();
     window.__playerDebug.renderResults([
-      { id: 'netease:770001', title: '搜索命中曲', author: '搜索歌手', url: '/api/apps/hanako-audio-player/routes/widget/api/music/go/770001?server=netease', pic: '' }
+      { id: 'netease:770001', title: '搜索命中曲', author: '搜索歌手', url: '/api/apps/hanako-simple-player/routes/widget/api/music/go/770001?server=netease', pic: '' }
     ]);
   });
   await sleep(200);
@@ -1573,7 +1573,7 @@ const motion = {};
   await page.evaluate(() => {
     window.__playerDebug.openSearch();
     window.__playerDebug.renderResults([
-      { id: 'netease:770002', title: '点播命中曲', author: '点播歌手', url: '/api/apps/hanako-audio-player/routes/widget/api/music/go/770002?server=netease', pic: '' }
+      { id: 'netease:770002', title: '点播命中曲', author: '点播歌手', url: '/api/apps/hanako-simple-player/routes/widget/api/music/go/770002?server=netease', pic: '' }
     ]);
   });
   await sleep(200);
@@ -1637,7 +1637,7 @@ const motion = {};
   // 推荐区：清空关键词/重开搜索时展示热门 + 榜单 + 电台三块
   await page.evaluate(() => {
     window.__playerDebug.renderDiscover({
-      hot: [{ id: 'netease:780001', title: '热门推荐 1', author: '推荐歌手 1', url: '/api/apps/hanako-audio-player/routes/widget/api/music/go/780001?server=netease', pic: '' }],
+      hot: [{ id: 'netease:780001', title: '热门推荐 1', author: '推荐歌手 1', url: '/api/apps/hanako-simple-player/routes/widget/api/music/go/780001?server=netease', pic: '' }],
       charts: [{ id: '3778678', name: '热歌榜', pic: '', note: '每天更新' }],
       sheets: [{ id: '8904187604', name: '超火rap', pic: '', note: '109 首' }],
       radios: [{ id: '1230174483', name: '你，静不下来', pic: '', category: '情感', programCount: 73 }]
@@ -1778,7 +1778,7 @@ const motion = {};
   await sleep(380);
   await page.evaluate(() => window.__playerDebug.renderResults([
     { id: 'netease:770001', title: '搜索命中曲', author: '搜索歌手',
-      url: '/api/apps/hanako-audio-player/routes/widget/api/music/go/770001?server=netease', pic: '' }
+      url: '/api/apps/hanako-simple-player/routes/widget/api/music/go/770001?server=netease', pic: '' }
   ]));
   await sleep(280);
   await page.evaluate(() => document.querySelector('#searchList .search-hit').click());
@@ -1873,7 +1873,7 @@ const motion = {};
     // 喂一页结果，让列表真占位（点行播放的路径不影响这里）
     await page.evaluate(() => window.__playerDebug.renderResults(Array.from({ length: 6 }, (_, i) => ({
       id: 'netease:78' + i, title: '结果 ' + (i + 1), author: '歌手 ' + (i + 1),
-      url: '/api/apps/hanako-audio-player/routes/widget/api/music/go/78' + i + '?server=netease', pic: ''
+      url: '/api/apps/hanako-simple-player/routes/widget/api/music/go/78' + i + '?server=netease', pic: ''
     }))));
     await sleep(320);
     s[name] = await page.evaluate(() => {

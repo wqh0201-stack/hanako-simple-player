@@ -17,8 +17,8 @@ const server = http.createServer((req,res) => {
   if (u.pathname.includes('/widget/api/lrc/load')) { const name=u.searchParams.get('name')||'';const trackNo=(/Fixture Track (\d+)/.exec(name)||[])[1]||'01';const delay=trackNo==='01'?1100:20;setTimeout(()=>{res.setHeader('content-type','application/json');res.end(JSON.stringify({ok:true,lrc:Array.from({length:100},(_,i)=>`[00:00.${String(i).padStart(2,'0')}]Track ${trackNo} lyric line ${i+1}`).join('\n')}));},delay);return; }
   if (u.pathname.includes('/widget/api/playlist')) { res.setHeader('content-type','application/json'); res.end(JSON.stringify({ok:true,tracks})); return; }
   if (u.pathname.includes('/widget/api')) { res.setHeader('content-type','application/json'); res.end(JSON.stringify({ok:true,tracks:[],results:[],playlist:[]})); return; }
-  if (u.pathname.includes('/api/apps/hanako-audio-player/ui/_build.json')) {res.setHeader('content-type','application/json');res.end(JSON.stringify({build:'1003131538'}));return;}
-  if (u.pathname.startsWith('/api/apps/hanako-audio-player/')) {res.setHeader('content-type','application/json');res.end(JSON.stringify({ok:true}));return;}
+  if (u.pathname.includes('/api/apps/hanako-simple-player/ui/_build.json')) {res.setHeader('content-type','application/json');res.end(JSON.stringify({build:'1003131538'}));return;}
+  if (u.pathname.startsWith('/api/apps/hanako-simple-player/')) {res.setHeader('content-type','application/json');res.end(JSON.stringify({ok:true}));return;}
   const f = path.join(ui, decodeURIComponent(u.pathname === '/' ? 'index.html' : u.pathname));
   if (!f.startsWith(ui) || !fs.existsSync(f)) { res.statusCode=404; res.end('not found'); return; }
   res.setHeader('content-type', f.endsWith('.js') ? 'text/javascript' : f.endsWith('.json') ? 'application/json' : 'text/html');

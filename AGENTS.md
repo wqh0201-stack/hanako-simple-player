@@ -1,14 +1,14 @@
-# AGENTS.md · hanako-audio-player
+# AGENTS.md · hanako-simple-player
 
 这是 **Hana v2 App「音频播放器」** 的源码仓库。
-**这不是宿主安装目录**——安装目录是 `~/.hanako/apps/hanako-audio-player/`，那是部署目标
+**这不是宿主安装目录**——安装目录是 `~/.hanako/apps/hanako-simple-player/`，那是部署目标
 （宿主会把它快照进 `.cache/app-ui-snapshots/`），别把它当工作区。
 
 **许可证是 AGPL-3.0，不是 MIT。** 本仓是 [openhanako-labs/openhanako-audio-player](https://github.com/openhanako-labs/openhanako-audio-player)
 （AGPL-3.0）的**衍生作品**，必须同证分发：别改回 MIT，也别把它当可以闭源/商用的东西
 （要闭源得上游的商业授权）。README 与 `LICENSE` 已按 AGPL-3.0 写好。
 
-**远端与分支**：本地 `fork` remote 指 `wqh0201-stack/openhanako-audio-player`（2026-10-09 起常驻）。
+**远端与分支**：本地 `fork` remote 指 `wqh0201-stack/openhanako-simple-player`（2026-10-09 起常驻）。
 `hana-simple` 是**本仓这版**、也是 fork 的默认分支；`master` 是上游原样；
 `fix/same-origin-audio-proxy` 是给上游的 PR 分支（基于上游 master，与本版历史不相连）。
 推送：`git push fork hana-simple`。
@@ -55,7 +55,7 @@
 - 前端是**单文件** `ui/index.html`（+ 孪生 `ui/standalone.html`），**无构建步骤**
   （没有打包器，改完直接跑）。这是历史包袱，**重构也要保持单文件**。
 - 后端 `index.js` + `lib/`（routes / meting / cookies / state），前端通过
-  `/api/apps/hanako-audio-player/routes/...` 与一批旧的 `/widget/api/...` 调它。
+  `/api/apps/hanako-simple-player/routes/...` 与一批旧的 `/widget/api/...` 调它。
 - 两种承载，尺寸都由宿主给、且会变：聊天卡片（实测约 465×930）、
   独立窗口（`manifest.json` 里 `detachedDefaultSize` = 1040×780，可缩放）。
 
@@ -78,7 +78,7 @@
 ## 3. 目录
 
 ```
-hanako-audio-player/
+hanako-simple-player/
 ├── manifest.json          # v2 清单：cards.player，route /index.html，
 │                          #   detached /standalone.html，1040×780
 ├── index.js               # v2 App 入口（apply(ctx)）
@@ -100,17 +100,17 @@ hanako-audio-player/
 └── docs/REFACTOR-BRIEF.md # ★ 前端重构交接简报（开工前先读）
 ```
 
-app-data（`~/.hanako/app-data/hanako-audio-player/`：`playlist.json` /
+app-data（`~/.hanako/app-data/hanako-simple-player/`：`playlist.json` /
 `cookies.env` / `lyrics/`）**不在本仓库**，安装/重装不碰它。
 
 ## 4. 部署回路
 
 1. 在本仓库改。
-2. 同步 `ui/` 进 `~/.hanako/apps/hanako-audio-player/`；
+2. 同步 `ui/` 进 `~/.hanako/apps/hanako-simple-player/`；
    **或**更省事：把本仓库装成本地来源
    （`extension_manager install`，source `local`），以后能直接 `reload`。
 3. `node tools/bump-build.mjs`。
-4. **重载 app（必须，别省）**：`extension_manager reload app:hanako-audio-player`。
+4. **重载 app（必须，别省）**：`extension_manager reload app:hanako-simple-player`。
    页面**不会**自己刷新 —— `index.html` 里只写了 `window.__HANA_BUILD` 标记，**没有** _build.json
    轮询块，光同步文件不生效。忘了这步 = 罐头看到的还是旧版。（2026-10-10 踩过：只推了文件没 reload，
    罐头以为没生效；更早一次还漏同步 CSS → `.cell` 退化成块级、元素竖堆。）

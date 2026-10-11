@@ -55,7 +55,7 @@
    * 同源相对路径，plain fetch 即可（与旧 UI 一致，不需要 surface session）。 */
   var API = (function () {
     var m = /^\/api\/apps\/([^/]+)\/ui(?:\/|$)/.exec(location.pathname || '');
-    return m ? '/api/apps/' + m[1] + '/routes' : '/api/apps/hanako-audio-player/routes';
+    return m ? '/api/apps/' + m[1] + '/routes' : '/api/apps/hanako-simple-player/routes';
   })();
 
   var ENDPOINT = {

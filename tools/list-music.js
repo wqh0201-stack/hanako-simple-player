@@ -41,12 +41,12 @@ const PARAMETERS = {
 export function makeListMusicTool(ctx) {
   const appId = path.basename(ctx.dataDir) || "app";
   const playlistPath = path.join(ctx.dataDir, "playlist.json");
-  const V1_MEDIA_PREFIX = "/api/plugins/hanako-audio-player/";
+  const V1_MEDIA_PREFIX = "/api/plugins/hanako-simple-player/";
   const V2_BASE = `/api/apps/${appId}/routes/`;
 
   /**
    * 把 v1 时期存下的媒体路径规范到 v2。
-   * v1 的本地曲目 url 长这样：/api/plugins/hanako-audio-player/widget/media/x.wav
+   * v1 的本地曲目 url 长这样：/api/plugins/hanako-simple-player/widget/media/x.wav
    * 这条路径在 v2 下是 404，原样列给模型等于给了一条播不了的地址。
    */
   function toPlayable(url) {

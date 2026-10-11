@@ -23,8 +23,8 @@ const server = http.createServer((req, res) => {
   const u = new URL(req.url, 'http://x');
   if (u.pathname.startsWith('/api/')) {
     const routes = {
-      '/api/apps/hanako-audio-player/routes/playlist/load': { tracks: [] },
-      '/api/apps/hanako-audio-player/routes/playback-state/load': {}
+      '/api/apps/hanako-simple-player/routes/playlist/load': { tracks: [] },
+      '/api/apps/hanako-simple-player/routes/playback-state/load': {}
     };
     const key = u.pathname.replace(/\/load$/, '/load');
     res.writeHead(200, { 'content-type': 'application/json' });

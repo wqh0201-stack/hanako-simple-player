@@ -1,4 +1,4 @@
-# Hana Audio Player（极简重构版）
+# 小花音乐播放器（极简重构版）
 
 > 这是 [openhanako-labs/openhanako-audio-player](https://github.com/openhanako-labs/openhanako-audio-player) 的一份**极简重构 fork**：
 > 后端沿用上游，前端整个重写、按 Hana 卡片的三种形态重新设计，并砍掉了 PV 舞台 / 黑胶唱盘 / 主题面板。
@@ -37,8 +37,8 @@
 
 **推荐：装 release 包**（不用 clone 源码，也不用碰打包工具链）
 
-1. 到 [Releases](https://github.com/wqh0201-stack/openhanako-audio-player/releases) 下载
-   `app-hanako-audio-player-<版本>.zip`（连同同名 `.entry.json`）；
+1. 到 [Releases](https://github.com/wqh0201-stack/hanako-simple-player/releases) 下载
+   `app-hanako-simple-player-<版本>.zip`（连同同名 `.entry.json`）；
 2. 让 Hana 安装这个 zip（本地来源安装），审批它声明的 5 项能力；
 3. 装完在应用详情页即可 Reload。
 
@@ -48,8 +48,8 @@
 **从源码装**（改代码、参与开发时）
 
 1. 把源码目录放到 `<HANA_HOME>/apps/` 下，**目录名必须等于 `manifest.id`**，
-   即 `hanako-audio-player`（GitHub 直接下载的 zip 解压出来是
-   `openhanako-audio-player-hana-simple`，**必须重命名**，否则官方校验器直接拒绝）；
+   即 `hanako-simple-player`（GitHub 直接下载的 zip 解压出来是
+   `hanako-simple-player-hana-simple`，**必须重命名**，否则官方校验器直接拒绝）；
 2. 打包或直接安装都需要官方工具链，先设环境变量：
    `HANA_APP_TOOLS_ROOT=<HANA_HOME>/artifacts/server/<版本>`
    （该目录里有 `APPS.md` 与 `scripts/`）；
@@ -58,12 +58,13 @@
 
 最低 Hana 版本：`0.946.2`。
 
-> 包 id 与上游相同（`hanako-audio-player`），**两者不能同时装**。
+> 本包 id 为 `hanako-simple-player`，与上游（`hanako-audio-player`）**不同名**，
+> 两者可以并存安装；数据目录也各自独立（`app-data/hanako-simple-player/`）。
 
 ## 可选：完整音源
 
 播放器**开箱即用**（内置公共 Meting 节点 + 各平台官方接口），不填 cookie 也能搜能听，
-代价是**部分歌只能听到试听版**。想解锁完整音频，在 `app-data/hanako-audio-player/cookies.env`
+代价是**部分歌只能听到试听版**。想解锁完整音频，在 `app-data/hanako-simple-player/cookies.env`
 里填一次登录 cookie：
 
 ```
