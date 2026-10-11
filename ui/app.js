@@ -1677,9 +1677,15 @@
     var dprQuery;
     var pointerOptions = { passive: true, capture: true };
     var MAX_WAVES = 22, MAX_TRAIL = 40;
-    /* 强度两档：无词更放（水面当主角），有词更收（不扰读词）。
-       数值对齐 docs/player-ui/ripple-lab.html 的「波澜」滑杆（0.5 比 lab 最低档 0.6 略轻）。 */
-    function strength() { return (player && player.getAttribute('data-haslyrics') === '1') ? 0.32 : 0.50; }
+    /* 基强度两档：无词更放（水面当主角），有词更收（不扰读词）。
+       数值对齐 docs/player-ui/ripple-lab.html 的「波澜」滑杆（0.5 比 lab 最低档 0.6 略轻）。
+       它管「输入力度 / 场能量 / 环的基础 alpha」，**不是**最终可见倍率。 */
+    function baseStrength() { return (player && player.getAttribute('data-haslyrics') === '1') ? 0.32 : 0.50; }
+    /* 最终可见倍率（罐头口头值 1.6）：**只在绘制阶段的 alpha 上乘一次**。
+       绝不乘进 inject() 的输入力，也绝不直接改 baseStrength() —— 当前 drop()/inject()
+       与 paintField() 已各乘一次基强度，直接乘会得到 1.6×1.6≈2.56（见 RIPPLE-AUDIO-PLAN §5）。
+       它只改观感：不参与音量、不参与起音计数、不参与波包预算。 */
+    var VISUAL_GAIN = 1.6;
 
     function shot() { return document.body.classList.contains('is-shot'); }
     function blocked() {
@@ -1704,14 +1710,40 @@
        captureStream() 不碰元素输出：同源（走 music/go 的同源分片代理）拿到
        MediaStream 能读频域；跨源抛错 → 捕获后退回纯指针，**绝不静音**。
        ============================================================ */
-    var audioCtx = null, msSrc = null, analyser = null, freqData = null;
+    var audioCtx = null, msSrc = null, analyser = null, freqData = null, prevBins = null;
     var audioReady = false, audioBuilding = false, audioRaf = 0;
-    var bass = 0, bassAvg = 0, lastBeat = 0, beatCount = 0, readAt = 0;
+    /* 代次：异步 resume/attach 的过期结果不得挂回新歌；detach 会 ++ 使在途请求失效。 */
+    var audioGen = 0;
+    var BANDS = null, binHz = 0;        // 每个分析器建一次：三频段的 bin 索引区间
+    var analysisOn = false;             // 分析调度开关：hidden/离屏/reduced-motion/截图/暂停时真停
+    var readAt = 0, lastRead = 0;
+    var envBass = 0;                    // 低频包络（attack ~120ms / release ~500ms）→ 宽缓水面
+    var envs = null;                    // 各频段快/慢包络（起音用）
+    var fluxBg = null;                  // 各频段谱通量的自适应背景
+    var onsetAt = -1e9, onsetCount = 0;
+    var warmupUntil = 0;                // 换源/重建链后的预热，防首帧全亮被当强鼓点
+    var bassPhase = 0;                  // 宽缓驱动的游移相位
+    var bassField = 0;                  // 最近一次 stepField 的真实场能量（限注入用）
+    var MAX_AUDIO_WAVES = 3;
+    var ONSET_COOLDOWN = 380;           // 明显起音最小间隔（ms）——合并/l限流
+    var WARMUP_MS = 320;
+    var BASS_DRIVE = 9;                 // 持续低频注入系数（真实曲目校准起点）
 
     function audioSupported() {
       return !!(window.AudioContext || window.webkitAudioContext) && !!(audio && audio.captureStream);
     }
-    function attachAudio() {
+    /* 三频段 bin 区间。40~180Hz 低频看包络；180~2000Hz 中频补起音；2000~8000Hz 只做修饰判断。 */
+    function makeBands(bins, bHz) {
+      var spec = [[40, 180, 'bass'], [180, 2000, 'mid'], [2000, 8000, 'high']];
+      var out = {};
+      for (var i = 0; i < spec.length; i++) {
+        var lo = Math.max(1, Math.floor(spec[i][0] / bHz));
+        var hi = Math.min(bins, Math.max(lo + 1, Math.ceil(spec[i][1] / bHz)));
+        out[spec[i][2]] = { start: lo, end: hi };
+      }
+      return out;
+    }
+    function attachAudio(gen) {
       if (audioCtx.state !== 'running') return false;
       try {
         var stream = audio.captureStream();
@@ -1720,15 +1752,20 @@
         var ms = audioCtx.createMediaStreamSource(stream);
         var an = audioCtx.createAnalyser();
         an.fftSize = 4096;                // 44.1k 下 ≈10.8Hz/bin：40~180Hz 低频才有足够分辨率
-        an.smoothingTimeConstant = 0.65;
+        an.smoothingTimeConstant = 0.2;   // 降平滑（原 0.65 会把起音抹平）；平滑改由我方包络负责
         an.minDecibels = -90; an.maxDecibels = -15;
         var g = audioCtx.createGain();
         g.gain.value = 0;                 // 副本静音：只取数据，不与元素自身出声叠加
         ms.connect(an); an.connect(g); g.connect(audioCtx.destination);  // 图要通到 destination，Analyser 才会被拉数据
-        msSrc = ms; analyser = an;
+        detachAudio();                    // 先释放可能残存的旧链（同代内只允许一条）
+        msSrc = ms; analyser = an; audioGen = gen;
         freqData = new Float32Array(an.frequencyBinCount);
+        prevBins = new Float32Array(an.frequencyBinCount);
+        binHz = audioCtx.sampleRate / an.fftSize;
+        BANDS = makeBands(freqData.length, binHz);
+        resetAnalysis(performance.now());
         audioReady = true; audioBuilding = false;
-        startAudioLoop();
+        if (playing && !blocked()) startAnalysis();
         return true;
       } catch (e) {
         detachAudio();                     // 跨源 / 不支持：退回纯指针，绝不静音
@@ -1737,49 +1774,182 @@
     }
     function buildAudio() {
       if (audioBuilding || audioReady || !audioSupported() || !audio.src) return;
+      var gen = ++audioGen;
       audioBuilding = true;
       if (!audioCtx) {
         try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
         catch (e) { audioBuilding = false; return; }
       }
-      if (audioCtx.state === 'running') { if (attachAudio()) return; }
-      audioCtx.resume().then(function () { if (!attachAudio()) audioBuilding = false; })
-        .catch(function () { audioBuilding = false; });
+      if (audioCtx.state === 'running') { if (!attachAudio(gen)) audioBuilding = false; return; }
+      audioCtx.resume().then(function () {
+        if (gen !== audioGen) { audioBuilding = false; return; }   // 过期代次：新歌已换/链已拆
+        if (!attachAudio(gen)) audioBuilding = false;
+      }).catch(function () { audioBuilding = false; });
     }
     function detachAudio() {
-      stopAudioLoop();
+      audioGen++;                        // 使在途 resume/attach 全部失效
+      stopAnalysis();
       if (msSrc) { try { msSrc.disconnect(); } catch (e) {} msSrc = null; }
       if (analyser) { try { analyser.disconnect(); } catch (e) {} analyser = null; }
-      freqData = null; audioReady = false; audioBuilding = false;
-      bass = 0; bassAvg = 0;
+      freqData = null; prevBins = null; BANDS = null;
+      audioReady = false; audioBuilding = false;
+      envBass = 0; envs = null; fluxBg = null; bassField = 0;
     }
-    function startAudioLoop() { if (!audioRaf && audioReady) audioRaf = requestAnimationFrame(audioLoop); }
-    function stopAudioLoop() { if (audioRaf) { cancelAnimationFrame(audioRaf); audioRaf = 0; } }
+    /* 清过期统计：换源/seek/重建链/重新可见后调用，避免上一帧频谱与起伏历史被当强鼓点。 */
+    function resetAnalysis(now) {
+      envBass = 0;
+      envs = { bass: { fast: 0, slow: 0 }, mid: { fast: 0, slow: 0 }, high: { fast: 0, slow: 0 } };
+      fluxBg = { bass: 0, mid: 0, high: 0 };
+      if (prevBins) prevBins.fill(0);
+      onsetAt = -1e9; lastRead = 0; onsetCount = 0;
+      warmupUntil = now + WARMUP_MS;
+      bassPhase = 0;
+    }
+    /* 分析调度与可见性同步：hidden/离屏/reduced-motion/截图/暂停都不排尾帧。 */
+    function startAnalysis() {
+      if (destroyed || !audioReady) return;
+      if (!analysisOn) { analysisOn = true; resetAnalysis(performance.now()); }
+      if (!audioRaf) { lastRead = 0; audioRaf = requestAnimationFrame(audioLoop); }
+    }
+    function stopAnalysis() {
+      analysisOn = false;
+      if (audioRaf) { cancelAnimationFrame(audioRaf); audioRaf = 0; }
+    }
     function audioLoop() {
       audioRaf = 0;
-      if (destroyed || !audioReady) return;
-      if (!blocked() && playing) readSignal(performance.now(), null);
+      if (destroyed || !audioReady || !analysisOn) return;
+      /* 真停：不再像旧实现那样即使 blocked() 也在尾部继续排 rAF。
+         恢复走 sync()/resume() 的 startAnalysis（内部重新预热 + 清过期起音）。 */
+      if (blocked() || !playing) { analysisOn = false; return; }
+      readSignal(performance.now(), null);
       audioRaf = requestAnimationFrame(audioLoop);
     }
-    /* 读频域：40~180Hz 的能量当「低频」；超过滑动均值 1.28 倍且够响 → 落一个波。 */
+    /* 一阶渐近（分离上升/回落时长，单位秒）。 */
+    function approach(cur, target, up, down, dt) {
+      var k = target > cur ? (1 - Math.exp(-dt / Math.max(0.001, up))) : (1 - Math.exp(-dt / Math.max(0.001, down)));
+      return cur + (target - cur) * k;
+    }
+    function clamp01(v) { return v <= 0 ? 0 : (v >= 1 ? 1 : v); }
+    /* 能量 → 0..1（dB 线性档）。静音 ~1e-7 归零；正常低音 1e-3~1e-2 落在中高段。 */
+    function normEnergy(e) {
+      if (!isFinite(e) || e <= 0) return 0;
+      return clamp01((10 * Math.log10(e) + 58) / 38);
+    }
+    function bandEnergy(start, end) {
+      if (!freqData) return 0;
+      var sum = 0;
+      for (var n = start; n < end; n++) { var v = freqData[n]; if (isFinite(v)) sum += Math.pow(10, v / 10); }
+      return Math.sqrt(sum / Math.max(1, end - start));
+    }
+    /* 正向谱通量（spectral flux）：只累计能量增长，同时推进 prevBins。 */
+    function bandFlux(start, end) {
+      if (!freqData || !prevBins) return 0;
+      var f = 0;
+      for (var n = start; n < end; n++) {
+        var v = freqData[n];
+        var cur = isFinite(v) ? Math.pow(10, v / 10) : 0;
+        if (cur > prevBins[n]) f += cur - prevBins[n];
+        prevBins[n] = cur;
+      }
+      return f / Math.max(1, end - start);
+    }
+    /* 落一个「音频短波」：一主环 + 一淡回声；同屏音频短波不超 MAX_AUDIO_WAVES。 */
+    function audioWaveCount() {
+      var n = 0;
+      for (var i = 0; i < waves.length; i++) if (waves[i].origin === 'audio') n++;
+      return n;
+    }
+    function dropAudio(power, kind, x, y) {
+      if (blocked()) return false;
+      while (audioWaveCount() >= MAX_AUDIO_WAVES) {
+        for (var i = 0; i < waves.length; i++) if (waves[i].origin === 'audio') { waves.splice(i, 1); break; }
+      }
+      if (waves.length >= MAX_WAVES) waves.shift();
+      /* 低频占比高的瞬态稍宽厚；中频起音更轻薄、退得快。差异小而可感知。 */
+      var low = kind === 'low';
+      waves.push({
+        x: x, y: y, age: 0, power: power, origin: 'audio', kind: kind,
+        life: low ? (1.24 + power * 0.18) : (1.02 + power * 0.18),
+        phase: Math.random() * 6.28
+      });
+      inject(x, y, low ? 1.5 : 1.15, power * baseStrength() * (low ? 1.1 : 0.75));
+      wake();
+      return true;
+    }
+    /* 统一起音事件：多频段合并一次、冷却限流、弱事件抑制。 */
+    function triggerOnset(power, kind, now) {
+      if (now - onsetAt < ONSET_COOLDOWN) return false;
+      onsetAt = now; onsetCount++;
+      /* 位置集中在封面附近的一小片，不满场跳。 */
+      var ax = bassAnchorX() + (Math.random() - 0.5) * 0.18;
+      var ay = bassAnchorY() + (Math.random() - 0.5) * 0.16;
+      return dropAudio(power, kind, Math.max(0.05, Math.min(0.95, ax)), Math.max(0.08, Math.min(0.92, ay)));
+    }
+    /* 封面锚点（归一化）：从 --cover-w 推封面区中心偏上，随布局计算。 */
+    function bassAnchorX() {
+      var coverRatio = 0.34;
+      try {
+        var cw = parseFloat(getComputedStyle(player).getPropertyValue('--cover-w'));
+        if (isFinite(cw) && cw > 0 && width > 0) coverRatio = Math.max(0.15, Math.min(0.6, cw / width));
+      } catch (e) {}
+      return coverRatio * 0.5 + 0.06;
+    }
+    function bassAnchorY() { return 0.44; }
+    /* 持续低频 → 宽缓水面：按实际 dt 推进并限注入量/场能量，低频结束后自然收敛。 */
+    function driveBass(env, dt) {
+      if (!field || env <= 0.03) return;
+      if (bassField > 0.0009) return;          // 场能量封顶：连续长播不无限堆积
+      bassPhase += dt * 0.12;
+      var nx = bassAnchorX() + Math.sin(bassPhase) * 0.055;
+      var ny = bassAnchorY() + Math.cos(bassPhase * 0.7) * 0.045;
+      var amount = env * BASS_DRIVE * Math.min(dt, 0.05);   // 按 dt 推进，不每帧无条件加固定能量
+      inject(nx, ny, 3.4, amount);
+      wake();
+    }
+    /* 读频域：一路低频包络驱动宽缓水面；一路（含中频）起音检测点短波。
+       **连续 Bass 不调用 drop()**；只有瞬态才落短波。 */
     function readSignal(now, forceBass) {
-      if (forceBass == null && (!analyser || !audioReady)) return;
-      if (forceBass == null && now - readAt < 30) return;
-      readAt = now;
-      if (forceBass != null) bass = forceBass;
-      else {
-        try { analyser.getFloatFrequencyData(freqData); } catch (e) { return; }
-        var binHz = audioCtx.sampleRate / analyser.fftSize;
-        var lo = Math.max(1, Math.floor(40 / binHz)), hi = Math.min(freqData.length, Math.ceil(180 / binHz));
-        var energy = 0, count = 0;
-        for (var n = lo; n < hi; n++) { energy += Math.pow(10, freqData[n] / 10); count++; }
-        bass = Math.sqrt(energy / Math.max(1, count));
+      if (forceBass != null) {
+        /* 测试/降级喂包络：真机走下面真实 FFT 分支。若在播，顺带推进宽缓水面。 */
+        envBass = Math.max(envBass, Math.min(1, forceBass * 4));
+        if (playing && !blocked()) driveBass(envBass, 1 / 30);
+        return envBass;
       }
-      bassAvg = bassAvg * 0.93 + bass * 0.07;
-      if (bass > 0.014 && bass > bassAvg * 1.28 && now - lastBeat > 300) {
-        lastBeat = now; beatCount++;
-        drop(0.60 + Math.sin(beatCount * 2.4) * 0.19, 0.52 + Math.cos(beatCount * 1.7) * 0.19, Math.min(1.9, 0.7 + bass * 6));
-      }
+      if (!analyser || !audioReady || !analysisOn) return;
+      if (readAt && now - readAt < 30) return;
+      var dt = lastRead ? Math.min(0.12, Math.max(0.005, (now - lastRead) / 1000)) : 1 / 30;
+      readAt = now; lastRead = now;
+      try { analyser.getFloatFrequencyData(freqData); } catch (e) { return; }
+      /* 逐频段能量 + 正向谱通量（bandFlux 顺带推进 prevBins）。 */
+      var be = bandEnergy(BANDS.bass.start, BANDS.bass.end), bf = bandFlux(BANDS.bass.start, BANDS.bass.end);
+      var me = bandEnergy(BANDS.mid.start, BANDS.mid.end), mf = bandFlux(BANDS.mid.start, BANDS.mid.end);
+      var he = bandEnergy(BANDS.high.start, BANDS.high.end), hf = bandFlux(BANDS.high.start, BANDS.high.end);
+      if (!isFinite(be)) be = 0; if (!isFinite(me)) me = 0; if (!isFinite(he)) he = 0;
+      if (!isFinite(bf)) bf = 0; if (!isFinite(mf)) mf = 0; if (!isFinite(hf)) hf = 0;
+      /* 快/慢包络（快 ~40ms 抓起音，慢 ~400ms 当背景）。 */
+      var eb = envs.bass, em = envs.mid, eh = envs.high;
+      eb.fast = approach(eb.fast, be, 0.04, 0.09, dt);
+      eb.slow = approach(eb.slow, be, 0.4, 0.4, dt);
+      em.fast = approach(em.fast, me, 0.04, 0.09, dt);
+      em.slow = approach(em.slow, me, 0.4, 0.4, dt);
+      eh.fast = approach(eh.fast, he, 0.04, 0.09, dt);
+      eh.slow = approach(eh.slow, he, 0.4, 0.4, dt);
+      /* 谱通量背景（自适应）：安静时阈值自动收敛，不会放大噪声。 */
+      fluxBg.bass = fluxBg.bass * 0.97 + bf * 0.03;
+      fluxBg.mid = fluxBg.mid * 0.97 + mf * 0.03;
+      fluxBg.high = fluxBg.high * 0.97 + hf * 0.03;
+      /* 低频包络（attack ~120ms / release ~500ms）→ 宽缓水面。 */
+      envBass = approach(envBass, normEnergy(be), 0.12, 0.5, dt);
+      if (envBass > 0.05 && playing) driveBass(envBass, dt);
+      /* 起音：快包络显著高于慢背景 + 谱通量超背景 + 绝对门限；预热期与冷却期不落波。 */
+      if (now < warmupUntil) return;
+      var bassOn = eb.fast > 0.003 && normEnergy(eb.fast) > 0.20 && eb.fast > eb.slow * 1.5 && bf > fluxBg.bass * 1.6 + 1e-6;
+      var midOn = em.fast > 0.0015 && normEnergy(em.fast) > 0.16 && em.fast > em.slow * 1.45 && mf > fluxBg.mid * 1.6 + 1e-7;
+      if (!bassOn && !midOn) return;
+      /* 同一瞬态同时出现在几个频段 → 只产一次敲击波。低频更厚，中频更薄。 */
+      var kind = bassOn ? 'low' : 'mid';
+      var p = kind === 'low' ? (0.55 + clamp01(normEnergy(be)) * 0.9) : (0.45 + clamp01(normEnergy(me)) * 0.7);
+      triggerOnset(Math.max(0.5, Math.min(1.9, p)), kind, now);
     }
 
     function size() {
@@ -1823,10 +1993,10 @@
       if (blocked()) return;
       if (waves.length >= MAX_WAVES) waves.shift();
       waves.push({
-        x: x, y: y, age: 0, power: power,
+        x: x, y: y, age: 0, power: power, origin: 'pointer',
         life: 2.9 + power * 0.35, phase: Math.random() * 6.28
       });
-      inject(x, y, 1.7 + power * 0.7, power * strength() * 1.8);
+      inject(x, y, 1.7 + power * 0.7, power * baseStrength() * 1.8);
       wake();
     }
 
@@ -1842,6 +2012,7 @@
       }
       var swap = previous; previous = field; field = swap;
       fieldEnergy = sum / (cols * rows);
+      bassField = fieldEnergy;   // 供 driveBass 限注入，避免连续低频无限堆积
     }
 
     /* 把 --hl-accent 解成 [r,g,b]：能从 rgb() 串直接取就直接取，取不到用 1×1 画布兜底。 */
@@ -1859,17 +2030,65 @@
       rgbCache = out; rgbKey = col; return out;
     }
 
-    /* 流光：把高度场当水面法线，用「边缘 + 坡度」化成明暗，低分辨率放大 —— 波过处一片柔光漫开。 */
+    /* 歌词区衰减掩膜：用实际歌词区矩形算，布局/尺寸变化后由 sync() 重算。
+       目的：歌词附近局部降低动效，不改歌词透明度、不让整屏随鼓点闪亮。
+       返回每格（cols*rows）的 0..1 权重（1 = 全强度，0 = 完全减）。 */
+    var attMask = null, attKey = '';
+    function computeAttMask() {
+      if (!cols || !rows || !width || !height) { attMask = null; return; }
+      var wrap = $('lyricWrap');
+      var shotNow = document.body.classList.contains('is-shot');
+      var visible = !!wrap && !shotNow && player.getAttribute('data-haslyrics') === '1';
+      if (wrap) visible = visible && wrap.offsetParent !== null;
+      var key = [cols, rows, width | 0, height | 0, visible ? 1 : 0].join(':');
+      if (key === attKey && attMask) return;
+      attKey = key;
+      if (!visible) { attMask = null; return; }
+      var rb = wrap.getBoundingClientRect();
+      var canvasRect = canvas.getBoundingClientRect();
+      if (!rb.width || !rb.height) { attMask = null; return; }
+      /* 归一化矩形（相对舞台）。 */
+      var x0 = (rb.left - canvasRect.left) / Math.max(1, canvasRect.width);
+      var x1 = (rb.right - canvasRect.left) / Math.max(1, canvasRect.width);
+      var y0 = (rb.top - canvasRect.top) / Math.max(1, canvasRect.height);
+      var y1 = (rb.bottom - canvasRect.top) / Math.max(1, canvasRect.height);
+      /* 羽化边（归一化）。 */
+      var fw = 0.05, fh = 0.06;
+      attMask = new Float32Array(cols * rows);
+      var MIN_W = 0.30;   // 歌词区里至少保留三成强度：水面仍在，只是不抢字
+      for (var j = 0; j < rows; j++) {
+        var ny = (j + 0.5) / rows;
+        var wy = 0;
+        if (ny >= y0 && ny <= y1) wy = 1;
+        else if (ny >= y0 - fh && ny < y0) wy = (ny - (y0 - fh)) / fh;
+        else if (ny > y1 && ny <= y1 + fh) wy = ((y1 + fh) - ny) / fh;
+        if (wy <= 0) continue;
+        for (var i = 0; i < cols; i++) {
+          var nx = (i + 0.5) / cols;
+          var wx = 0;
+          if (nx >= x0 && nx <= x1) wx = 1;
+          else if (nx >= x0 - fw && nx < x0) wx = (nx - (x0 - fw)) / fw;
+          else if (nx > x1 && nx <= x1 + fw) wx = ((x1 + fw) - nx) / fw;
+          if (wx <= 0) continue;
+          attMask[j * cols + i] = 1 - wx * wy * (1 - MIN_W);
+        }
+      }
+    }
+
+    /* 流光：把高度场当水面法线，用「边缘 + 坡度」化成明暗，低分辨率放大 —— 波过处一片柔光漫开。
+       VISUAL_GAIN 在**此处（最终绘制）**只乘一次再限幅。 */
     function paintField(fade, s) {
       if (!pixels) return;
       var rgb = resolveRGB(getComputedStyle(canvas).color);
       var data = pixels.data;
+      var gain = s * VISUAL_GAIN;
       for (var y = 1; y < rows - 1; y++) {
         for (var x = 1; x < cols - 1; x++) {
           var i = y * cols + x, o = i * 4;
           var dx = field[i + 1] - field[i - 1], dy = field[i + cols] - field[i - cols];
           var edge = Math.abs(dx * 0.65 + dy * 0.85), slope = Math.sqrt(dx * dx + dy * dy);
-          var a = Math.min(0.64, (edge * 0.22 + slope * 0.06) * s);
+          var att = attMask ? attMask[i] : 1;
+          var a = Math.min(0.64, (edge * 0.22 + slope * 0.06) * gain * att);
           data[o] = rgb[0]; data[o + 1] = rgb[1]; data[o + 2] = rgb[2]; data[o + 3] = Math.round(a * 255);
         }
       }
@@ -1895,33 +2114,42 @@
     function draw() {
       clear();
       if (reduce && reduce.matches) return;
+      computeAttMask();   // 歌词区衰减掩膜（布局/尺寸变化后重算，带 key 记忆）
       // CSS 负责解析 var() / color-mix()，Canvas 只接收计算后的颜色。
       ctx.strokeStyle = getComputedStyle(canvas).color;
       var fade = drain > 0 ? Math.min(1, drain / 0.4) : 1;
-      var s = strength();
+      var s = baseStrength();
+      /* 最终可见倍率：流光、主环、回声、中心小圈、尾流共用同一次 VISUAL_GAIN（限幅）。 */
+      var vis = Math.min(1.5, s * VISUAL_GAIN);
       if (fieldEnergy > 0.00001) paintField(fade, s);
       for (var i = 0; i < waves.length; i++) {
         var w = waves[i], p = w.age / w.life;
         var birth = Math.min(1, w.age / 0.10), end = Math.pow(1 - p, 1.8);
         var reach = Math.min(width, height) * (0.44 + w.power * 0.14);
         var radius = 8 + reach * (1 - Math.pow(1 - p, 2));
-        for (var k = 0; k < 4; k++) {
-          var r = radius - k * (10 + w.power * 5) * (1 - p * 0.45);
+        var audio = w.origin === 'audio';
+        /* 音频短波：一主环 + 一淡回声（优先清晰度，不靠数量）。
+           指针波保留原有四层轮廓。 */
+        var layers = audio ? 2 : 4;
+        for (var k = 0; k < layers; k++) {
+          var r = radius - k * (audio ? 9 : 10 + w.power * 5) * (1 - p * 0.45);
           if (r < 3) continue;
-          var alpha = birth * end * (0.60 - k * 0.105) * Math.min(1.4, s) * fade;
+          var base = audio ? 0.52 : (0.60 - k * 0.105);
+          var alpha = birth * end * base * vis * fade;
+          if (audio && k === 1) alpha *= 0.42;   // 回声更淡
           ringPath(w, r, k * 0.3);
           ctx.lineWidth = k === 0 ? 5 : 2.5; ctx.globalAlpha = alpha * 0.075; ctx.stroke();
           ctx.lineWidth = k === 0 ? 1.25 : 0.7; ctx.globalAlpha = alpha; ctx.stroke();
         }
-        if (w.age < 0.55) {
-          ctx.globalAlpha = (1 - w.age / 0.55) * 0.8 * fade; ctx.lineWidth = 0.8;
+        if (!audio && w.age < 0.55) {
+          ctx.globalAlpha = (1 - w.age / 0.55) * 0.8 * Math.min(1.2, vis) * fade; ctx.lineWidth = 0.8;
           ctx.beginPath(); ctx.arc(w.x * width, w.y * height, 2 + w.age * 14, 0, Math.PI * 2); ctx.stroke();
         }
       }
       if (trail.length > 1) {
         for (var t = 1; t < trail.length; t++) {
           ctx.strokeStyle = getComputedStyle(canvas).color;
-          ctx.globalAlpha = Math.max(0, 1 - trail[t].age / 0.65) * 0.45 * Math.min(1, s) * fade;
+          ctx.globalAlpha = Math.max(0, 1 - trail[t].age / 0.65) * 0.45 * Math.min(1.2, vis) * fade;
           ctx.lineWidth = 0.65 + 1.8 * (1 - trail[t].age / 0.65);
           ctx.beginPath();
           ctx.moveTo(trail[t - 1].x * width, trail[t - 1].y * height);
@@ -1935,6 +2163,9 @@
     function breathe() {
       timer = 0;
       if (blocked() || !playing) return;
+      /* 真实音频可读时停掉随机呼吸波（不再以随机波伪装音乐驱动）；
+         捕获不可用时保留原先的降级呼吸。 */
+      if (audioReady) { schedule(); return; }
       // 鼠标仍在缓慢移动时，不让呼吸波与交互争抢。
       if (performance.now() - inputAt < 4500) { schedule(); return; }
       drop(0.25 + Math.random() * 0.5, 0.3 + Math.random() * 0.4, 0.7);
@@ -1988,22 +2219,35 @@
 
     function sync() {
       if (destroyed) return;
-      stop(); resetPointer();
+      stop(); attKey = ''; resetPointer();
       if (reduce && reduce.matches) {
         waves.length = 0; trail.length = 0;
         if (field) { field.fill(0); previous.fill(0); }
-        fieldEnergy = 0; drain = 0; clear(); return;
+        fieldEnergy = 0; bassField = 0; drain = 0; stopAnalysis(); clear(); return;
       }
-      if (shot()) return;   // 保留最后一帧及波的年龄
+      if (shot()) { stopAnalysis(); return; }   // 保留最后一帧及波的年龄（分析也真停）
       size();
-      if (!blocked()) { draw(); wake(); }
+      if (!blocked()) {
+        /* 恢复可见：重建时间基准，清理过期起音历史，避免补发积压鼓点。 */
+        if (audioReady && playing) startAnalysis(); else stopAnalysis();
+        draw(); wake();
+      } else {
+        stopAnalysis();
+      }
     }
-    function resume() { if (destroyed || playing) return; playing = true; drain = 0; buildAudio(); startAudioLoop(); sync(); }
+    function resume() {
+      if (destroyed || playing) return;
+      playing = true; drain = 0;
+      lastRead = 0; warmupUntil = performance.now() + WARMUP_MS;   // 恢复后重新预热
+      buildAudio();
+      if (audioReady && !blocked()) startAnalysis();
+      sync();
+    }
     function pause(immediate) {
       if (destroyed) return;
       if (!playing && immediate !== true) return;   // audio 的事件对象不视作 immediate
       playing = false;
-      stopAudioLoop();
+      stopAnalysis();
       drain = immediate === true ? 0 : 0.4;
       if (immediate === true) { waves.length = 0; trail.length = 0; }
       sync();
@@ -2030,7 +2274,7 @@
         if (speed > 0.07 && sinceInject > 8) {
           trail.push({ x: p.x, y: p.y, age: 0 });
           if (trail.length > MAX_TRAIL) trail.shift();
-          inject(p.x, p.y, 1.6, Math.min(1.4, speed) * strength() * 0.35);
+          inject(p.x, p.y, 1.6, Math.min(1.4, speed) * baseStrength() * 0.35);
           sinceInject = 0;
           wake();
         }
@@ -2087,11 +2331,41 @@
       resume: resume,
       pause: pause,
       /* 测试用：读波数 / 手动喂一圈（与 __playerDebug 同类的探针） */
-      stats: function () { return { waves: waves.length, trail: trail.length, field: fieldEnergy, playing: playing, raf: !!raf, w: width, h: height, cols: cols, rows: rows, strength: strength() }; },
+      stats: function () {
+        return {
+          waves: waves.length, trail: trail.length, field: fieldEnergy, playing: playing,
+          raf: !!raf, w: width, h: height, cols: cols, rows: rows,
+          strength: baseStrength(), gain: VISUAL_GAIN, audioWaves: audioWaveCount(),
+          mask: attMask ? (function () { var m = 1; for (var i = 0; i < attMask.length; i++) if (attMask[i] < m) m = attMask[i]; return m; })() : null
+        };
+      },
       poke: function (x, y, strong) { drop(x, y, strong ? 1.8 : 0.8); return waves.length; },
-      /* 测试用：音频链状态 / 直接喂一个低频（真机走同一条 readSignal） */
-      audioState: function () { return { ready: audioReady, bass: bass, beats: beatCount, waves: waves.length }; },
-      audioPoke: function (level) { lastBeat = 0; readSignal(performance.now(), level == null ? 0.08 : level); return waves.length; },
+      /* 测试用：音频链状态 / 直接喂一个低频包络 / 喂一次音频瞬态（真机走同一条 readSignal） */
+      audioState: function () {
+        return {
+          ready: audioReady, analysing: analysisOn, playing: playing,
+          envBass: envBass, onsets: onsetCount, bassField: bassField,
+          waves: waves.length, audioWaves: audioWaveCount(), gain: VISUAL_GAIN,
+          /* 起音内部量（调试/校准用）：快包络 / 慢背景 / 谱通量 / 通量背景 */
+          eFast: envs ? envs.bass.fast : 0, eSlow: envs ? envs.bass.slow : 0,
+          mFast: envs ? envs.mid.fast : 0, mSlow: envs ? envs.mid.slow : 0,
+          bf: fluxBg ? fluxBg.bass : 0, fb: fluxBg ? fluxBg.bass : 0
+        };
+      },
+      /* 旧签名兼容（单值 = 低频包络）；对象签名走新三路。 */
+      audioPoke: function (level) { return readSignal(performance.now(), level == null ? 0.08 : level); },
+      pokeOnset: function (power, kind) { return triggerOnset(power == null ? 1.2 : power, kind === 'mid' ? 'mid' : 'low', performance.now()); },
+      setGain: function (g) { VISUAL_GAIN = Math.max(0.2, Math.min(4, Number(g) || 1.6)); return VISUAL_GAIN; },
+      resetAnalysis: function () { resetAnalysis(performance.now()); },
+      /* 测试用：清场（波包 / 尾流 / 高度场 / 包络 / 起音历史）——夹具间彻底隔离。 */
+      clear: function () {
+        waves.length = 0; trail.length = 0;
+        if (field) { field.fill(0); previous.fill(0); }
+        fieldEnergy = 0; bassField = 0; drain = 0;
+        envBass = 0; onsetAt = -1e9; onsetCount = 0; bassPhase = 0;
+        if (prevBins) prevBins.fill(0);
+        attKey = ''; draw();
+      },
       destroy: function () {
         if (destroyed) return;
         destroyed = true; stop(); detachAudio(); waves.length = 0; trail.length = 0; clear();
@@ -5991,7 +6265,12 @@
     rippleState: function () { return rippleHandle ? rippleHandle.stats() : { exists: false }; },
     ripplePoke: function (x, y, strong) { return rippleHandle ? rippleHandle.poke(x, y, strong) : 0; },
     rippleAudio: function () { return rippleHandle ? rippleHandle.audioState() : { exists: false }; },
-    rippleAudioPoke: function (level) { return rippleHandle ? rippleHandle.audioPoke(level) : 0; },
+    rippleAudioPoke: function (level) { if (!rippleHandle) return 0; rippleHandle.audioPoke(level); return rippleHandle.audioState().waves; },
+    /* 涟漪分层（测试用）：喂一次音频瞬态 / 读增幅 / 手动重置分析统计。 */
+    ripplePokeOnset: function (power, kind) { return rippleHandle ? rippleHandle.pokeOnset(power, kind) : 0; },
+    rippleSetGain: function (g) { return rippleHandle ? rippleHandle.setGain(g) : 0; },
+    rippleResetAnalysis: function () { return rippleHandle ? rippleHandle.resetAnalysis() : 0; },
+    rippleClear: function () { return rippleHandle ? rippleHandle.clear() : 0; },
     /* 跨源歌词兜底的匹配判定（测试用）：不依赖网络，直接喂结果集。 */
     pickLyricHit: pickLyricHit,
     lyricIsPlaceholder: lyricIsPlaceholder,

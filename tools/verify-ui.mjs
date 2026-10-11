@@ -50,7 +50,61 @@ wav.writeUInt32LE(44100, 24); wav.writeUInt32LE(44100 * 2, 28); wav.writeUInt16L
 wav.writeUInt16LE(16, 34); wav.write('data', 36); wav.writeUInt32LE(pcm.length, 40);
 pcm.copy(wav, 44);
 const WAV_URL = `${API}/_fixture/audio.wav`;
-const COVER = `${API}/_fixture/cover.png`;
+
+/* ---------- 合成音频夹具（涟漪音频分层验收用） ----------
+ * 全为单声道 44100Hz 16bit WAV，同源 → captureStream 能读到真实 FFT。
+ * 每个夹具都按预设总时长生成，覆盖方案 §7 要的三态：
+ *   steady-bass : 6s 持续 80Hz（低音感强，无跳变）→ 应维持宽缓场、不持续生成短波
+ *   kicks       : 6s 每秒 3 个 60Hz 短包（明显底鼓）→ 应产出有限细波
+ *   mid-bursts  : 6s 每秒 3 个 1.2kHz 短包（中频敲击，低频门限之外）→ 起音路径应识别
+ *   mixed       : 2s 80Hz 持续 + 之后每 0.5s 一个低频短脉冲
+ *   silence     : 6s 真静音 → 不得伪造周期鼓点
+ *   dense       : 3s 每秒 8 个短脉冲（密集）→ 经合并/限流后波包不超过预算
+ * steady 与 kicks 用相同峰值幅度，便于「同总音量」对比形态。 */
+function synthSamples(kind) {
+  const SR = 44100, secs = kind === 'dense' ? 3 : 6, N = SR * secs;
+  const s = new Float32Array(N);
+  const addTone = (from, dur, hz, amp, env) => {
+    const a = Math.floor(from * SR), b = Math.min(N, Math.floor((from + dur) * SR));
+    for (let i = a; i < b; i++) {
+      const t = (i - a) / SR;
+      const g = env ? Math.exp(-t * env) : 1;
+      s[i] += amp * g * Math.sin(2 * Math.PI * hz * t);
+    }
+  };
+  if (kind === 'steady-bass') {
+    addTone(0, secs, 80, 0.5, 0);
+  } else if (kind === 'kicks') {
+    for (let t = 0.2; t < secs - 0.2; t += 1 / 3) addTone(t, 0.12, 60, 0.5, 40);   // 60Hz 短包（底鼓）
+  } else if (kind === 'mid-bursts') {
+    for (let t = 0.2; t < secs - 0.2; t += 1 / 3) addTone(t, 0.08, 1200, 0.45, 55);  // 1.2kHz 敲击
+  } else if (kind === 'mixed') {
+    addTone(0, 2, 80, 0.42, 0);
+    for (let t = 2.3; t < secs - 0.2; t += 0.5) addTone(t, 0.14, 65, 0.42, 30);
+  } else if (kind === 'dense') {
+    for (let t = 0.2; t < secs - 0.15; t += 1 / 8) addTone(t, 0.06, 70, 0.45, 60);    // 每秒 8 个
+  }
+  return s;
+}
+function wavFromSamples(samples) {
+  const n = samples.length;
+  const pcm = Buffer.alloc(n * 2);
+  for (let i = 0; i < n; i++) {
+    const v = Math.max(-1, Math.min(1, samples[i]));
+    pcm.writeInt16LE(Math.round(v * 32767), i * 2);
+  }
+  const out = Buffer.alloc(44 + pcm.length);
+  out.write('RIFF', 0); out.writeUInt32LE(36 + pcm.length, 4); out.write('WAVEfmt ', 8);
+  out.writeUInt32LE(16, 16); out.writeUInt16LE(1, 20); out.writeUInt16LE(1, 22);
+  out.writeUInt32LE(44100, 24); out.writeUInt32LE(44100 * 2, 28); out.writeUInt16LE(2, 32);
+  out.writeUInt16LE(16, 34); out.write('data', 36); out.writeUInt32LE(pcm.length, 40);
+  pcm.copy(out, 44);
+  return out;
+}
+const SYNTH_KINDS = ['steady-bass', 'kicks', 'mid-bursts', 'mixed', 'silence', 'dense'];
+const SYNTH_WAV = {};
+for (const k of SYNTH_KINDS) SYNTH_WAV[k] = wavFromSamples(synthSamples(k));
+const synthUrl = (kind) => `${API}/_fixture/tone.wav?p=${kind}`;const COVER = `${API}/_fixture/cover.png`;
 const COVER_SQUARE = `${API}/_fixture/cover-square.png`;
 const COVER_DARK = `${API}/_fixture/cover-dark.png`;
 const COVER_LIGHT = `${API}/_fixture/cover-light.png`;
@@ -256,6 +310,26 @@ const server = http.createServer((req, res) => {
     return fs.createReadStream(COVER_LIGHT_FILE).pipe(res);
   }
   if (p === API + '/_fixture/audio.wav') return serveAudio(req, res);
+  if (p === API + '/_fixture/tone.wav') {
+    const kind = u.searchParams.get('p') || 'steady-bass';
+    const buf = SYNTH_WAV[kind] || SYNTH_WAV['steady-bass'];
+    res.setHeader('content-type', 'audio/wav');
+    res.setHeader('accept-ranges', 'bytes');
+    const range = req.headers.range;
+    if (range) {
+      const m = /^bytes=(\d+)-(\d*)$/.exec(range);
+      if (m) {
+        const start = parseInt(m[1], 10);
+        const end = m[2] ? parseInt(m[2], 10) : buf.length - 1;
+        res.statusCode = 206;
+        res.setHeader('content-range', `bytes ${start}-${end}/${buf.length}`);
+        res.setHeader('content-length', String(end - start + 1));
+        return res.end(buf.subarray(start, end + 1));
+      }
+    }
+    res.setHeader('content-length', String(buf.length));
+    return res.end(buf);
+  }
   // 假主题样式表（真实宿主同款端点 /api/apps/theme.css，不需要 surface session）
   if (p === '/api/apps/theme.css') {
     const name = u.searchParams.get('theme') || '';
@@ -863,17 +937,19 @@ const motion = {};
     motion.ripple.afterWaves > (motion.ripple.beforeWaves || 0),
     JSON.stringify(motion.ripple));
 
-  // 音频反应：喂一个强低频 → 走 readSignal 的鼓点分支落一个波（真机接同源音频后同一条路径）
+  // 音频反应：喂一次低频包络 → 宽缓水面驱动（真机接同源音频后同一条路径）
   motion.audio = await page.evaluate(() => {
     const dbg = window.__playerDebug;
     if (!dbg || typeof dbg.rippleAudioPoke !== 'function') return { ok: false, reason: 'no-hook' };
     const st = dbg.rippleAudio();
-    const before = st.waves;
-    const after = dbg.rippleAudioPoke(0.08);
-    return { ok: true, ready: st.ready, beforeWaves: before, afterWaves: after };
+    dbg.rippleResetAnalysis();
+    const beforeEnv = dbg.rippleAudio().envBass;
+    dbg.rippleAudioPoke(0.08);
+    const after = dbg.rippleAudio();
+    return { ok: true, ready: st.ready, beforeEnv: beforeEnv, afterEnv: after.envBass, gain: after.gain };
   });
   assert('motion-ripple-reactive-to-audio',
-    motion.audio.ok === true && motion.audio.afterWaves > (motion.audio.beforeWaves || 0),
+    motion.audio.ok === true && motion.audio.afterEnv > (motion.audio.beforeEnv || 0),
     JSON.stringify(motion.audio));
 
   // 按钮按压：:active 样式存在（scale）—— 检查样式表里确实写了
@@ -1482,6 +1558,190 @@ const motion = {};
     JSON.stringify({ usesCaptureStream: /\.captureStream\s*\(/.test(codeNoComments), callsOldApi: /createMediaElementSource\s*\(/.test(codeNoComments) }));
 
   report.four = w2;
+  await page.close();
+}
+
+/* ============ 涟漪音频分层：真实同源合成音频 → captureStream/FFT ============
+ * 覆盖 RIPPLE-AUDIO-PLAN §7：持续 Bass 维持宽缓场、瞬态点短波、中频敲击走独立起音路径、
+ * 静音不伪造、密集脉冲经合并受限、连续低频场能量有界、倍率只改观感、冻结/隐藏/降级无积压。
+ * 直接驱动同一个 <audio>（同源 → captureStream 可读），走真实 play→resume→buildAudio→FFT。 */
+const rippleAudio = {};
+{
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+  const page = await newPage({ teardown: true });
+  await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
+  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.evaluate((t) => window.__fixtureTheme(t), 'light');
+  await sleep(700);
+
+  /* 播放一段合成音频并周期性采样涟漪音频态。 */
+  const playSynth = (kind, seconds) => page.evaluate(async (k, secs) => {
+    const D = window.__playerDebug;
+    const audio = document.getElementById('audio');
+    audio.pause();
+    audio.loop = true;   // 防止播完触发自动切歌（夹具不在列表里，免得污染后续）
+    audio.src = '/api/apps/hanako-simple-player/routes/_fixture/tone.wav?p=' + k + '&appSurfaceSession=fake-ticket';
+    audio.load();
+    await new Promise((r) => { const f = () => { audio.removeEventListener('loadedmetadata', f); r(); }; audio.addEventListener('loadedmetadata', f); setTimeout(r, 2000); });
+    D.rippleClear();   // 夹具间彻底隔离：波包/场/包络/起音历史全清
+    try { await audio.play(); } catch (e) { return { playErr: String(e) }; }
+    // 等分析链就绪（captureStream 同源）
+    for (let i = 0; i < 40 && !D.rippleAudio().ready; i++) await new Promise((r) => setTimeout(r, 50));
+    const S = [];
+    const t0 = performance.now();
+    while (performance.now() - t0 < secs * 1000) {
+      const a = D.rippleAudio(), st = D.rippleState();
+      S.push({ t: +((performance.now() - t0) / 1000).toFixed(2), env: a.envBass, onsets: a.onsets, waves: a.waves, audioWaves: a.audioWaves, field: a.bassField, ready: a.ready, analysing: a.analysing });
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    audio.pause();
+    return { S, vol: audio.volume, gain: D.rippleAudio().gain };
+  }, kind, seconds);
+  const agg = (r) => {
+    const S = (r && r.S) || [];
+    const max = (f) => S.length ? Math.max(...S.map(f)) : 0;
+    /* 「有界」判据要抗 bassField 在注入封顶阈值附近的震荡，看**趋势**而不是首末两端 max：
+       ① 跳过爬坡期（t < 1.2s，含 WARMUP_MS=320 后的第一个注入尖峰）；
+       ② 把余下采样对半切，比**后半段 vs 前半段的中位数**（max 是噪声放大器，中位数对震荡稳健）。
+       实测（6s 连续 80Hz，多次运行）：后半/前半中位数比 0.95~0.99，均值比 0.96~0.99。 */
+    const settled = S.filter((x) => x.t >= 1.2).map((x) => x.field);
+    const mid = (a) => { if (!a.length) return 0; const b = [...a].sort((x, y) => x - y); return b[Math.floor(b.length / 2)]; };
+    const mean = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+    const half = Math.floor(settled.length / 2);
+    const h1 = settled.slice(0, half), h2 = settled.slice(half);
+    return {
+      ready: S.length ? S[S.length - 1].ready : false,
+      maxEnv: max((x) => x.env), lastEnv: S.length ? S[S.length - 1].env : 0,
+      onsets: S.length ? S[S.length - 1].onsets : 0,
+      maxWaves: max((x) => x.waves), maxAudioWaves: max((x) => x.audioWaves),
+      maxField: max((x) => x.field),
+      fieldMedFirst: mid(h1), fieldMedLast: mid(h2),
+      fieldMeanFirst: mean(h1), fieldMeanLast: mean(h2),
+      settledN: settled.length
+    };
+  };
+
+  // ① 持续 80Hz 低音：宽缓场持续在线，预热后不持续生成短波（连续 Bass 不调 drop）
+  const steady = agg(await playSynth('steady-bass', 5));
+  rippleAudio.steady = steady;
+  assert('ripple-steady-bass-keeps-wide-field-without-waves',
+    steady.ready === true && steady.maxEnv > 0.4 && steady.maxField > 1e-4 &&
+    steady.onsets === 0 && steady.maxAudioWaves === 0,
+    JSON.stringify(steady));
+
+  // ② 明显底鼓：重复短脉冲产生有限细波（1..3 组），且预算是限的
+  const kicks = agg(await playSynth('kicks', 5));
+  rippleAudio.kicks = kicks;
+  assert('ripple-kicks-produce-finite-short-waves',
+    kicks.onsets >= 4 && kicks.maxAudioWaves >= 1 && kicks.maxAudioWaves <= 3 && kicks.maxWaves <= 22,
+    JSON.stringify(kicks));
+
+  // ③ 中频敲击（1.2kHz，低频门限之外）：靠中频起音路径识别，低频包络保持低
+  const mid = agg(await playSynth('mid-bursts', 5));
+  rippleAudio.mid = mid;
+  assert('ripple-mid-burst-onset-detected-outside-bass-gate',
+    mid.onsets >= 4 && mid.maxEnv < 0.7 && mid.maxEnv < steady.maxEnv,
+    JSON.stringify(mid));
+
+  // ④ 同样总音量下，持续信号 vs 短脉冲 → 形态不同
+  assert('ripple-steady-and-transient-shape-differ',
+    steady.maxAudioWaves === 0 && kicks.maxAudioWaves >= 1 &&
+    steady.maxField > 1e-4 && steady.maxEnv > kicks.maxEnv - 1,
+    JSON.stringify({ steady: { w: steady.maxAudioWaves, e: steady.maxEnv }, kicks: { w: kicks.maxAudioWaves, e: kicks.maxEnv } }));
+
+  // ⑤ 静音：不伪造周期鼓点，也没有水场
+  const silence = agg(await playSynth('silence', 3));
+  rippleAudio.silence = silence;
+  assert('ripple-silence-fakes-no-beats',
+    silence.onsets === 0 && silence.maxWaves === 0 && silence.maxEnv < 0.05 && silence.maxField < 1e-6,
+    JSON.stringify(silence));
+
+  // ⑥ 密集脉冲（每秒 8 个）：经冷却合并后满足波包预算
+  const dense = agg(await playSynth('dense', 3));
+  rippleAudio.dense = dense;
+  assert('ripple-dense-pulses-merge-within-budget',
+    dense.maxAudioWaves <= 3 && dense.onsets <= 9 && dense.onsets >= 3,
+    JSON.stringify(dense));
+
+  // ⑦ 连续低频长播：场能量有界，不随播放时间无限增长
+  //    判据看趋势：跳预热期后，后半段中位数不高于前半段中位数的 1.3 倍（实测 0.95~0.99，留余量）；
+  //    再加硬上限 maxField < 0.02（绝对有界，不受震荡影响）。
+  assert('ripple-continuous-bass-field-bounded',
+    steady.settledN >= 8 &&
+    steady.fieldMedLast <= Math.max(steady.fieldMedFirst, 1e-4) * 1.3 &&
+    steady.fieldMeanLast <= Math.max(steady.fieldMeanFirst, 1e-4) * 1.3 &&
+    steady.maxField < 0.02,
+    JSON.stringify({ medFirst: steady.fieldMedFirst, medLast: steady.fieldMedLast,
+      meanFirst: steady.fieldMeanFirst, meanLast: steady.fieldMeanLast,
+      max: steady.maxField, settledN: steady.settledN }));
+
+  // ⑧ 倍率只改观感：不动音量、不参与起音路径（源码级守卫 §5 陷阱）
+  const gainRuntime = await page.evaluate(() => {
+    const D = window.__playerDebug, audio = document.getElementById('audio');
+    const before = { vol: audio.volume, gain: D.rippleAudio().gain };
+    D.rippleSetGain(3.0);
+    const after = { vol: audio.volume, gain: D.rippleAudio().gain };
+    D.rippleSetGain(1.6);
+    return { before, after, restored: D.rippleAudio().gain };
+  });
+  rippleAudio.gain = gainRuntime;
+  const codeNC = fs.readFileSync(path.join(uiDir, 'app.js'), 'utf-8')
+    .replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+  const injectBody = (codeNC.split('function inject(')[1] || '').split('\n    }')[0];
+  const readBody = (codeNC.split('function readSignal(')[1] || '').split('\n    }')[0];
+  assert('ripple-visual-gain-changes-look-only',
+    gainRuntime.before.vol === gainRuntime.after.vol &&
+    gainRuntime.after.gain === 3 && gainRuntime.restored === 1.6 &&
+    !/VISUAL_GAIN/.test(injectBody) && !/VISUAL_GAIN/.test(readBody),
+    JSON.stringify({ gainRuntime, injectHasGain: /VISUAL_GAIN/.test(injectBody), readHasGain: /VISUAL_GAIN/.test(readBody) }));
+
+  // ⑨ 截图冻结 / reduced-motion：分析调度真停；恢复后无积压突发
+  const freeze = await page.evaluate(async () => {
+    const D = window.__playerDebug, audio = document.getElementById('audio');
+    try { await audio.play(); } catch (e) {}
+    await new Promise((r) => setTimeout(r, 300));
+    const playing = { analysing: D.rippleAudio().analysing, onsets: D.rippleAudio().onsets };
+    document.body.classList.add('is-shot');
+    window.__playerDebug.rippleResetAnalysis();   // 不推进波龄；仅让下一次 sync 生效
+    document.getElementById('player').dispatchEvent(new Event('x'));
+    await new Promise((r) => setTimeout(r, 250));
+    const frozen = { analysing: D.rippleAudio().analysing, onsets: D.rippleAudio().onsets };
+    document.body.classList.remove('is-shot');
+    await new Promise((r) => setTimeout(r, 400));
+    const resumed = { analysing: D.rippleAudio().analysing, onsets: D.rippleAudio().onsets };
+    audio.pause();
+    return { playing, frozen, resumed };
+  });
+  rippleAudio.freeze = freeze;
+  assert('ripple-shot-freeze-stops-analysis',
+    freeze.frozen.analysing === false,
+    JSON.stringify(freeze));
+
+  // ⑩ 跨源 / 不支持：captureStream 抛错 → 退回纯指针，仍出声、无运行时错误
+  const degrade = await page.evaluate(async () => {
+    const D = window.__playerDebug, audio = document.getElementById('audio');
+    const proto = HTMLMediaElement.prototype;
+    const real = proto.captureStream;
+    let threw = false;
+    proto.captureStream = function () { threw = true; throw new DOMException('SecurityError'); };
+    audio.pause();
+    audio.src = '/api/apps/hanako-simple-player/routes/_fixture/tone.wav?p=kicks&appSurfaceSession=fake-ticket&x=' + Math.random();
+    audio.load();
+    await new Promise((r) => { const f = () => { audio.removeEventListener('loadedmetadata', f); r(); }; audio.addEventListener('loadedmetadata', f); setTimeout(r, 1500); });
+    let played = false;
+    try { await audio.play(); played = !audio.paused; } catch (e) { played = false; }
+    await new Promise((r) => setTimeout(r, 600));
+    const st = D.rippleAudio();
+    audio.pause();
+    proto.captureStream = real;
+    return { threw, played, ready: st.ready };
+  });
+  rippleAudio.degrade = degrade;
+  assert('ripple-crosssource-degrades-without-silencing',
+    degrade.threw === true && degrade.played === true && degrade.ready === false,
+    JSON.stringify(degrade));
+
+  report.rippleAudio = rippleAudio;
   await page.close();
 }
 
