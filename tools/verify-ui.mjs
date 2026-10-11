@@ -262,8 +262,18 @@ const server = http.createServer((req, res) => {
   if (p === API + '/widget/api/music/search') {
     searchHits++;
     const kw = u.searchParams.get('keyword') || '';
+    const server = u.searchParams.get('server') || '';
     const offset = Math.max(0, Number(u.searchParams.get('offset')) || 0);
     const limit = Math.max(1, Number(u.searchParams.get('limit')) || 30);
+    /* B站分P夹具：server=bilibili 时回两条 —— 一条多P（长时长，值得探分P）、
+     * 一条单P（短片，不该出现分集入口）。id 形状与真实后端一致。 */
+    if (server === 'bilibili' && kw.indexOf('多P') >= 0) {
+      const results = [
+        { id: 'bilibili:BV1Multi', title: 'B站合集 多P', author: '合集UP', pic: '', dur: 6489 * 60, url: `${API}/widget/api/music/go/BV1Multi?server=bilibili`, lrc: '' },
+        { id: 'bilibili:BV1Single', title: 'B站单曲', author: '单曲UP', pic: '', dur: 270, url: `${API}/widget/api/music/go/BV1Single?server=bilibili`, lrc: '' },
+      ];
+      return json(res, 200, { ok: true, results, host: 'mock', total: 2 });
+    }
     /* 分页夹具：关键词含「分页」时回一套可翻页的数据集（共 75 条，每页 30），
      * 供无限滚动断言；其余关键词保持原来的单条返回（backfill / 跨源歌词等用）。 */
     if (kw.indexOf('分页') >= 0) {
@@ -291,6 +301,17 @@ const server = http.createServer((req, res) => {
     const id = u.searchParams.get('id') || '0';
     const results = Array.from({ length: 2 }, (_, i) => ({ id: `netease:${id}${i}`, title: `榜单曲 ${i + 1}`, author: '榜单歌手', url: goUrl(`${id}${i}`), pic: '', lrc: '' }));
     return json(res, 200, { ok: true, results, name: '热歌榜', host: 'mock' });
+  }
+  if (p === API + '/widget/api/music/bili-parts') {
+    const bvid = u.searchParams.get('bvid') || '';
+    if (bvid === 'BV1Multi') {
+      const results = Array.from({ length: 12 }, (_, i) => ({
+        id: `bilibili:BV1Multi_${1000 + i}`, title: `分集曲 ${i + 1}`, author: '', pic: '', dur: 240 + i,
+        page: i + 1, cid: 1000 + i, url: `${API}/widget/api/music/go/BV1Multi_${1000 + i}?server=bilibili`, lrc: ''
+      }));
+      return json(res, 200, { ok: true, results, videos: results.length, bvid, host: 'mock' });
+    }
+    return json(res, 200, { ok: true, results: [{ id: `bilibili:${bvid}_1`, title: '唯 1 集', author: '', pic: '', dur: 270, page: 1, cid: 1, url: `${API}/widget/api/music/go/${bvid}_1?server=bilibili`, lrc: '' }], videos: 1, bvid, host: 'mock' });
   }
   if (p === API + '/widget/api/music/radios') {
     return json(res, 200, { ok: true, results: [
@@ -1956,6 +1977,111 @@ const motion = {};
   assert('search-radio-opens-programs',
     s.radioOpen.rows === 2 && s.radioOpen.first === '电台节目 1',
     JSON.stringify(s.radioOpen));
+
+  /* ── B站分P（多 P 视频的展开）───────────────────────────────
+   * 搜索结果里没有分P字段，只能探 pagelist；长视频才探（正常单曲摸不到阈值），
+   * 且一轮搜索有额度上限（不预取整页）。五条：
+   *   ①只有多P才挂分集入口 ②点开就地长树、不跳页 ③子面板限高滚动
+   *   ④单集红心落「我的喜欢」 ⑤整单导入成新歌单。 */
+  await page.evaluate(() => { window.__playerDebug.clearSearch(); });
+  await sleep(300);
+  await page.evaluate(() => {
+    window.__playerDebug.openSearch();
+    window.__playerDebug.setServer('bilibili');   // B站分P：先切平台
+    window.__playerDebug.setKeyword('多P');
+    window.__playerDebug.doSearch();
+  });
+  await page.waitForFunction(() => document.querySelectorAll('#searchList .bili-mark').length === 1, { timeout: 4000, polling: 50 }).catch(() => {});
+  s.biliProbe = await page.evaluate(() => ({
+    rows: document.querySelectorAll('#searchList .search-row').length,
+    marks: document.querySelectorAll('#searchList .bili-mark').length,
+    markText: (document.querySelector('#searchList .bili-mark') || {}).textContent || '',
+    state: window.__playerDebug.biliPartsState(),
+    singleMark: !!document.querySelector('#searchList .search-row[data-i="1"] .bili-mark')
+  }));
+  assert('bili-parts-mark-only-on-multi',
+    s.biliProbe.rows === 2 && s.biliProbe.marks === 1 && /分集/.test(s.biliProbe.markText) &&
+    /12/.test(s.biliProbe.markText) && s.biliProbe.singleMark === false &&
+    s.biliProbe.state.probe.BV1Single === undefined,   // 短片不探（不预取）
+    JSON.stringify(s.biliProbe));
+
+  // 点分集标记 → 就地展开分集树（12 集），树长在主行与下一条结果之间
+  await page.evaluate(() => document.querySelector('#searchList .bili-mark').click());
+  await page.waitForFunction(() => document.querySelectorAll('#searchList .bili-prow').length === 12, { timeout: 4000, polling: 50 }).catch(() => {});
+  s.biliOpen = await page.evaluate(() => {
+    const row = document.querySelector('#searchList .search-row');
+    const tree = document.querySelector('#searchList .bili-tree');
+    const plist = document.querySelector('#searchList .bili-plist');
+    const hit = document.querySelector('#searchList .search-hit');
+    const rows = document.querySelectorAll('#searchList .search-row');
+    const trect = tree ? tree.getBoundingClientRect() : null;
+    return {
+      open: row.classList.contains('is-open'),
+      treeInRow: !!tree,
+      prows: document.querySelectorAll('#searchList .bili-prow').length,
+      firstName: (document.querySelector('#searchList .bili-pname') || {}).textContent || '',
+      firstIdx: (document.querySelector('#searchList .bili-pidx') || {}).textContent || '',
+      treeTop: trect ? Math.round(trect.top) : 0,
+      hitBottom: Math.round(hit.getBoundingClientRect().bottom),
+      nextRowTop: rows[1] ? Math.round(rows[1].getBoundingClientRect().top) : 0,
+      capped: plist ? getComputedStyle(plist).maxHeight : '',
+      discover: window.__playerDebug.searchState().discoverVisible
+    };
+  });
+  assert('bili-parts-expand-in-place',
+    s.biliOpen.open === true && s.biliOpen.treeInRow === true && s.biliOpen.prows === 12 &&
+    s.biliOpen.firstName === '分集曲 1' && s.biliOpen.firstIdx === 'P1' &&
+    s.biliOpen.treeTop >= s.biliOpen.hitBottom - 3 &&
+    (s.biliOpen.nextRowTop === 0 || s.biliOpen.treeTop <= s.biliOpen.nextRowTop + 3) &&
+    s.biliOpen.discover === false,
+    JSON.stringify(s.biliOpen));
+  assert('bili-parts-list-scrolls',
+    /px$/.test(s.biliOpen.capped) && parseFloat(s.biliOpen.capped) > 0,
+    s.biliOpen.capped);
+  await page.screenshot({ path: path.join(outDir, 'search-bili-parts-1040x780-light.png') });
+
+  // 分集行尾红心 = 收藏到「我的喜欢」（与主行红心同一语义）
+  await page.evaluate(() => document.querySelector('#searchList .bili-prow .search-fav').click());
+  await sleep(250);
+  await clickTab(page, 'fav');
+  await sleep(300);
+  s.biliFav = await page.evaluate(() => ({
+    favOn: !!document.querySelector('#searchList .bili-prow .search-fav.is-on'),
+    inFav: Array.prototype.some.call(document.querySelectorAll('#queueList .q-title'), (e) => e.textContent === '分集曲 1')
+  }));
+  assert('bili-part-fav-goes-to-fav',
+    s.biliFav.favOn === true && s.biliFav.inFav === true,
+    JSON.stringify(s.biliFav));
+
+  // 整单导入 → 新建歌单（imp:N），不塞「我的喜欢」
+  await page.evaluate(() => { window.__playerDebug.openSearch(); window.__playerDebug.setServer('bilibili'); window.__playerDebug.setKeyword('多P'); window.__playerDebug.doSearch(); });
+  await page.waitForFunction(() => document.querySelectorAll('#searchList .bili-mark').length === 1, { timeout: 4000, polling: 50 }).catch(() => {});
+  await page.evaluate(() => document.querySelector('#searchList .bili-mark').click());
+  await page.waitForFunction(() => document.querySelectorAll('#searchList .bili-prow').length === 12, { timeout: 4000, polling: 50 }).catch(() => {});
+  s.biliBefore = await page.evaluate(() => document.querySelectorAll('#listTabs .list-tab').length);
+  await page.evaluate(() => document.querySelector('#searchList [data-bili-imp]').click());
+  await sleep(400);
+  s.biliImport = await page.evaluate(() => ({
+    tabs: document.querySelectorAll('#listTabs .list-tab').length,
+    active: (document.querySelector('#listTabs .list-tab.is-active') || {}).textContent || '',
+    queueRows: document.querySelectorAll('#queueList .q-row').length,
+    firstQueue: (document.querySelector('#queueList .q-title') || {}).textContent || ''
+  }));
+  assert('bili-parts-import-to-new-list',
+    s.biliImport.tabs === s.biliBefore + 1 && s.biliImport.queueRows === 12 &&
+    s.biliImport.firstQueue === '分集曲 1',
+    JSON.stringify(s.biliImport));
+
+  // 歌词手动匹配面板里的静态对齐提示（罐头补充：绑定后还能长按歌词调对齐）
+  s.lmHint = await page.evaluate(() => {
+    const el = document.getElementById('lmAlignHint');
+    if (!el) return { exists: false };
+    const cs = getComputedStyle(el);
+    return { exists: true, text: el.textContent.trim(), fs: parseFloat(cs.fontSize) };
+  });
+  assert('lyric-match-align-hint-present',
+    s.lmHint.exists === true && /长按歌词/.test(s.lmHint.text) && s.lmHint.fs >= 11,
+    JSON.stringify(s.lmHint));
 
   /* 无限滚动翻页（罐头拍板：滚到底自动加载）。
    * 假后端对「分页」关键词回 75 条、每页 30（见 _fixture 的 music/search）。

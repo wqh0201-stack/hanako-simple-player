@@ -1772,6 +1772,9 @@ button:disabled { cursor: default; }
 .lm-note { margin: 2px 0 10px; font-size: 11px; line-height: 1.45; color: var(--hk-muted); }
 .lm-note:empty { display: none; }
 .lm-note.is-err { color: var(--danger, #d9534f); }
+/* 静态提示：告诉用户绑定后还能长按歌词调对齐。与 .lm-note 同行语言但更淡，
+   且不被 JS 触碰（#lmNote 会被搜索中/出错改写，所以单独一个元素）。 */
+.lm-hint { margin: 2px 0 10px; font-size: 11px; line-height: 1.45; color: var(--hk-faint); }
 .lm-actions { display: flex; justify-content: flex-end; gap: 6px; }
 .lm-btn {
   padding: 6px 12px;
@@ -2360,6 +2363,119 @@ body.is-shot *::after {
 .search-fav.is-on { opacity: 1; }
 .search-fav.is-on .icon { fill: currentColor; }
 .search-fav .icon { width: 16px; height: 16px; }
+
+/* ── 搜索结果里的 B站分集（多 P 视频） ──────────────────────────
+   标题后跟一枚「分集 N」，点开在行下长出分集树。列表 flex-wrap，树占满一整行。 */
+.search-row { flex-wrap: wrap; }
+.search-row.is-open { background: var(--hk-hover); }
+.search-row .q-line1 { display: flex; align-items: center; gap: 7px; min-width: 0; }
+/* 标题先让位：分集标记 flex:none 永远完整，标题自己缩成省略号 */
+.search-row .q-line1 .q-title { flex: 1 1 auto; min-width: 0; }
+
+.bili-mark {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid var(--hk-hairline);
+  border-radius: var(--radius-s, 5px);
+  background: none;
+  color: var(--hk-muted);
+  font: inherit;
+  font-size: 10px;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+.bili-mark:hover { background: var(--hk-hover); color: var(--hk-text); }
+.bili-mark .bili-n { font-variant-numeric: tabular-nums; position: relative; top: 0.5px; }
+.bili-mark .bili-arrow {
+  width: 10px;
+  height: 10px;
+  display: block;
+  transform: rotate(180deg);   /* i-chevron-left 转成右向 */
+  transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.search-row.is-open .bili-mark { border-color: var(--hl-accent); color: var(--hl-accent); }
+.search-row.is-open .bili-mark .bili-arrow { transform: rotate(90deg); }
+
+/* 分集树：整行铺开 */
+.bili-tree {
+  flex: 1 0 100%;
+  min-width: 0;
+  animation: bili-tree-in 0.34s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+@keyframes bili-tree-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+.bili-subtools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 2px 6px 52px; }
+.bili-tbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--hk-hairline);
+  border-radius: var(--radius-s, 5px);
+  background: none;
+  color: var(--hk-text);
+  padding: 4px 9px;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background-color 0.16s ease, border-color 0.16s ease;
+}
+.bili-tbtn:hover { background: var(--hk-hover); }
+.bili-tbtn.primary { border-color: var(--hl-accent); color: var(--hl-accent); }
+.bili-tbtn.primary:hover { background: var(--hk-hover); }
+.bili-count { margin-left: auto; padding-right: 2px; font-size: 11px; color: var(--hk-faint); }
+
+/* 分集列表：限高滚动（134 P 会 4000+ px）+ 一条竖向导引线 */
+.bili-plist {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 4px;
+  max-height: 232px;
+  overflow-y: auto;
+  position: relative;
+}
+.bili-plist::before {
+  content: "";
+  position: absolute;
+  left: 46px;
+  top: 0;
+  bottom: 4px;
+  width: 1px;
+  background: var(--hk-hairline);
+}
+.bili-prow { display: flex; align-items: center; gap: 6px; border-radius: var(--radius-s, 5px); }
+.bili-prow:hover { background: var(--hk-hover); }
+.bili-phit {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 2px 4px 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.bili-pidx { text-align: right; font-size: 10.5px; color: var(--hk-faint); font-variant-numeric: tabular-nums; padding-left: 6px; }
+.bili-pname { min-width: 0; font-size: 12px; color: var(--hk-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bili-pdur { font-size: 11px; color: var(--hk-faint); font-variant-numeric: tabular-nums; }
+.bili-prow .search-fav { width: 28px; height: 28px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bili-tree, .bili-mark .bili-arrow { animation-duration: 0.01ms; transition-duration: 0.01ms; }
+}
 .search-empty {
   padding: 40px 12px;
   text-align: center;

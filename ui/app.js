@@ -97,6 +97,7 @@
     chartTracks: API + '/widget/api/music/chart-tracks',
     radios: API + '/widget/api/music/radios',
     radioPrograms: API + '/widget/api/music/radio-programs',
+    biliParts: API + '/widget/api/music/bili-parts',
     importFile: API + '/widget/api/import-file',
     scanFolder: API + '/widget/api/scan-folder',
     playbackState: API + '/api/playback-state'
@@ -4126,6 +4127,20 @@
   var discoverCharts = [];      // 榜单
   var discoverSheets = [];      // 推荐歌单
   var discoverRadios = [];      // 热门电台
+  /* B站分P（多 P 视频的展开）：
+   *  · 搜索结果里**没有**分P数，只能查 pagelist 才知道「这条有几个 P」与每 P 的标题，
+   *    所以分集标记是一道二段式的：先探测（长视频才探）、再按需拉列表。
+   *  · probe   bvid -> 分P数（>1 才挂分集入口；-1 = 探测在途）。只有「时长≥10min」的行参与探测。
+   *  · open    bvid -> true（该行展开中）。按 bvid 而非行索引，重渲染不丢状态。
+   *  · cache   bvid -> [{...}] | 'loading'（点开时拉，拉过就复用）。
+   *  · probesLeft 本轮搜索还能探测多少条（不预取整页 30 条）。
+   */
+  var BILI_PART_MIN_DUR = 600;   // 秒：≥ 10 分钟才当疑似合集去探分P（正常单曲 3-5 min 摸不到）
+  var BILI_PROBE_MAX = 10;       // 一轮搜索最多探这么多条
+  var biliProbe = {};
+  var biliOpen = {};
+  var biliPartsCache = {};
+  var biliProbesLeft = 0;
   var searchPage = $('searchPage');
   var searchList = $('searchList');
   var searchNoteEl = $('searchNote');
@@ -4181,7 +4196,162 @@
     updateServerFade();   // 重渲染后溢出情况可能变了（比如刚开页时量不到）
   }
 
-  /* 搜索结果行：封面 + 标题/歌手 + 行尾红心（收藏到我的喜欢）。 */
+  /* ── B站分P：探测 / 拉列表 / 展开 ────────────────────────
+   * 搜索结果没有分P字段，所以「这行是不是合集」要先探一次 pagelist。
+   * 探测只对**时长达标**的 B站行做（正常单曲摸不到阈值），且一轮搜索有上限；
+   * 拉到的条数缓存起来，重渲染不重复请求。 */
+  function isBiliTrack(r) {
+    var id = String((r && (r.id || r.url)) || '');
+    return /^bilibili:/.test(id) || /[?&]server=bilibili/.test(String((r && r.url) || ''));
+  }
+  function biliBvid(r) {
+    var id = String((r && r.id) || '').replace(/^bilibili:/, '').split('_')[0];
+    if (id) return id;
+    var m = /\/music\/go\/([A-Za-z0-9]+)/.exec(String((r && r.url) || ''));
+    return m ? m[1] : '';
+  }
+
+  /* 探测一批结果里哪些是多 P（每行各自独立，不阻塞渲染）。只在「本轮还剩额度」时发起。 */
+  function probeBiliParts(list) {
+    if (!list || !list.length) return;
+    for (var i = 0; i < list.length; i++) {
+      var r = list[i];
+      if (!isBiliTrack(r)) continue;
+      if (!(Number(r.dur) >= BILI_PART_MIN_DUR)) continue;   // 短片不值得探
+      var bv = biliBvid(r);
+      if (!bv || biliProbe[bv] !== undefined) continue;       // 已探过 / 在途
+      if (biliProbesLeft <= 0) break;                         // 本轮额度用完
+      biliProbesLeft--;
+      biliProbe[bv] = -1;
+      (function (bvid) {
+        apiGetJson(ENDPOINT.biliParts + '?bvid=' + encodeURIComponent(bvid)).then(function (res) {
+          var n = (res.ok && res.body && res.body.ok && Array.isArray(res.body.results)) ? res.body.results.length : 0;
+          biliProbe[bvid] = n;
+          if (res.ok && res.body && res.body.ok) biliPartsCache[bvid] = res.body.results;   // 顺手缓存，点开不再请求
+          renderSearchResults();
+        }).catch(function () {
+          biliProbe[bvid] = 0;
+          renderSearchResults();
+        });
+      })(bv);
+    }
+  }
+
+  /* 点开/收起某行的分集树。列表没拉过就先拉（探测已缓存则直接用）。 */
+  function toggleBiliParts(r) {
+    var bv = biliBvid(r);
+    if (!bv) return;
+    if (biliOpen[bv]) { delete biliOpen[bv]; renderSearchResults(); return; }
+    biliOpen[bv] = true;
+    if (Array.isArray(biliPartsCache[bv])) { renderSearchResults(); return; }
+    biliPartsCache[bv] = 'loading';
+    renderSearchResults();
+    apiGetJson(ENDPOINT.biliParts + '?bvid=' + encodeURIComponent(bv)).then(function (res) {
+      var list2 = (res.ok && res.body && res.body.ok && Array.isArray(res.body.results)) ? res.body.results : [];
+      biliPartsCache[bv] = list2;
+      if (list2.length) biliProbe[bv] = list2.length;
+      renderSearchResults();
+    }).catch(function () {
+      biliPartsCache[bv] = [];
+      renderSearchResults();
+    });
+  }
+
+  /* 分集行尾红心：单曲进「我的喜欢」（与主行红心同一套语义）。
+   * 分P曲目尚未入库（搜索结果只是列表），所以借 addTrackToTarget 落 fav；
+   * 已在 fav 则走 removeFav（与原行红心 toggleSearchFav 一致）。 */
+  function togglePartFav(part) {
+    if (!part) return;
+    var id = deriveId(part, part.url);
+    if (isFav(id)) { removeFav(id); toast('已取消喜欢'); }
+    else { addTrackToTarget(part); }
+    renderQueue(); renderTrack();
+    renderSearchResults();
+  }
+
+  /* 把某条视频的全部分集导入成一个新歌单（imp:N）——长合集本该可整体管理，
+   * 不塞「我的喜欢」（134 首混进收藏夹很难收拾）。走 mergeTracks 同一条路。 */
+  function importBiliParts(r) {
+    var bv = biliBvid(r);
+    var parts = biliPartsCache[bv];
+    if (!Array.isArray(parts) || !parts.length) { toast('分集还没拉到，稍后再试'); return; }
+    var nameRaw = String(r.title || 'B站合集').trim() || 'B站合集';
+    var id = nextImportId();
+    state.lists.push({ id: id, name: nameRaw });
+    saveLists();
+    var items = parts.map(function (p) {
+      var o = Object.assign({}, p);
+      o.list = id;
+      o.mode = '在线';
+      o.group = '在线音乐';
+      if (!o.title && o.page) o.title = 'P' + o.page;
+      return o;
+    });
+    var added = mergeTracks(items, id);
+    state.activeList = id;
+    savePlaylist();
+    renderAll();
+    toast('已导入「' + nameRaw + '」共 ' + added + ' 首');
+  }
+
+  /* 把某条视频的全部分集加入「我的喜欢」 */
+  function favAllBiliParts(r) {
+    var bv = biliBvid(r);
+    var parts = biliPartsCache[bv];
+    if (!Array.isArray(parts) || !parts.length) { toast('分集还没拉到，稍后再试'); return; }
+    ensureList('fav', '我的喜欢');
+    var n = 0;
+    for (var i = 0; i < parts.length; i++) {
+      if (!isFav(deriveId(parts[i], parts[i].url))) n += addTrackToTarget(parts[i]) ? 1 : 0;
+    }
+    renderQueue(); renderTrack();
+    renderSearchResults();
+    if (!n) toast('这些分集都已在「我的喜欢」里');
+  }
+
+  /* 分集子面板（展开时嵌在主行下方的那块树）。 */
+  function renderPartsTree(r, idx) {
+    var bv = biliBvid(r);
+    var parts = biliPartsCache[bv];
+    var h = '';
+    if (parts === 'loading' || parts === undefined) {
+      return '<div class="bili-tree"><div class="bili-subtools"><span class="bili-count">正在拉取分集…</span></div></div>';
+    }
+    if (!Array.isArray(parts) || !parts.length) {
+      return '<div class="bili-tree"><div class="bili-subtools"><span class="bili-count">分集拉取失败</span></div></div>';
+    }
+    h += '<div class="bili-tree"><div class="bili-subtools">'
+      + '<button class="bili-tbtn primary" type="button" data-bili-all="' + idx + '">全部加入我的喜欢</button>'
+      + '<button class="bili-tbtn" type="button" data-bili-imp="' + idx + '">导入成歌单</button>'
+      + '<span class="bili-count">共 ' + parts.length + ' 集</span>'
+      + '</div><ol class="bili-plist">';
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      var pid = deriveId(p, p.url);
+      var on = isFav(pid);
+      h += '<li class="bili-prow">'
+        + '<button class="bili-phit" type="button" data-bili-p="' + i + '" data-bili-row="' + idx + '" title="' + esc(String(p.title || '')) + '">'
+          + '<span class="bili-pidx">P' + esc(String(p.page || (i + 1))) + '</span>'
+          + '<span class="bili-pname">' + esc(String(p.title || ('P' + (i + 1)))) + '</span>'
+          + '<span class="bili-pdur">' + (Number(p.dur) > 0 ? fmtTime(p.dur) : '--:--') + '</span>'
+        + '</button>'
+        + '<button class="search-fav' + (on ? ' is-on' : '') + '" type="button" data-bili-fav="' + i + '" data-bili-row="' + idx + '" aria-pressed="' + (on ? 'true' : 'false') + '" aria-label="' + (on ? '取消喜欢' : '加入我的喜欢') + '" title="' + (on ? '取消喜欢' : '加入我的喜欢') + '">' + icon('i-heart', 'icon-sm') + '</button>'
+        + '</li>';
+    }
+    h += '</ol></div>';
+    return h;
+  }
+
+  /* 是否为搜索层里的一条普通结果：推荐区不做分P展开，保持轻。 */
+  function showPartsFor(r, i) {
+    if (!searchPaginated) return false;   // 详情层（榜单/电台）不展开分P
+    if (!isBiliTrack(r)) return false;
+    var n = biliProbe[biliBvid(r)];
+    return n === -1 || n > 1;             // 在途或确为多 P 才挂入口
+  }
+
+  /* 搜索结果行：封面 + 标题/歌手 + 行尾红心（收藏到我的喜欢）。
+   * B站多 P 视频在标题后挂一枚「分集 N」，点开在行下长出分集树（不跳页）。 */
   function renderSearchResults() {
     if (!searchList) return;
     if (!searchResults.length) {
@@ -4195,11 +4365,23 @@
       var title = String(r.title || r.name || '').trim() || '未命名';
       var author = String(r.author || '').trim();
       var favOn = isFav(deriveId(r, r.url));
-      html += '<li class="search-row" id="searchRow' + i + '" data-i="' + i + '">' +
+      var bv = biliBvid(r);
+      var showParts = showPartsFor(r, i);
+      var open = !!biliOpen[bv];
+      var pn = biliProbe[bv];
+      var mark = '';
+      if (showParts) {
+        var cnt = pn > 1 ? String(pn) : '';
+        mark = '<span class="bili-mark' + (open ? ' is-open' : '') + '" role="button" tabindex="0" data-bili-mark="' + i + '" aria-expanded="' + (open ? 'true' : 'false') + '" aria-label="' + (open ? '收起' : '展开') + '分集">'
+          + '<span>分集</span>' + (cnt ? '<span class="bili-n">' + cnt + '</span>' : '')
+          + '<svg class="icon bili-arrow" aria-hidden="true"><use href="#i-chevron-left"></use></svg>'
+        + '</span>';
+      }
+      html += '<li class="search-row' + (open ? ' is-open' : '') + (showParts ? ' has-parts' : '') + '" id="searchRow' + i + '" data-i="' + i + '">' +
         '<button class="search-hit" id="searchHit' + i + '" type="button" data-i="' + i + '" aria-label="播放 ' + esc(title) + '">' +
           '<span class="q-cover"></span>' +
           '<span class="q-meta">' +
-            '<span class="q-title">' + esc(title) + '</span>' +
+            '<span class="q-line1"><span class="q-title">' + esc(title) + '</span>' + mark + '</span>' +
             '<span class="q-artist">' + esc(author) + '</span>' +
           '</span>' +
         '</button>' +
@@ -4207,6 +4389,7 @@
           ' aria-pressed="' + (favOn ? 'true' : 'false') + '" aria-label="' + (favOn ? '取消喜欢' : '加入我的喜欢') + '" title="' + (favOn ? '取消喜欢' : '加入我的喜欢') + '">' +
           icon('i-heart', 'icon-sm') +
         '</button>' +
+        (showParts && open ? renderPartsTree(r, i) : '') +
       '</li>';
     }
     // 翻页尾巴：仅在「搜索层 + 还有下一页」时出现（详情层不挂，见 searchPaginated）
@@ -4218,8 +4401,7 @@
     applySearchCovers();
   }
 
-  /* 搜索结果封面：搜索结果里带 pic（封面地址），与队列同一套 cover 变量 */
-  function applySearchCovers() {
+  /* 搜索结果封面：搜索结果里带 pic（封面地址），与队列同一套 cover 变量 */  function applySearchCovers() {
     if (!searchList) return;
     var rows = searchList.querySelectorAll('.search-row');
     for (var i = 0; i < rows.length; i++) {
@@ -4513,6 +4695,7 @@
     if (!kw) { setSearchNote('先输入关键词'); return; }
     searchBusy = true;
     var gen = ++searchSeq;
+    biliProbe = {}; biliOpen = {}; biliPartsCache = {}; biliProbesLeft = BILI_PROBE_MAX;   // 新搜索：重置分P探测
     searchKeyword = kw;          // 翻页沿用这次的关键词（中途改输入框不影响在途翻页）
     searchPaginated = true;      // 搜索层可翻页（详情层不置这面旗）
     searchLoadingMore = false;
@@ -4535,6 +4718,7 @@
       }
       searchResults = list;
       renderSearchResults();
+      probeBiliParts(list);   // 探测本页哪些是 B站多P合集（长视频才探，有额度上限）
       setSearchNote('共 ' + searchTotal + ' 条 · 来自' + serverLabel(searchServer));
     }, function () {
       searchBusy = false;
@@ -4573,6 +4757,7 @@
       if (!list.length || !added) searchTotal = searchResults.length;
       else if (total > 0 && total > searchTotal) searchTotal = total;
       renderSearchResults();
+      probeBiliParts(list);   // 追加页同样探一次
       setSearchNote('共 ' + searchTotal + ' 条 · 来自' + serverLabel(server));
     }, function () {
       searchLoadingMore = false;
@@ -4602,6 +4787,7 @@
     searchTotal = 0;
     searchKeyword = '';
     searchResults = [];
+    biliProbe = {}; biliOpen = {}; biliPartsCache = {}; biliProbesLeft = 0;   // 清空搜索：分P状态一并清
     renderSearchResults();
     setSearchSection('');
     loadDiscover();
@@ -4748,6 +4934,27 @@
   }
   if (searchList) {
     searchList.addEventListener('click', function (e) {
+      /* 分集相关先于通用处理（标记与行主体嵌套，得先拦住） */
+      var mark = e.target.closest('.bili-mark');
+      if (mark) { e.stopPropagation(); toggleBiliParts(searchResults[Number(mark.getAttribute('data-bili-mark'))]); return; }
+      var all = e.target.closest('[data-bili-all]');
+      if (all) { favAllBiliParts(searchResults[Number(all.getAttribute('data-bili-all'))] || null); return; }
+      var imp = e.target.closest('[data-bili-imp]');
+      if (imp) { importBiliParts(searchResults[Number(imp.getAttribute('data-bili-imp'))]); return; }
+      var partHit = e.target.closest('.bili-phit');
+      if (partHit) {
+        var row = searchResults[Number(partHit.getAttribute('data-bili-row'))];
+        var plist = row ? biliPartsCache[biliBvid(row)] : null;
+        if (Array.isArray(plist)) playSearchHit(plist[Number(partHit.getAttribute('data-bili-p'))]);
+        return;
+      }
+      var partFav = e.target.closest('.search-fav[data-bili-fav]');
+      if (partFav) {
+        var row2 = searchResults[Number(partFav.getAttribute('data-bili-row'))];
+        var plist2 = row2 ? biliPartsCache[biliBvid(row2)] : null;
+        if (Array.isArray(plist2)) togglePartFav(plist2[Number(partFav.getAttribute('data-bili-fav'))]);
+        return;
+      }
       var play = e.target.closest('.search-hit');
       if (play) { playSearchHit(searchResults[Number(play.getAttribute('data-i'))]); return; }
       var btn = e.target.closest('.search-fav');
@@ -5529,6 +5736,7 @@
     renderResults: function (list) { searchSeq++; searchBusy = false; searchPaginated = false; searchTotal = (list || []).length; searchLoadingMore = false; setDiscoverVisible(false); searchResults = list || []; renderSearchResults(); },
     /* 翻页（测试用）：真走 doSearch / loadMoreSearch 的控制流，只是不依赖键盘与滚动事件。 */
     setKeyword: function (kw) { if (searchInput) searchInput.value = kw || ''; },
+    setServer: function (id) { searchServer = id; renderSearchServers(); },
     doSearch: doSearch,
     loadMore: loadMoreSearch,
     setPaginated: function (on) { searchPaginated = !!on; },
@@ -5548,6 +5756,13 @@
       return el ? el.hidden : null;
     },
     clearSearch: clearSearch,
+    /* B站分P（测试用）：不依赖真实网络 —— 探测/拉列表都可直接喂。 */
+    biliPartsState: function () { return { probe: JSON.parse(JSON.stringify(biliProbe)), open: Object.keys(biliOpen), cacheKeys: Object.keys(biliPartsCache), probesLeft: biliProbesLeft }; },
+    biliPartsProbe: function (bvid, n) { biliProbe[bvid] = n; renderSearchResults(); },
+    biliPartsFeed: function (bvid, list) { biliPartsCache[bvid] = list; biliProbe[bvid] = list.length; renderSearchResults(); return list.length; },
+    biliPartsToggle: function (idx) { toggleBiliParts(searchResults[idx]); },
+    biliPartsImport: function (idx) { importBiliParts(searchResults[idx]); },
+    biliPartsFavAll: function (idx) { favAllBiliParts(searchResults[idx]); },
     renderDiscover: function (o) {
       o = o || {};
       hotSongs = o.hot || []; discoverCharts = o.charts || []; discoverSheets = o.sheets || []; discoverRadios = o.radios || [];

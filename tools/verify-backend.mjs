@@ -70,6 +70,20 @@ const netFetch = async (url) => {
       })
     };
   }
+  // B站分P列表：回 data[] 形状（每 P 一个 {cid,page,part,duration}）
+  if (url.includes('api.bilibili.com') && url.includes('/player/pagelist')) {
+    return {
+      ok: true,
+      json: async () => ({
+        code: 0,
+        data: [
+          { cid: 111, page: 1, part: '01 第一首', duration: 240 },
+          { cid: 222, page: 2, part: '02 第二首', duration: 260 },
+          { cid: 333, page: 3, part: '03 第三首', duration: 210 },
+        ],
+      })
+    };
+  }
   // 其余（Meting 节点）：回一个最小可用的曲目数组（url 带 id，好让 metingStableId 能取到）
   return { ok: true, json: async () => ([{ id: '1', title: 't', author: 'a', url: 'http://node/1?server=tencent&type=url&id=1', pic: '', lrc: '' }]) };
 };
@@ -85,6 +99,7 @@ const handler = (method, p) => {
 const POST_PLAYLIST = handler('POST', '/widget/api/playlist');
 const GET_PLAYLIST = handler('GET', '/widget/api/music/playlist');
 const GET_SEARCH = handler('GET', '/widget/api/music/search');
+const GET_BILI_PARTS = handler('GET', '/widget/api/music/bili-parts');
 const DELETE_TRACK = handler('DELETE', '/api/track');
 const GET_PLAYBACK = handler('GET', '/api/playback-state');
 const POST_PLAYBACK = handler('POST', '/api/playback-state');
@@ -232,6 +247,26 @@ check('search-meting-untouched',
   sRes.body.results[0].id === 'tencent:1' &&
   netCalls.some((u) => u.includes('server=tencent')),
   JSON.stringify({ body: sRes.body, netCalls }));
+
+/* 15) B站分P列表：每 P 带合成 id（`bilibili:<bvid>_<cid>`）与 go 跳板 url，
+ *     形状与搜索结果的曲目一致（前端可直接当普通曲目播放/收藏）。
+ *     同一支视频的 P1/P2 必须是**不同的 id**（否则落库会去重成一条）。 */
+netCalls = [];
+let partsRes = await GET_BILI_PARTS(fakeC({ query: { bvid: 'BV1CAxaeHEeH' } }));
+check('bili-parts-shape',
+  partsRes.body.ok === true && partsRes.body.results.length === 3 && partsRes.body.videos === 3 &&
+  partsRes.body.results[0].id === 'bilibili:BV1CAxaeHEeH_111' &&
+  partsRes.body.results[0].title === '01 第一首' &&
+  partsRes.body.results[0].dur === 240 &&
+  partsRes.body.results[0].url.indexOf('music/go/BV1CAxaeHEeH_111') >= 0 &&
+  partsRes.body.results[1].id !== partsRes.body.results[0].id,
+  JSON.stringify(partsRes.body));
+check('bili-parts-endpoint',
+  netCalls.some((u) => u.includes('api.bilibili.com/x/player/pagelist') && u.includes('bvid=BV1CAxaeHEeH')),
+  JSON.stringify(netCalls));
+/* 16) 非法 bvid 被拒（防把任意字符串透传给 B站） */
+let badParts = await GET_BILI_PARTS(fakeC({ query: { bvid: '../etc' } }));
+check('bili-parts-reject-invalid', badParts.status === 400, JSON.stringify(badParts));
 
 fs.rmSync(dataDir, { recursive: true, force: true });
 
