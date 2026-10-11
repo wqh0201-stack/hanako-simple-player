@@ -1,19 +1,23 @@
-# 小花音乐播放器（极简重构版）
+# 小花音乐播放器（hanako-simple-player）
 
-> 这是 [openhanako-labs/openhanako-audio-player](https://github.com/openhanako-labs/openhanako-audio-player) 的一份**极简重构 fork**：
-> 后端沿用上游，前端整个重写、按 Hana 卡片的三种形态重新设计，并砍掉了 PV 舞台 / 黑胶唱盘 / 主题面板。
+> [openhanako-labs/openhanako-audio-player](https://github.com/openhanako-labs/openhanako-audio-player)（作者 **Yuexiye**）的**极简重构衍生版**：
+> 后端沿用上游，前端整个重写、按 Hana 的三种承载形态重新设计，砍掉 PV 舞台 / 黑胶唱盘 / 配色面板。
 > 上游以 **AGPL-3.0** 发布（另提供[商业授权](https://github.com/openhanako-labs/openhanako-audio-player/blob/master/COMMERCIAL-LICENSE.md)），
-> 本 fork 作为其衍生同样以 **AGPL-3.0** 发布，见 [`LICENSE`](LICENSE)。
+> 本衍生同样以 **AGPL-3.0** 发布，见 [`LICENSE`](LICENSE)。
 
-## 与上游的差异
+自有图标与名称，包 id 为 `hanako-simple-player`，**与上游 `hanako-audio-player` 不同名，可同时安装**。
 
-| | 上游 | 本 fork |
+## 这版和原版的区别
+
+| | 原版 | 小花版 |
 |---|---|---|
 | 前端 | `ui/index.html` 单文件（约 734 KB） | 拆成 `index.html` + `app.js` + `style.css`，状态由 `data-*` 驱动，无构建 |
-| 视觉 | 三模式胶囊：标准（黑胶唱盘）/ PV（文字排版舞台）/ 歌词 | 单一形态、按卡片三态自适应：窄长卡 / 矮卡 / 宽窗 |
-| 主题 | 内置配色面板 + 多套预设 | 只跟随宿主 `hana.theme`（+ macOS 深浅兜底），不自带面板 |
-| 构建 | `pv/build.mjs` 幂等流水线 + `pv/release.mjs` 出双包（含 PV / lite） | 无构建；`tools/bump-build.mjs` 只管构建号 |
-| 取源 | `music/go/:id` 302 跳到 CDN | 改**同源分片流式代理**（跨源媒体接 Web Audio 会被静音） |
+| 视觉 | 三模式胶囊：标准（黑胶唱盘）/ PV（文字排版舞台）/ 歌词 | 单一形态、按承载自适应：窄长卡 / 矮卡 / 宽窗 |
+| 主题 | 内置配色面板 + 多套预设 | 只跟随宿主 `hana.theme`（含夜间），不自带面板 |
+| 动效 | 黑胶旋转、PV 逐字扫光 | 指针涟漪（真音频驱动的「流光」水面）+ 歌词/频谱两态交叉淡入 |
+| 音源 | 网易云 / QQ / 酷狗 | 网易云 / **B站** / QQ / 酷狗 |
+| 构建 | `pv/build.mjs` 幂等流水线 + `pv/release.mjs` 出双包 | 无构建；`tools/bump-build.mjs` 只管构建号 |
+| 取源 | `music/go/:id` 302 跳 CDN | **同源分片流式代理**（跨源媒体接 Web Audio 会被静音） |
 
 ## 功能
 
@@ -23,6 +27,16 @@
 - 播放列表：本地固定文件夹 + 自建导入列表，可切换 / 重命名 / 删除；去重键带上归属，同一首歌可同时存在于多个歌单
 - 补全歌手（老数据缺 author 时按标题回查）
 
+**搜索（内置公开音源）**
+- 四个音源开箱即用：**网易云 / B站 / QQ / 酷狗**，不用配置
+- 搜歌曲 / 搜歌手两种范围；点搜索结果行**直接播放**，播过自动进「最近播放」
+- 结果行尾红心 = 收藏进「我的喜欢」（**收藏与播放是两件事**）
+- 空白时预置推荐：热门歌曲 / 榜单歌单 / 热门电台
+
+**B站音轨**（原版没有）
+- 搜 B 站视频、抽其音频轨播放，也能**收进「我的喜欢」**
+- 代价：B站曲目**没有 LRC 歌词**（退回无歌词态，画面走封面 + 涟漪）
+
 **歌词**
 - 播放即按曲名自动匹配，多源回退（TTML / LRC）
 - 匹配过的歌词自动落盘（`app-data/lyrics/`），离线也能出词
@@ -30,8 +44,11 @@
 
 **视觉**
 - 封面主色调背景 + 歌词两态薄纱；当前句高亮（颜色 + 字重），窄卡只显当前句 ±1 行
-- 无歌词时自动切频谱；接真音频（`AnalyserNode`）随乐律动，建链失败则退回装饰循环
-- 动效：歌词 ⇄ 频谱交叉淡入淡出、队列进出场、按钮按压反馈 —— 两条底线是**可打断**且**只动 `transform` / `opacity`**
+- **指针涟漪**：封面之上的 Canvas 2D「流光」水面；接真音频（`captureStream` + `AnalyserNode` 低频能量）随鼓点起波，跨源时自动退回纯指针涟漪，**绝不静音**
+- 动效底线：**可打断**，只动 `transform` / `opacity`；reduced-motion 退为纯淡入
+
+**适配 Hana 的多种承载**
+- 聊天卡片（窄长卡 / 矮卡）与独立窗口各自重排；控制面按宽度自适应（窄到 400px 模式与音量上移一行，**播放键恒居中**）
 
 ## 安装
 
@@ -42,24 +59,18 @@
 2. 让 Hana 安装这个 zip（本地来源安装），审批它声明的 5 项能力；
 3. 装完在应用详情页即可 Reload。
 
-> release zip 是**运行时文件**打的包（约 0.2MB），不含 `docs/` 设计与交接文档、
-> `tools/` 验证脚本。仓库里这些都在，只是不进包。
+> release zip 是**运行时文件**打的包（约 0.5MB），不含 `docs/` 设计与交接文档、`tools/` 验证脚本。
 
 **从源码装**（改代码、参与开发时）
 
-1. 把源码目录放到 `<HANA_HOME>/apps/` 下，**目录名必须等于 `manifest.id`**，
-   即 `hanako-simple-player`（GitHub 直接下载的 zip 解压出来是
-   `hanako-simple-player-hana-simple`，**必须重命名**，否则官方校验器直接拒绝）；
+1. 把源码目录放到 `<HANA_HOME>/apps/` 下，**目录名必须等于 `manifest.id`**，即 `hanako-simple-player`
+   （GitHub 直接下载的 zip 解压出来名字不对，**必须重命名**，否则官方校验器直接拒绝）；
 2. 打包或直接安装都需要官方工具链，先设环境变量：
-   `HANA_APP_TOOLS_ROOT=<HANA_HOME>/artifacts/server/<版本>`
-   （该目录里有 `APPS.md` 与 `scripts/`）；
+   `HANA_APP_TOOLS_ROOT=<HANA_HOME>/artifacts/server/<版本>`（该目录里有 `APPS.md` 与 `scripts/`）；
 3. 让 Hana 以**本地来源**安装（目录或 `tools/pack-release.mjs` 产出的 zip），审批能力；
 4. 之后改代码：同步 `ui/` + Reload 即可。
 
 最低 Hana 版本：`0.946.2`。
-
-> 本包 id 为 `hanako-simple-player`，与上游（`hanako-audio-player`）**不同名**，
-> 两者可以并存安装；数据目录也各自独立（`app-data/hanako-simple-player/`）。
 
 ## 可选：完整音源
 
@@ -86,7 +97,6 @@ ui/app.js                全部逻辑（ES5，无构建）
 ui/style.css             全部样式（三态布局 + 动效）
 tools/bump-build.mjs     构建号三处同步（_build.json + index.html + standalone.html）
 tools/pack-release.mjs   出 release 包：白名单复制运行时文件 → 官方 extension-pack
-                         （排除 docs/ tools/ AGENTS.md，55MB → ≈0.2MB）
 tools/verify-ui.mjs      无头验收：布局自检 + 断言 + 截图
 tools/verify-backend.mjs 后端验收：去重键 / DELETE / playback-state / playlist-meta
 ```
@@ -102,6 +112,7 @@ tools/verify-backend.mjs 后端验收：去重键 / DELETE / playback-state / pl
 
 ## 致谢
 
-- 上游 [openhanako-labs/openhanako-audio-player](https://github.com/openhanako-labs/openhanako-audio-player) —— 后端与数据链路
-- [AMLL TTML DB](https://github.com/Steve-xmh/amll-ttml-db) —— 歌词数据库
+- **Yuexiye** —— 原版 [openhanako-audio-player](https://github.com/openhanako-labs/openhanako-audio-player) 的作者，本项目的后端与数据链路全部来自其作品
+- [AMLL TTML DB](https://github.com/Steve-xmh/amll-ttml-db) —— 逐字歌词数据库
 - Meting 公共节点 —— 搜索 / 歌词 / 直链
+- 上游原版 PV 的灵感来源（本版未采用，一并致意）：JIZURA（852話）文字 PV 排版引擎、folia-major Monet 动效公式
