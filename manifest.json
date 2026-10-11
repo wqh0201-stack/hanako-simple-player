@@ -27,7 +27,8 @@
       "api.bilibili.com",
       "*.hdslb.com",
       "*.bilivideo.cn",
-      "*.bilivideo.com"
+      "*.bilivideo.com",
+      "*.mountaintoys.cn"
     ],
     "methods": [
       "GET"
