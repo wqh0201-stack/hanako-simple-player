@@ -1300,6 +1300,68 @@ const motion = {};
     lyricMatch.emptyList === null && lyricMatch.noUrl === 'null',
     JSON.stringify(lyricMatch));
 
+  /* 歌词关键词清洗（cleanLyricQuery）：B站长标题是「一整条广告」+ author 是 UP 主。
+   * 跨源兜底原来拿 [title, author].join(' ') 原样搜 —— 搜索这一步就废了。
+   * 真实样本（2026-10-11，B站搜索结果）走纯函数验证。 */
+  const cleanq = await page.evaluate(() => {
+    const D = window.__playerDebug;
+    const q = (t, a) => D.cleanLyricQuery(t, a).keyword;
+    const qo = (t, a) => { const r = D.lyricQueryOf(t, a); return r ? r.keyword : null; };
+    return {
+      book: q('【4K珍藏】南拳妈妈《下雨天》MV极致修复！（收录于2008年专辑《优の良曲 南搞小孩》）', '郭总说'),
+      bookEn: q('【𝐇𝐢-𝐑𝐞𝐬无损音质】｜《稻香》- 周杰伦 -‘还记得你说家是唯一的城堡’', 'VV音乐局'),
+      dash: q('【4K修复】周杰伦 - 稻香 MV 2160P修复版 简体', 'zyl2012_音乐无限'),
+      after: q('《起风了》买辣椒也用券「我终将青春还给了她」【循环歌单】', '余响闲时'),
+      // 合集/纯音乐：判定 ok=false，不做自动兜底（返回 null）
+      collection: qo('【时长6小时】100首超好听的纯音乐，没有歌词也能打动人心，绝对值得珍藏的轻音乐合集！', '北流嘉措'),
+      instrumental: qo('HR音质：纯音乐《卡农》（经典钢琴版）——dylanf', '一二桂'),
+      // 干净标题：歌名原样 + 真歌手保留（author 不是 UP 主）
+      clean: qo('晴天', '周杰伦')
+    };
+  });
+  assert('lyric-query-cleaned-for-bili-titles',
+    cleanq.book === '下雨天 南拳妈妈' && cleanq.bookEn === '稻香 周杰伦' &&
+    cleanq.dash === '稻香 周杰伦' && cleanq.after === '起风了 买辣椒也用券' &&
+    cleanq.clean === '晴天 周杰伦',
+    JSON.stringify(cleanq));
+  assert('lyric-query-skips-collection-and-instrumental',
+    cleanq.collection === null && cleanq.instrumental === null,
+    JSON.stringify(cleanq));
+
+  /* 脏标题也能匹配上：拿 B站长标题去 pickLyricHit，应当命中干净结果的「地下天」。 */
+  const dirtyMatch = await page.evaluate(() => {
+    const D = window.__playerDebug;
+    const mk = (title, author) => ({ title, author, url: 'x' });
+    const r = D.pickLyricHit([mk('下雨天', '南拳妈妈'), mk('下雨天', '梁心颐')],
+      '【4K珍藏】南拳妈妈《下雨天》MV极致修复！（收录于2008年专辑《优の良曲 南搞小孩》）', '郭总说');
+    return r ? (r.title + '/' + r.author) : null;
+  });
+  assert('lyric-dirty-title-matches-after-clean',
+    dirtyMatch === '下雨天/南拳妈妈',
+    JSON.stringify(dirtyMatch));
+
+  /* 无词入口：只在「确实无词」时亮，加载中/有词都不亮（罐头拍板：单入口、有词不打扰）。 */
+  const lyricAsk = await page.evaluate(() => {
+    const D = window.__playerDebug;
+    const el = document.getElementById('lyricAsk');
+    const st = () => D.lyricAskState();
+    // 当前曲目（fixture 里带词）→ 不亮
+    const withLyrics = st().hidden;
+    // 手动把状态改成 none 再看
+    D.openLyricMatch();
+    const popOpen = st().popHidden === false;
+    const prefilled = (document.getElementById('lmSong') || {}).value || '';
+    D.closeLyricMatch();
+    const popClosed = st().popHidden === true;
+    return { withLyrics: withLyrics, popOpen: popOpen, prefilled: prefilled, popClosed: popClosed, hasEl: !!el };
+  });
+  assert('lyric-ask-hidden-when-lyrics-present',
+    lyricAsk.hasEl === true && lyricAsk.withLyrics === true,
+    JSON.stringify(lyricAsk));
+  assert('lyric-match-panel-opens-and-prefills',
+    lyricAsk.popOpen === true && lyricAsk.popClosed === true && lyricAsk.prefilled.length > 0,
+    JSON.stringify(lyricAsk));
+
   /* 占位词识别：纯音乐占位句（「这似乎是一首纯音乐呢」等）当空处理，不占歌词层 */
   const placeholder = await page.evaluate(() => {
     const D = window.__playerDebug;

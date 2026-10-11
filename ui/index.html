@@ -40,6 +40,17 @@
           <div class="lyrics" id="lyrics"></div>
         </div>
 
+        <!-- 无词入口：只在「当前曲目确实没有歌词」时出现（加载中/有词都不显）。
+             单入口、有词不打扰（罐头拍板）；点开 = 手动匹配面板。
+             频在歌词区正中，不碰封面区。 -->
+        <div class="lyric-ask" id="lyricAsk" hidden>
+          <button class="lyric-ask-btn" id="lyricAskBtn" type="button">
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-search"></use></svg>
+            <span class="ask-full">找不到歌词？手动匹配</span>
+            <span class="ask-short">手动匹配歌词</span>
+          </button>
+        </div>
+
         <!-- 指针涟漪：Canvas 2D 流光波场，接真音频（captureStream，跨源退纯指针）。落在封面/薄纱之上、文字之下，
              封面区与歌词区都可见。方案见 docs/player-ui/RIPPLE-LAB.md。 -->
         <canvas class="ripple-canvas" id="rippleCanvas" aria-hidden="true"></canvas>
@@ -229,6 +240,29 @@
     </footer>
 
     <div class="toast" id="toast" hidden></div>
+
+    <!-- 手动匹配歌词：预填精简后的关键词，可手改、点了重搜（罐头拍板单入口）。
+         绑定写回曲目 raw.lyricMatch，随 playlist.json 落盘。 -->
+    <div class="lyric-match" id="lyricMatchPop" hidden>
+      <div class="lm-card" role="dialog" aria-modal="true" aria-labelledby="lmTitle">
+        <p class="lm-title" id="lmTitle">手动匹配歌词</p>
+        <p class="lm-sub" id="lmOrigin"></p>
+        <div class="lm-field">
+          <label class="lm-label" for="lmSong">歌名</label>
+          <input class="lm-input" id="lmSong" type="text" autocomplete="off" spellcheck="false" placeholder="歌名">
+        </div>
+        <div class="lm-field">
+          <label class="lm-label" for="lmArtist">歌手</label>
+          <input class="lm-input" id="lmArtist" type="text" autocomplete="off" spellcheck="false" placeholder="可留空">
+        </div>
+        <p class="lm-note" id="lmNote"></p>
+        <div class="lm-actions">
+          <button class="lm-btn" id="lmResetBtn" type="button">重新精简</button>
+          <button class="lm-btn" id="lmCancelBtn" type="button">取消</button>
+          <button class="lm-btn lm-primary" id="lmGoBtn" type="button">搜索并绑定</button>
+        </div>
+      </div>
+    </div>
     <button class="resume-chip" id="resumeBtn" type="button" hidden>
       <svg class="icon icon-sm" aria-hidden="true"><use href="#i-play"></use></svg>
       <span>继续播放</span>
@@ -318,7 +352,7 @@
 </defs></svg>
 
 <script src="app.js" defer></script>
-<script>window.__HANA_BUILD = "1003131635";</script>
+<script>window.__HANA_BUILD = "1003131637";</script>
 <script type="module">
   import { hana } from "./sdk.js";
   window.hana = hana;

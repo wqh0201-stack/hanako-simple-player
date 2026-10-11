@@ -1600,6 +1600,118 @@ button:disabled { cursor: default; }
 
 .report { display: none; }
 
+/* ============================================================
+   歌词手动匹配（罐头拍板，2026-10-11）
+   ------------------------------------------------------------
+   ① 入口：只在「确实没词」时出现（加载中/有词都不显），居歌词区正中。
+      它挂在 .scene 里（无词时 .lyric-wrap 是 display:none，塞不进去）。
+      水平起点跟歌词列（--content-x），只盖无歌词那块、不碰封面区。
+   ② 面板：轻浮层 + 小卡，与 .first-run 同一套语言（不抢焦点、可 Esc）。
+      预填精简后的关键词，可手改重搜；绑定落 raw.lyricMatch。
+   ============================================================ */
+.lyric-ask {
+  position: absolute;
+  left: var(--content-x, 34%);
+  right: 20px;
+  top: var(--lyric-top, 108px);
+  bottom: 0;
+  z-index: 3;                 /* 在薄纱(3)/涟漪之上、标题(4)之下；文字层不遮它 */
+  display: grid;
+  place-items: center;
+  pointer-events: none;       /* 只让按钮可点，不挡涟漪/指针 */
+}
+.lyric-ask[hidden] { display: none; }
+.lyric-ask-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  padding: 7px 13px;
+  border: 1px solid var(--hk-hairline);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--hk-surface) 82%, transparent);
+  color: var(--cover-text-soft, var(--hk-muted));
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;        /* 窄卡里不能换行（否则行高变 50px、被列宽切成两行） */
+  cursor: pointer;
+  transition: color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+}
+.lyric-ask-btn .ask-full { display: inline; }
+.lyric-ask-btn .ask-short { display: none; }
+/* 窄容器（长卡/窄卡）里歌名列很窄：换短文案，不让它撑破行 */
+.player:not([data-layout="wide"]) .lyric-ask-btn .ask-full { display: none; }
+.player:not([data-layout="wide"]) .lyric-ask-btn .ask-short { display: inline; }
+.lyric-ask-btn .icon { width: 14px; height: 14px; opacity: 0.8; }
+.lyric-ask-btn:hover {
+  color: var(--cover-text, var(--hk-text));
+  background: var(--hk-surface);
+  box-shadow: var(--hv-ring-icon, none);
+}
+.lyric-ask-btn:active { transform: scale(0.97); }
+.lyric-ask-btn:focus-visible { outline: 2px solid var(--hl-accent); outline-offset: 2px; }
+
+.lyric-match {
+  position: absolute;
+  inset: 0;
+  z-index: 42;                /* 高过首次提示(40)：正调用时不该被它压 */
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: color-mix(in srgb, var(--hk-bg) 62%, transparent);
+  animation: fadeIn 0.2s ease both;
+}
+.lyric-match[hidden] { display: none; }
+.lm-card {
+  width: min(340px, 100%);
+  padding: 15px 15px 13px;
+  border-radius: var(--radius-m, 8px);
+  background: var(--hk-surface);
+  border: 1px solid var(--hk-hairline);
+  box-shadow: var(--hk-pop-shadow);
+  animation: frIn 0.22s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+.lm-title { margin: 0 0 4px; font-size: 14px; font-weight: 600; color: var(--hk-text); }
+.lm-sub { margin: 0 0 11px; font-size: 11px; line-height: 1.45; color: var(--hk-muted); }
+.lm-sub:empty { display: none; }
+.lm-field { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.lm-label { flex: 0 0 32px; font-size: 12px; color: var(--hk-muted); }
+.lm-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid var(--hk-hairline);
+  border-radius: var(--radius-m, 8px);
+  background: var(--hk-bg);
+  color: var(--hk-text);
+  font: inherit;
+  font-size: 13px;
+}
+.lm-input:focus { outline: none; border-color: var(--hk-accent); box-shadow: 0 0 0 2px var(--hk-accent-soft); }
+.lm-input::placeholder { color: var(--hk-faint, var(--hk-muted)); }
+.lm-note { margin: 2px 0 10px; font-size: 11px; line-height: 1.45; color: var(--hk-muted); }
+.lm-note:empty { display: none; }
+.lm-note.is-err { color: var(--danger, #d9534f); }
+.lm-actions { display: flex; justify-content: flex-end; gap: 6px; }
+.lm-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--hk-hairline);
+  border-radius: var(--radius-m, 8px);
+  background: transparent;
+  color: var(--hk-text);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: background 0.16s ease;
+}
+.lm-btn:hover { background: var(--hk-hover); }
+.lm-btn.lm-primary { background: var(--hk-accent); border-color: var(--hk-accent); color: var(--hk-on-accent, #fff); }
+.lm-btn.lm-primary:hover { filter: brightness(1.06); }
+.lm-btn[disabled] { opacity: 0.55; cursor: default; }
+
 /* 首次使用提示：一张居中小卡 + 一层很淡的底。只在第一次打开时弹一次（见 app.js）。
  * 用「可点掉」的轻浮层，不用 alert —— 不抢焦点、不拦操作。 */
 .first-run {

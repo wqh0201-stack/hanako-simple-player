@@ -1252,6 +1252,7 @@
       setArtistLine(emptyImportHint(), false);
       $('trackMeta').textContent = '';
       setCtlTrack(null);
+      lyricState = 'idle'; renderAsk();
       paintFav(favBtn, null);
       paintFav(favTextBtn, null);
       if (favBtn) favBtn.hidden = true;   // 没曲目可喜欢，不留孤零零一颗心
@@ -2131,18 +2132,170 @@
   function normLyricAuthor(s) {
     return String(s || '').toLowerCase().replace(/[\s\u3000\/、,，&]+/g, '');
   }
+
+  /* ============================================================
+     歌词关键词清洗（cleanLyricQuery）
+     ------------------------------------------------------------
+     为什么需要它：B站（以及部分搬运源）的曲目标题是**一整条广告**，
+     「【4K珍藏】南拳妈妈《下雨天》MV极致修复！（收录于2008年专辑《…》）」；
+     而 author 字段是 **UP 主**不是歌手。原来跨源兜底直接拿
+       [title, author].join(' ')
+     去搜，等于拿一句广告去搜歌 —— 匹配算法再准也没用（搜索这一步就废）。
+     实测（2026-10-11，真实 B站搜索结果 20 条）：
+       · 脏串搜不到；换成「下雨天 南拳妈妈」第一条即命中。
+
+     解析优先级（罐头拍板）：
+       ① 有《》→ 取第一个「不在括号内」的《》内容当歌名（最强锚点）；
+       ② 无《》→ 去成对括号 → 剥噪声词（画质/音质/字幕/营销/场景/结构词）
+                 → 在分隔符处截断取前段；
+       ③ 顺手抽歌手：紧邻书名号或分隔符、≤8 个 CJK 字（或 ≤3 个拉丁词）、
+          不含数字与残留符号 —— **取不到就留空，宁可空也不塞错的**。
+     守卫：合集/串烧/纯音乐/伴奏这类标题判为 ok=false，不做自动兜底
+     （那类视频本来就不该配到原唱的词），只留给「手动匹配」出手。
+
+     这是纯函数：同一份会被用在**两端** —— 匹配端 pickLyricHit + 关键词构造端
+     crossLyric。两端必须走同一份，否则一处改了另一处会漂。
+     ============================================================ */
+  var LQ_SEP = /[|｜丨\/／\u2013\u2014\u2015\-–—~～·・♪♫☆★✦✧，,。.；;：:！!？?「」『』‘’“”]+/;
+  var LQ_EDGE = /^[\s\-–—_|｜丨\/／·・☆★✦✧♫♪，,。.；;：:！!？?]+|[\s\-–—_|｜丨\/／·・☆★✦✧♫♪，,。.；;：:！!？?]+$/g;
+  var LQ_NOISE_EN = ['4k', '8k', '2k', '1080p', '2160p', '1440p', '720p', '480p', 'hd', 'hdr', 'uhd',
+    'hi-res', 'hires', 'hi-fi', 'hifi', 'lossless', 'flac', 'ape', 'mv', 'pv', 'playlist', 'bgm', 'official'];
+  var LQ_NOISE_MIX = ['hr音质', '无损音质', '高品质', '官方mv', '官方版'];
+  var LQ_NOISE_CN = [
+    '百万豪装录音棚', '录音棚', '大声听', '自测全网最清', '全网最清',
+    '超清', '高清', '蓝光', '无损', '母带', '黑胶',
+    '动态歌词', '歌词版', '字幕版', '中日字幕', '双语字幕', '中文字幕', '字幕',
+    '修复版', '修复', '重制版', '重制', '完整版', '纯享版', '纯享', '收藏级', '珍藏版', '珍藏',
+    '原版', '正式版', '简体', '繁体', '超清版',
+    '指法技巧精讲', '技巧精讲', '精讲', '教程', '指法',
+    '神作', '超治愈', '超感人', '超好听', '极致', '究极', '天花板', '私藏馆', '私藏', '宝藏', '必听',
+    '助眠', '解压', '治愈', '放松', '背景音乐',
+    '歌单', '合集', '精选', '串烧', '盘点', '终于弹了这首',
+    '纯音乐', '伴奏', '钢琴曲', '轻音乐', '钢琴版'
+  ];
+  /* 合集 / 器乐类：命中即不做自动兜底（交给手动匹配）。
+   * 注意「歌单」不算 —— 搬运标题里「循环歌单」很常见，容易被误伤。 */
+  var LQ_COLLECTIONY = /合集|合辑|串烧|盘点|playlist|\d{2,}\s*首|首连播|连播|精选集/i;
+  var LQ_INSTRUMENTAL = /纯音乐|伴奏|instrumental|钢琴曲|轻音乐|钢琴版|卡拉\s*ok/i;
+
+  function lqUniqSpaces(s) { return String(s || '').replace(/[\s\u3000]+/g, ' ').trim(); }
+  function lqEsc(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  function lqStripBrackets(s) {
+    return String(s || '').replace(/[（(【\[｛{「『《][^）)】\]｝}」』》]*[）)】\]｝}」』》]/g, ' ');
+  }
+  function lqStripNoise(s) {
+    var t = ' ' + String(s || '') + ' ';
+    var i;
+    for (i = 0; i < LQ_NOISE_EN.length; i++) t = t.replace(new RegExp('\\b' + lqEsc(LQ_NOISE_EN[i]) + '\\b', 'gi'), ' ');
+    for (i = 0; i < LQ_NOISE_MIX.length; i++) t = t.replace(new RegExp(lqEsc(LQ_NOISE_MIX[i]), 'gi'), ' ');
+    for (i = 0; i < LQ_NOISE_CN.length; i++) t = t.split(LQ_NOISE_CN[i]).join(' ');
+    t = t.replace(/\b\d{3,4}[pP]?\b/g, ' ');
+    t = t.replace(LQ_EDGE, ' ');
+    t = t.replace(/^\s*[\u4e00-\u9fa5]\s+/, '');      // 前导单字（「在 买辣椒也用券」的「在」）
+    return lqUniqSpaces(t);
+  }
+  /* 第一个「不在括号内」的《》内容 —— 括在【】/（）里的书名号是专辑名，不算。 */
+  function lqFirstBookTitle(s) {
+    var str = String(s || ''), re = /《([^》]+)》/g, m;
+    while ((m = re.exec(str))) {
+      var before = str.slice(0, m.index);
+      var open = (before.match(/[（(【\[｛{「『]/g) || []).length;
+      var close = (before.match(/[）)】\]｝}」』]/g) || []).length;
+      if (open === close) return lqUniqSpaces(m[1]);
+    }
+    return '';
+  }
+  function lqHasCJK(s) { return /[\u4e00-\u9fa5\u3040-\u30ff\uac00-\ud7af]/.test(s); }
+  function lqHasAlpha(s) { return /[a-zA-Z]/.test(s); }
+  var LQ_BAD_NAME = /[《》【】（）()「」『』|｜丨\/／：:，,。.；;！!？?~～·・♪♫☆★]/;
+  /* 歌手候选是否像个人名：≤8 个 CJK 字 / ≤3 个拉丁词，不含数字与残留符号。 */
+  function lqIsNameLike(s) {
+    var t = lqUniqSpaces(s);
+    if (!t || /\d/.test(t)) return false;
+    if (LQ_BAD_NAME.test(t)) return false;
+    if (!lqHasCJK(t) && !lqHasAlpha(t)) return false;
+    if (lqHasCJK(t)) return t.replace(/\s/g, '').length <= 8;
+    return t.split(/\s+/).length <= 3 && t.length <= 24;
+  }
+  function lqTidySong(s) {
+    var t = lqUniqSpaces(s);
+    if (!t) return '';
+    t = lqUniqSpaces(String(t).replace(LQ_EDGE, ' '));
+    if (lqHasCJK(t)) {
+      var seg = (t.split(LQ_SEP)[0] || '').trim();
+      t = seg || (t.split(/\s+/)[0] || t);
+    }
+    return lqUniqSpaces(String(t).replace(LQ_EDGE, ' '));
+  }
+  /* 洗出来的歌名像不像真的（不含残留分隔符、长度合理）。 */
+  function lqSongPlausible(s) {
+    var t = lqUniqSpaces(s);
+    if (!t) return false;
+    if (LQ_SEP.test(t)) return false;
+    if (lqHasCJK(t)) return t.replace(/\s/g, '').length <= 20;
+    return t.length <= 60 && t.split(/\s+/).length <= 12;
+  }
+  function cleanLyricQuery(title, author) {
+    var raw = lqUniqSpaces(title);
+    var song = '', artist = '';
+    var bt = lqFirstBookTitle(raw);
+    if (bt) {
+      song = lqTidySong(bt);
+      var idx = raw.indexOf('《' + bt);
+      var head = idx > 0 ? raw.slice(0, idx) : '';
+      var tailAll = raw.slice(idx + ('《' + bt + '》').length);
+      var hc = lqStripNoise(lqStripBrackets(head));
+      if (lqIsNameLike(hc)) artist = hc;
+      if (!artist) {
+        var parts = tailAll.split(LQ_SEP).map(function (x) { return lqStripNoise(lqStripBrackets(x)); }).filter(Boolean);
+        for (var i = 0; i < parts.length; i++) { if (lqIsNameLike(parts[i])) { artist = parts[i]; break; } }
+      }
+    } else {
+      var noBr = lqStripBrackets(raw);
+      var segs = noBr.split(LQ_SEP).map(function (x) { return lqStripNoise(x); }).filter(Boolean);
+      if (segs.length >= 2 && lqIsNameLike(segs[0])) {
+        artist = segs[0];
+        song = lqTidySong(segs.slice(1).join(' '));
+      } else {
+        song = lqTidySong(segs.join(' ') || noBr);
+      }
+    }
+    song = lqUniqSpaces(song);
+    artist = lqIsNameLike(artist) ? lqUniqSpaces(artist) : '';
+    if (artist && song && artist === song) artist = '';
+    var collectiony = LQ_COLLECTIONY.test(raw) || LQ_INSTRUMENTAL.test(raw);
+    var ok = lqSongPlausible(song) && !collectiony;
+    return { song: song, artist: artist, keyword: [song, artist].filter(Boolean).join(' '), ok: ok };
+  }
+
+  /* 曲目 → 歌词搜索用的一组字段。返回 null = 这首不做自动兜底（合集/纯音乐）。
+   * 脏标题（B站那类）→ 用解析出的歌名+歌手，**丢掉 UP 主**；
+   * 干净标题 → 歌名原样 + 原始歌手（这时 author 是真歌手，别丢）。 */
+  function lyricQueryOf(title, author) {
+    var c = cleanLyricQuery(title, author);
+    if (!c.ok) return null;
+    var raw = lqUniqSpaces(title);
+    var dirty = c.song !== raw;
+    var song = c.song || raw;
+    var artist = dirty ? c.artist : (c.artist || String(author || '').trim());
+    return { song: song, artist: artist, keyword: [song, artist].filter(Boolean).join(' '), dirty: dirty };
+  }
+
   /* 从搜索结果里挑一个「标题对得上」的（作者对得上加权），防同名不同版本乱匹配。
    * 只有当标题完全相等，或标题部分包含 + 作者也对得上时才接受；
-   * 没有歌手的曲目（纯音乐等）只认标题完全相等。宁可没词，不可错配。 */
+   * 没有歌手的曲目（纯音乐等）只认标题完全相等。宁可没词，不可错配。
+   * 查询词与候选标题都先过 cleanLyricQuery（两端同一份规则）。 */
   function pickLyricHit(list, title, author) {
-    var want = normLyricTitle(title);
+    var q = lyricQueryOf(title, author);
+    if (!q) return null;
+    var want = normLyricTitle(q.song);
     if (!want) return null;
-    var wantA = normLyricAuthor(author);
+    var wantA = normLyricAuthor(q.artist);
     var best = null, bestScore = 0;
     for (var i = 0; i < (list || []).length; i++) {
       var it = list[i];
       if (!it || !it.url) continue;
-      var nm = normLyricTitle(it.title);
+      var nm = normLyricTitle(cleanLyricQuery(it.title, it.author).song || it.title);
       if (!nm) continue;
       var exact = nm === want;
       var ts = exact ? 3 : (nm.indexOf(want) >= 0 || want.indexOf(nm) >= 0 ? 2 : 0);
@@ -2158,15 +2311,17 @@
     return best;
   }
 
-  /* 降级链：离线库 → music/lrc → lrc-proxy → ttml(404 退空) → **跨源兜底**。
+  /* 降级链：离线库 → 绑定的关键词 → music/lrc → lrc-proxy → ttml(404 退空) → **跨源兜底**。
    * 每次带代次，迟到响应不许覆盖新歌。 */
   function loadLyrics(t) {
     var gen = ++lyricGen;
     state.lyricLines = [];
     lyricIndex = -1;
+    lyricState = 'loading';     // 三态之一：只有最终确实无词才亮入口（防每次换曲闪一下）
     renderLyrics();
+    renderAsk();
     sizeLyricPad();
-    if (!t || !t.title) return;
+    if (!t || !t.title) { lyricState = 'none'; renderAsk(); return; }
 
     function done(lines, cacheText) {
       if (gen !== lyricGen) return;
@@ -2218,45 +2373,223 @@
       }
     }
 
-    // 跨源兜底：本平台/本 id 拿不到词时，拿「标题+歌手」去别的平台搜一次，
+    // 跨源兜底：本平台/本 id 拿不到词时，拿「清洗后的歌名+歌手」去别的平台搜一次，
     // 命中标题匹配的首条再取词。只兜 online 曲目；本地文件不动（避免纯音乐乱配）。
+    //
+    // 关键词构造（关键一步）：**不能**再拿 t.title 原文拼 —— B站标题是一整条广告，
+    // 拿它去搜必然空手。改为过 lyricQueryOf（= cleanLyricQuery + 脏标题时丢掉 UP 主）。
+    // 若用户手动绑过（raw.lyricMatch），优先用它。
     function crossLyric() {
       if (gen !== lyricGen) return Promise.resolve();
       if (state.lyricLines.length) return Promise.resolve();    // 已有词，不兜
       if (t.mode !== '在线') return Promise.resolve();
-      var kw = [t.title, t.author].filter(Boolean).join(' ').trim();
-      if (!kw) return Promise.resolve();
+      var bound = lyricMatchOf(t);
+      var q = bound ? { song: bound.song, artist: bound.artist, keyword: [bound.song, bound.artist].filter(Boolean).join(' ') } : lyricQueryOf(t.title, t.author);
+      if (!q || !q.keyword) return Promise.resolve();          // 合集/纯音乐 → 不自动兜底
+
       var cur = onlineServerOf(t);
       var servers = ['netease', 'tencent', 'kugou'].filter(function (s) { return s !== cur; });
-      var i = 0;
-      function next() {
+      if (bound) servers.unshift(cur);                          // 手动绑过：先试本平台
+
+      function next(i) {
         if (gen !== lyricGen || i >= servers.length) return Promise.resolve();
-        var sv = servers[i++];
-        return apiGetJson(ENDPOINT.search + '?keyword=' + encodeURIComponent(kw) + '&server=' + encodeURIComponent(sv)).then(function (res) {
+        var sv = servers[i];
+        return apiGetJson(ENDPOINT.search + '?keyword=' + encodeURIComponent(q.keyword) + '&server=' + encodeURIComponent(sv)).then(function (res) {
           if (gen !== lyricGen) return;
           var list = (res.ok && res.body && res.body.ok && Array.isArray(res.body.results)) ? res.body.results : [];
-          var hit = pickLyricHit(list, t.title, t.author);
+          // 手动绑定时只认用户输入的关键词，不再对标题做二次筛选
+          var hit = bound ? pickByQuery(list, q.keyword) : pickLyricHit(list, t.title, t.author);
           var hid = hit ? onlineIdOf(hit) : '';
-          if (!hid) return next();
+          if (!hid) return next(i + 1);
           return apiText(ENDPOINT.musicLrc + '?id=' + encodeURIComponent(hid) + '&server=' + encodeURIComponent(sv)).then(function (r) {
             if (gen !== lyricGen) return;
             if (r.ok && r.text && !/^lyric fetch failed/.test(r.text)) {
               var lines = parseLrc(r.text);
               if (lines.length) return done(lines, r.text);   // 标题对上了才落盘
             }
-            return next();
-          }).catch(function () { return next(); });
-        }).catch(function () { return next(); });
+            return next(i + 1);
+          }).catch(function () { return next(i + 1); });
+        }).catch(function () { return next(i + 1); });
       }
-      return next();
+      return next(0);
+    }
+
+    // 手动绑定优先于离线库：绑定过就先用它重取一次（离线库可能没存住 / 被清）。
+    function runBoundFirst() {
+      var bound = lyricMatchOf(t);
+      if (!bound || !bound.keyword) return Promise.resolve(false);
+      var gen0 = gen;
+      return apiGetJson(ENDPOINT.search + '?keyword=' + encodeURIComponent(bound.keyword) + '&server=netease').then(function (res) {
+        if (gen0 !== lyricGen) return true;
+        var list = (res.ok && res.body && res.body.ok && Array.isArray(res.body.results)) ? res.body.results : [];
+        var hit = pickByQuery(list, bound.keyword);
+        var hid = hit ? onlineIdOf(hit) : '';
+        if (!hid) return false;
+        return apiText(ENDPOINT.musicLrc + '?id=' + encodeURIComponent(hid) + '&server=netease').then(function (r) {
+          if (gen0 !== lyricGen) return true;
+          if (r.ok && r.text && !/^lyric fetch failed/.test(r.text)) {
+            var lines = parseLrc(r.text);
+            if (lines.length) { done(lines, r.text); return true; }
+          }
+          return false;
+        }).catch(function () { return false; });
+      }).catch(function () { return false; });
     }
 
     apiGetJson(ENDPOINT.lrcLoad + '?name=' + encodeURIComponent(t.title)).then(function (res) {
       if (gen !== lyricGen) return;
       if (res.ok && res.body && res.body.ok && res.body.lrc) return done(parseLrc(res.body.lrc), null);
-      return online();
+      // 离线库没有：先试用户绑定的关键词，再走常规链
+      return runBoundFirst().then(function (bound) { if (bound || gen !== lyricGen) return; return online(); });
     }).catch(function () { return online(); })
-    .then(function () { return crossLyric(); });
+    .then(function () { return crossLyric(); })
+    .then(function () {
+      if (gen !== lyricGen) return;
+      lyricState = state.lyricLines.length ? 'ready' : 'none';
+      renderAsk();
+    });
+  }
+
+  /* ---------- 无词入口 + 手动匹配（罐头拍板：单入口、有词不打扰） ---------- */
+  var lyricState = 'idle';   // idle | loading | ready | none
+  function renderAsk() {
+    var el = $('lyricAsk');
+    if (!el) return;
+    /* 只在当前曲目「确实无词」且看着播放页时亮。加载中不亮 —— 否则每次换曲都会闪。
+     * 纯音乐（占位词被当无词）也亮：那类恰恰最需要手动救（罐头认可）。 */
+    el.hidden = !(lyricState === 'none' && state.page === 'play' && currentTrack());
+  }
+
+  function lmNote(msg, isErr) {
+    var el = $('lmNote');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.classList.toggle('is-err', !!isErr);
+  }
+  function openLyricMatch() {
+    var pop = $('lyricMatchPop');
+    if (!pop) return;
+    var t = currentTrack();
+    if (!t) return;
+    var c = cleanLyricQuery(t.title, t.author);
+    var bound = lyricMatchOf(t);
+    // 预填：优先已绑定的，否则精简结果（精简结果可能是空 —— 那就让用户自己输）
+    if ($('lmSong')) $('lmSong').value = (bound && bound.song) || c.song || '';
+    if ($('lmArtist')) $('lmArtist').value = (bound && bound.artist) || c.artist || '';
+    var sub = $('lmOrigin');
+    if (sub) {
+      sub.textContent = '原标题：' + String(t.title || '').slice(0, 60) +
+        (c.ok ? '（已自动精简，可手改）' : '（标题像合集/纯音乐，请手动填）');
+    }
+    lmNote('');
+    pop.hidden = false;
+    var go = $('lmGoBtn');
+    if (go && !go._bound) {
+      go._bound = true;
+      go.addEventListener('click', submitLyricMatch);
+    }
+    var nameField = $('lmSong');
+    if (nameField) setTimeout(function () { try { nameField.focus(); nameField.select(); } catch (e) {} }, 30);
+  }
+  function closeLyricMatch() {
+    var pop = $('lyricMatchPop');
+    if (pop) pop.hidden = true;
+  }
+
+  /* 用用户输入的「歌名+歌手」搜一次、取词、绑定，并落盘。
+   * 绑定写进 raw.lyricMatch（随 playlist.json 走），下次换曲先认它。 */
+  function submitLyricMatch() {
+    var t = currentTrack();
+    if (!t) return;
+    var song = lqUniqSpaces($('lmSong') ? $('lmSong').value : '');
+    var artist = lqUniqSpaces($('lmArtist') ? $('lmArtist').value : '');
+    var keyword = [song, artist].filter(Boolean).join(' ').trim();
+    if (!keyword) { lmNote('先填一个歌名', true); return; }
+    var go = $('lmGoBtn');
+    if (go) go.disabled = true;
+    lmNote('正在搜索…');
+    var gen = lyricGen;                      // 跟当前歌词代次走（用户中途切歌就放弃）
+    var servers = [];
+    [onlineServerOf(t) || 'netease', 'netease', 'tencent', 'kugou'].forEach(function (s) {
+      if (servers.indexOf(s) < 0) servers.push(s);
+    });
+    var i = 0;
+    function step() {
+      if (i >= servers.length) {
+        if (go) go.disabled = false;
+        lmNote('没找到这首歌的歌词，换个关键词试试', true);
+        return;
+      }
+      var sv = servers[i++];
+      apiGetJson(ENDPOINT.search + '?keyword=' + encodeURIComponent(keyword) + '&server=' + encodeURIComponent(sv)).then(function (res) {
+        var list = (res.ok && res.body && res.body.ok && Array.isArray(res.body.results)) ? res.body.results : [];
+        var hit = pickByQuery(list, keyword);
+        var hid = hit ? onlineIdOf(hit) : '';
+        if (!hid) return step();
+        apiText(ENDPOINT.musicLrc + '?id=' + encodeURIComponent(hid) + '&server=' + encodeURIComponent(sv)).then(function (r) {
+          if (r.ok && r.text && !/^lyric fetch failed/.test(r.text)) {
+            var lines = parseLrc(r.text);
+            if (lines.length && !lyricIsPlaceholder(lines)) {
+              bindLyricMatch(t, song, artist, keyword);
+              if (go) go.disabled = false;
+              closeLyricMatch();
+              toast('歌词已绑定：' + (hit.title || keyword));
+              return;
+            }
+          }
+          step();
+        }).catch(function () { step(); });
+      }).catch(function () { step(); });
+    }
+    step();
+  }
+
+  function bindLyricMatch(t, song, artist, keyword) {
+    if (!t.raw || typeof t.raw !== 'object') t.raw = {};
+    t.raw.lyricMatch = { song: song || '', artist: artist || '', keyword: keyword || '', at: Date.now() };
+    savePlaylist();
+    // 重跑一次歌词链（loadLyrics 会先认绑定），立即显示上线
+    if (t.uid === state.currentUid) loadLyrics(t);
+  }
+
+  /* 「重新精简」：把两个输入框重置回自动精简的结果。 */
+  function resetLyricMatch() {
+    var t = currentTrack();
+    if (!t) return;
+    var c = cleanLyricQuery(t.title, t.author);
+    if ($('lmSong')) $('lmSong').value = c.song || '';
+    if ($('lmArtist')) $('lmArtist').value = c.artist || '';
+    lmNote(c.ok ? '' : '这首的标题像合集/纯音乐，自动精简不可靠，建议自己填', false);
+  }
+
+  /* 手动匹配绑定：存在曲目 raw.lyricMatch = { song, artist, keyword, at }。
+   * 随 playlist.json 落盘（toStoredTrack 会把 raw 原样带回），拆窗贴回也在。 */
+  function lyricMatchOf(t) {
+    var m = t && t.raw && t.raw.lyricMatch;
+    if (!m || typeof m !== 'object') return null;
+    var song = lqUniqSpaces(m.song), artist = lqUniqSpaces(m.artist);
+    var keyword = lqUniqSpaces(m.keyword) || [song, artist].filter(Boolean).join(' ');
+    if (!keyword) return null;
+    return { song: song, artist: artist, keyword: keyword };
+  }
+
+  /* 手动绑定用：按用户关键词取「看起来最匹配」的一条。
+   * 用户既然手动输了词，就不再拿原曲名去筛 —— 只要求关键词的每个词都出现在
+   * 候选的「标题+歌手」里，避免拿到第一条不相关的。 */
+  function pickByQuery(list, keyword) {
+    var words = String(keyword || '').toLowerCase().split(/\s+/).filter(Boolean);
+    if (!words.length) return (list || [])[0] || null;
+    var firstWithUrl = null;
+    for (var i = 0; i < (list || []).length; i++) {
+      var it = list[i];
+      if (!it || !it.url) continue;
+      if (!firstWithUrl) firstWithUrl = it;
+      var hay = (String(it.title || '') + ' ' + String(it.author || '')).toLowerCase();
+      var all = true;
+      for (var w = 0; w < words.length; w++) { if (hay.indexOf(words[w]) < 0) { all = false; break; } }
+      if (all) return it;
+    }
+    return firstWithUrl;
   }
 
   /* ============================================================
@@ -2948,10 +3281,12 @@
       cancelQueueLeave();
       state.page = 'queue';
       renderChrome();
+      renderAsk();                // 队列页不显无词入口
       beginQueueEnter(260);   // 整页交叉：播放页左滑出 + 队列右滑入
     } else {
       state.page = 'play';
       renderChrome();
+      renderAsk();
       beginQueueLeave(260);
     }
     persistState();
@@ -4078,6 +4413,24 @@
   }
 
   if ($('searchEntryBtn')) $('searchEntryBtn').addEventListener('click', toggleSearch);
+
+  /* 无词入口 + 手动匹配面板（罐头拍板：单入口、有词不打扰） */
+  if ($('lyricAskBtn')) $('lyricAskBtn').addEventListener('click', openLyricMatch);
+  if ($('lmCancelBtn')) $('lmCancelBtn').addEventListener('click', closeLyricMatch);
+  if ($('lmResetBtn')) $('lmResetBtn').addEventListener('click', resetLyricMatch);
+  if ($('lyricMatchPop')) {
+    // 点遮罩处关闭（点卡内不关）
+    $('lyricMatchPop').addEventListener('click', function (e) {
+      if (e.target === $('lyricMatchPop')) closeLyricMatch();
+    });
+  }
+  ['lmSong', 'lmArtist'].forEach(function (id) {
+    var el = $(id);
+    if (el) el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); submitLyricMatch(); }
+      else if (e.key === 'Escape') { e.preventDefault(); closeLyricMatch(); }
+    });
+  });
   /* 舞台歌手名 = 通用搜索入口（搜索页不依赖宽窗，只是入口按钮只在独立窗） */
   if ($('trackArtist')) $('trackArtist').addEventListener('click', function () {
     var n = $('trackArtistName');
@@ -4191,6 +4544,8 @@
 
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
+    var lm = $('lyricMatchPop');
+    if (lm && !lm.hidden) { closeLyricMatch(); return; }   // 手动匹配面板最上层
     if (volPopShown) { closeVolPop(); return; }   // 最瞬时的浮层先收
     if (searchPage && !searchPage.hidden) { searchGoBack(); return; }   // 分层退：详情→推荐区→退出
     if (!morePop.hidden || !importPop.hidden) { closePops(); return; }
@@ -4445,6 +4800,7 @@
     renderPlayState();
     renderLyricMode();
     renderLyrics();
+    renderAsk();
     renderResume();
     renderChrome();
   }
@@ -4878,6 +5234,16 @@
     lyricIsPlaceholder: lyricIsPlaceholder,
     normLyricTitle: normLyricTitle,
     normLyricAuthor: normLyricAuthor,
+    /* 歌词关键词清洗（测试用）：纯函数，直接喂标题/歌手。 */
+    cleanLyricQuery: cleanLyricQuery,
+    lyricQueryOf: lyricQueryOf,
+    pickByQuery: pickByQuery,
+    lyricMatchOf: lyricMatchOf,
+    lyricAskState: function () { return { state: lyricState, hidden: $('lyricAsk') ? $('lyricAsk').hidden : null, popHidden: $('lyricMatchPop') ? $('lyricMatchPop').hidden : null }; },
+    openLyricMatch: openLyricMatch,
+    closeLyricMatch: closeLyricMatch,
+    resetLyricMatch: resetLyricMatch,
+    bindLyricMatch: bindLyricMatch,
     /* 搜索页（测试用）：不依赖真实网络，直接喂结果验证渲染/落库。 */
     openSearch: openSearch,
     closeSearch: closeSearch,

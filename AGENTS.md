@@ -289,7 +289,28 @@ app-data（`~/.hanako/app-data/hanako-simple-player/`：`playlist.json` /
   `empty-hint-follows-layout-change`（新增 `fixtureMode=empty` 夹具），验收 **116/116**。
   交接：`docs/player-ui/EMPTY-HINT-FIX.md`；模式已沉淀知识库
   `20-资料/UI 文案写死控件方位-结构重排就失效.md`（改控件结构后要 grep 方位词，别只搜 id）。
-- 无头验收：`node tools/verify-ui.mjs`（12/12 布局自检 + 4/4 窄卡 + **116/116** 断言 + 接线冒烟 + 迁移 + 跨文档生命周期（含「快照自带曲目」续播）+ 来源/真名/补齐/删除 + 红心/我的喜欢 + 环境色两态/兜底 + 动效五项 + 跨源安全/歌词兜底 + 搜索页/推荐区 + 涟漪 + 控制条对称/歌名 + 切换条溢出/跟随 + 音量浮层 + 悬停抬升 + 空列表引导语）
+- **歌词标题精简 + 手动匹配**（2026-10-11，**已部署**，构建号 1003131637，罐头需求）：
+  两条需求 —— ① 加个动作把标题精简后再匹配；② 允许用户自己改关键词适配。
+  **先厘清：根因不在匹配算法，在喂进去的名字本来就是假的。** 用真实 B站搜索结果验实三条假设
+  （B站无数字 id / `author` 是 UP 主 / 标题尾巴没清），并挖出**更靠上游的元凶**：
+  跨源兜底原样拿 `[title, author].join(' ')` 去搜 —— 实长「【4K珍藏】南拳妈妈《下雨天》MV极致修复！… 郭总说」，
+  **搜索这一步就废了**，改 `pickLyricHit` 只治一半（干净串「下雨天 南拳妈妈」一搜即中，已印证）。
+  ① **`cleanLyricQuery(title, author)` 纯函数**：`《》` 优先（取第一个不在括号内的）→ 无书名号则去括号
+     + 剥噪声词（4K/Hi-Res/无损/字幕/神作/助眠/合集…）→ 分隔符截断 → 抽歌手（紧邻书名号或分隔符、
+     ≤8 CJK 字或 ≤3 拉丁词、不含数字符号；**取不到就空，宁缺毋滥**）。守卫：合集/串烧/纯音乐/伴奏 →
+     `ok=false` 不自动兜底（「歌单」不算 —— 「循环歌单」会误伤）。
+  ② **两端共用同一份**：匹配端 `pickLyricHit`（查询词与候选都过清洗）+ 关键词构造端 `crossLyric`
+     （改走 `lyricQueryOf()` = 脏标题时**丢掉 UP 主**、净标题则歌名原样 + 保留真歌手）。
+  ③ **手动匹配：单入口、有词不打扰**（罐头拍板，原「歌名旁常驻按钮」已否）。只在**确实无词**时
+     歌词区正中出现胶囊按钮（挂 `.scene`，无词时 `.lyric-wrap` 是 `display:none` 塞不进）；
+     **三态** `loading/ready/none` 只有 `none` 亮（防换曲闪一下）；纯音乐也亮。面板预填精简结果、
+     可手改重搜；**绑定写 `raw.lyricMatch` 随 `playlist.json` 落盘**（拆窗贴回也在），
+     下次换曲先试绑定再走常规链。
+  断言新增 5 条（`lyric-query-cleaned-for-bili-titles` / `lyric-query-skips-collection-and-instrumental` /
+  `lyric-dirty-title-matches-after-clean` / `lyric-ask-hidden-when-lyrics-present` /
+  `lyric-match-panel-opens-and-prefills`），验收 **132/132**；后端未碰，仍 19/19。
+  交接：`docs/player-ui/LYRIC-MATCH-DONE.md`。
+- 无头验收：`node tools/verify-ui.mjs`（12/12 布局自检 + 4/4 窄卡 + **132/132** 断言 + 接线冒烟 + 迁移 + 跨文档生命周期（含「快照自带曲目」续播）+ 来源/真名/补齐/删除 + 红心/我的喜欢 + 环境色两态/兜底 + 动效五项 + 跨源安全/歌词兜底 + 歌词清洗/手动匹配 + 搜索页/推荐区 + 涟漪 + 控制条对称/歌名 + 切换条溢出/跟随 + 音量浮层 + 悬停抬升 + 空列表引导语）
 - 图标工具：`node tools/measure-icons.mjs`（量每个 symbol 在 24×24 里的实际内容外接框）。
   改控制面图标尺寸前先跑它 —— 图标「看起来多大」取决于内容外接框，不取决于 CSS 框宽。
 - 指针涟漪（2026-10-10，**已部署**，构建号 1003131586）：**旧「频谱」整层替换为 Canvas 2D 指针涟漪**。
