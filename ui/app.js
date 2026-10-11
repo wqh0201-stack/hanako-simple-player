@@ -2679,24 +2679,32 @@
     }
 
     // 手动绑定优先于离线库：绑定过就先用它重取一次（离线库可能没存住 / 被清）。
+    // 有 pick（用户在手选候选里定下的那条）就直接按它取词 —— 否则按关键词重搜，
+    // 万一用户选的是 tencent 那条，重搜可能又挑回 netease。
     function runBoundFirst() {
       var bound = lyricMatchOf(t);
       if (!bound || !bound.keyword) return Promise.resolve(false);
       var gen0 = gen;
+      function useText(id, sv, hop) {
+        return apiText(ENDPOINT.musicLrc + '?id=' + encodeURIComponent(id) + '&server=' + encodeURIComponent(sv)).then(function (r) {
+          if (gen0 !== lyricGen) return true;
+          if (r.ok && r.text && !/^lyric fetch failed/.test(r.text)) {
+            var lines = parseLrc(r.text);
+            if (lines.length) { doneLrc(r.text, r.text); return true; }
+          }
+          return hop ? hop() : false;
+        }).catch(function () { return hop ? hop() : false; });
+      }
+      if (bound.mid) {
+        return useText(bound.mid, bound.server || 'netease', null);
+      }
       return apiGetJson(ENDPOINT.search + '?keyword=' + encodeURIComponent(bound.keyword) + '&server=netease').then(function (res) {
         if (gen0 !== lyricGen) return true;
         var list = (res.ok && res.body && res.body.ok && Array.isArray(res.body.results)) ? res.body.results : [];
         var hit = pickByQuery(list, bound.keyword);
         var hid = hit ? onlineIdOf(hit) : '';
         if (!hid) return false;
-        return apiText(ENDPOINT.musicLrc + '?id=' + encodeURIComponent(hid) + '&server=netease').then(function (r) {
-          if (gen0 !== lyricGen) return true;
-          if (r.ok && r.text && !/^lyric fetch failed/.test(r.text)) {
-            var lines = parseLrc(r.text);
-            if (lines.length) { doneLrc(r.text, r.text); return true; }
-          }
-          return false;
-        }).catch(function () { return false; });
+        return useText(hid, 'netease', null);
       }).catch(function () { return false; });
     }
 
@@ -2746,6 +2754,7 @@
         (c.ok ? '（已自动精简，可手改）' : '（标题像合集/纯音乐，请手动填）');
     }
     lmNote('');
+    lmCandidateList = []; renderLmCandidates();   // 新开面板：清掉上次的候选
     pop.hidden = false;
     var go = $('lmGoBtn');
     if (go && !go._bound) {
@@ -2760,8 +2769,31 @@
     if (pop) pop.hidden = true;
   }
 
-  /* 用用户输入的「歌名+歌手」搜一次、取词、绑定，并落盘。
-   * 绑定写进 raw.lyricMatch（随 playlist.json 走），下次换曲先认它。 */
+  /* 用用户输入的「歌名+歌手」去各源搜一次，**列出候选让人挑**（罐头：匹配错了要能挑）。
+   * 不再「搜到第一条命中的就绑」——算法再准也会有偏差，把选择权交回用户。
+   * 点候选行才绑（见 bindLmCandidate），取词/失败状态照旧用 lmNote 提示。 */
+  var LM_MAX = 5;              // 最多列 5 条候选
+  var lmCandidateList = [];    // 当前候选（索引对应 DOM 上的 data-lm-cand）
+
+  function renderLmCandidates() {
+    var ol = $('lmCandidates');
+    if (!ol) return;
+    if (!lmCandidateList.length) { ol.hidden = true; ol.innerHTML = ''; return; }
+    var h = '';
+    for (var i = 0; i < lmCandidateList.length; i++) {
+      var c = lmCandidateList[i];
+      h += '<li class="lm-cand"><button class="lm-cand-hit" type="button" data-lm-cand="' + i + '" title="绑定这条歌词">' +
+        '<span class="lm-cand-meta">' +
+          '<span class="lm-cand-title">' + esc(c.title) + '</span>' +
+          '<span class="lm-cand-artist">' + esc(c.author || '未知歌手') + '</span>' +
+        '</span>' +
+        '<span class="lm-cand-src">' + esc(serverLabel(c.server)) + '</span>' +
+      '</button></li>';
+    }
+    ol.innerHTML = h;
+    ol.hidden = false;
+  }
+
   function submitLyricMatch() {
     var t = currentTrack();
     if (!t) return;
@@ -2771,46 +2803,99 @@
     if (!keyword) { lmNote('先填一个歌名', true); return; }
     var go = $('lmGoBtn');
     if (go) go.disabled = true;
+    lmCandidateList = []; renderLmCandidates();
     lmNote('正在搜索…');
     var gen = lyricGen;                      // 跟当前歌词代次走（用户中途切歌就放弃）
     var servers = [];
     [onlineServerOf(t) || 'netease', 'netease', 'tencent', 'kugou'].forEach(function (s) {
       if (servers.indexOf(s) < 0) servers.push(s);
     });
+    var words = keyword.toLowerCase().split(/\s+/).filter(Boolean);
+    var seen = {};
+    var found = [];
     var i = 0;
+
+    function scoreOf(it) {
+      var hay = (String(it.title || '') + ' ' + String(it.author || '')).toLowerCase();
+      var n = 0;
+      for (var w = 0; w < words.length; w++) if (hay.indexOf(words[w]) >= 0) n++;
+      return n;
+    }
+    function finish() {
+      if (gen !== lyricGen) return;
+      if (go) go.disabled = false;
+      if (!found.length) { lmNote('没找到相关歌词，换个关键词试试', true); return; }
+      // 相关度（命中关键词数）高者在前，同分保持源顺序
+      found.sort(function (a, b) { return b._score - a._score; });
+      lmCandidateList = found.slice(0, LM_MAX).map(function (c) {
+        return { title: c.title, author: c.author, server: c.server, mid: c.mid };
+      });
+      renderLmCandidates();
+      lmNote('找到 ' + lmCandidateList.length + ' 条，点一条绑定');
+    }
     function step() {
-      if (i >= servers.length) {
-        if (go) go.disabled = false;
-        lmNote('没找到这首歌的歌词，换个关键词试试', true);
-        return;
-      }
+      if (gen !== lyricGen) return;
+      if (i >= servers.length) { finish(); return; }
       var sv = servers[i++];
       apiGetJson(ENDPOINT.search + '?keyword=' + encodeURIComponent(keyword) + '&server=' + encodeURIComponent(sv)).then(function (res) {
+        if (gen !== lyricGen) return;
         var list = (res.ok && res.body && res.body.ok && Array.isArray(res.body.results)) ? res.body.results : [];
-        var hit = pickByQuery(list, keyword);
-        var hid = hit ? onlineIdOf(hit) : '';
-        if (!hid) return step();
-        apiText(ENDPOINT.musicLrc + '?id=' + encodeURIComponent(hid) + '&server=' + encodeURIComponent(sv)).then(function (r) {
-          if (r.ok && r.text && !/^lyric fetch failed/.test(r.text)) {
-            var lines = parseLrc(r.text);
-            if (lines.length && !lyricIsPlaceholder(lines)) {
-              bindLyricMatch(t, song, artist, keyword);
-              if (go) go.disabled = false;
-              closeLyricMatch();
-              toast('歌词已绑定：' + (hit.title || keyword));
-              return;
-            }
-          }
-          step();
-        }).catch(function () { step(); });
+        for (var j = 0; j < list.length; j++) {
+          var it = list[j];
+          if (!it || !it.url || !it.title) continue;
+          var sc = scoreOf(it);
+          if (sc <= 0) continue;                       // 一条关键词都不沾的，不列（宁缺毋滥）
+          var mid = onlineIdOf(it);
+          if (!mid) continue;
+          var key = sv + ':' + mid;
+          if (seen[key]) continue;
+          seen[key] = 1;
+          found.push({ title: String(it.title || ''), author: String(it.author || ''), server: sv, mid: mid, _score: sc });
+        }
+        // 已经攒够足够的候选就不再打后面的源（省请求）；否则继续
+        if (found.length >= LM_MAX * 3) { finish(); return; }
+        step();
       }).catch(function () { step(); });
     }
     step();
   }
 
-  function bindLyricMatch(t, song, artist, keyword) {
+  /* 点某条候选 = 绑这条：先取一次词确认能出词，能则绑并关面板。
+   * 绑定带 pick（源 + id），重载时 runBoundFirst 会**直接按它取词**，
+   * 不再按关键词重新解析 —— 否则选了 tencent 那条，重载可能又挑回 netease。 */
+  function bindLmCandidate(idx) {
+    var t = currentTrack();
+    var c = lmCandidateList[idx];
+    if (!t || !c) return;
+    lmNote('正在取词…');
+    apiText(ENDPOINT.musicLrc + '?id=' + encodeURIComponent(c.mid) + '&server=' + encodeURIComponent(c.server)).then(function (r) {
+      if (r.ok && r.text && !/^lyric fetch failed/.test(r.text)) {
+        var lines = parseLrc(r.text);
+        if (lines.length && !lyricIsPlaceholder(lines)) {
+          var song = lqUniqSpaces($('lmSong') ? $('lmSong').value : '');
+          var artist = lqUniqSpaces($('lmArtist') ? $('lmArtist').value : '');
+          var kw = [song, artist].filter(Boolean).join(' ').trim();
+          bindLyricMatch(t, song, artist, kw, { server: c.server, mid: c.mid, title: c.title });
+          closeLyricMatch();
+          toast('歌词已绑定：' + (c.title || kw));
+          return;
+        }
+      }
+      lmNote('这条没取到歌词，换一条试试', true);
+    }).catch(function () { lmNote('取词失败，换一条试试', true); });
+  }
+
+  /* 落盘绑定（写 raw.lyricMatch）+ 重跑歌词链。
+   * pick = 用户在候选里选中那一条的 { server, mid, title }；有它才能确定性取词
+   * （见 runBoundFirst），没有则退回按 keyword 取。 */
+  function bindLyricMatch(t, song, artist, keyword, pick) {
     if (!t.raw || typeof t.raw !== 'object') t.raw = {};
     t.raw.lyricMatch = { song: song || '', artist: artist || '', keyword: keyword || '', at: Date.now() };
+    if (pick && pick.server && pick.mid) {
+      t.raw.lyricMatch.server = pick.server;
+      t.raw.lyricMatch.mid = String(pick.mid);
+      if (pick.title) t.raw.lyricMatch.title = String(pick.title);
+    }
     // 换词源后旧校准不再成立；同音频的所有歌单副本一起更新。
     state.tracks.forEach(function (x) { if (x.id === t.id) x.raw.lyricMatch = t.raw.lyricMatch; });
     setTrackLyricOffset(t, null);
@@ -2826,6 +2911,7 @@
     var c = cleanLyricQuery(t.title, t.author);
     if ($('lmSong')) $('lmSong').value = c.song || '';
     if ($('lmArtist')) $('lmArtist').value = c.artist || '';
+    lmCandidateList = []; renderLmCandidates();   // 换了关键词：候选作废
     lmNote(c.ok ? '' : '这首的标题像合集/纯音乐，自动精简不可靠，建议自己填', false);
   }
 
@@ -2837,7 +2923,9 @@
     var song = lqUniqSpaces(m.song), artist = lqUniqSpaces(m.artist);
     var keyword = lqUniqSpaces(m.keyword) || [song, artist].filter(Boolean).join(' ');
     if (!keyword) return null;
-    return { song: song, artist: artist, keyword: keyword };
+    var server = String(m.server || '').trim();
+    var mid = String(m.mid || '').replace(/\D/g, '');
+    return { song: song, artist: artist, keyword: keyword, server: server, mid: mid };
   }
 
   /* 手动绑定用：按用户关键词取「看起来最匹配」的一条。
@@ -4896,6 +4984,19 @@
   if ($('lyricAskBtn')) $('lyricAskBtn').addEventListener('click', openLyricMatch);
   if ($('lmCancelBtn')) $('lmCancelBtn').addEventListener('click', closeLyricMatch);
   if ($('lmResetBtn')) $('lmResetBtn').addEventListener('click', resetLyricMatch);
+  /* 工具条里的「换歌词」（长按歌词调对齐时出现）→ 同一个手动匹配面板。
+   * 从工具条调用不受 renderAsk 的「无词才亮」限制（工具条本就是长按出的）。 */
+  if ($('lyricAlignSwap')) $('lyricAlignSwap').addEventListener('click', function () {
+    closeLyricAlign();      // 先收工具条，避免两个浮层叠着
+    openLyricMatch();
+  });
+  if ($('lmCandidates')) {
+    $('lmCandidates').addEventListener('click', function (e) {
+      var hit = e.target.closest('[data-lm-cand]');
+      if (!hit) return;
+      bindLmCandidate(Number(hit.getAttribute('data-lm-cand')));
+    });
+  }
   if ($('lyricMatchPop')) {
     // 点遮罩处关闭（点卡内不关）
     $('lyricMatchPop').addEventListener('click', function (e) {
@@ -5758,6 +5859,16 @@
     closeLyricMatch: closeLyricMatch,
     resetLyricMatch: resetLyricMatch,
     bindLyricMatch: bindLyricMatch,
+    /* 手动匹配候选（测试用）：走真 submitLyricMatch / bindLmCandidate 控制流。 */
+    lmCandidateState: function () {
+      return { count: lmCandidateList.length, hidden: $('lmCandidates') ? $('lmCandidates').hidden : null,
+        list: lmCandidateList.map(function (c) { return { title: c.title, author: c.author, server: c.server, mid: c.mid }; }),
+        bound: currentTrack() ? lyricMatchOf(currentTrack()) : null };
+    },
+    lmSubmit: submitLyricMatch,
+    lmBind: bindLmCandidate,
+    openLyricAlign: openLyricAlign,
+    closeLyricAlign: closeLyricAlign,
     /* 搜索页（测试用）：不依赖真实网络，直接喂结果验证渲染/落库。 */
     openSearch: openSearch,
     closeSearch: closeSearch,

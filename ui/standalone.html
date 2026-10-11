@@ -40,7 +40,10 @@
           <div class="lyrics" id="lyrics"></div>
           <div class="lyric-align-guide" id="lyricAlignGuide" hidden aria-hidden="true"><span>现在</span></div>
           <div class="lyric-align-tools" id="lyricAlignTools" hidden role="group" aria-label="调整歌词节奏">
-            <output id="lyricAlignValue">原始节奏</output>
+            <div class="lyric-align-top">
+              <output id="lyricAlignValue">原始节奏</output>
+              <button class="lyric-align-swap" id="lyricAlignSwap" type="button" title="这首的歌词匹配错了？换一首来匹配">换歌词</button>
+            </div>
             <div class="lyric-align-actions">
               <button id="lyricAlignEarlier" type="button" title="歌词提前 50 毫秒">提前</button>
               <button id="lyricAlignLater" type="button" title="歌词延后 50 毫秒">延后</button>
@@ -267,11 +270,13 @@
           <input class="lm-input" id="lmArtist" type="text" autocomplete="off" spellcheck="false" placeholder="可留空">
         </div>
         <p class="lm-note" id="lmNote"></p>
+        <!-- 候选列表：搜到几条就列几条，用户点哪条绑哪条（罐头：匹配错了要能挑） -->
+        <ol class="lm-candidates" id="lmCandidates" hidden></ol>
         <p class="lm-hint" id="lmAlignHint">歌词绑定后若与节奏不齐，长按歌词拖动即可对齐</p>
         <div class="lm-actions">
           <button class="lm-btn" id="lmResetBtn" type="button">重新精简</button>
           <button class="lm-btn" id="lmCancelBtn" type="button">取消</button>
-          <button class="lm-btn lm-primary" id="lmGoBtn" type="button">搜索并绑定</button>
+          <button class="lm-btn lm-primary" id="lmGoBtn" type="button">搜索歌词</button>
         </div>
       </div>
     </div>
@@ -364,7 +369,7 @@
 </defs></svg>
 
 <script src="app.js" defer></script>
-<script>window.__HANA_BUILD = "1003131644";</script>
+<script>window.__HANA_BUILD = "1003131645";</script>
 <script type="module">
   import { hana } from "./sdk.js";
   window.hana = hana;

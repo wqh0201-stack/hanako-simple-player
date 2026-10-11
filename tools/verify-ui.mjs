@@ -295,6 +295,22 @@ const server = http.createServer((req, res) => {
       });
       return json(res, 200, { ok: true, results, host: 'mock', total: TOTAL });
     }
+    /* 手动匹配候选夹具：关键词含「候选」时按平台各回几条不同结果，
+       让 submitLyricMatch 能攒出「多条候选 + 不同来源平台」。 */
+    if (kw.indexOf('候选') >= 0) {
+      if (server === 'tencent') {
+        return json(res, 200, { ok: true, results: [
+          { id: 'tencent:9003', title: '候选歌曲 · 腾讯版', author: '候选歌手', url: `${API}/widget/api/music/go/9003?server=tencent`, pic: '', lrc: '' },
+        ], host: 'mock', total: 1 });
+      }
+      if (server === 'netease' || !server) {
+        return json(res, 200, { ok: true, results: [
+          { id: 'netease:9001', title: '候选歌曲 · 网易甲', author: '候选歌手', url: goUrl(9001), pic: '', lrc: '' },
+          { id: 'netease:9002', title: '候选歌曲 · 网易乙', author: '另一歌手', url: goUrl(9002), pic: '', lrc: '' },
+        ], host: 'mock', total: 2 });
+      }
+      return json(res, 200, { ok: true, results: [], host: 'mock', total: 0 });
+    }
     return json(res, 200, { ok: true, results: [{ id: `netease:${770000 + kw.length}`, title: `命中 ${kw}`, author: '搜索歌手', url: goUrl(770000 + kw.length), pic: '', lrc: 'http://mock/lrc/' + encodeURIComponent(kw) }], host: 'mock', total: 1 });
   }
   if (p === API + '/widget/api/music/hot') {
@@ -1528,8 +1544,9 @@ const motion = {};
   await sleep(220);
   const narrow = await page.evaluate(() => {
     const el = document.getElementById('lyricAlignTools'), r = el.getBoundingClientRect(), p = document.getElementById('player').getBoundingClientRect();
-    const buttons = Array.from(el.querySelectorAll('button'));
-    return { inside: r.left >= p.left && r.right <= p.right + 1 && r.top >= p.top && r.bottom <= p.bottom, singleRow: Math.abs(buttons[0].getBoundingClientRect().top - buttons[3].getBoundingClientRect().top) < 1, hits: buttons.every((b) => { const r = b.getBoundingClientRect(); return b.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)); }) };
+    // 只量「对齐动作」那一排（提前/延后/还原/完成）—— 第一行是读数 + 换歌词，不参与单行判定
+    const buttons = Array.from(el.querySelectorAll('.lyric-align-actions button'));
+    return { inside: r.left >= p.left && r.right <= p.right + 1 && r.top >= p.top && r.bottom <= p.bottom, singleRow: Math.abs(buttons[0].getBoundingClientRect().top - buttons[buttons.length - 1].getBoundingClientRect().top) < 1, hits: Array.from(el.querySelectorAll('button')).every((b) => { const r = b.getBoundingClientRect(); return b.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)); }) };
   });
   assert('lyric-align-controls-fit-and-hit-in-narrow-card', narrow.inside && narrow.hits && narrow.singleRow, JSON.stringify(narrow));
   await page.screenshot({ path: path.join(outDir, 'lyric-align-dark-312x494.png') });
@@ -2212,6 +2229,76 @@ const motion = {};
   assert('lyric-match-align-hint-present',
     s.lmHint.exists === true && /长按歌词/.test(s.lmHint.text) && s.lmHint.fs >= 11,
     JSON.stringify(s.lmHint));
+
+  /* ── 歌词匹配错了要能「挑」：①工具条有「换歌词」能开面板 ②手动匹配列候选、点哪条绑哪条 ── */
+  // ① 工具条里的「换歌词」（长按歌词调对齐时出现）
+  s.lmSwap = await page.evaluate(() => {
+    const btn = document.getElementById('lyricAlignSwap');
+    if (!btn) return { exists: false };
+    const tools = document.getElementById('lyricAlignTools');
+    const val = document.getElementById('lyricAlignValue');
+    const inTools = tools && btn.closest('#lyricAlignTools') !== null;
+    // 同一行：与 output 的垂直中心差
+    const b = btn.getBoundingClientRect(), v = val.getBoundingClientRect();
+    return { exists: true, text: btn.textContent.trim(), inTools: inTools,
+      sameRow: Math.abs((b.top + b.height / 2) - (v.top + v.height / 2)) <= 3 };
+  });
+  assert('lyric-align-tools-has-swap-button',
+    s.lmSwap.exists === true && s.lmSwap.text === '换歌词' && s.lmSwap.inTools === true && s.lmSwap.sameRow === true,
+    JSON.stringify(s.lmSwap));
+
+  // 点它 → 开手动匹配面板（面板本身在无词时才自动亮，但工具条调用不受那个限制）
+  s.lmSwapOpen = await page.evaluate(() => {
+    window.__playerDebug.closeLyricMatch();
+    const before = document.getElementById('lyricMatchPop').hidden;
+    document.getElementById('lyricAlignSwap').click();
+    const after = document.getElementById('lyricMatchPop').hidden;
+    const song = (document.getElementById('lmSong') || {}).value || '';
+    return { before: before, after: after, song: song };
+  });
+  assert('lyric-align-swap-opens-match-panel',
+    s.lmSwapOpen.before === true && s.lmSwapOpen.after === false,
+    JSON.stringify(s.lmSwapOpen));
+
+  // ② 手动匹配列出候选（不直接绑），点其中一条才绑那条
+  await page.evaluate(() => {
+    const D = window.__playerDebug;
+    D.closeLyricMatch();
+    D.openLyricMatch();
+    document.getElementById('lmSong').value = '候选歌曲';
+    document.getElementById('lmArtist').value = '候选歌手';
+    D.lmSubmit();
+  });
+  await page.waitForFunction(() => window.__playerDebug.lmCandidateState().count >= 2, { timeout: 4000, polling: 50 }).catch(() => {});
+  s.lmCands = await page.evaluate(() => {
+    const D = window.__playerDebug;
+    const st = D.lmCandidateState();
+    const rows = document.querySelectorAll('#lmCandidates .lm-cand-hit');
+    const srcs = Array.prototype.map.call(document.querySelectorAll('#lmCandidates .lm-cand-src'), (e) => e.textContent);
+    return { count: st.count, domRows: rows.length, hidden: st.hidden, list: st.list, srcs: srcs, boundBefore: st.bound };
+  });
+  assert('lyric-match-lists-candidates',
+    s.lmCands.count >= 2 && s.lmCands.domRows === s.lmCands.count && s.lmCands.hidden === false &&
+    s.lmCands.boundBefore === null &&                       // 选之前不能已经绑上
+    s.lmCands.srcs.indexOf('QQ') >= 0 && /网易云/.test(s.lmCands.srcs.join('')),   // 候选跨平台
+    JSON.stringify(s.lmCands));
+  // 点第 2 条（腾讯那条，跨源）→ 绑的就是这条（带 server+mid）
+  s.lmPick = await page.evaluate(() => {
+    const D = window.__playerDebug;
+    const list = D.lmCandidateState().list;
+    const idx = list.findIndex((c) => c.server === 'tencent');
+    document.querySelector('#lmCandidates .lm-cand-hit[data-lm-cand="' + idx + '"]').click();
+    return { idx: idx, want: list[idx] };
+  });
+  await page.waitForFunction(() => { const b = window.__playerDebug.lmCandidateState().bound; return b && b.mid; }, { timeout: 4000, polling: 50 }).catch(() => {});
+  s.lmBound = await page.evaluate(() => ({
+    bound: window.__playerDebug.lmCandidateState().bound,
+    popHidden: document.getElementById('lyricMatchPop').hidden
+  }));
+  assert('lyric-match-binds-picked-candidate',
+    s.lmBound.bound && s.lmBound.bound.mid === '9003' && s.lmBound.bound.server === 'tencent' &&
+    s.lmBound.popHidden === true,
+    JSON.stringify({ picked: s.lmPick, bound: s.lmBound }));
 
   /* 无限滚动翻页（罐头拍板：滚到底自动加载）。
    * 假后端对「分页」关键词回 75 条、每页 30（见 _fixture 的 music/search）。

@@ -576,6 +576,23 @@ app-data（`~/.hanako/app-data/hanako-simple-player/`：`playlist.json` /
         是 absolute 挂在滚动容器上的，`top:0;bottom:4px` 撑的是**可视高**非内容总高，
         只盖首屏 —— 本来就画不了全程。断言 `bili-parts-no-guide-line`。
   交接：`docs/player-ui/BILI-PARTS-FIX.md`。
+- **歌词「挑 / 换」**（2026-10-11，构建号 1003131647，罐头需求「匹配错了要能挑和改」）：
+  ① **长按工具条加「换歌词」**：`#lyricAlignTools` 第一行原只有 `<output>原始节奏</output>`，
+     改成 `.lyric-align-top`（output flex:1 + `#lyricAlignSwap`）。点它 `closeLyricAlign()` + `openLyricMatch()`
+     （先收工具条防两浮层叠；`openLyricMatch` 本不受 renderAsk 限制，所以**有词也能换**）。
+     样式沿用工具条语言（11px/`--hk-muted`/hover `--hv-surface`+`--hv-ring-icon`，22px 矮一档）。
+     ⚠️ 连带修：既有断言 `lyric-align-controls-fit-and-hit-in-narrow-card` 原本用
+     `querySelectorAll('button')[0..3]` 判「四动作一行」，加按钮后会数到 5 个而误判 ——
+     单行判定已收敛到 `.lyric-align-actions button`。
+  ② **手动匹配改「列候选让人挑」**（根治）：`submitLyricMatch` 不再「搜到第一条就绑」，
+     改搜各源→攒候选（相关度=关键词命中词数，一条不沾的不列）→列最多 5 条（歌名+歌手+平台胶囊），
+     **点哪条绑哪条**（罐头拍板：点=直接绑定）。
+  ③ **确定性取词**（这轮的真根）：只存 keyword 不够 —— `runBoundFirst` 原来按关键词重搜、
+     `pickByQuery` 取第一条，用户在列表里选了 tencent 那条，重载可能又解回 netease。
+     所以绑定加上选中的源与 id：`raw.lyricMatch={…, server, mid, title}`；`runBoundFirst` 有 mid
+     就直接用 `server+mid` 取词，没有才回退（兼容老数据）。保留 `bindLyricMatch` 清旧 lyicOffset 的逻辑。
+  验收：verify-backend 22/22、verify-ui **171/171**（新增 4 条：工具条有换歌词/能开面板/
+     列候选（选前未绑）/点哪条绑哪条）。未动 lib。交接：`docs/player-ui/LYRIC-PICK-DONE.md`。
 - 待办：独立窗/小卡音频不中断（pagehide/beacon 落盘 + 续播，2026-10-10 两轮：快照自带曲目 +
   换曲即落盘 + 进度护栏 + 媒体时钟进度 + seek 落点前不起播 + boot 提速，构建号 1003131614，
   **真机已复核（2026-10-10，罐头确认「ok 了」）**；剩余「一小段静默」是换文档重连媒体的固有代价，

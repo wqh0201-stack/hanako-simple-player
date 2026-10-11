@@ -741,6 +741,29 @@ button:disabled { cursor: default; }
 /* 桌面歌词校准：临时显影的刻度和工具，平时不占版面。
  * 工具在滚动 mask 外；短刻度放左侧，不横穿歌词文字。 */
 .lyric-align-guide[hidden], .lyric-align-tools[hidden], .lyric-align-hint[hidden] { display: none; }
+
+/* 第一行：节奏读数 + 「换歌词」（次级动作，沿用工具条的克制语言）。
+   匹配错了只长按调对齐没用 —— 那颗按钮开手动匹配面板让人重挑。 */
+.lyric-align-top { display: flex; align-items: center; gap: 8px; padding: 0 4px 5px; }
+.lyric-align-tools output {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.lyric-align-swap {
+  flex: 0 0 auto;
+  min-height: 22px;
+  padding: 2px 6px;
+  color: var(--hk-muted);
+  font-size: 11px;
+  border-radius: 4px;
+}
+.lyric-align-swap:hover { color: var(--hk-text); background: var(--hv-surface); box-shadow: var(--hv-ring-icon); }
+.lyric-align-actions { display: flex; gap: 2px; flex-wrap: wrap; }
 .lyric-align-guide {
   position: absolute;
   top: 50%;
@@ -773,8 +796,9 @@ button:disabled { cursor: default; }
 }
 @keyframes lyricAlignIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 .lyric-align-tools output {
-  display: block;
-  padding: 0 4px 5px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
   font-size: 11px;
   line-height: 1.5;
   font-variant-numeric: tabular-nums;
@@ -1776,6 +1800,45 @@ button:disabled { cursor: default; }
 /* 静态提示：告诉用户绑定后还能长按歌词调对齐。与 .lm-note 同行语言但更淡，
    且不被 JS 触碰（#lmNote 会被搜索中/出错改写，所以单独一个元素）。 */
 .lm-hint { margin: 2px 0 10px; font-size: 11px; line-height: 1.45; color: var(--hk-faint); }
+/* 手动匹配的候选列表：搜出几条就列几条，点哪条绑哪条（罐头：匹配错了要能挑）。 */
+.lm-candidates {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  max-height: 168px;
+  overflow-y: auto;
+  border-top: 1px solid var(--hk-hairline);
+}
+.lm-candidates[hidden] { display: none; }
+.lm-cand { border-bottom: 1px solid var(--hk-hairline); }
+.lm-cand-hit {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 4px;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.lm-cand-hit:hover { background: var(--hk-hover); }
+.lm-cand-meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.lm-cand-title { font-size: 12px; color: var(--hk-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lm-cand-artist { font-size: 11px; color: var(--hk-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lm-cand-src {
+  flex: 0 0 auto;
+  padding: 1px 6px;
+  border: 1px solid var(--hk-hairline);
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--hk-faint);
+  white-space: nowrap;
+}
 .lm-actions { display: flex; justify-content: flex-end; gap: 6px; }
 .lm-btn {
   padding: 6px 12px;
