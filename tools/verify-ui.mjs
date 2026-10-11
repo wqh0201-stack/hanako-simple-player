@@ -1182,7 +1182,13 @@ const motion = {};
   await clickTab(page, 'imp:1');
   await sleep(250);
   await page.evaluate(() => document.querySelectorAll('#queueList .q-row')[0].querySelector('.q-hit').click());
-  await sleep(900);
+  /* 等条件而不是等时间（同 search-hit-plays-directly 的根因）：点行起播需等媒体就绪、
+   * play 事件把 data-playing 置 1。固定 sleep(900) 会偶发（HEAD 干净副本同样会挂）。 */
+  await page.waitForFunction(
+    () => document.getElementById('player').getAttribute('data-playing') === '1'
+      && document.getElementById('audio').paused === false,
+    { timeout: 5000, polling: 100 }
+  ).catch(() => {});
   const before = await page.evaluate(() => ({
     playing: document.getElementById('player').getAttribute('data-playing'),
     title: document.getElementById('trackTitle').textContent,
@@ -1200,7 +1206,14 @@ const motion = {};
   const popTitle = await page.$eval('#listPopTitle', (e) => e.textContent);
   await page.screenshot({ path: path.join(outDir, 'list-delete-confirm-465x930-light.png') });
   await page.evaluate(() => document.getElementById('listDeleteBtn').click());
-  await sleep(700);
+  /* 等条件而不是等时间（同 before 半）：删除歌单逻辑一行不碰音频，但状态刷新是异步的。
+   * 固定 sleep(700) 会偶发（实测：同一次会话里第1跑红、第2跑绿）。
+   * 若播放真被打断（永不恢复），这里 5s 后会超时，让下面断言报出真实状态。 */
+  await page.waitForFunction(
+    () => document.getElementById('player').getAttribute('data-playing') === '1'
+      && document.getElementById('audio').paused === false,
+    { timeout: 5000, polling: 100 }
+  ).catch(() => {});
   const after = await page.evaluate(() => ({
     playing: document.getElementById('player').getAttribute('data-playing'),
     title: document.getElementById('trackTitle').textContent,
@@ -1579,7 +1592,14 @@ const motion = {};
   await sleep(200);
   s.playHit = await page.evaluate(() => ({ hits: document.querySelectorAll('#searchList .search-hit').length }));
   await page.evaluate(() => document.querySelector('#searchList .search-hit').click());
-  await sleep(600);
+  /* 等条件而不是等时间：点搜索行 → playTrack 先置 playing=true，但换曲时 loadAudio 重置旧
+   * <audio> 会触发 pause 把状态打回 false，新音频要等媒体就绪、play 事件才再置真。
+   * 固定 sleep(600) 赌这个异步会偶发（2026-10-11 实测定案：HEAD 干净副本同样会挂）。
+   * 等到真的 playing=1 为止，最多 5s；超时不当场抛，让下面的断言报出真实状态。 */
+  await page.waitForFunction(
+    () => document.getElementById('player').getAttribute('data-playing') === '1',
+    { timeout: 5000, polling: 100 }
+  ).catch(() => {});
   s.afterPlay = await page.evaluate(() => ({
     playing: document.getElementById('player').getAttribute('data-playing'),
     title: document.getElementById('trackTitle').textContent,
