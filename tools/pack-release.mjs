@@ -35,7 +35,6 @@ const EXCLUDE = new Set([
   ".github",
   ".backups",
   "docs", // 54MB 设计稿 + 交接文档
-  "tools", // 验证 / 打包脚本本身
   "node_modules",
   "dist",
   "dist-release",
@@ -43,6 +42,20 @@ const EXCLUDE = new Set([
   "CLAUDE.md",
   ".gitignore",
   ".DS_Store",
+]);
+
+/**
+ * tools/ 不能整目录排除：里面混着两种东西——
+ *   运行时工具（lib/register-tools.js 直接 import 的三个），包必须带；
+ *   开发脚本（verify-* / bump-build / pack-release 等 .mjs），不该进包。
+ * 所以这里显式列白名单，只放行运行时那三个。
+ * ⚠️ 漏一个就是装载期 import 失败（2026-10-11 踩过：tools/play.js 缺失 →
+ *    plugin failed to load: Cannot find module）。
+ */
+const TOOLS_RUNTIME = new Set([
+  "play.js",
+  "list-music.js",
+  "bind-banner.js",
 ]);
 
 function parseArgs(argv) {
@@ -74,22 +87,59 @@ function resolveToolsRoot() {
   return root;
 }
 
-/** 递归复制，按 EXCLUDE 顶层名与常见噪声过滤。 */
+/** 递归复制，按 EXCLUDE 顶层名与常见噪声过滤；tools/ 只放行运行时工具。 */
 function copyRuntime(src, dst, rel = "") {
   for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
     const name = entry.name;
     const relPath = rel ? `${rel}/${name}` : name;
     if (!rel && EXCLUDE.has(name)) continue; // 只按顶层名排除
+    if (rel === "tools" && entry.isFile() && !TOOLS_RUNTIME.has(name)) continue; // tools/ 只留运行时
     if (name === ".DS_Store" || name.endsWith(".log")) continue;
     const from = path.join(src, name);
     const to = path.join(dst, name);
     if (entry.isDirectory()) {
+      // tools/ 下若没有运行时文件就不必建目录
+      if (relPath === "tools") {
+        const keep = fs.readdirSync(from).filter((f) => TOOLS_RUNTIME.has(f));
+        if (!keep.length) continue;
+      }
       fs.mkdirSync(to, { recursive: true });
       copyRuntime(from, to, relPath);
     } else if (entry.isFile()) {
       fs.copyFileSync(from, to);
     }
   }
+}
+
+/**
+ * 完整性守卫：扫描包里每个 .js 的相对 import（import "../x/y.js"），
+ * 确认目标文件也在包里。白名单切错一个就会在“装载期 import 失败”，
+ * 而那是装到用户机器上才炸；这里在打包时当场拦住。
+ * （2026-10-11 踩过：tools/ 被整目录排除 → tools/play.js 缺失 → plugin failed to load）
+ */
+function checkRuntimeImports(stageDir) {
+  const missing = [];
+  const seen = new Set();
+  const walk = (d) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) { if (e.name !== "ui") walk(p); continue; }
+      if (!e.name.endsWith(".js")) continue;
+      const text = fs.readFileSync(p, "utf8");
+      const re = /(?:import|export)\s[^;]*?from\s*["'](\.{1,2}\/[^"']+)["']/g;
+      let m;
+      while ((m = re.exec(text))) {
+        const target = path.resolve(path.dirname(p), m[1]);
+        const rel = path.relative(stageDir, target);
+        if (!fs.existsSync(target) && !seen.has(rel)) {
+          seen.add(rel);
+          missing.push(`${path.relative(stageDir, p)} → ${m[1]}`);
+        }
+      }
+    }
+  };
+  walk(stageDir);
+  return missing;
 }
 
 /** 统计目录体积 / 文件数（用于回报）。 */
@@ -125,6 +175,16 @@ function main() {
   const staged = measure(stageDir);
   console.log(`[pack-release] 暂存目录 ${stageDir}`);
   console.log(`[pack-release] 运行时文件：${staged.files} 个 / ${(staged.bytes / 1024).toFixed(1)} KB`);
+
+  // 完整性守卫：包内 .js 的相对 import 必须都在包里（防白名单切错）
+  const missing = checkRuntimeImports(stageDir);
+  if (missing.length) {
+    console.error("[pack-release] 包内缺失被 import 的运行时文件，中止打包：");
+    for (const m of missing) console.error(`  - ${m}`);
+    process.exitCode = 1;
+    return;
+  }
+  console.log("[pack-release] 运行时 import 完整性：OK");
 
   // 先校验（便宜且能提前拦下 MISSING_UI_RESOURCE 这类 error）
   const validate = spawnSync(process.execPath, [path.join(toolsRoot, "scripts/validate-app.mjs"), "--dir", stageDir, "--json"], {
