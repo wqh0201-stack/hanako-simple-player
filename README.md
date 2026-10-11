@@ -19,7 +19,7 @@
 </td>
 <td width="50%" align="center">
 <a href="docs/showcase/02-card-light-lyrics.png"><img src="docs/showcase/thumb/02-card-light-lyrics.png" width="100%" alt="聊天卡片 · 浅色 · 歌词态"></a>
-<br><sub><b>聊天卡片</b> · 浅色 · 歌词态</sub>
+<br><sub><b>聊天卡片</b> · 浅色 · 歌词态（嵌在 Hana 侧栏）</sub>
 </td>
 </tr>
 <tr>
@@ -29,7 +29,7 @@
 </td>
 <td width="50%" align="center">
 <a href="docs/showcase/04-card-long-dark.png"><img src="docs/showcase/thumb/04-card-long-dark.png" width="100%" alt="长条卡 · 深色 · 歌单"></a>
-<br><sub><b>嵌入长条卡</b> · 深色 · 歌单</sub>
+<br><sub><b>嵌入长条卡</b> · 深色 · 歌单（上方舞台 + 下方列表）</sub>
 </td>
 </tr>
 <tr>
