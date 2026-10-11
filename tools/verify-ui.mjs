@@ -2809,10 +2809,11 @@ const AMBIENT_PROBE = async () => {
     lyricTop: Math.round(parseFloat(pcs.getPropertyValue('--lyric-top')) || 0),
     coverW: pcs.getPropertyValue('--cover-w').trim(),
     coverBox: (() => { const r = cover.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; })(),
-    /* ETE 封面三边锚定完整 player（允许宽出被裁），底栏不另缩放一份图。 */
+    /* 长卡只铺上方 scene；其余播放形态三边锚定完整 player。 */
     coverAnchored: (() => {
       const r = cover.getBoundingClientRect();
-      return Math.abs(r.left - pb.left) <= 1 && Math.abs(r.top - pb.top) <= 1 && Math.abs(r.bottom - pb.bottom) <= 1;
+      const bounds = player.dataset.layout === 'long' ? sb : pb;
+      return Math.abs(r.left - bounds.left) <= 1 && Math.abs(r.top - bounds.top) <= 1 && Math.abs(r.bottom - bounds.bottom) <= 1;
     })(),
     seam: pcs.getPropertyValue('--seam').trim(),
     band: pcs.getPropertyValue('--band').trim(),
@@ -2943,8 +2944,8 @@ let ambient = {};
     ambient.dark.frameBg.every((v, i) => Math.abs(v - ambient.dark.surfaceRGB[i]) <= 2),
     JSON.stringify({ frameBg: ambient.dark.frameBg, surface: ambient.dark.surfaceRGB }));
   assert('ambient-fills-scene',
-    ambient.dark.ambient[0] === ambient.dark.player[0] && ambient.dark.ambient[1] === ambient.dark.player[1] &&
-    ambient.dark.ambient[1] > ambient.dark.scene[1],
+    ambient.dark.ambient[0] === ambient.dark.scene[0] && ambient.dark.ambient[1] === ambient.dark.scene[1] &&
+    ambient.dark.ambient[1] < ambient.dark.player[1],
     JSON.stringify({ a: ambient.dark.ambient, s: ambient.dark.scene, p: ambient.dark.player }));
   assert('ambient-dark-lyric-readable',
     ambient.dark.contrastMid.current >= 4.5 && ambient.dark.contrastMid.near >= 4.5,
@@ -3523,6 +3524,7 @@ let lifecycle = {};
     return { immersive: p.dataset.immersive, hidden: p.dataset.controlsHidden, opacity: +getComputedStyle(c).opacity,
       inert: c.inert, glass: g.backdropFilter, bg: g.backgroundColor, theme: getComputedStyle(p).getPropertyValue('--hk-surface').trim(),
       cover: rect('cover'), backdrop: rect('playerBackdrop'), lyrics: rect('lyricWrap'), title: rect('sceneTop'),
+      scene: rect('scene'), footer: rect('controls'), layout: p.dataset.layout,
       pending: window.__eteClock.pending.size };
   });
   const axis = [];
@@ -3672,14 +3674,47 @@ let lifecycle = {};
     getComputedStyle(el).transitionDuration === '0s' && getComputedStyle(el).visibility === 'hidden'));
   await enter();
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
-  // 长卡的队列常驻：只打开菜单也必须守住底栏，不能依赖 drawer 标记。
+  // 已隐藏的宽窗缩成长卡时，恢复主题底栏；出窗也不再安排隐藏。
+  await leave(); await tick();
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
   await sleep(400);
+  const long = await probe();
+  assert('ete-long-restores-solid-visible-controls-after-hidden-wide', long.layout === 'long' && long.immersive === '0' &&
+    long.hidden === '0' && !long.inert && long.glass === 'none' && long.pending === 0, JSON.stringify(long));
+  await tick();
+  assert('ete-long-pointer-exit-keeps-controls-visible', (await probe()).hidden === '0' && (await probe()).pending === 0);
+  const sameScene = (s) => s.backdrop.every((n, i) => Math.abs(n - s.scene[i]) < 1) &&
+    Math.abs(s.cover[3] - s.scene[3]) < 1 && s.backdrop[1] + s.backdrop[3] < s.footer[1];
+  assert('ete-long-background-confined-to-upper-scene', sameScene(long), JSON.stringify(long));
+  // 拖动上下分区：背景与封面随播放区缩放，不在队列或底栏下露出来。
+  await playRow(0);
+  const split = await page.$eval('#splitHandle', (el) => { const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+  await page.mouse.move(split.x, split.y); await page.mouse.down();
+  await page.mouse.move(split.x, split.y - 100, { steps: 8 });
+  const splitLong = await probe();
+  assert('ete-long-split-keeps-background-and-cover-in-scene', sameScene(splitLong) &&
+    splitLong.scene[3] < long.scene[3] - 50 && Math.abs(splitLong.cover[2] - splitLong.scene[3]) < 1 &&
+    splitLong.hidden === '0', JSON.stringify(splitLong));
+  await page.mouse.up();
+  await page.screenshot({ path: path.join(outDir, 'ete-long-stage-only-465x930-dark.png') });
+  // 相反方向切回宽窗仍铺满全高；其隐藏倒计时切回长卡必须取消。
+  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 }); await sleep(400);
+  await enter(); await leave();
+  const resumedWide = await probe();
+  assert('ete-long-to-wide-restores-full-background-and-deadline', resumedWide.immersive === '1' &&
+    resumedWide.backdrop[3] === 780 && resumedWide.cover[3] === 780 && resumedWide.pending === 1, JSON.stringify(resumedWide));
+  await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 }); await sleep(400); await tick();
+  assert('ete-long-cancels-pending-wide-deadline', (await probe()).hidden === '0' && (await probe()).pending === 0 && sameScene(await probe()));
+  await enter();
+  // 长卡的队列常驻：只打开菜单也必须守住底栏，不能依赖 drawer 标记。
   await page.click('#queueList .q-more'); await leave(); await tick();
   assert('ete-menu-in-permanent-queue-keeps-controls', (await probe()).hidden === '0' && (await probe()).pending === 0 &&
     !(await page.$eval('#morePop', (el) => el.hidden)));
   await enter();
   await page.setViewport({ width: 312, height: 494, deviceScaleFactor: 1 }); await sleep(400);
+  const compact = await probe();
+  assert('ete-long-to-compact-restores-full-background', compact.layout === 'compact' && compact.immersive === '1' &&
+    compact.backdrop[3] === 494 && compact.cover[3] === 494, JSON.stringify(compact));
   await page.click('#queueBtn'); await sleep(320);
   const backSafety = await page.$eval('#backBtn', (el) => {
     const r = el.getBoundingClientRect(), hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
@@ -3690,7 +3725,7 @@ let lifecycle = {};
   await playRow(3); await leave(); await tick();
   assert('ete-no-cover-keeps-theme-controls-visible', (await probe()).hidden === '0' && (await probe()).immersive === '0' && (await probe()).glass === 'none');
   assert('ete-operation-deadlines-are-all-three-seconds', await page.evaluate(() => window.__eteClock.requests.length > 5 && window.__eteClock.requests.every((d) => d === 3000)));
-  report.ete = { axis, inside, hidden, search, exiting };
+  report.ete = { axis, inside, hidden, search, exiting, long, splitLong, resumedWide, compact };
   await page.close();
 }
 

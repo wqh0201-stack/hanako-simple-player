@@ -438,7 +438,8 @@ button:disabled { cursor: default; }
   overflow: hidden;
 }
 
-/* 全高背景与前景分离；隐藏底栏只改变工具层，不改变画幅。 */
+/* 背景与前景分离：宽窗/矮卡贯通全高，长卡由 JS 放回 scene，只铺上方播放区。
+ * 隐藏底栏只改变工具层，不改变画幅。 */
 .player-backdrop {
   position: absolute;
   inset: 0;
@@ -449,7 +450,7 @@ button:disabled { cursor: default; }
 
 /* 顶部局部渐变（标题可读底色）。
  * 底部**不再有渐隐** —— 曾试过「让封面底缘化进环境色」（.scene::after，吃 --ambient-color），
- * 2026-10-09 罐头拍板撤掉；ETE 继续保持无底部渐隐，让背景贯通底栏。 */
+ * 2026-10-09 罐头拍板撤掉；背景容器只裁切，不补底部渐隐。 */
 .scene::before {
   content: "";
   position: absolute;

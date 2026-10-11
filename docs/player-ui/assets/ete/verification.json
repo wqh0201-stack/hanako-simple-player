@@ -1,9 +1,9 @@
 {
-  "build": "1003131649",
-  "baseline": "f9a7161",
+  "build": "1003131650",
+  "baseline": "6d51a2d",
   "assertions": {
-    "passed": 212,
-    "total": 212
+    "passed": 219,
+    "total": 219
   },
   "layout": {
     "passed": 12,
@@ -52,6 +52,19 @@
               484,
               99.15625
             ],
+            "scene": [
+              0,
+              0,
+              1040,
+              680
+            ],
+            "footer": [
+              0,
+              680,
+              1040,
+              100
+            ],
+            "layout": "wide",
             "pending": 0
           },
           {
@@ -86,6 +99,19 @@
               484,
               99.15625
             ],
+            "scene": [
+              0,
+              0,
+              1040,
+              680
+            ],
+            "footer": [
+              0,
+              680,
+              1040,
+              100
+            ],
+            "layout": "wide",
             "pending": 0
           },
           {
@@ -120,6 +146,19 @@
               484,
               99.15625
             ],
+            "scene": [
+              0,
+              0,
+              1040,
+              680
+            ],
+            "footer": [
+              0,
+              680,
+              1040,
+              100
+            ],
+            "layout": "wide",
             "pending": 0
           }
         ]
@@ -160,6 +199,19 @@
               426,
               99.15625
             ],
+            "scene": [
+              0,
+              0,
+              910,
+              500
+            ],
+            "footer": [
+              0,
+              500,
+              910,
+              100
+            ],
+            "layout": "wide",
             "pending": 0
           },
           {
@@ -194,6 +246,19 @@
               426,
               99.15625
             ],
+            "scene": [
+              0,
+              0,
+              910,
+              500
+            ],
+            "footer": [
+              0,
+              500,
+              910,
+              100
+            ],
+            "layout": "wide",
             "pending": 0
           },
           {
@@ -228,6 +293,19 @@
               426,
               99.15625
             ],
+            "scene": [
+              0,
+              0,
+              910,
+              500
+            ],
+            "footer": [
+              0,
+              500,
+              910,
+              100
+            ],
+            "layout": "wide",
             "pending": 0
           }
         ]
@@ -237,24 +315,24 @@
         "h": 930,
         "samples": [
           {
-            "immersive": "1",
+            "immersive": "0",
             "hidden": "0",
             "opacity": 1,
             "inert": false,
-            "glass": "blur(20px) saturate(1.12)",
-            "bg": "color(srgb 0.988235 0.980392 0.960784 / 0.82)",
+            "glass": "none",
+            "bg": "rgb(252, 250, 245)",
             "theme": "#FCFAF5",
             "cover": [
               0,
               0,
-              930,
-              930
+              514,
+              513.984375
             ],
             "backdrop": [
               0,
               0,
               465,
-              930
+              513.984375
             ],
             "lyrics": [
               177,
@@ -268,27 +346,40 @@
               270,
               99.15625
             ],
+            "scene": [
+              0,
+              0,
+              465,
+              513.984375
+            ],
+            "footer": [
+              0,
+              830,
+              465,
+              100
+            ],
+            "layout": "long",
             "pending": 0
           },
           {
-            "immersive": "1",
+            "immersive": "0",
             "hidden": "0",
             "opacity": 1,
             "inert": false,
-            "glass": "blur(20px) saturate(1.12)",
-            "bg": "color(srgb 0.988235 0.980392 0.960784 / 0.82)",
+            "glass": "none",
+            "bg": "rgb(252, 250, 245)",
             "theme": "#FCFAF5",
             "cover": [
               0,
               0,
-              1395,
-              930
+              771,
+              513.984375
             ],
             "backdrop": [
               0,
               0,
               465,
-              930
+              513.984375
             ],
             "lyrics": [
               177,
@@ -302,27 +393,40 @@
               270,
               99.15625
             ],
+            "scene": [
+              0,
+              0,
+              465,
+              513.984375
+            ],
+            "footer": [
+              0,
+              830,
+              465,
+              100
+            ],
+            "layout": "long",
             "pending": 0
           },
           {
-            "immersive": "1",
+            "immersive": "0",
             "hidden": "0",
             "opacity": 1,
             "inert": false,
-            "glass": "blur(20px) saturate(1.12)",
-            "bg": "color(srgb 0.988235 0.980392 0.960784 / 0.82)",
+            "glass": "none",
+            "bg": "rgb(252, 250, 245)",
             "theme": "#FCFAF5",
             "cover": [
               0,
               0,
-              465,
-              930
+              257,
+              513.984375
             ],
             "backdrop": [
               0,
               0,
               465,
-              930
+              513.984375
             ],
             "lyrics": [
               177,
@@ -336,6 +440,19 @@
               270,
               99.15625
             ],
+            "scene": [
+              0,
+              0,
+              465,
+              513.984375
+            ],
+            "footer": [
+              0,
+              830,
+              465,
+              100
+            ],
+            "layout": "long",
             "pending": 0
           }
         ]
@@ -376,6 +493,19 @@
               175,
               87.96875
             ],
+            "scene": [
+              0,
+              0,
+              312,
+              382
+            ],
+            "footer": [
+              0,
+              382,
+              312,
+              112
+            ],
+            "layout": "compact",
             "pending": 0
           },
           {
@@ -410,6 +540,19 @@
               175,
               87.96875
             ],
+            "scene": [
+              0,
+              0,
+              312,
+              382
+            ],
+            "footer": [
+              0,
+              382,
+              312,
+              112
+            ],
+            "layout": "compact",
             "pending": 0
           },
           {
@@ -444,6 +587,19 @@
               175,
               87.96875
             ],
+            "scene": [
+              0,
+              0,
+              312,
+              382
+            ],
+            "footer": [
+              0,
+              382,
+              312,
+              112
+            ],
+            "layout": "compact",
             "pending": 0
           }
         ]
@@ -481,6 +637,19 @@
         484,
         99.15625
       ],
+      "scene": [
+        0,
+        0,
+        1040,
+        680
+      ],
+      "footer": [
+        0,
+        680,
+        1040,
+        100
+      ],
+      "layout": "wide",
       "pending": 0
     },
     "hidden": {
@@ -515,6 +684,19 @@
         484,
         99.15625
       ],
+      "scene": [
+        0,
+        0,
+        1040,
+        680
+      ],
+      "footer": [
+        0,
+        680,
+        1040,
+        100
+      ],
+      "layout": "wide",
       "pending": 0
     },
     "search": {
@@ -549,6 +731,19 @@
         484,
         99.15625
       ],
+      "scene": [
+        0,
+        0,
+        1040,
+        680
+      ],
+      "footer": [
+        0,
+        680,
+        1040,
+        100
+      ],
+      "layout": "wide",
       "pending": 0
     },
     "exiting": {
@@ -583,6 +778,207 @@
         484,
         99.15625
       ],
+      "scene": [
+        0,
+        0,
+        1040,
+        680
+      ],
+      "footer": [
+        0,
+        680,
+        1040,
+        100
+      ],
+      "layout": "wide",
+      "pending": 0
+    },
+    "long": {
+      "immersive": "0",
+      "hidden": "0",
+      "opacity": 1,
+      "inert": false,
+      "glass": "none",
+      "bg": "rgb(68, 85, 96)",
+      "theme": "#445560",
+      "cover": [
+        0,
+        0,
+        257,
+        513.984375
+      ],
+      "backdrop": [
+        0,
+        0,
+        465,
+        513.984375
+      ],
+      "lyrics": [
+        177,
+        109,
+        268,
+        404.984375
+      ],
+      "title": [
+        177,
+        0,
+        270,
+        99.15625
+      ],
+      "scene": [
+        0,
+        0,
+        465,
+        513.984375
+      ],
+      "footer": [
+        0,
+        830,
+        465,
+        100
+      ],
+      "layout": "long",
+      "pending": 0
+    },
+    "splitLong": {
+      "immersive": "0",
+      "hidden": "0",
+      "opacity": 1,
+      "inert": false,
+      "glass": "none",
+      "bg": "rgb(68, 85, 96)",
+      "theme": "#445560",
+      "cover": [
+        0,
+        0,
+        415,
+        414.5
+      ],
+      "backdrop": [
+        0,
+        0,
+        465,
+        414.5
+      ],
+      "lyrics": [
+        177,
+        109,
+        268,
+        305.5
+      ],
+      "title": [
+        177,
+        0,
+        270,
+        99.15625
+      ],
+      "scene": [
+        0,
+        0,
+        465,
+        414.5
+      ],
+      "footer": [
+        0,
+        830,
+        465,
+        100
+      ],
+      "layout": "long",
+      "pending": 0
+    },
+    "resumedWide": {
+      "immersive": "1",
+      "hidden": "0",
+      "opacity": 1,
+      "inert": false,
+      "glass": "blur(20px) saturate(1.12)",
+      "bg": "color(srgb 0.266667 0.333333 0.376471 / 0.82)",
+      "theme": "#445560",
+      "cover": [
+        0,
+        0,
+        780,
+        780
+      ],
+      "backdrop": [
+        0,
+        0,
+        1040,
+        780
+      ],
+      "lyrics": [
+        538,
+        109,
+        482,
+        571
+      ],
+      "title": [
+        538,
+        0,
+        484,
+        99.15625
+      ],
+      "scene": [
+        0,
+        0,
+        1040,
+        680
+      ],
+      "footer": [
+        0,
+        680,
+        1040,
+        100
+      ],
+      "layout": "wide",
+      "pending": 1
+    },
+    "compact": {
+      "immersive": "1",
+      "hidden": "0",
+      "opacity": 1,
+      "inert": false,
+      "glass": "blur(20px) saturate(1.12)",
+      "bg": "color(srgb 0.266667 0.333333 0.376471 / 0.82)",
+      "theme": "#445560",
+      "cover": [
+        0,
+        0,
+        494,
+        494
+      ],
+      "backdrop": [
+        0,
+        0,
+        312,
+        494
+      ],
+      "lyrics": [
+        119,
+        98,
+        173,
+        284
+      ],
+      "title": [
+        119,
+        0,
+        175,
+        87.96875
+      ],
+      "scene": [
+        0,
+        0,
+        312,
+        382
+      ],
+      "footer": [
+        0,
+        382,
+        312,
+        112
+      ],
+      "layout": "compact",
       "pending": 0
     }
   },
@@ -896,8 +1292,56 @@
     }
   ],
   "eteTargeted": {
-    "assertions": "41/41",
+    "assertions": "48/48",
     "failures": [],
     "runtimeErrors": []
+  },
+  "longCardRegression": [
+    {
+      "name": "ete-long-restores-solid-visible-controls-after-hidden-wide",
+      "ok": true,
+      "detail": "{\"immersive\":\"0\",\"hidden\":\"0\",\"opacity\":1,\"inert\":false,\"glass\":\"none\",\"bg\":\"rgb(68, 85, 96)\",\"theme\":\"#445560\",\"cover\":[0,0,257,513.984375],\"backdrop\":[0,0,465,513.984375],\"lyrics\":[177,109,268,404.984375],\"title\":[177,0,270,99.15625],\"scene\":[0,0,465,513.984375],\"footer\":[0,830,465,100],\"layout\":\"long\",\"pending\":0}"
+    },
+    {
+      "name": "ete-long-pointer-exit-keeps-controls-visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "ete-long-background-confined-to-upper-scene",
+      "ok": true,
+      "detail": "{\"immersive\":\"0\",\"hidden\":\"0\",\"opacity\":1,\"inert\":false,\"glass\":\"none\",\"bg\":\"rgb(68, 85, 96)\",\"theme\":\"#445560\",\"cover\":[0,0,257,513.984375],\"backdrop\":[0,0,465,513.984375],\"lyrics\":[177,109,268,404.984375],\"title\":[177,0,270,99.15625],\"scene\":[0,0,465,513.984375],\"footer\":[0,830,465,100],\"layout\":\"long\",\"pending\":0}"
+    },
+    {
+      "name": "ete-long-split-keeps-background-and-cover-in-scene",
+      "ok": true,
+      "detail": "{\"immersive\":\"0\",\"hidden\":\"0\",\"opacity\":1,\"inert\":false,\"glass\":\"none\",\"bg\":\"rgb(68, 85, 96)\",\"theme\":\"#445560\",\"cover\":[0,0,415,414.5],\"backdrop\":[0,0,465,414.5],\"lyrics\":[177,109,268,305.5],\"title\":[177,0,270,99.15625],\"scene\":[0,0,465,414.5],\"footer\":[0,830,465,100],\"layout\":\"long\",\"pending\":0}"
+    },
+    {
+      "name": "ete-long-to-wide-restores-full-background-and-deadline",
+      "ok": true,
+      "detail": "{\"immersive\":\"1\",\"hidden\":\"0\",\"opacity\":1,\"inert\":false,\"glass\":\"blur(20px) saturate(1.12)\",\"bg\":\"color(srgb 0.266667 0.333333 0.376471 / 0.82)\",\"theme\":\"#445560\",\"cover\":[0,0,780,780],\"backdrop\":[0,0,1040,780],\"lyrics\":[538,109,482,571],\"title\":[538,0,484,99.15625],\"scene\":[0,0,1040,680],\"footer\":[0,680,1040,100],\"layout\":\"wide\",\"pending\":1}"
+    },
+    {
+      "name": "ete-long-cancels-pending-wide-deadline",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "ete-long-to-compact-restores-full-background",
+      "ok": true,
+      "detail": "{\"immersive\":\"1\",\"hidden\":\"0\",\"opacity\":1,\"inert\":false,\"glass\":\"blur(20px) saturate(1.12)\",\"bg\":\"color(srgb 0.266667 0.333333 0.376471 / 0.82)\",\"theme\":\"#445560\",\"cover\":[0,0,494,494],\"backdrop\":[0,0,312,494],\"lyrics\":[119,98,173,284],\"title\":[119,0,175,87.96875],\"scene\":[0,0,312,382],\"footer\":[0,382,312,112],\"layout\":\"compact\",\"pending\":0}"
+    }
+  ],
+  "narrowLong": {
+    "layout": "long",
+    "immersive": "0",
+    "hidden": "0",
+    "inert": false,
+    "glass": "none",
+    "sceneBottom": 559.859375,
+    "backdropBottom": 559.859375,
+    "backgroundOwner": "scene",
+    "visiblePlay": "visible"
   }
 }

@@ -814,8 +814,8 @@
   }
   function refreshImmersiveControls() {
     var immersive = !player.classList.contains('nocover') && state.page === 'play' && !searchIsVisible();
-    // 浓缩聊天工具卡保留自己的承载形态，不参与完整播放器的沉浸工具层。
-    immersive = immersive && immersiveFullPlayer;
+    // 长卡下方是常驻队列与主题底栏；只在没有上下分区的播放形态启用底部沉浸。
+    immersive = immersive && immersiveFullPlayer && player.getAttribute('data-layout') !== 'long';
     var value = immersive ? '1' : '0';
     if (player.getAttribute('data-immersive') !== value) player.setAttribute('data-immersive', value);
     if (!immersive || immersivePointerInside || immersiveIsBlocked() || document.hidden) {
@@ -885,7 +885,7 @@
   // 菜单、歌词校准、音量浮层都有既有显隐入口。仅观察其状态，不另改业务生命周期。
   var immersiveObserver = new MutationObserver(refreshImmersiveControls);
   immersiveObserver.observe(player, {
-    attributes: true, attributeFilter: ['class', 'data-playing', 'data-page', 'data-drawer']
+    attributes: true, attributeFilter: ['class', 'data-playing', 'data-page', 'data-drawer', 'data-layout']
   });
   // 不观察逐字高亮/歌词行的每帧 class 更新，避免装饰动效不断触发控制层检查。
   player.querySelectorAll('.pop, .lyric-match, .first-run, .vol-group, #lyricWrap, #searchPage').forEach(function (el) {
@@ -1219,14 +1219,18 @@
     img.src = ambientUrl(pic);
   }
 
-  /* 舞台指标（纯呈现）：封面锚定全高背景「左/上/下」三边、满高贴左；
-   * 宽度 = 播放器高 × 画幅比；阅读列只跟窗口宽走，不依赖封面画幅。
+  /* 舞台指标（纯呈现）：长卡背景只在上方播放区，其余形态贯通到底栏。
+   * 封面宽度 = 背景高 × 画幅比；阅读列只跟窗口宽走，不依赖封面画幅。
    * 过渡：封面右缘用 --seam 羽化，薄纱在阅读列起点变满；共用 --band 带宽。 */
   function updateStageMetrics() {
     var sceneEl = $('scene');
     if (!sceneEl) return;
+    var backdrop = $('playerBackdrop');
+    // 共用同一份背景与封面，跟随所属容器裁切；拖分区时不需另算背景高度。
+    var backdropHost = player.getAttribute('data-layout') === 'long' ? sceneEl : player;
+    if (backdrop.parentNode !== backdropHost) backdropHost.prepend(backdrop);
     var w = sceneEl.clientWidth;
-    var h = $('playerBackdrop').clientHeight;
+    var h = backdrop.clientHeight;
     if (!(w > 0) || !(h > 0)) return;
     var ar = coverAR > 0 ? coverAR : 1;
     var coverW = Math.max(96, h * ar);
@@ -5364,6 +5368,7 @@
     player.style.setProperty('--stage-flex', String(Math.round(r * 100)));
     player.style.setProperty('--queue-flex', String(Math.round((1 - r) * 100)));
     positionSplitHandle();
+    updateStageMetrics();   // 长卡封面按上方播放区尺寸缩放，拖动中也保持正确画幅。
     if (persist) storeSet(SPLIT_KEY, r);
   }
   function positionSplitHandle() {
@@ -5400,7 +5405,6 @@
       splitting = false;
       player.classList.remove('is-splitting');
       setSplit(state.splitRatio, true);
-      updateStageMetrics();
       sizeLyricPad();
     }
     splitHandle.addEventListener('pointerup', endSplit);
