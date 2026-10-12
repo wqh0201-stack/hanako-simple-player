@@ -1,6 +1,8 @@
 # B站合集封面补全（网易云单源）
 
-2026-10-12 · build `1003131668` · 已实现，未同步安装目录、未 reload、未批量修改真实歌单。
+2026-10-12 · build `1003131668` · 已实现、已部署（版本 **1.0.7**，tag `v1.0.7-simple`）、真机验收通过。
+部署：安装目录已同步 `ui/` 整包 + `lib/cover-catalog.js` + `lib/register-routes.js`，app-data 未动；
+`extension_manager reload` 后构建号 1003131668 生效。真实歌单由罐头本人操作，未代批量补全。
 
 ## 行为
 
@@ -31,7 +33,8 @@
 - 封面元数据检查 8/8；既有后端检查 32/32。
 - 真实官方接口确认歌手 ID：周杰伦 6452、陶喆 5196、Aimer 16152；魔杰座与 11月的萧邦返回原版曲目和封面。
 - 正式发布包静态检查零错误；唯一提示为静态校验不能证明动态 URL/网络响应，这是校验器的能力说明。
-- 全量 UI 回归 337/367，布局 12/12、窄卡 4/4，无运行时错误；30 项音频/沉浸动效断言未过。完整原始 HEAD 基线为 317/349、32 项失败，本次的 30 项失败全部在基线失败集合内，新增失败为零；基线另有两项歌词校准/媒体时间断言失败。不能把这轮报告称作全量通过，需在可正常播放的环境由 Hana 和用户真机复核。
+- 全量 UI 回归 337/367，布局 12/12、窄卡 4/4，无运行时错误；30 项音频/沉浸动效断言未过。完整原始 HEAD 基线为 317/349、32 项失败，本次的 30 项失败全部在基线失败集合内，新增失败为零；基线另有两项歌词校准/媒体时间断言失败。
+- **2026-10-12 部署后本机复跑（Hana）**：全量 `verify-ui.mjs` **367/367 全过**，`runtimeErrors: []`，exit 0；上述 30 项音频/沉浸动效失败**未复现**——含 `motion-ripple-reactive-to-audio`、`reactive-uses-captureStream-not-mediaElementSource`、`ripple-steady-bass-keeps-wide-field-without-waves`、`ripple-kicks-produce-finite-short-waves`、`lyrics-flow-through-phrase-and-boundary`、`surface-motion-unified-clock-and-easing` 等，报告 `rippleAudio.steady.ready=true` 证明真实解码 + FFT 已执行。先前那份 337/367 是**另一环境**的时序敏感结果；本机未复现（仅复跑一次，未做多次稳定性确认）。
 
 ## 交给 Hana 的部署 prompt
 
