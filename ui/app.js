@@ -371,6 +371,7 @@
   var LISTS_KEY = 'player-lists';
   var LOCALDIR_KEY = 'player-local-dir';
   var FIRST_RUN_KEY = 'player-cookie-notice-seen';   // 首次 cookie 说明是否已读
+  var WELCOME_KEY = 'player-welcome-seeded';         // 首次欢迎歌是否已播种
   var memStore = {};
 
   /* 读存储，返回 { ok, value }：ok=false 表示这次**没读到**（宿主未就绪 / 超时 / 报错）。
@@ -720,6 +721,12 @@
    * 条件卡得紧：**只有「存储确实读过且读到空」才弹** ——
    * 存储不可用（纯浏览器 / 宿主未就绪 / 测试无头环境）时读不到，就不弹，
    * 否则每次启动都弹一次，那是骚扰不是提示。 */
+  /* 首次卡里的「想加歌」那句：位置随布局变（＋ 在长卡下方 / 窄卡与独立窗要经右下角队列）。
+   * 卡片打开时填一次；换布局时若卡片还开着也重写（照 refreshEmptyHint 的路子）。 */
+  function fillFirstRunAddHint() {
+    var el = $('frAddHint');
+    if (el) el.textContent = '想加歌：点' + importSpotText() + '，可以用链接、本地文件或文件夹添加。';
+  }
   function closeFirstRun(remember) {
     var el = $('firstRun');
     if (el) el.hidden = true;
@@ -730,9 +737,55 @@
     if (!el || SHOT) return;                 // 截图模式不打扰（保持图确定性）
     if (!read || read.ok !== true) return;   // 读不到 → 不弹
     if (read.value) return;                  // 已读过 → 不弹
+    fillFirstRunAddHint();                    // 「＋ 在哪」按当前布局落地
     el.hidden = false;
     var ok = $('firstRunOk');
     if (ok && !ok._bound) { ok._bound = true; ok.addEventListener('click', function () { closeFirstRun(true); }); }
+  }
+
+  /* ---------- 首次使用的欢迎歌 ----------
+   * 罐头拍板：内置一首免费在线曲目，单独放一个歌单「塞壬唱片」，作为首次打开时的欢迎内容。
+   * **只走我们自己的在线取源**（go 跳板 + Meting 节点），不随包分发任何媒体资源 ——
+   * 所以不涉「打包再分发」的授权问题；歌词/封面/音轨都按常规在线曲目那套懒加载。
+   * 触发条件与首次提示同一条纪律：**只在「播放列表确实读到、且确实为空、且没播种过」时**
+   * 播一次。存储读不到（宿主未就绪 / 纯浏览器）不播 —— 否则每次启动都补一遍，那是骚扰。
+   * 播种成功即打标；删掉歌单或后来清空列表后不再补回；不自动进「我的喜欢」。 */
+  var WELCOME_LIST_NAME = '塞壬唱片';
+  var WELCOME_TRACK_ID = 'netease:1460626792';
+  function welcomeTrack() {
+    return {
+      id: WELCOME_TRACK_ID,
+      name: "Everything's Alright",
+      author: '塞壬唱片-MSR / DJ OKAWARI / 澤田かおり',
+      url: API + '/widget/api/music/go/1460626792?server=netease',
+      mode: '在线',
+      dur: 250,
+      pic: 'https://p1.music.126.net/C_dc-WuRU4YKJREo4A2Wbw==/109951165115215198.jpg',
+      group: WELCOME_LIST_NAME
+    };
+  }
+  function maybeSeedWelcome(read) {
+    if (SHOT) return false;                       // 截图模式不打扰（保持出图确定性）
+    if (!read || read.ok !== true) return false;  // 读不到 → 不播
+    if (read.value) return false;                 // 播过 → 不补
+    if (state.tracks.length) return false;        // 已有曲目 → 不碰用户数据
+    var id = nextImportId();
+    state.lists.push({ id: id, name: WELCOME_LIST_NAME });
+    saveLists();
+    mergeTracks([welcomeTrack()], id);
+    savePlaylist();
+    storeSet(WELCOME_KEY, 1);
+    state.activeList = id;                        // 落到欢迎歌单，首屏就能看到它
+    var wt = null;
+    for (var i = 0; i < state.tracks.length; i++) {
+      if (state.tracks[i].id === WELCOME_TRACK_ID && state.tracks[i].list === id) { wt = state.tracks[i]; break; }
+    }
+    if (wt && !state.currentUid) state.currentUid = wt.uid;
+    renderAll();
+    /* 「默认待播放」：把音轨先挂上（不自动出音），点播放键直接能响。 */
+    if (wt) loadAudio(wt, 0, false);
+    persistNow();
+    return true;
   }
 
   /* ---------- 播放列表：读写都走后端（与工具侧共用 playlist.json） ---------- */
@@ -1513,9 +1566,9 @@
     return '来源·' + sourceName(t);
   }
 
-  /* 控制条曲目信息（宽窗专属）：歌名一行 + 歌手一行；没曲目就清空。
-   * 只作用于文字节点，不动红心与布局。 */
+  /* 控制条曲目信息（宽窗专属）：同步搜索返回封面、歌名与歌手；没曲目就清空。 */
   function setCtlTrack(t) {
+    setSearchCover(t);
     var copy = $('ctlTitle');
     if (!copy) return;
     var nameEl = $('ctlTitleText'), artistEl = $('ctlArtist');
@@ -1549,12 +1602,16 @@
     else btn.removeAttribute('aria-label');
   }
 
-  /* 空列表时的引导语：＋ 住在队列面板头部（#importBtn），而队列在三种布局里位置不同 ——
-   * 长卡常驻在下方、窄卡是独立一页、独立窗是右侧抽屉（都从右下角队列键进）。
-   * 所以不能一律说「右上角」（那是极简版早期的位置，控制条/队列重排后就失效了）。 */
+  /* 「＋ 在哪」的位置短语（随布局变）：＋ 住在队列面板头部（#importBtn），而队列在三种布局里
+   * 位置不同 —— 长卡常驻在下方、窄卡是独立一页、独立窗是右侧抽屉。
+   * 空列表引导语与首次欢迎卡共用这一份，避免两处口径漂移。 */
+  function importSpotText() {
+    return player.getAttribute('data-layout') === 'long' ? '下方播放列表里的 ＋' : '右下角队列里的 ＋';
+  }
+
+  /* 空列表时的引导语：把位置短语拼成一句（＋ 的方位随布局变）。 */
   function emptyImportHint() {
-    if (player.getAttribute('data-layout') === 'long') return '点下方播放列表里的 ＋ 添加';
-    return '点右下角队列里的 ＋ 添加';
+    return '点' + importSpotText() + ' 添加';
   }
 
   /* 换布局（长卡/窄卡/独立窗）后 ＋ 的位置跟着变，空列表引导语要重写。 */
@@ -4444,84 +4501,89 @@
     }
   }
 
-  /* 队列呼出/收回：进加 .is-anim 滑入；出加 player.is-q-leaving 滑出，
-   * 动画结束再摘类回到 resting 的 display:none（延迟卸载，可打断）。 */
-  var queueLeaveTimer = 0;
-  var queueEnterTimer = 0;
-
-  function pulseQueueAnim() {
-    var q = $('queue');
-    if (!q) return;
-    q.classList.remove('is-anim');
-    // 强制回流后重加，保证连点同一方向也能重放
-    void q.offsetWidth;
-    q.classList.add('is-anim');
-  }
-
+  /* 搜索 / 封面 / 队列共用时长、缓动与开始时间。反向时先读当前呈现值再取消旧动画，
+   * finished 只由最新一组调用收尾；不以独立定时器猜测卸载时刻。 */
   function reducedMotion() {
     try { return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) { return false; }
   }
-
-  function cancelQueueLeave() {
-    clearTimeout(queueLeaveTimer); queueLeaveTimer = 0;
-    clearTimeout(queueEnterTimer); queueEnterTimer = 0;
-    player.classList.remove('is-q-leaving');
-    player.classList.remove('is-q-in');
+  function surfaceFrame(el, to, hiddenFrom) {
+    if (!el) return null;
+    var cs = getComputedStyle(el), from = {};
+    var hidden = cs.display === 'none';
+    Object.keys(to).forEach(function (key) { from[key] = hidden && hiddenFrom ? hiddenFrom[key] : cs[key]; });
+    return { el: el, from: from, to: to };
+  }
+  function animateSurfaces(frames, done) {
+    frames = frames.filter(Boolean);
+    var reduce = reducedMotion();
+    var cs = getComputedStyle(player);
+    var duration = Number(cs.getPropertyValue('--surface-motion-ms')) || 320;
+    var easing = cs.getPropertyValue('--surface-motion-ease').trim() || 'cubic-bezier(0.22, 0.61, 0.36, 1)';
+    var animations = [];
+    frames.forEach(function (f) {
+      if (f.el._surfaceAnim) { f.el._surfaceAnim.cancel(); f.el._surfaceAnim = null; }
+      if (SHOT || !f.el.animate || getComputedStyle(f.el).display === 'none') return;
+      var from = Object.assign({}, f.from), to = Object.assign({}, f.to);
+      if (reduce) {
+        /* 减少动态时只淡入淡出，不插值尺寸、间距或位移。 */
+        if (!Object.prototype.hasOwnProperty.call(to, 'opacity')) return;
+        from = { opacity: from.opacity }; to = { opacity: to.opacity };
+      }
+      var anim = f.el.animate([from, to], { duration: duration, easing: easing, fill: 'both' });
+      f.el._surfaceAnim = anim;
+      animations.push({ el: f.el, anim: anim });
+    });
+    /* 所有元素共享同一帧的时间零点，包括占位宽度与封面缩放。 */
+    var start = document.timeline.currentTime;
+    animations.forEach(function (a) { if (start !== null) a.anim.startTime = start; });
+    if (!animations.length) { if (done) done(); return; }
+    Promise.all(animations.map(function (a) { return a.anim.finished; })).then(function () {
+      if (!animations.every(function (a) { return a.el._surfaceAnim === a.anim; })) return;
+      if (done) done();
+      animations.forEach(function (a) { a.el._surfaceAnim = null; a.anim.cancel(); });
+    }, function () {
+      /* 中途反向：旧回调不得卸载新页面。跨布局切换时也释放旧组未被复用的元素。 */
+      animations.forEach(function (a) {
+        if (a.el._surfaceAnim === a.anim) { a.el._surfaceAnim = null; a.anim.cancel(); }
+      });
+    });
   }
 
-  /* 降级（reduced-motion）：不做延迟卸载，直接卸 */
-  function beginQueueLeave(ms) {
-    if (reducedMotion()) return;
-    player.classList.remove('is-q-in');
-    player.classList.add('is-q-leaving');
-    clearTimeout(queueLeaveTimer);
-    queueLeaveTimer = setTimeout(function () {
-      player.classList.remove('is-q-leaving');
-      queueLeaveTimer = 0;
-    }, ms);
-  }
-
-  /* 入场镜像：播放页留在原地左滑淡出，队列从右滑入（矮卡整页交叉） */
-  function beginQueueEnter(ms) {
-    if (reducedMotion()) return;
-    player.classList.remove('is-q-leaving');
-    player.classList.remove('is-q-in');
-    void player.offsetWidth;
-    player.classList.add('is-q-in');
-    clearTimeout(queueEnterTimer);
-    queueEnterTimer = setTimeout(function () {
-      player.classList.remove('is-q-in');
-      queueEnterTimer = 0;
-    }, ms);
+  function setSearchCover(t) {
+    var img = $('searchCoverImg'), btn = $('searchCoverBtn');
+    if (!img || !btn) return;
+    var src = t && t.pic ? withSession(coverSrc(t.pic)) : '';
+    if ((img.getAttribute('src') || '') === src) return;
+    img.hidden = true; btn.classList.remove('has-cover');
+    img.onload = function () { img.hidden = false; btn.classList.add('has-cover'); };
+    img.onerror = function () { img.hidden = true; btn.classList.remove('has-cover'); };
+    if (src) img.src = src; else img.removeAttribute('src');
   }
 
   function setDrawer(open) {
-    if (open) {
-      cancelQueueLeave();
-      state.drawer = true;
-      renderChrome();
-      pulseQueueAnim();
-    } else {
-      state.drawer = false;
-      renderChrome();
-      beginQueueLeave(280);   // 同帧内重新挂载，不留中间帧
-    }
+    if (open === state.drawer && !player.classList.contains('is-q-leaving')) return;
+    var frames = [
+      surfaceFrame($('queue'), { transform: open ? 'none' : 'translateX(100%)', opacity: open ? '1' : '0' }, { transform: 'translateX(100%)', opacity: '0' }),
+      surfaceFrame(drawerScrim, { opacity: open ? '1' : '0' }, { opacity: '0' })
+    ];
+    state.drawer = open;
+    player.classList.toggle('is-q-leaving', !open);
+    renderChrome();
+    animateSurfaces(frames, function () { player.classList.remove('is-q-leaving'); });
     persistState();
   }
 
   function setCompactPage(next) {
-    if (next === 'queue') {
-      cancelQueueLeave();
-      state.page = 'queue';
-      renderChrome();
-      renderAsk();                // 队列页不显无词入口
-      beginQueueEnter(260);   // 整页交叉：播放页左滑出 + 队列右滑入
-    } else {
-      state.page = 'play';
-      renderChrome();
-      renderAsk();
-      beginQueueLeave(260);
-    }
+    var open = next === 'queue';
+    var frames = [
+      surfaceFrame($('queue'), { transform: open ? 'none' : 'translateX(100%)', opacity: open ? '1' : '0' }, { transform: 'translateX(100%)', opacity: '0' }),
+      surfaceFrame($('scene'), { transform: open ? 'translateX(-6%)' : 'none', opacity: open ? '0' : '1' }, { transform: 'translateX(-6%)', opacity: '0' })
+    ];
+    state.page = next;
+    player.classList.toggle('is-q-in', open);
+    player.classList.toggle('is-q-leaving', !open);
+    renderChrome(); renderAsk();
+    animateSurfaces(frames, function () { player.classList.remove('is-q-in', 'is-q-leaving'); });
     persistState();
   }
 
@@ -5730,40 +5792,54 @@
     }
   }
 
-  var searchLeaveTimer = 0;
-
+  function searchMotionFrames(open) {
+    return [
+      surfaceFrame(searchPage, { transform: open ? 'none' : 'translateX(-100%)', opacity: open ? '1' : '0' }, { transform: 'translateX(-100%)', opacity: '0' }),
+      surfaceFrame($('searchCoverSlot'), { width: open ? '44px' : '0px', marginRight: open ? '4px' : '-4px' }),
+      surfaceFrame($('searchCoverBtn'), { transform: open ? 'none' : 'scale(.35)', opacity: open ? '1' : '0' })
+    ];
+  }
+  function syncSearchCoverAction(open) {
+    var slot = $('searchCoverSlot'), btn = $('searchCoverBtn');
+    if (!slot || !btn) return;
+    if (!open && slot.contains(document.activeElement)) {
+      var entry = $('searchEntryBtn');
+      if (entry) entry.focus({ preventScroll: true });
+    }
+    slot.inert = !open;
+    slot.setAttribute('aria-hidden', open ? 'false' : 'true');
+    btn.disabled = !open;
+  }
   function openSearch() {
     if (!searchPage || (!searchPage.hidden && !player.classList.contains('is-s-leaving'))) return;
-    clearTimeout(searchLeaveTimer); searchLeaveTimer = 0;
+    var frames = searchMotionFrames(true);
     player.classList.remove('is-s-leaving');
     searchPage.hidden = false;
+    syncSearchCoverAction(true);
+    setSearchCover(currentTrack());
     renderChrome();
-    renderSearchServers();
-    renderSearchScope();
-    renderSearchResults();
-    bindSearchScroll();   // 无限滚动：结果列表触底加载下一页（只绑一次）
-    if (!String((searchInput && searchInput.value) || '').trim()) loadDiscover();   // 空白页预置推荐
-    // 从左侧滑入（与队列抽屉同一套语言；reduced-motion 下退为淡入）
-    searchPage.classList.remove('is-anim');
-    void searchPage.offsetWidth;
-    searchPage.classList.add('is-anim');
-    clearTimeout(searchLeaveTimer);
-    searchLeaveTimer = setTimeout(function () { searchPage.classList.remove('is-anim'); searchLeaveTimer = 0; }, 300);
-    if (searchInput) setTimeout(function () { try { searchInput.focus(); } catch (e) {} }, 30);
+    renderSearchServers(); renderSearchScope(); renderSearchResults();
+    bindSearchScroll();
+    if (!String((searchInput && searchInput.value) || '').trim()) loadDiscover();
+    animateSurfaces(frames);
+    if (searchInput) setTimeout(function () {
+      if (!searchPage.hidden && !player.classList.contains('is-s-leaving')) {
+        try { searchInput.focus(); } catch (e) {}
+      }
+    }, 30);
   }
   function closeSearch() {
     if (!searchPage || searchPage.hidden || player.classList.contains('is-s-leaving')) return;
-    clearTimeout(searchLeaveTimer); searchLeaveTimer = 0;
-    searchLoadingMore = false;   // 关页时若正翻页，别把「正在加载…」尾巴留到下次重开
-    searchPage.classList.remove('is-anim');
+    var frames = searchMotionFrames(false);
+    searchLoadingMore = false;
     player.classList.add('is-s-leaving');
-    renderChrome();                                   // 退场期间保持主题控制条
-    searchLeaveTimer = setTimeout(function () {
-      player.classList.remove('is-s-leaving');
+    syncSearchCoverAction(false);
+    renderChrome();
+    animateSurfaces(frames, function () {
       searchPage.hidden = true;
-      searchLeaveTimer = 0;
+      player.classList.remove('is-s-leaving');
       renderChrome();
-    }, 290);
+    });
   }
   function toggleSearch() {
     if (searchPage && !searchPage.hidden && !player.classList.contains('is-s-leaving')) closeSearch(); else openSearch();
@@ -6177,6 +6253,7 @@
   }
 
   if ($('searchEntryBtn')) $('searchEntryBtn').addEventListener('click', toggleSearch);
+  if ($('searchCoverBtn')) $('searchCoverBtn').addEventListener('click', closeSearch);
 
   /* 无词入口 + 手动匹配面板（罐头拍板：单入口、有词不打扰） */
   if ($('lyricAskBtn')) $('lyricAskBtn').addEventListener('click', openLyricMatch);
@@ -6427,6 +6504,8 @@
        * 卡片里也开得了（宽窄只在头部排布上有别）。用户自己用「返回」退出。 */
       renderChrome();
       refreshEmptyHint();   // 空列表引导语里 ＋ 的方位随布局变（长卡下方 / 窄卡另一页 / 独立窗抽屉）
+      // 首次卡若还开着，里面那句「＋ 在哪」也跟着布局重写
+      if ($('firstRun') && !$('firstRun').hidden) fillFirstRunAddHint();
     }
     updateStageMetrics();
     sizeLyricPad();
@@ -6707,8 +6786,7 @@
 
   function boot() {
     renderAll();
-    applyLayout();
-    rippleHandle = initRipples();   // 指针涟漪（不读音频；reduced-motion/截图内部自处理）
+    applyLayout();    rippleHandle = initRipples();   // 指针涟漪（不读音频；reduced-motion/截图内部自处理）
     if (rippleHandle) rippleHandle.onTune(renderRippleTune);   // 参数变化时同步面板滑杆
 
     /* 拖进/拖出 = 新文档从零 boot，"静默"全落在这段。把与宿主 SDK 无关的事先发出去：
@@ -6726,12 +6804,14 @@
      * hanaStorage() 为 null。所以存储读取必须先等宿主 SDK 落地；否则永远读回 null，
      * 而回写默认名会把用户改过的歌单名覆盖回「歌单 N」（改名不持久化的根因）。 */
     var sdkReady = waitForHana(2000);
+    var listsLoaded = false;   // 播放列表是否真的读到（加载失败时不为欢迎歌播种）
 
     dataReady.then(function (results) {
       var tracks = results[0];
       var pb = results[1];
       /* 先用派生名把列表立起来：首屏不等存储读取（宿主桥没应答时不至于卡住） */
       if (tracks) {
+        listsLoaded = true;
         var needsAssign = migrateLists(tracks, null);
         applyTracks(tracks);                             // 先落 state.tracks
         if (needsAssign) savePlaylist();                 // 再回写（savePlaylist 读的是 state.tracks）
@@ -6771,8 +6851,12 @@
         saveLists();
         if (before !== listNamesKey()) renderAll();
       }
-      /* 首次使用提示：再读一次一个专用 key（不拿 listsRead 代表一切）。 */
+      /* 首次使用提示与欢迎歌：各读各自专用的 key（不拿 listsRead 代表一切）。
+       * 欢迎歌只在「列表确实读到且为空」时播一次 —— 加载失败（listsLoaded=false）不播。 */
       storeRead(FIRST_RUN_KEY).then(maybeShowFirstRun);
+      storeRead(WELCOME_KEY).then(function (w) {
+        if (listsLoaded && !state.tracks.length) maybeSeedWelcome(w);
+      });
     });
   }
 
@@ -7152,13 +7236,49 @@
     setScope: function (sc) { searchScope = sc; renderSearchScope(); },
     /* 首次提示（测试用）：直接喂一个 read 结果，验弹/不弹的条件。
      * 每次先复位 hidden，避免上一次调用残留状态影响判定。 */
-    firstRunState: function () { var el = $('firstRun'); return { hidden: el ? el.hidden : null }; },
+    firstRunState: function () {
+      var el = $('firstRun');
+      var hint = $('frAddHint');
+      return { hidden: el ? el.hidden : null, addHint: hint ? hint.textContent : null,
+        title: $('frTitle') ? $('frTitle').textContent : null };
+    },
     firstRunTry: function (read) {
       var el = $('firstRun');
       if (el) el.hidden = true;
       maybeShowFirstRun(read);
       return el ? el.hidden : null;
     },
+    /* 欢迎歌播种（测试用）：隔离验条件 —— 每个场景自己在快照上装一份 state，跑完还原，
+     * 不污染主夹具。scenario：'hasTracks'（默认，模拟已用过的用户）/ 'empty'（模拟全新安装）。 */
+    welcomeSeedTry: function (read, scenario) {
+      var snapTracks = state.tracks, snapLists = state.lists, snapActive = state.activeList, snapUid = state.currentUid;
+      var stale = {};
+      state.lists = state.lists.filter(function (l) {
+        if (l.name === WELCOME_LIST_NAME) { stale[l.id] = 1; return false; }
+        return true;
+      });
+      state.tracks = state.tracks.filter(function (t) { return !stale[t.list]; });
+      if (scenario === 'empty') { state.tracks = []; state.activeList = 'fav'; }
+      var ok = maybeSeedWelcome(read);
+      var list = null;
+      for (var i = 0; i < state.lists.length; i++) if (state.lists[i].name === WELCOME_LIST_NAME) list = state.lists[i];
+      var inList = list ? state.tracks.filter(function (t) { return t.list === list.id; }) : [];
+      var out = {
+        seeded: ok,
+        listId: list ? list.id : null,
+        listName: list ? list.name : null,
+        count: inList.length,
+        trackId: inList[0] ? inList[0].id : null,
+        trackUrl: inList[0] ? inList[0].url : null,
+        activeList: state.activeList,
+        favCount: state.tracks.filter(function (t) { return t.list === 'fav'; }).length
+      };
+      /* 还原（隔离）：场景只是探条件，不该改动主夹具。 */
+      state.tracks = snapTracks; state.lists = snapLists; state.activeList = snapActive; state.currentUid = snapUid;
+      renderAll();
+      return out;
+    },
+    welcomeTrack: welcomeTrack,
     clearSearch: clearSearch,
     /* B站分P（测试用）：不依赖真实网络 —— 探测/拉列表都可直接喂。 */
     biliPartsState: function () { return { probe: JSON.parse(JSON.stringify(biliProbe)), open: Object.keys(biliOpen), cacheKeys: Object.keys(biliPartsCache), probesLeft: biliProbesLeft }; },

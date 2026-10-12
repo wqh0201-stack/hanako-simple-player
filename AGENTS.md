@@ -593,6 +593,18 @@ app-data（`~/.hanako/app-data/hanako-simple-player/`：`playlist.json` /
      就直接用 `server+mid` 取词，没有才回退（兼容老数据）。保留 `bindLyricMatch` 清旧 lyicOffset 的逻辑。
   验收：verify-backend 22/22、verify-ui **171/171**（新增 4 条：工具条有换歌词/能开面板/
      列候选（选前未绑）/点哪条绑哪条）。未动 lib。交接：`docs/player-ui/LYRIC-PICK-DONE.md`。
+- **首次使用的欢迎歌 + 首次卡**（2026-10-12，**已部署**，构建号 1003131665，罐头需求）：
+  默认安装状态空列表，希望首开能听到一首歌、有封面有歌词。指定《Everything's Alright》
+  （网易云 `1460626792`，塞壬唱片-MSR / DJ OKAWARI / 澤田かおり），单独放歌单「塞壬唱片」。
+  **不打包任何媒体**，只走 `music/go` 跳板 + Meting 取在线源（避开随包再分发的授权问题）。
+  闸门同「首次 cookie 提示」那条纪律：只在「播放列表确实读到 + 确实为空 + 没播过」时播一次，
+  加载失败/存储读不到/截图模式都不播；删歌单或清空后不再补回；不进「我的喜欢」。
+  默认待播放（挂 audio 不出声），点播放键即响。
+  另：有了欢迎歌后空态引导语不再出现，所以把「＋ 在哪」并进首次卡（标题「欢迎使用小花音乐播放器」
+  + `#frAddHint`，位置句按布局给），点「知道了」永久消失（沿用 `player-cookie-notice-seen`）。
+  断言 `welcome-song-seeds-once-when-empty` / `welcome-song-not-reseeded` /
+  `first-run-card-teaches-how-to-add` / `first-run-card-hint-follows-layout`，验收 **310/310**。
+  交接：`docs/player-ui/WELCOME-SONG.md`。
 - 待办：独立窗/小卡音频不中断（pagehide/beacon 落盘 + 续播，2026-10-10 两轮：快照自带曲目 +
   换曲即落盘 + 进度护栏 + 媒体时钟进度 + seek 落点前不起播 + boot 提速，构建号 1003131614，
   **真机已复核（2026-10-10，罐头确认「ok 了」）**；剩余「一小段静默」是换文档重连媒体的固有代价，

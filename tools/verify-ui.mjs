@@ -599,6 +599,138 @@ const geom = (page) => page.evaluate(() => {
   return { sceneTop: r('sceneTop'), controls: r('controls'), tabs: r('listTabs'), listTop: Math.round(document.getElementById('queueList').getBoundingClientRect().top) };
 });
 
+/* 搜索封面与两个侧滑面板：验实际中间帧、同步时钟和反向，不只验 CSS 属性。 */
+async function verifySurfaceMotion() {
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+  const page = await newPage();
+  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
+  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await sleep(700);
+  await clickTab(page, 'imp:1');
+  await page.evaluate(() => document.querySelector('#queueList .q-hit').click());
+  await sleep(120);
+  const result = await page.evaluate(async () => {
+    const $ = (id) => document.getElementById(id), D = window.__playerDebug;
+    const tick = () => new Promise((r) => requestAnimationFrame(r));
+    const finish = async (...ids) => { await Promise.all(ids.flatMap((id) => $(id).getAnimations().map((a) => a.finished.catch(() => {})))); await tick(); };
+    const snapshot = () => {
+      const slot = $('searchCoverSlot'), btn = $('searchCoverBtn'), copy = $('ctlTitle').getBoundingClientRect();
+      const c = $('controls').getBoundingClientRect(), p = $('playBtn').getBoundingClientRect();
+      return { width: slot.getBoundingClientRect().width, titleX: copy.left, inert: slot.inert, disabled: btn.disabled,
+        opacity: +getComputedStyle(btn).opacity, searchHidden: $('searchPage').hidden,
+        immersive: $('player').getAttribute('data-immersive'), glass: getComputedStyle($('controls'), '::before').backdropFilter, controlsHidden: $('player').getAttribute('data-controls-hidden'),
+        centered: Math.abs(p.left + p.width / 2 - c.left - c.width / 2) < 1 };
+    };
+    const home = snapshot();
+    D.openSearch();
+    const group = ['searchPage', 'searchCoverSlot', 'searchCoverBtn'].map((id) => $(id).getAnimations()[0]);
+    const timing = group.map((a) => ({ start: a.startTime, duration: a.effect.getTiming().duration, easing: a.effect.getTiming().easing }));
+    group.forEach((a) => { a.pause(); a.currentTime = 100; });
+    const mid = snapshot();
+    const before = getComputedStyle($('searchPage')).transform;
+    D.closeSearch();
+    const reverse = $('searchPage').getAnimations()[0].effect.getKeyframes()[0].transform;
+    await finish('searchPage', 'searchCoverSlot', 'searchCoverBtn');
+    const closed = snapshot();
+    D.openSearch();
+    await finish('searchPage', 'searchCoverSlot', 'searchCoverBtn');
+    const opened = snapshot();
+    const image = $('searchCoverImg'), b = image.getBoundingClientRect(), style = getComputedStyle(image);
+    const cover = { shown: !image.hidden, crop: style.objectFit, position: style.objectPosition, width: b.width, height: b.height,
+      between: $('searchEntryBtn').getBoundingClientRect().right <= b.left && b.right <= $('ctlTitle').getBoundingClientRect().left };
+    const previousSrc = image.getAttribute('src');
+    $('nextBtn').click(); await new Promise((r) => setTimeout(r, 120));
+    const changed = { previousSrc, currentSrc: image.getAttribute('src'), expected: D.currentTrack().pic,
+      naturalWidth: image.naturalWidth, naturalHeight: image.naturalHeight };
+    $('searchCoverBtn').click();
+    const leaving = snapshot();
+    await finish('searchPage', 'searchCoverSlot', 'searchCoverBtn');
+    const byCover = snapshot();
+    // 已有搜索详情也直接回播放；先收再马上重新打开，旧 finished 不能卸载新页。
+    D.openSearch(); D.renderResults([{ id: 'netease:780001', title: '封面测试结果', author: '测试', url: '/unused' }]);
+    await finish('searchPage', 'searchCoverSlot', 'searchCoverBtn');
+    $('searchCoverBtn').click(); D.openSearch();
+    await finish('searchPage', 'searchCoverSlot', 'searchCoverBtn');
+    const reopened = snapshot();
+    D.closeSearch(); await finish('searchPage', 'searchCoverSlot', 'searchCoverBtn');
+    // 一首确无封面的歌曲；无效图片用同源 WAV，HTTP 200 但图片解码失败。
+    D.currentTrack().pic = ''; D.openSearch(); await finish('searchPage', 'searchCoverSlot', 'searchCoverBtn');
+    const fallback = image.hidden && !$('searchCoverBtn').classList.contains('has-cover');
+    D.closeSearch(); await finish('searchPage', 'searchCoverSlot', 'searchCoverBtn');
+    D.currentTrack().pic = '/api/apps/hanako-simple-player/routes/_fixture/audio.wav';
+    D.openSearch(); await finish('searchPage', 'searchCoverSlot', 'searchCoverBtn');
+    const brokenFallback = image.hidden && !$('searchCoverBtn').classList.contains('has-cover');
+    D.closeSearch(); await finish('searchPage', 'searchCoverSlot', 'searchCoverBtn');
+    $('queueBtn').click();
+    const queueTiming = $('queue').getAnimations()[0].effect.getTiming();
+    const qa = $('queue').getAnimations()[0]; qa.pause(); qa.currentTime = 100;
+    const qb = getComputedStyle($('queue')).transform;
+    $('queueBtn').click();
+    const qr = $('queue').getAnimations()[0].effect.getKeyframes()[0].transform;
+    const scrimShown = getComputedStyle($('drawerScrim')).display !== 'none';
+    await finish('queue', 'drawerScrim');
+    const queueClosed = getComputedStyle($('queue')).display === 'none';
+    return { home, mid, before, reverse, closed, opened, cover, changed, leaving, byCover, reopened, fallback, brokenFallback,
+      timing, queueTiming, queueBefore: qb, queueReverse: qr, scrimShown, queueClosed };
+  });
+  assert('search-cover-home-has-no-slot-or-focus', result.home.width === 0 && result.home.inert && result.home.disabled, JSON.stringify(result.home));
+  assert('surface-motion-unified-clock-and-easing', result.timing.every((t) => t.start === result.timing[0].start && t.duration === 320 && t.easing === result.timing[0].easing) && result.queueTiming.duration === 320 && result.queueTiming.easing === result.timing[0].easing, JSON.stringify(result.timing));
+  assert('search-cover-grows-and-moves-title', result.mid.width > 0 && result.mid.width < 44 && result.mid.titleX > result.home.titleX && result.mid.opacity > 0 && result.mid.opacity < 1, JSON.stringify(result.mid));
+  assert('search-cover-keeps-play-centered', [result.home, result.mid, result.opened, result.closed].every((s) => s.centered), JSON.stringify(result));
+  assert('search-motion-reverses-from-visible-frame', result.before === result.reverse, JSON.stringify({ before: result.before, reverse: result.reverse }));
+  assert('search-cover-exit-finishes-with-page', result.closed.searchHidden && result.closed.width === 0 && result.closed.titleX === result.home.titleX, JSON.stringify(result.closed));
+  assert('search-cover-is-centered-square-between-search-and-title', result.cover.shown && result.cover.crop === 'cover' && result.cover.position === '50% 50%' && result.cover.width === 32 && result.cover.height === 32 && result.cover.between, JSON.stringify(result.cover));
+  assert('search-cover-follows-track-and-crops-landscape', result.changed.previousSrc !== result.changed.currentSrc && result.changed.naturalWidth > result.changed.naturalHeight, JSON.stringify(result.changed));
+  assert('search-exit-keeps-solid-controls-through-real-animation', result.leaving.immersive === '0' && result.leaving.glass === 'none' && result.leaving.controlsHidden === '0', JSON.stringify(result.leaving));
+  assert('search-cover-click-closes-with-immediate-focus-removal', result.leaving.inert && result.leaving.disabled && !result.leaving.searchHidden && result.byCover.searchHidden && result.byCover.width === 0, JSON.stringify(result.byCover));
+  assert('search-cover-reopen-cancels-stale-unmount', !result.reopened.searchHidden && result.reopened.width === 44, JSON.stringify(result.reopened));
+  assert('search-cover-missing-and-broken-image-fallback', result.fallback && result.brokenFallback, JSON.stringify({ missing: result.fallback, broken: result.brokenFallback }));
+  assert('queue-motion-reverses-and-finishes-with-scrim', result.queueBefore === result.queueReverse && result.scrimShown && result.queueClosed, JSON.stringify(result));
+  // 留下深浅两张实际控制条截图，检查裁切、间距与文字收缩。
+  await page.evaluate((pic) => { window.__playerDebug.currentTrack().pic = pic; window.__playerDebug.openSearch(); }, COVER);
+  await sleep(380);
+  for (const tone of ['light', 'dark']) {
+    await page.evaluate((t) => window.__fixtureTheme(t), tone);
+    await (await page.$('#controls')).screenshot({ path: path.join(outDir, `search-cover-${tone}.png`) });
+  }
+  // 窄一点的宽窗也要让文字收缩，封面/红心不得碰到播放模式。
+  await page.setViewport({ width: 720, height: 700, deviceScaleFactor: 1 });
+  await page.evaluate(() => window.__playerDebug.openSearch()); await sleep(380);
+  const tight = await page.evaluate(() => {
+    const heart = document.getElementById('favBtn').getBoundingClientRect(), mode = document.getElementById('modeBtn').getBoundingClientRect();
+    return { gap: mode.left - heart.right, copyWidth: document.getElementById('ctlTitle').getBoundingClientRect().width };
+  });
+  assert('search-cover-fits-small-wide-window', tight.gap >= 0 && tight.copyWidth > 0, JSON.stringify(tight));
+  await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+  const reduced = await page.evaluate(async () => {
+    window.__playerDebug.closeSearch();
+    const animations = ['searchPage', 'searchCoverSlot', 'searchCoverBtn'].flatMap((id) => document.getElementById(id).getAnimations());
+    const keys = animations.flatMap((a) => a.effect.getKeyframes().flatMap(Object.keys));
+    await Promise.all(animations.map((a) => a.finished));
+    return { keys, hidden: document.getElementById('searchPage').hidden };
+  });
+  assert('surface-motion-reduced-is-opacity-only', reduced.hidden && !reduced.keys.some((k) => ['transform', 'width', 'marginRight'].includes(k)), JSON.stringify(reduced));
+  await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
+  await page.waitForFunction(() => document.getElementById('player').getAttribute('data-layout') === 'long');
+  await page.evaluate(() => window.__playerDebug.openSearch());
+  assert('search-cover-hidden-in-card', await page.$eval('#searchCoverSlot', (el) => getComputedStyle(el).display === 'none'));
+  await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
+  await page.evaluate(() => window.__playerDebug.closeSearch()); await sleep(380);
+  await page.setViewport({ width: 531, height: 451, deviceScaleFactor: 1 });
+  await page.waitForFunction(() => document.getElementById('player').getAttribute('data-layout') === 'compact');
+  await page.evaluate(() => {
+    document.getElementById('queueBtn').click();
+    for (const id of ['queue', 'scene']) for (const a of document.getElementById(id).getAnimations()) { a.pause(); a.currentTime = 100; }
+  });
+  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
+  await page.waitForFunction(() => document.getElementById('player').getAttribute('data-layout') === 'wide');
+  await page.evaluate(() => document.getElementById('queueBtn').click()); await sleep(380);
+  const switched = await page.$eval('#scene', (el) => ({ opacity: +getComputedStyle(el).opacity, transform: getComputedStyle(el).transform, animations: el.getAnimations().length }));
+  assert('surface-motion-layout-switch-cleans-obsolete-scene', switched.opacity === 1 && switched.transform === 'none' && switched.animations === 0, JSON.stringify(switched));
+  await page.close();
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+}
+
 /* 真实媒体时钟驱动的歌词验收；--lyrics-only 可单独运行，完整验收也包含它。 */
 async function verifyLyricFlow() {
   await fetch(`${BASE}${API}/__fixture/reset?mode=lyric-flow&appSurfaceSession=fake-ticket`);
@@ -735,6 +867,12 @@ async function verifyLyricFlow() {
   assert('lyrics-last-phrase-has-finite-position-and-stops-frames', last.index === 6 && last.focus === 6 && !last.raf && Number.isFinite(last.position), JSON.stringify(last));
   await page.close();
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+}
+await verifySurfaceMotion();
+if (process.argv.includes('--surface-motion-only')) {
+  console.log(JSON.stringify({ assertions: `${report.assertions.filter((a) => a.ok).length}/${report.assertions.length}`, failed: report.assertions.filter((a) => !a.ok), runtimeErrors: report.runtimeErrors }, null, 2));
+  await browser.close(); server.close();
+  process.exit(report.assertions.some((a) => !a.ok) || report.runtimeErrors.length ? 1 : 0);
 }
 await verifyLyricFlow();
 if (process.argv.includes('--lyrics-only')) {
@@ -3465,6 +3603,59 @@ const rippleTool = {};
     s.firstRun.hiddenAfterSeen === true && s.firstRun.hiddenWhenUnreadable === true,
     JSON.stringify(s.firstRun));
 
+  /* 欢迎歌：只在「列表确实读到、且为空、且没播过」时播一次，单独放一个歌单。
+   * 夹具此时有曲目（imp:1/imp:2）→ 不应当被播种；先验这道闸。 */
+  s.welcome = await page.evaluate(() => {
+    const D = window.__playerDebug;
+    const r = {};
+    r.whenHasTracks = D.welcomeSeedTry({ ok: true, value: null });   // 有曲目 → 不播
+    r.whenUnreadable = D.welcomeSeedTry({ ok: false, value: null }); // 读不到 → 不播
+    r.whenSeen = D.welcomeSeedTry({ ok: true, value: 1 });           // 播过 → 不播
+    r.whenEmpty = D.welcomeSeedTry({ ok: true, value: null }, 'empty');   // 空且未播 → 播
+    return r;
+  });
+  assert('welcome-song-seeds-once-when-empty',
+    s.welcome.whenHasTracks.seeded === false && s.welcome.whenUnreadable.seeded === false &&
+    s.welcome.whenSeen.seeded === false && s.welcome.whenEmpty.seeded === true &&
+    s.welcome.whenEmpty.listName === '塞壬唱片' && s.welcome.whenEmpty.count === 1 &&
+    s.welcome.whenEmpty.trackId === 'netease:1460626792' &&
+    /\/widget\/api\/music\/go\/1460626792\?server=netease/.test(s.welcome.whenEmpty.trackUrl || '') &&
+    s.welcome.whenEmpty.activeList === s.welcome.whenEmpty.listId &&
+    s.welcome.whenEmpty.favCount === 0,
+    JSON.stringify(s.welcome));
+  // 播过再点一次（标已置）→ 不重复播，也不把用户的空列表重新填满
+  s.welcomeAgain = await page.evaluate(() => window.__playerDebug.welcomeSeedTry({ ok: true, value: 1 }, 'empty'));
+  assert('welcome-song-not-reseeded',
+    s.welcomeAgain.seeded === false && s.welcomeAgain.count === 0,
+    JSON.stringify(s.welcomeAgain));
+
+  /* 首次卡：不能只是 cookie 说明，还要告诉新用户「怎么加歌」（罐头需求）。
+   * 位置句随布局变（宽窗 = 右下角队列；长卡 = 下方播放列表），与空态引导语同一份口径。
+   * 当前页是宽窗（1040）。 */
+  s.firstRunCard = await page.evaluate(() => {
+    const D = window.__playerDebug;
+    const r = {};
+    r.shown = D.firstRunTry({ ok: true, value: null });        // 没用过 → 弹
+    r.state = D.firstRunState();
+    return r;
+  });
+  assert('first-run-card-teaches-how-to-add',
+    s.firstRunCard.shown === false &&
+    /^欢迎使用/.test(s.firstRunCard.state.title || '') &&
+    /^想加歌：点右下角队列里的 ＋/.test(s.firstRunCard.state.addHint || '') &&
+    /添加。?$/.test(s.firstRunCard.state.addHint || ''),
+    JSON.stringify(s.firstRunCard));
+  // 换到长卡布局（宽→窄）：还开着的卡片里那句位置也要跟着变
+  await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
+  await sleep(700);
+  const hintLong = await page.evaluate(() => window.__playerDebug.firstRunState().addHint);
+  assert('first-run-card-hint-follows-layout',
+    /^想加歌：点下方播放列表里的 ＋/.test(hintLong || ''),
+    JSON.stringify({ hintLong }));
+  await page.evaluate(() => window.__playerDebug.firstRunTry({ ok: true, value: 1 }));   // 收掉，别挡后续
+  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });            // 还原宽窗（后续断言依赖它）
+  await sleep(500);
+
   // 播一首「有歌手」的搜索结果（夹具搜索结果 author = 搜索歌手）→ 歌手行变成活的入口
   await page.evaluate(() => window.__playerDebug.openSearch());
   await sleep(380);
@@ -4665,10 +4856,11 @@ let lifecycle = {};
   await page.screenshot({ path: path.join(outDir, 'ete-search-solid-1040x780-light.png') });
   await page.evaluate(() => window.__playerDebug.closeSearch()); await sleep(100);
   const exiting = await probe();
-  assert('ete-search-exit-retains-theme-through-animation', exiting.immersive === '0' && exiting.glass === 'none' && exiting.hidden === '0');
+  // shot 模式统一即时收尾；真实退场保留主题的断言由 verifySurfaceMotion 覆盖。
+  assert('ete-search-exit-shot-settles-immediately', exiting.immersive === '1' && await page.$eval('#searchPage', (el) => el.hidden));
   // 收起途中再点可恢复，旧退场回调不能卸载重开的页。
   await page.evaluate(() => window.__playerDebug.openSearch()); await sleep(330);
-  assert('ete-search-exit-is-interruptible', !(await page.$eval('#searchPage', (el) => el.hidden)) && (await probe()).immersive === '0');
+  assert('ete-search-reopen-restores-solid-theme', !(await page.$eval('#searchPage', (el) => el.hidden)) && (await probe()).immersive === '0');
   await page.evaluate(() => window.__playerDebug.closeSearch()); await sleep(340);
   assert('ete-search-exit-restores-immersion-at-completion', (await probe()).immersive === '1' && (await probe()).pending === 1);
   await enter();
