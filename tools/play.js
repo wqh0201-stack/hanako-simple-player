@@ -54,7 +54,7 @@ export function makePlayTool(ctx, state) {
   const playlistPath = path.join(ctx.dataDir, "playlist.json");
 
   /**
-   * 把曲目追加进播放列表。
+   * 把新曲目放到播放列表顶部；重复项只更新信息、保留位置。
    *
    * UI 读的就是这份文件（`/widget/api/playlist`），所以工具和界面看到的是同一
    * 份列表。v1 里 play 写 queue.json、UI 读 playlist.json，两个仓 —— 结果工具
@@ -76,7 +76,7 @@ export function makePlayTool(ctx, state) {
 
     const at = list.findIndex((t) => t && t.url === entry.url);
     if (at >= 0) list[at] = { ...list[at], ...entry };
-    else list.push(entry);
+    else list.unshift(entry);
 
     try {
       fs.writeFileSync(playlistPath, JSON.stringify(list, null, 2), "utf-8");

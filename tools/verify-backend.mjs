@@ -13,6 +13,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { registerRoutes } from '../lib/register-routes.js';
 import { parseBiliInput } from '../lib/bilibili.js';
+import { makePlayTool } from './play.js';
 
 const routes = [];
 const app = {
@@ -361,6 +362,18 @@ check('parse-bili-input-boundaries',
   pb('这是一段普通文字') === null &&
   pb('aabbccddeeff1122334455667788') === null,   // 40 位 hex 不得被误当 BV
   JSON.stringify([pb('BV118411B7XU'), pb('av123456'), pb('普通文字')]));
+
+/* 工具新增也置顶；重复调用保留原位置，不重排已有曲目。 */
+const toolPlaylistPath = path.join(dataDir, 'playlist.json');
+const toolSeed = [{ name: '旧甲', url: 'https://example.com/a.mp3' }, { name: '旧乙', url: 'https://example.com/b.mp3' }];
+fs.writeFileSync(toolPlaylistPath, JSON.stringify(toolSeed));
+const playTool = makePlayTool({ dataDir }, {});
+await playTool.execute({ source: 'https://example.com/new.mp3', title: '新歌' });
+let toolTracks = JSON.parse(fs.readFileSync(toolPlaylistPath, 'utf8'));
+check('tool-new-track-prepends', toolTracks.map((t) => t.name).join(',') === '新歌,旧甲,旧乙', JSON.stringify(toolTracks));
+await playTool.execute({ source: 'https://example.com/a.mp3', title: '旧甲更新' });
+toolTracks = JSON.parse(fs.readFileSync(toolPlaylistPath, 'utf8'));
+check('tool-existing-track-keeps-position', toolTracks.map((t) => t.name).join(',') === '新歌,旧甲更新,旧乙', JSON.stringify(toolTracks));
 
 fs.rmSync(dataDir, { recursive: true, force: true });
 

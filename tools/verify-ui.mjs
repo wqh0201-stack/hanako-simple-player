@@ -5267,6 +5267,155 @@ let lifecycle = {};
   await page.close();
 }
 
+
+/* 当前歌单搜索 + 新增置顶：通过真实行按钮、导入入口和持久化验业务行为。 */
+{
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+  persistedPlaylist = TRACKS.map((t, i) => i < 2 ? { ...t, name: i ? 'Alpha Two' : 'Alpha One', author: 'Alice' } : { ...t });
+  persistedPlaylist.push({ id: 'netease:900051', name: '旧喜欢', author: '旧歌手', url: goUrl(900051), list: 'fav', mode: '在线' });
+  persistedPlaylist.push(...[2, 1, 4].map((i) => ({ id: `scan-${i}.mp3`, name: `扫描曲目 ${i}`, url: WAV_URL, list: 'local', mode: '本地' })));
+  const page = await newPage();
+  await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
+  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__playerDebug && document.querySelector('#listTabs .list-tab[data-list="imp:1"]'));
+  await clickTab(page, 'imp:1');
+  const original = await page.evaluate(() => window.__playerDebug.listTracks('imp:1'));
+  const otherOriginal = await page.evaluate(() => window.__playerDebug.listTracks('imp:2'));
+  const input = async (query) => page.evaluate((q) => {
+    const el = document.getElementById('queueSearchInput');
+    el.value = q; el.dispatchEvent(new Event('input', { bubbles: true }));
+  }, query);
+  const closed = await page.$eval('#queueSearch', (el) => getComputedStyle(el).display === 'none');
+  await page.click('#queueSearchBtn');
+  const entry = await page.evaluate(() => {
+    const r = (id) => document.getElementById(id).getBoundingClientRect();
+    return { open: getComputedStyle(document.getElementById('queueSearch')).display !== 'none', focused: document.activeElement.id,
+      beforeRename: r('queueSearchBtn').right <= r('renameBtn').left, beforeAdd: r('renameBtn').right <= r('importBtn').left };
+  });
+  assert('queue-search-entry-before-rename-and-add', closed && entry.open && entry.focused === 'queueSearchInput' && entry.beforeRename && entry.beforeAdd, JSON.stringify(entry));
+  const hitsBefore = searchHits;
+  await input('  ＡＬＰＨＡ   alice  ');
+  const filtered = await rowTitles(page);
+  assert('queue-search-title-and-artist-within-current-list', filtered.join(',') === 'Alpha One,Alpha Two' && searchHits === hitsBefore &&
+    await page.$eval('#queueCount', (el) => el.textContent) === '2 / 20' && await page.$eval('#queueBtnCount', (el) => el.textContent) === '20', JSON.stringify(filtered));
+  await input('不存在的关键词');
+  assert('queue-search-no-match-keeps-list-intact', await rowCount(page) === 0 && await page.$eval('#queueList', (el) => el.textContent.includes('没有匹配的歌曲')) &&
+    JSON.stringify(await page.evaluate(() => window.__playerDebug.listTracks('imp:1'))) === JSON.stringify(original));
+  await page.click('#queueSearchClear');
+  assert('queue-search-clear-restores-original-order', (await rowTitles(page)).join('|') === original.map((t) => t.title).join('|') &&
+    await page.$eval('#queueSearchInput', (el) => el.value) === '');
+  await input('在线曲目 12');
+  await page.evaluate(() => document.querySelector('#queueList .q-hit').click());
+  await page.waitForFunction(() => window.__playerDebug.currentUid() === 'imp:1|netease:900011');
+  await page.click('#nextBtn');
+  await page.waitForFunction(() => window.__playerDebug.currentUid() === 'imp:1|netease:900012');
+  assert('queue-search-play-keeps-full-playback-order', await rowCount(page) === 1 && await page.evaluate(() => window.__playerDebug.currentUid()) === 'imp:1|netease:900012');
+  await page.evaluate(() => document.querySelector('#queueList .q-fav').click());
+  const fav = await page.evaluate(() => window.__playerDebug.listTracks('fav'));
+  assert('queue-fav-adds-to-top-without-moving-source', fav[0].id === 'netease:900011' && fav[1].id === 'netease:900051' &&
+    JSON.stringify(await page.evaluate(() => window.__playerDebug.listTracks('imp:1'))) === JSON.stringify(original), JSON.stringify(fav));
+  await page.focus('#queueSearchInput');
+  await page.keyboard.press('Escape');
+  const firstEsc = await page.evaluate(() => ({ value: document.getElementById('queueSearchInput').value, open: !document.getElementById('queueSearch').hidden, rows: document.querySelectorAll('#queueList .q-row').length }));
+  await page.keyboard.press('Escape');
+  assert('queue-search-escape-clears-then-closes', firstEsc.value === '' && firstEsc.open && firstEsc.rows === 20 && await page.$eval('#queueSearch', (el) => getComputedStyle(el).display === 'none'));
+  await page.click('#queueSearchBtn'); await input('alpha');
+  await clickTab(page, 'imp:2');
+  assert('queue-search-resets-on-list-switch', await rowCount(page) === 6 && await page.$eval('#queueSearchInput', (el) => el.value === '') && await page.$eval('#queueSearch', (el) => el.hidden));
+
+  // 文件批量导入的返回顺序是 B、A、重复 B；要整批置顶、去重、旧顺序及播放指针不动。
+  await clickTab(page, 'imp:1');
+  const playingUid = await page.evaluate(() => window.__playerDebug.currentUid());
+  const importFiles = async () => {
+    await page.evaluate(() => {
+      window.hana.resources.pick = async () => ({ resources: [{ path: '/fixture/新增B.mp3' }, { path: '/fixture/新增A.mp3' }, { path: '/fixture/新增B.mp3' }] });
+      document.getElementById('importBtn').click();
+      document.querySelector('[data-import="file"]').click();
+    });
+    await page.waitForFunction(() => document.getElementById('importNote').textContent.includes('新增') || document.getElementById('importNote').textContent.includes('没有新曲目'));
+  };
+  await importFiles();
+  await page.waitForFunction(() => window.__playerDebug.listTracks('imp:1').length === 22);
+  const imported = await page.evaluate(() => window.__playerDebug.listTracks('imp:1'));
+  assert('batch-import-prepends-in-order-and-dedupes', imported.slice(0, 2).map((t) => t.title).join(',') === '新增B,新增A' &&
+    JSON.stringify(imported.slice(2)) === JSON.stringify(original) && JSON.stringify(await page.evaluate(() => window.__playerDebug.listTracks('imp:2'))) === JSON.stringify(otherOriginal) &&
+    await page.evaluate(() => window.__playerDebug.currentUid()) === playingUid, JSON.stringify(imported.slice(0, 3)));
+  await importFiles(); await sleep(250);
+  assert('duplicate-import-keeps-existing-order', JSON.stringify(await page.evaluate(() => window.__playerDebug.listTracks('imp:1'))) === JSON.stringify(imported));
+
+  // 移到目标歌单也是一次新增，要在已有喜欢前面；同曲已在目标时仍去重。
+  await page.evaluate(() => window.__playerDebug.moveTrackTo('imp:1|新增A.mp3', 'fav'));
+  const movedFav = await page.evaluate(() => window.__playerDebug.listTracks('fav'));
+  assert('move-to-list-prepends-new-track', movedFav[0].id === '新增A.mp3' && movedFav[1].id === 'netease:900011' && movedFav[2].id === 'netease:900051', JSON.stringify(movedFav));
+
+  // B站「全部喜欢」批量入口复用合并，不能逐项置顶导致分集顺序反转。
+  await page.evaluate((url) => {
+    const D = window.__playerDebug, bv = 'BV118411B7XU';
+    D.renderResults([{ id: 'bilibili:' + bv, title: '合集', url, mode: '在线' }]);
+    D.biliPartsFeed(bv, [
+      { id: 'bilibili:' + bv + ':p1', title: '分集一', url, page: 1 },
+      { id: 'bilibili:' + bv + ':p2', title: '分集二', url, page: 2 }
+    ]);
+    D.biliPartsFavAll(0);
+  }, WAV_URL);
+  const parts = await page.evaluate(() => window.__playerDebug.listTracks('fav'));
+  assert('batch-fav-keeps-part-order-at-top', parts.slice(0, 2).map((t) => t.title).join(',') === '分集一,分集二' && parts[2].id === '新增A.mp3', JSON.stringify(parts));
+  await page.evaluate(() => window.__playerDebug.biliPartsFavAll(0));
+  assert('batch-fav-repeat-keeps-order', JSON.stringify(await page.evaluate(() => window.__playerDebug.listTracks('fav'))) === JSON.stringify(parts));
+
+  // 本地重扫：旧顺序 2、1，已删除文件 4 要摘掉；新增文件 3 放到最前。
+  await page.evaluate(() => {
+    window.hana.resources.pick = async () => ({ resources: [{ path: '/fixture/local-music' }] });
+    document.getElementById('importBtn').click();
+    document.querySelector('[data-import="folder"]').click();
+  });
+  await page.waitForFunction(() => window.__playerDebug.activeList() === 'local' && window.__playerDebug.listTracks('local').map((t) => t.id).join(',') === 'scan-3.mp3,scan-2.mp3,scan-1.mp3');
+  const localOrder = await page.evaluate(() => window.__playerDebug.listTracks('local').map((t) => t.id));
+  assert('local-rescan-prepends-new-keeps-old-order-and-removes-missing', localOrder.join(',') === 'scan-3.mp3,scan-2.mp3,scan-1.mp3', JSON.stringify(localOrder));
+  await page.evaluate(() => { document.getElementById('importBtn').click(); document.querySelector('[data-import="folder"]').click(); });
+  await page.waitForFunction(() => document.getElementById('toast').textContent === '本地文件夹：3 首');
+  assert('local-rescan-existing-files-keep-count-and-order', (await page.evaluate(() => window.__playerDebug.listTracks('local').map((t) => t.id))).join(',') === localOrder.join(','));
+  await clickTab(page, 'imp:1');
+
+  // 真 DOM 尺寸和实际截图：三种布局、深浅主题，标题长时按钮也不能被挤出。
+  for (const [width, height] of [[312, 420], [465, 930], [1040, 780]]) {
+    await page.setViewport({ width, height, deviceScaleFactor: 1 });
+    await sleep(380);
+    await page.evaluate(() => {
+      const p = document.getElementById('player');
+      if ((p.getAttribute('data-layout') === 'compact' && p.getAttribute('data-page') !== 'queue') ||
+          (p.getAttribute('data-layout') === 'wide' && p.getAttribute('data-drawer') !== '1')) document.getElementById('queueBtn').click();
+      if (document.getElementById('queueSearch').hidden) document.getElementById('queueSearchBtn').click();
+      document.getElementById('queueTitle').textContent = '这是一个很长很长的歌单名称，应该省略而不推走搜索按钮';
+    });
+    await sleep(380);   // 抽屉/整页交叉动画落定后再量和截图
+    await page.mouse.move(1, 1);
+    for (const tone of ['light', 'dark']) {
+      await page.evaluate((t) => window.__fixtureTheme(t), tone);
+      const fits = await page.evaluate(() => {
+        const box = document.getElementById('queue').getBoundingClientRect();
+        const r = document.getElementById('queueSearchBtn').getBoundingClientRect();
+        const input = document.getElementById('queueSearchInput').getBoundingClientRect();
+        const rows = document.getElementById('queueList').getBoundingClientRect();
+        const buttons = ['queueSearchBtn', 'renameBtn', 'importBtn'].map((id) => document.getElementById(id).getBoundingClientRect());
+        return { visible: r.width > 0 && buttons.every((b) => b.left >= Math.max(0, box.left) && b.right <= Math.min(innerWidth, box.right)), input: input.width > 100 && input.left >= box.left && input.right <= box.right,
+          rows: rows.height > 0, overflow: document.getElementById('queue').scrollWidth > document.getElementById('queue').clientWidth };
+      });
+      assert(`queue-search-fits-${width}-${tone}`, fits.visible && fits.input && fits.rows && !fits.overflow, JSON.stringify(fits));
+      await (await page.$('#queue')).screenshot({ path: path.join(outDir, `queue-search-${width}-${tone}.png`) });
+    }
+  }
+  // 等待保存链完成，再用新文档读回；搜索是临时显示，新增顺序必须持久化。
+  await page.waitForFunction(async (api) => {
+    const data = await fetch(api + '/widget/api/playlist?appSurfaceSession=fake-ticket').then((r) => r.json());
+    return data.tracks.some((t) => t.id === 'bilibili:BV118411B7XU:p2');
+  }, {}, API);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__playerDebug && window.__playerDebug.listTracks('fav').length >= 5);
+  assert('new-track-order-survives-reload', JSON.stringify(await page.evaluate(() => window.__playerDebug.listTracks('fav'))) === JSON.stringify(parts) && await page.$eval('#queueSearch', (el) => el.hidden));
+  await page.close();
+}
+
 await browser.close();
 server.closeAllConnections();
 server.close();

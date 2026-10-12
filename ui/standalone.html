@@ -131,6 +131,9 @@
         <header class="queue-head" id="queueHead">
           <h2 class="queue-title"><span id="queueTitle">播放队列</span> <span class="queue-count"><span id="queueCount">12</span> 首</span></h2>
           <div class="queue-head-actions">
+            <button class="icon-btn" id="queueSearchBtn" type="button" aria-label="搜索当前歌单" title="搜索当前歌单" aria-expanded="false" aria-controls="queueSearch">
+              <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+            </button>
             <button class="icon-btn" id="renameBtn" type="button" aria-label="重命名歌单" title="重命名歌单" hidden>
               <svg class="icon" aria-hidden="true"><use href="#i-pencil"></use></svg>
             </button>
@@ -144,6 +147,13 @@
         </header>
 
         <div class="list-tabs" id="listTabs" role="tablist" aria-label="歌单切换"></div>
+
+        <div class="queue-search" id="queueSearch" hidden>
+          <input class="queue-search-input" id="queueSearchInput" type="search" placeholder="搜索当前歌单的歌名 / 歌手" aria-label="搜索当前歌单的歌名或歌手" aria-controls="queueList" autocomplete="off" maxlength="200">
+          <button class="icon-btn" id="queueSearchClear" type="button" aria-label="清空歌单搜索" title="清空搜索" hidden>
+            <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
+          </button>
+        </div>
 
         <ol class="queue-list" id="queueList"></ol>
 
@@ -441,7 +451,7 @@
 </defs></svg>
 
 <script src="app.js" defer></script>
-<script>window.__HANA_BUILD = "1003131666";</script>
+<script>window.__HANA_BUILD = "1003131667";</script>
 <script type="module">
   import { hana } from "./sdk.js";
   window.hana = hana;

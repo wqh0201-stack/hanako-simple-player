@@ -499,7 +499,7 @@
     ensureList('fav', '我的喜欢');
     var stored = toStoredTrack(src);   // 借用回写形状，保住 pic/author/lrcUrl/raw 补充字段
     stored.list = 'fav';
-    state.tracks.push(normalizeTrack(stored));
+    prependTracks([normalizeTrack(stored)]);
     savePlaylist();
     return true;
   }
@@ -578,10 +578,10 @@
       fresh = normalizeTrack(stored);
     }
     /* 插到 recent 段的最前一条之前 = 最近的在最上。
-     * 没有 recent 项时（first<0）追加到末尾（此后它就是唯一一条，位置无所谓）。 */
+     * 没有 recent 项时（first<0）直接置顶（此后它就是唯一一条）。 */
     var b = recentBounds();
     if (b.first >= 0) state.tracks.splice(b.first, 0, fresh);
-    else state.tracks.push(fresh);
+    else prependTracks([fresh]);
     /* 超限：从**最旧**（recent 段末尾）开始丢，不能丢掉正在播的那首。 */
     var over = countRecent() - RECENT_MAX;
     for (var k = 0; k < over; k++) {
@@ -814,13 +814,16 @@
     return saveChain;
   }
 
-  /* 把新曲目并入指定列表（按 uid 去重，保留原位置；同 uid 覆盖补充信息）。
-   * 返回真正新增的条数。 */
+  /* 新增放到列表顶部；批量保留传入顺序，不倒序、不移动已有曲目。 */
+  function prependTracks(tracks) {
+    if (tracks.length) state.tracks = tracks.concat(state.tracks);
+  }
+
+  /* 按 uid 合并；已有项只补充信息，真正新增项整批置顶。 */
   function mergeTracks(incoming, listId) {
-    var index = {};
-    var i;
+    var index = Object.create(null), freshIndex = Object.create(null);
+    var fresh = [], i;
     for (i = 0; i < state.tracks.length; i++) index[state.tracks[i].uid] = i;
-    var added = 0;
     for (i = 0; i < incoming.length; i++) {
       var t = normalizeTrack(incoming[i]);
       inheritLyricSettings(t);
@@ -828,13 +831,15 @@
       t.uid = uidOf(t);
       if (index[t.uid] !== undefined) {
         state.tracks[index[t.uid]] = t;
+      } else if (freshIndex[t.uid] !== undefined) {
+        fresh[freshIndex[t.uid]] = t;
       } else {
-        index[t.uid] = state.tracks.length;
-        state.tracks.push(t);
-        added++;
+        freshIndex[t.uid] = fresh.length;
+        fresh.push(t);
       }
     }
-    return added;
+    prependTracks(fresh);
+    return fresh.length;
   }
 
   /* ---------- 元素 ---------- */
@@ -1733,9 +1738,69 @@
     return '<li class="q-empty">这个歌单还没有曲目</li>';
   }
 
+  var queueSearchOpen = false;
+  var queueSearchQuery = '';
+  var queueSearchList = '';
+
+  function queueSearchText(text) {
+    return String(text || '').normalize('NFKC').toLowerCase().trim();
+  }
+  function filteredQueueTracks(tracks) {
+    var query = queueSearchText(queueSearchQuery);
+    if (!query) return tracks;
+    var words = query.split(/\s+/);
+    return tracks.filter(function (t) {
+      var text = queueSearchText(t.title + ' ' + (t.author || ''));
+      return words.every(function (word) { return text.indexOf(word) !== -1; });
+    });
+  }
+  function syncQueueSearch() {
+    $('queueSearch').hidden = !queueSearchOpen;
+    $('queueSearchBtn').setAttribute('aria-expanded', queueSearchOpen ? 'true' : 'false');
+    $('queueSearchInput').value = queueSearchQuery;
+    $('queueSearchClear').hidden = !queueSearchQuery;
+  }
+  function setQueueSearchOpen(open) {
+    queueSearchOpen = open;
+    if (!open) queueSearchQuery = '';
+    closePops();
+    renderQueue();
+    if (open) $('queueSearchInput').focus();
+    else $('queueSearchBtn').focus();
+  }
+  $('queueSearchBtn').addEventListener('click', function () { setQueueSearchOpen(!queueSearchOpen); });
+  $('queueSearchInput').addEventListener('input', function () {
+    queueSearchQuery = this.value;
+    closePops();
+    renderQueue();
+    queueList.scrollTop = 0;
+  });
+  $('queueSearchClear').addEventListener('click', function () {
+    queueSearchQuery = '';
+    renderQueue();
+    $('queueSearchInput').focus();
+  });
+  $('queueSearchInput').addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    e.stopPropagation();
+    if (e.isComposing) return;
+    e.preventDefault();
+    if (queueSearchQuery) {
+      queueSearchQuery = '';
+      renderQueue();
+    } else setQueueSearchOpen(false);
+  });
+
   function renderQueue() {
+    if (queueSearchList !== state.activeList) {
+      queueSearchList = state.activeList;
+      queueSearchOpen = false;
+      queueSearchQuery = '';
+    }
+    syncQueueSearch();
     renderListTabs();
-    var vis = visibleTracks();
+    var all = visibleTracks();
+    var vis = filteredQueueTracks(all);
     var html = '';
     for (var i = 0; i < vis.length; i++) {
       var t = vis[i];
@@ -1758,12 +1823,14 @@
         '<button class="q-more" id="qMore' + i + '" type="button" aria-label="更多操作：' + esc(t.title) + '">' + icon('i-more') + '</button>' +
       '</li>';
     }
-    if (!html) html = emptyGuide();
+    if (!html) html = queueSearchText(queueSearchQuery)
+      ? '<li class="q-empty q-guide"><p class="q-guide-text">没有匹配的歌曲</p><p class="q-guide-hint">换个歌名或歌手试试，或清空搜索</p></li>'
+      : emptyGuide();
     queueList.innerHTML = html;
     applyCovers();
     var n = vis.length;
-    $('queueCount').textContent = String(n);
-    $('queueBtnCount').textContent = String(n);
+    $('queueCount').textContent = queueSearchText(queueSearchQuery) ? n + ' / ' + all.length : String(all.length);
+    $('queueBtnCount').textContent = String(all.length);
     // 队列头显示当前列表名（重命名后这里可见）；本地页固定「本地」
     var act = findList(state.activeList);
     var qt = $('queueTitle');
@@ -5026,7 +5093,7 @@
       var stored = toStoredTrack(t);
       stored.list = dstList;
       dstCopy = normalizeTrack(stored);
-      state.tracks.push(dstCopy);
+      prependTracks([dstCopy]);
     }
     /* 摘掉原记录（移动 ≠ 复制：原歌单不留副本）。 */
     state.tracks = state.tracks.filter(function (x) { return x.uid !== srcUid; });
@@ -5328,14 +5395,22 @@
         if (announce) toast('扫描失败：' + ((r.body && r.body.error) || r.status));
         return 0;
       }
-      // 先拿掉旧的 local 曲目，再放入本次扫描结果（替换语义）
-      state.tracks = state.tracks.filter(function (x) { return x.list !== 'local'; });
-      var added = mergeTracks(r.body.files || [], 'local');
+      // 仍严格等于扫描结果；保留已有文件的顺序，只把新发现的文件置顶。
+      var files = r.body.files || [];
+      var scanned = Object.create(null);
+      files.forEach(function (file) {
+        var t = normalizeTrack(file);
+        t.list = 'local';
+        scanned[uidOf(t)] = true;
+      });
+      state.tracks = state.tracks.filter(function (x) { return x.list !== 'local' || scanned[x.uid]; });
+      mergeTracks(files, 'local');
+      var count = state.tracks.filter(function (x) { return x.list === 'local'; }).length;
       // 正在播的那首若被本次替换移除，保留当前播放指针不强行切歌
       savePlaylist();
       renderQueue();
-      if (announce) toast(added > 0 ? '本地文件夹：' + added + ' 首' : '文件夹里没有音频文件');
-      return added;
+      if (announce) toast(count > 0 ? '本地文件夹：' + count + ' 首' : '文件夹里没有音频文件');
+      return count;
     }).catch(function () { if (announce) toast('扫描失败：网络错误'); return 0; });
   }
 
@@ -5659,13 +5734,12 @@
     var parts = biliPartsCache[bv];
     if (!Array.isArray(parts) || !parts.length) { toast('分集还没拉到，稍后再试'); return; }
     ensureList('fav', '我的喜欢');
-    var n = 0;
-    for (var i = 0; i < parts.length; i++) {
-      if (!isFav(deriveId(parts[i], parts[i].url))) n += addTrackToTarget(parts[i]) ? 1 : 0;
-    }
+    var incoming = parts.filter(function (part) { return !isFav(deriveId(part, part.url)); });
+    var n = mergeTracks(incoming, 'fav');
+    if (n) savePlaylist();
     renderQueue(); renderTrack();
     renderSearchResults();
-    if (!n) toast('这些分集都已在「我的喜欢」里');
+    toast(n ? '已加入「我的喜欢」：' + n + ' 首' : '这些分集都已在「我的喜欢」里');
   }
 
   /* 分集子面板（展开时嵌在主行下方的那块树）。 */
@@ -6244,7 +6318,7 @@
       var stored = Object.assign({}, r);
       stored.list = target;
       var nt = normalizeTrack(stored);
-      state.tracks.push(nt);
+      prependTracks([nt]);
       found = nt;
     }
     // 不切激活列表（不打断搜索上下文）；播放本身会由 recordRecent 把它记进最近播放
@@ -6427,6 +6501,7 @@
     if (lm && !lm.hidden) { closeLyricMatch(); return; }   // 手动匹配面板最上层
     if (volPopShown) { closeVolPop(); return; }   // 最瞬时的浮层先收
     if (rippleToolPop && !rippleToolPop.hidden) { closeRippleTool(); return; }
+    if (queueSearchOpen && queue.contains(document.activeElement)) { setQueueSearchOpen(false); return; }
     if (searchPage && !searchPage.hidden) { searchGoBack(); return; }   // 分层退：详情→推荐区→退出
     if (!morePop.hidden || !importPop.hidden || (movePop && !movePop.hidden)) { closePops(); return; }
     if (player.getAttribute('data-layout') === 'wide' && state.drawer) closeDrawer();
@@ -6736,7 +6811,7 @@
           t = already;
         } else {
           ensureList(wantList, defaultListName(wantList));
-          state.tracks.push(ct);
+          prependTracks([ct]);
           t = ct;
           savePlaylist();   // 重建完顺手落盘，下次拖进拖出就不用再靠快照了
           saveLists();

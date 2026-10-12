@@ -907,7 +907,13 @@ button:disabled { cursor: default; }
   letter-spacing: 0.01em;
   color: var(--hk-text);
   min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
+#queueTitle { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.queue-count { flex: 0 0 auto; white-space: nowrap; }
 /* 内联重命名输入（不用模态） */
 .list-name-input {
   width: 150px;
@@ -931,12 +937,44 @@ button:disabled { cursor: default; }
 }
 .queue-head-actions {
   margin-left: auto;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 4px;
 }
 #drawerCloseBtn { display: none; }
 .queue-head-actions .icon { width: 21px; height: 21px; }
+
+/* 当前歌单内搜索：独立于播放顺序，只筛选队列的显示。 */
+.queue-search {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 14px 10px;
+  padding: 2px 4px 2px 10px;
+  border: 1px solid var(--hk-hairline);
+  border-radius: var(--radius-s);
+  background: var(--hk-bg);
+}
+.queue-search[hidden], #queueSearchClear[hidden] { display: none; }
+.queue-search:focus-within { border-color: var(--hk-accent); }
+.queue-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--hk-text);
+  font: inherit;
+  font-size: 13px;
+}
+.queue-search-input::placeholder { color: var(--hk-muted); }
+.queue-search-input:focus-visible { outline: none; }
+.queue-search-input::-webkit-search-cancel-button { display: none; }
+#queueSearchBtn[aria-expanded="true"] { color: var(--hk-accent); }
 
 /* ---------- 顶部歌单切换条（横向可滚的分段控件） ---------- */
 .list-tabs {
