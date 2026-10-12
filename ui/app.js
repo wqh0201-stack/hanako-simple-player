@@ -1422,14 +1422,10 @@
     var seam = coverW - band * 0.5 - 8;
     /* 竖图的淡出仍须在图片内部结束；阅读列不再依赖这条接缝。 */
     seam = Math.max(0, Math.min(seam, w * 0.58));
-    /* 歌词列起点：宽窗下跟随面板宽度线性右移（网易式：右缘锚定，左缘占面板宽的比
-   * 随宽度缓慢上升）—— 封面固定三边、不跟随；窄卡仍叠进过渡带，与封面右缘重叠。
-   * 线性系数由网易两档实测反推：911px→0.513、1253px→0.526。 */
+    /* 定稿阅读列：大卡 52%，长/方卡 38%；最终字号仍由实际阅读区计算。 */
     var contentX;
     if (player.getAttribute('data-layout') === 'wide') {
-      var ratio = 0.478 + 0.000038 * w;
-      ratio = Math.max(0.48, Math.min(ratio, 0.56));
-      contentX = w * ratio;
+      contentX = w * 0.52;
       contentX = Math.min(contentX, w - 210);
     } else {
       // 卡片同样不跟横图变窄，保留约六成可读宽度。
@@ -1439,6 +1435,12 @@
     player.style.setProperty('--seam', Math.round(seam) + 'px');
     player.style.setProperty('--band', Math.round(band) + 'px');
     player.style.setProperty('--content-x', Math.round(contentX) + 'px');
+    var hostTextSize = parseFloat(getComputedStyle(player).getPropertyValue('--lyric-reading-size')) || 15;
+    var wideTitle = player.getAttribute('data-layout') === 'wide';
+    // 主标题高于队列歌单名（15px）；大卡在上一轮20px基础上加2px。
+    var titleMax = hostTextSize + (wideTitle ? 7 : 3);
+    var titleMin = hostTextSize + (wideTitle ? 5 : 3);
+    player.style.setProperty('--track-title-size', Math.min(titleMax, Math.max(titleMin, sceneEl.clientHeight * .07), Math.max(titleMin, (w - contentX - 20) * .14)) + 'px');
     if (stagePic) probeAmbient(stagePic, coverProbeToken);
     measureLyricTop();
   }
@@ -1454,6 +1456,11 @@
     var gap = 10;
     var top = Math.max(44, Math.round(hb.bottom - sb.top + gap));
     player.style.setProperty('--lyric-top', top + 'px');
+    // 拖长卡分隔线时至少留一块可读区域，队列仍有自己的滚动空间。
+    if (player.getAttribute('data-layout') === 'long') {
+      var available = $('stage').clientHeight;
+      player.style.setProperty('--lyric-scene-min', Math.max(0, Math.min(available - 100, top + 128)) + 'px');
+    } else player.style.removeProperty('--lyric-scene-min');
   }
   function probeCover(pic) {
     var token = ++coverProbeToken;
@@ -1564,6 +1571,7 @@
     if (favBtn && !favBtn.querySelector('use')) favBtn.innerHTML = icon('i-heart');
     if (!t) {
       $('trackTitle').textContent = '还没有曲目';
+      $('trackTitle').removeAttribute('title');
       setArtistLine(emptyImportHint(), false);
       $('trackMeta').textContent = '';
       setCtlTrack(null);
@@ -1578,6 +1586,7 @@
       return;
     }
     $('trackTitle').textContent = t.title;
+    $('trackTitle').title = t.title;
     /* 副标题只放真歌手：拿不到就留空省略，不把来源/分组冒充歌手（R3）。
      * 有歌手时它同时是「搜这位歌手」的入口。 */
     setArtistLine(t.author || '', !!t.author);
@@ -2665,10 +2674,13 @@
       html = '';
     } else {
       for (var i = 0; i < state.lyricLines.length; i++) {
-        html += '<p class="lyric-line" data-i="' + i + '">' + esc(state.lyricLines[i].text) + '</p>';
+        html += '<p class="lyric-line" data-i="' + i + '"><span class="lyric-text">' + esc(state.lyricLines[i].text) + '</span></p>';
       }
     }
-    lyrics.innerHTML = html;
+    stopLyricFrames();
+    lyrics.innerHTML = has ? '<div class="lyric-flow">' + html + '</div>' : '';
+    lyricGeometry = { nodes: Array.from(lyrics.querySelectorAll('.lyric-line')), centers: [], slopes: [], clock: [], content: lyrics.firstElementChild, height: 0, residual: 0, painted: [] };
+    buildLyricClock();
   }
 
   function renderChrome() {
@@ -2676,6 +2688,7 @@
     player.setAttribute('data-page', state.page);
     player.setAttribute('data-drawer', state.drawer ? '1' : '0');
     player.setAttribute('data-search', (searchPage && !searchPage.hidden) ? '1' : '0');
+    syncLyricFrames();
     drawerScrim.hidden = !(player.getAttribute('data-layout') === 'wide' && state.drawer);
 
     // 搜索入口按钮：已开时提示「收起搜索」
@@ -2714,6 +2727,128 @@
   var lyricSuppressClickUntil = 0;
   var LYRIC_OFFSET_LIMIT = 600000;
 
+  /* 标题靠近宿主正文，歌词峰值比标题小3px；字体沿用现有栈。
+   * 行数是软约束，空间不足时守住11px；宽高增加也不把字推大。 */
+  var LYRIC_VIEW = { wide: { rows: 10, preference: .85 }, long: { rows: 6, preference: 1.10 }, compact: { rows: 5, preference: .90 } };
+  var LYRIC_WAVE_PEAK = .15;
+  var lyricGeometry = { nodes: [], centers: [], slopes: [], clock: [], content: null, height: 0, residual: 0, painted: [] };
+  var lyricFlowRaf = 0, lyricInView = true, lyricFocus = 0;
+  var lyricReturn = null;
+
+  // 单调三次插值：长短句交替、时间间隔不等时，行中心和波峰速度都连续。
+  function lyricSlopes(points, x, y) {
+    return points.map(function (p, i) {
+      if (!i || i === points.length - 1) return 0;
+      var h0 = p[x] - points[i - 1][x], h1 = points[i + 1][x] - p[x];
+      var d0 = (p[y] - points[i - 1][y]) / h0, d1 = (points[i + 1][y] - p[y]) / h1;
+      if (!(d0 > 0 && d1 > 0)) return 0;
+      var w0 = 2 * h1 + h0, w1 = h1 + 2 * h0;
+      return (w0 + w1) / (w0 / d0 + w1 / d1);
+    });
+  }
+  function lyricInterpolate(a, b, slopeA, slopeB, fraction, dx) {
+    var t = Math.max(0, Math.min(1, fraction)), t2 = t * t, t3 = t2 * t;
+    return (2 * t3 - 3 * t2 + 1) * a + (t3 - 2 * t2 + t) * dx * slopeA
+      + (-2 * t3 + 3 * t2) * b + (t3 - t2) * dx * slopeB;
+  }
+  function buildLyricClock() {
+    var clock = [];
+    state.lyricLines.forEach(function (line, i) {
+      var last = clock[clock.length - 1];
+      if (last && line.t === last.t) { last.f = i; return; } // 同刻翻译/双语不制造零时长段
+      if (last && line.t - last.t > 12) clock.push({ t: line.t - 6, f: last.f }); // 长间奏先停留，接近下一句再流入
+      clock.push({ t: line.t, f: i });
+    });
+    var slopes = lyricSlopes(clock, 't', 'f');
+    clock.forEach(function (p, i) { p.slope = slopes[i]; });
+    lyricGeometry.clock = clock;
+  }
+  function lyricFocusAt(time) {
+    var clock = lyricGeometry.clock;
+    if (!clock.length || time <= clock[0].t) return clock.length ? clock[0].f : 0;
+    for (var i = 1; i < clock.length; i++) {
+      if (time < clock[i].t) {
+        var a = clock[i - 1], b = clock[i], dt = b.t - a.t;
+        return lyricInterpolate(a.f, b.f, a.slope, b.slope, (time - a.t) / dt, dt);
+      }
+    }
+    return clock[clock.length - 1].f;
+  }
+  function lyricCenterAt(focus) {
+    var g = lyricGeometry, n = Math.max(0, Math.min(g.centers.length - 1, focus));
+    var a = Math.floor(n), b = Math.min(a + 1, g.centers.length - 1);
+    return a === b ? g.centers[a] : lyricInterpolate(g.centers[a], g.centers[b], g.slopes[a], g.slopes[b], n - a, 1);
+  }
+  function scrollLyricPosition(target) {
+    var g = lyricGeometry;
+    target = Math.max(0, Math.min(lyrics.scrollHeight - g.height, target));
+    lyrics.scrollTop = target;
+    // Chromium 的 scrollTop 可能舍入到整像素，用内容层补回慢流动的亚像素。
+    g.residual = lyrics.scrollTop - target;
+    if (g.content) g.content.style.transform = 'translateY(' + g.residual.toFixed(4) + 'px)';
+  }
+  function paintLyricFlow() {
+    var g = lyricGeometry;
+    if (!g.nodes.length || !g.centers.length || lyricAlign) return;
+    var still = reducedMotion() || SHOT;
+    lyricFocus = still ? Math.max(0, lyricIndex) : lyricFocusAt(lyricTimeAt(liveProgress()));
+    var first = Math.max(0, Math.floor(lyricFocus) - 4), last = Math.min(g.nodes.length - 1, Math.ceil(lyricFocus) + 4);
+    var active = [];
+    for (var i = first; i <= last; i++) active.push(i);
+    g.painted.forEach(function (i) {
+      if (i >= first && i <= last) return;
+      g.nodes[i].style.removeProperty('--lyric-scale');
+      g.nodes[i].style.removeProperty('--lyric-opacity');
+      g.nodes[i].style.removeProperty('--lyric-strength');
+    });
+    active.forEach(function (i) {
+      var strength = Math.exp(-.5 * Math.pow(i - lyricFocus, 2));
+      g.nodes[i].style.setProperty('--lyric-scale', String(still ? 1 : 1 + g.wavePeak * strength));
+      g.nodes[i].style.setProperty('--lyric-opacity', String(.65 + .35 * strength));
+      g.nodes[i].style.setProperty('--lyric-strength', (Math.pow(strength, 3) * 100).toFixed(2) + '%');
+    });
+    g.painted = active;
+    if (state.follow) {
+      var target = lyricCenterAt(lyricFocus) - g.height / 2;
+      if (lyricReturn) {
+        var p = Math.min(1, (performance.now() - lyricReturn.at) / 500);
+        target = lyricReturn.from + (target - lyricReturn.from) * (p * p * (3 - 2 * p));
+        if (p === 1) lyricReturn = null;
+      }
+      scrollLyricPosition(target);
+    }
+  }
+  function stopLyricFrames() {
+    if (lyricFlowRaf) cancelAnimationFrame(lyricFlowRaf);
+    lyricFlowRaf = 0;
+  }
+  function canFlowLyrics() {
+    var clock = lyricGeometry.clock, time = lyricTimeAt(liveProgress()), moving = false;
+    for (var i = 1; i < clock.length; i++) {
+      if (time >= clock[i - 1].t && time < clock[i].t) { moving = clock[i].f !== clock[i - 1].f; break; }
+    }
+    return !SHOT && !reducedMotion() && !document.hidden && lyricInView && !lyricAlign && state.follow
+      && lyricGeometry.nodes.length > 0 && lyricGeometry.height > 0 && state.page === 'play' && !state.drawer
+      && player.getAttribute('data-search') !== '1' && !audio.seeking
+      && ((!audio.paused && !audio.ended && audio.readyState >= 3 && moving) || !!lyricReturn);
+  }
+  function startLyricFrames() {
+    if (lyricFlowRaf || !canFlowLyrics()) return;
+    lyricFlowRaf = requestAnimationFrame(function () {
+      // 保留当前句的语义时间戳；视觉波峰可以提前流向下一句。
+      updateLyricIndex(false);
+      lyricFlowRaf = 0;
+      startLyricFrames();
+    });
+  }
+  function syncLyricFrames() {
+    if (!lyricGeometry) return;
+    stopLyricFrames();
+    if (!canFlowLyrics()) lyricReturn = null;
+    if (!document.hidden) paintLyricFlow();
+    startLyricFrames();
+  }
+
   function validLyricOffset(v) {
     var n = typeof v === 'number' ? v : 0;
     return isFinite(n) ? Math.max(-LYRIC_OFFSET_LIMIT, Math.min(LYRIC_OFFSET_LIMIT, Math.round(n))) : 0;
@@ -2728,36 +2863,67 @@
   }
 
   function sizeLyricPad() {
-    var h = lyricWrap.clientHeight;
-    if (!h) return;
-    var pad = lyricAlign ? Math.round(h / 2) : Math.max(28, Math.round(h / 2 - 26));
+    // 读外层真实预算：滚动容器的旧 padding 会撑住 clientHeight，不能拿它反推新高度。
+    var h = lyricWrap.clientHeight, w = lyrics.clientWidth, g = lyricGeometry;
+    if (!h || !w || !g) return;
+    var anchor = -1, distance = Infinity, anchorY = 0;
+    if (!state.follow && !lyricAlign) g.centers.forEach(function (y, i) {
+      var d = Math.abs(y - lyrics.scrollTop - g.height / 2);
+      if (d < distance) { anchor = i; distance = d; anchorY = y - lyrics.scrollTop; }
+    });
+    var view = LYRIC_VIEW[player.getAttribute('data-layout')] || LYRIC_VIEW.long;
+    var peakSize = Math.max(11, parseFloat(getComputedStyle($('trackTitle')).fontSize) - 3);
+    // 峰值始终留在标题下方；极小预算时收幅度，避免基础字号跌破11px。
+    g.wavePeak = Math.min(LYRIC_WAVE_PEAK, Math.max(0, peakSize / 11 - 1));
+    var waveMax = 1 + g.wavePeak;
+    player.style.setProperty('--lyric-wave-max', String(waveMax));
+    var proposed = Math.min(w / waveMax / 12.5, (h / view.rows - 9) / (1.55 * waveMax)) * view.preference;
+    var font = Math.max(11, Math.min(peakSize / waveMax, proposed));
+    lyrics.style.setProperty('--lyric-font', font.toFixed(1) + 'px');
+    var pad = h / 2;
     lyrics.style.paddingTop = pad + 'px';
     lyrics.style.paddingBottom = pad + 'px';
+    if (g.content) g.content.style.transform = 'none';
+    g.residual = 0; g.height = h;
+    var reserves = g.nodes.map(function (node) { return node.firstElementChild.offsetHeight * g.wavePeak / 2 + 4.5; });
+    g.nodes.forEach(function (node, i) {
+      var reserve = reserves[i];
+      node.style.paddingTop = reserve + 'px';
+      node.style.paddingBottom = reserve + 'px';
+    });
+    g.centers = g.nodes.map(function (node) { return pad + node.offsetTop + node.offsetHeight / 2; });
+    g.slopes = lyricSlopes(g.centers.map(function (y, i) { return { x: i, y: y }; }), 'x', 'y');
+    if (anchor >= 0 && g.centers[anchor] != null) lyrics.scrollTop = Math.max(0, g.centers[anchor] - anchorY);
+    if (lyricAlign) { measureAlignLines(); paintLyricAlign(); }
+    else { paintLyricFlow(); startLyricFrames(); }
   }
 
   function centerCurrentLine(instant) {
     if (!state.follow || lyricAlign) return;
-    var el = lyrics.querySelector('.lyric-line.is-current');
-    if (!el) return;
-    var target = el.offsetTop - lyrics.offsetTop - lyricWrap.clientHeight / 2 + el.offsetHeight / 2;
-    lyrics.scrollTo({ top: Math.max(0, target), behavior: instant ? 'auto' : 'smooth' });
+    if (!instant && !reducedMotion() && !SHOT) lyricReturn = { from: lyrics.scrollTop - lyricGeometry.residual, at: performance.now() };
+    else lyricReturn = null;
+    paintLyricFlow(); startLyricFrames();
   }
 
   function updateLyricIndex(instant) {
     var idx = -1;
     var time = lyricTimeAt(liveProgress());
     for (var i = 0; i < state.lyricLines.length; i++) {
-      if (state.lyricLines[i].t <= time + 0.01) idx = i; else break;
+      if (state.lyricLines[i].t <= time + 0.001) idx = i; else break;
     }
-    if (idx === lyricIndex) return;
-    lyricIndex = idx;
-    var nodes = lyrics.querySelectorAll('.lyric-line');
-    for (var j = 0; j < nodes.length; j++) {
-      var d = j - idx;
-      nodes[j].classList.toggle('is-current', d === 0);
-      nodes[j].classList.toggle('is-near', Math.abs(d) === 1);
+    if (idx !== lyricIndex) {
+      lyricIndex = idx;
+      var nodes = lyricGeometry.nodes;
+      for (var j = 0; j < nodes.length; j++) {
+        var d = j - idx;
+        nodes[j].classList.toggle('is-current', d === 0);
+        nodes[j].classList.toggle('is-near', Math.abs(d) === 1);
+        if (d === 0) nodes[j].setAttribute('aria-current', 'true');
+        else nodes[j].removeAttribute('aria-current');
+      }
     }
-    if (state.follow) centerCurrentLine(instant);
+    if (instant) lyricReturn = null;
+    paintLyricFlow(); startLyricFrames();
   }
 
   /* 歌词跟随：滚完停 3s 自动回归（motion 2）。
@@ -2772,8 +2938,11 @@
   }
   function pauseFollow() {
     if (lyricAlign) return;
-    lyrics.classList.add('is-browsing');   // 3 行聚焦：滚动时全部行显形
+    lyrics.classList.add('is-browsing');
     if (state.follow) state.follow = false;
+    lyricReturn = null; stopLyricFrames();
+    if (lyricGeometry.content) lyricGeometry.content.style.transform = 'none';
+    lyricGeometry.residual = 0;
     scheduleResume();
   }
   function resumeFollow() {
@@ -2783,14 +2952,14 @@
     centerCurrentLine(false);
   }
 
-  /* 校准时用连续的「时间 → 行中心」插值，普通阅读仍按句居中。
+  /* 校准时用连续的「时间 → 行中心」插值，和阅读共用稳定行几何。
    * 播放时钟始终前进；鼠标只改变固定的提前量，停手/松手不会重新锚定音频时间。 */
   function measureAlignLines() {
     if (!lyricAlign) return;
     var nodes = lyrics.querySelectorAll('.lyric-line');
     lyricAlign.points = [];
     for (var i = 0; i < nodes.length; i++) {
-      lyricAlign.points.push({ t: state.lyricLines[i].t, y: nodes[i].offsetTop - lyrics.offsetTop + nodes[i].offsetHeight / 2, node: nodes[i] });
+      lyricAlign.points.push({ t: state.lyricLines[i].t, y: lyricGeometry.centers[i], node: nodes[i] });
     }
     lyricAlign.width = lyrics.clientWidth;
     lyricAlign.height = lyrics.clientHeight;
@@ -2821,7 +2990,7 @@
     if (lyricAlign.width !== lyrics.clientWidth || lyricAlign.height !== lyrics.clientHeight) measureAlignLines();
     updateLyricIndex(true);
     var position = alignPosition(lyricTimeAt(liveProgress()));
-    lyrics.scrollTo({ top: Math.max(0, position - lyrics.clientHeight / 2), behavior: 'instant' });
+    scrollLyricPosition(position - lyrics.clientHeight / 2);
     var nearest = null, distance = Infinity;
     lyricAlign.points.forEach(function (p) {
       var d = Math.abs(p.y - position);
@@ -2858,6 +3027,7 @@
     var t = currentTrack();
     if (!t || lyricState !== 'ready' || !state.lyricLines.length || !lyricWrap.clientHeight || state.page !== 'play') return false;
     lyricAlign = { uid: t.uid, gen: lyricGen, original: savedLyricOffset(t), draft: savedLyricOffset(t), points: [], saving: false };
+    lyricReturn = null; stopLyricFrames();
     clearFollowTimer(); hideLyricHint();
     state.follow = false;
     lyrics.classList.remove('is-browsing');
@@ -2865,8 +3035,7 @@
     $('lyricAlignTools').hidden = false;
     $('lyricAlignGuide').hidden = false;
     // 上下都留足半屏：首句/末句也能到现在线，不受普通阅读 padding 的限制。
-    lyrics.style.paddingTop = lyrics.clientHeight / 2 + 'px';
-    lyrics.style.paddingBottom = lyrics.clientHeight / 2 + 'px';
+    sizeLyricPad();
     measureAlignLines(); paintLyricAlign(); startAlignFrames();
     return true;
   }
@@ -2994,6 +3163,18 @@
   audio.addEventListener('play', startAlignFrames);
   audio.addEventListener('pause', function () { stopAlignFrames(); paintLyricAlign(); });
   audio.addEventListener('seeked', paintLyricAlign);
+  ['play', 'playing', 'pause', 'ended', 'seeking', 'seeked', 'emptied', 'waiting'].forEach(function (name) { audio.addEventListener(name, syncLyricFrames); });
+  document.addEventListener('visibilitychange', syncLyricFrames);
+  window.addEventListener('pagehide', stopLyricFrames);
+  if (window.IntersectionObserver) new IntersectionObserver(function (entries) {
+    lyricInView = entries[0].isIntersecting;
+    syncLyricFrames();
+  }).observe(lyricWrap);
+  if (window.ResizeObserver) new ResizeObserver(function () {
+    measureLyricTop(); sizeLyricPad();
+  }).observe(lyricWrap);
+  var lyricMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  if (lyricMotionQuery.addEventListener) lyricMotionQuery.addEventListener('change', syncLyricFrames);
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) { clearLyricPress(true); if (lyricAlign) closeLyricAlign(); }
   });
@@ -6894,6 +7075,12 @@
         base: lyricBaseOffset, time: lyricTimeAt(liveProgress()), index: lyricIndex,
         media: liveProgress(), follow: state.follow, raf: !!lyricAlignRaf,
         copies: state.tracks.filter(function (t) { return currentTrack() && t.id === currentTrack().id; }).map(function (t) { return { uid: t.uid, offset: t.raw.lyricOffset }; }) };
+    },
+    lyricFlowState: function () {
+      return { focus: lyricFocus, index: lyricIndex, raf: !!lyricFlowRaf, follow: state.follow,
+        width: lyrics.clientWidth, height: lyricGeometry.height, residual: lyricGeometry.residual,
+        position: lyrics.scrollTop - lyricGeometry.residual, font: parseFloat(lyrics.style.getPropertyValue('--lyric-font')),
+        centers: lyricGeometry.centers.slice(), clock: lyricGeometry.clock.map(function (p) { return { t: p.t, f: p.f }; }) };
     },
     bindLyricMatch: bindLyricMatch,
     currentTrack: currentTrack,

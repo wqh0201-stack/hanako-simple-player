@@ -11,6 +11,9 @@ dist/
 # release 包（由 tools/pack-release.mjs 生成）
 dist-release/
 
+# 本地工具状态（impeccable 评审产物等，不入库）
+.impeccable/
+
 # 依赖
 node_modules/
 

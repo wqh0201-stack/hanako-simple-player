@@ -292,6 +292,15 @@ const server = http.createServer((req, res) => {
     if (id === '900099') return text(res, 200, '', 'text/plain; charset=utf-8');  // 无词纯音乐
     if (id === '900098') return text(res, 200, '[00:00.00]这似乎是一首纯音乐呢，请尽情欣赏它吧！', 'text/plain; charset=utf-8');  // 占位词纯音乐
     if (fixtureMode === 'align') return text(res, 200, '[offset:250]\n' + Array.from({ length: 12 }, (_, i) => `[00:${String(1 + i * 2).padStart(2, '0')}.00]校准试听 第 ${i + 1} 句`).join('\n'), 'text/plain; charset=utf-8');
+    if (fixtureMode === 'lyric-flow') return text(res, 200, [
+      '[00:01.00]风慢慢经过窗前',
+      '[00:03.00]这是一句很长的中文歌词，让它自然换行之后仍然能够看清，每一个字都不会被波浪挤到旁边的句子上',
+      '[00:05.00]再向前一点',
+      '[00:08.00]Somewhere beyond the skyline, we keep moving through the night with a very long English lyric',
+      '[00:08.00]同一时刻的翻译也保留',
+      '[00:10.00]灯光渐渐亮起来',
+      '[00:27.00]漫长间奏之后继续唱'
+    ].join('\n'), 'text/plain; charset=utf-8');
     return text(res, 200, lrcFor('fixture'), 'text/plain; charset=utf-8');
   }
   if (p === API + '/widget/api/music/lrc-proxy') {
@@ -590,6 +599,151 @@ const geom = (page) => page.evaluate(() => {
   return { sceneTop: r('sceneTop'), controls: r('controls'), tabs: r('listTabs'), listTop: Math.round(document.getElementById('queueList').getBoundingClientRect().top) };
 });
 
+/* 真实媒体时钟驱动的歌词验收；--lyrics-only 可单独运行，完整验收也包含它。 */
+async function verifyLyricFlow() {
+  await fetch(`${BASE}${API}/__fixture/reset?mode=lyric-flow&appSurfaceSession=fake-ticket`);
+  const page = await newPage();
+  await page.setViewport({ width: 820, height: 700, deviceScaleFactor: 1 });
+  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await sleep(700);
+  await clickTab(page, 'imp:1');
+  await page.evaluate(() => document.querySelector('#queueList .q-hit').click());
+  await page.waitForFunction(() => document.querySelectorAll('.lyric-line').length === 7);
+  const info = () => page.evaluate(() => window.__playerDebug.lyricFlowState());
+  async function seekTo(t) {
+    await page.evaluate((t) => { document.querySelector('audio').currentTime = t; }, t);
+    await page.waitForFunction(() => !document.querySelector('audio').seeking);
+    await sleep(80);
+  }
+  await seekTo(4.2);
+  const flow = await page.evaluate(() => new Promise((resolve) => {
+    const frames = [], start = performance.now();
+    function sample() {
+      const st = window.__playerDebug.lyricFlowState();
+      frames.push({ focus: st.focus, position: st.position, index: st.index, height: document.querySelector('.lyric-line').offsetHeight });
+      if (performance.now() - start < 2100) requestAnimationFrame(sample); else resolve(frames);
+    }
+    requestAnimationFrame(sample);
+  }));
+  const steps = flow.slice(1).map((f, i) => ({ focus: f.focus - flow[i].focus, pos: f.position - flow[i].position }));
+  assert('lyrics-flow-through-phrase-and-boundary', flow.length > 30 && flow[0].index === 1 && flow.at(-1).index === 2 && steps.every((s) => s.focus >= -0.001 && s.focus < .2) && steps.filter((s) => s.focus > .0001).length > steps.length * .9,
+    JSON.stringify({ frames: flow.length, first: flow[0], last: flow.at(-1), stalled: steps.filter((s) => s.focus <= .0001).length, maxStep: Math.max(...steps.map((s) => s.focus)) }));
+  assert('lyrics-wave-keeps-row-geometry-stable', new Set(flow.map((f) => f.height)).size === 1, JSON.stringify([...new Set(flow.map((f) => f.height))]));
+  assert('lyrics-flow-preserves-subpixel-motion', steps.some((s) => s.pos > 0 && Math.abs(s.pos - Math.round(s.pos)) > .01), JSON.stringify(steps.slice(0, 6)));
+  await page.evaluate(() => document.querySelector('audio').pause());
+  await sleep(60);
+  const paused = await info();
+  await sleep(350);
+  const frozen = await info();
+  await page.evaluate(() => document.querySelector('audio').play());
+  await sleep(220);
+  const resumed = await info();
+  assert('lyrics-pause-resume-keeps-phase', !frozen.raf && Math.abs(frozen.focus - paused.focus) < .001 && Math.abs(frozen.position - paused.position) < .01 && resumed.focus > frozen.focus && resumed.focus - frozen.focus < .5,
+    JSON.stringify({ paused, frozen, resumed }));
+  await page.evaluate(() => document.querySelector('audio').pause());
+  await seekTo(5);
+  const beforeResize = await info();
+  await page.setViewport({ width: 1120, height: 940, deviceScaleFactor: 1 });
+  await sleep(160);
+  const afterResize = await info();
+  const centerError = await page.evaluate(() => {
+    const row = document.querySelector('.lyric-line.is-current').getBoundingClientRect(), wrap = document.querySelector('#lyrics').getBoundingClientRect();
+    return Math.abs((row.top + row.bottom) / 2 - (wrap.top + wrap.bottom) / 2);
+  });
+  assert('lyrics-same-phrase-resize-recenters-with-readable-size-cap', beforeResize.index === afterResize.index && afterResize.height > beforeResize.height && afterResize.font <= 19 / 1.15 + .1 && centerError < 2, JSON.stringify({ beforeResize, afterResize, centerError }));
+
+  for (const [w, h] of [[820, 700], [465, 930], [380, 430], [312, 494], [719, 559], [720, 560]]) {
+    await page.setViewport({ width: w, height: h, deviceScaleFactor: 1 });
+    await sleep(120);
+    await seekTo(3);
+    const fit = await page.evaluate(() => {
+      const wrap = document.querySelector('#lyrics').getBoundingClientRect();
+      const texts = [...document.querySelectorAll('.lyric-text')].map((el) => el.getBoundingClientRect());
+      const title = document.querySelector('#trackTitle');
+      title.textContent = '一个很长很长的歌名，用来验证超长标题不会占掉歌词空间'.repeat(4);
+      const current = document.querySelector('.lyric-line.is-current').getBoundingClientRect();
+      const currentText = document.querySelector('.lyric-line.is-current .lyric-text');
+      const baseFont = parseFloat(getComputedStyle(currentText).fontSize);
+      const peakFont = baseFont * new DOMMatrix(getComputedStyle(currentText).transform).a;
+      return { ...window.__playerDebug.lyricFlowState(), layout: document.querySelector('#player').getAttribute('data-layout'), fontFamily: getComputedStyle(currentText).fontFamily, bodyFontFamily: getComputedStyle(document.body).fontFamily, peakFont, actualHeight: document.querySelector('#lyricWrap').clientHeight, centerError: Math.abs((current.top + current.bottom - wrap.top - wrap.bottom) / 2), overlaps: texts.some((r, i) => i && r.top < texts[i - 1].bottom - .5), overflow: texts.some((r) => r.right > wrap.right - 1 || r.left < wrap.left - .5), wrapped: document.querySelectorAll('.lyric-text')[1].offsetHeight > parseFloat(getComputedStyle(document.querySelector('.lyric-line')).lineHeight) * 1.3, titleHeight: title.clientHeight, titleFont: parseFloat(getComputedStyle(title).fontSize), queueTitleFont: parseFloat(getComputedStyle(document.querySelector('.queue-title')).fontSize), titleFull: title.title.length > 0 };
+    });
+    assert(`lyrics-readable-and-wave-fits-${w}x${h}`, fit.font >= 11 && fit.height === fit.actualHeight && fit.centerError < 2 && !fit.overlaps && !fit.overflow && fit.wrapped && fit.titleHeight <= fit.titleFont * 1.3 && fit.titleFull, JSON.stringify(fit));
+    assert(`lyrics-peak-stays-three-pixels-below-title-${w}x${h}`, fit.font >= 11 && fit.peakFont <= fit.titleFont - 2.9 && fit.titleFont > fit.queueTitleFont && fit.fontFamily === fit.bodyFontFamily && (fit.layout === 'wide' ? fit.titleFont >= 20 && fit.titleFont <= 22 : Math.abs(fit.titleFont - 18) < .1), JSON.stringify({ peakFont: fit.peakFont, titleFont: fit.titleFont, queueTitleFont: fit.queueTitleFont, fontFamily: fit.fontFamily, layout: fit.layout }));
+    if ([820, 465, 380].includes(w)) {
+      for (const theme of ['light', 'dark']) {
+        await page.evaluate((t) => window.__fixtureTheme(t), theme);
+        await page.screenshot({ path: path.join(outDir, `lyric-flow-${w}x${h}-${theme}.png`) });
+      }
+    }
+  }
+  await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
+  await sleep(120);
+  const split = await page.$eval('#splitHandle', (el) => { const b = el.getBoundingClientRect(); return { x: b.width / 2, y: b.top + b.height / 2 }; });
+  await page.mouse.move(split.x, split.y);
+  await page.mouse.down();
+  await page.mouse.move(split.x, 180, { steps: 10 });
+  await page.mouse.up();
+  await sleep(160);
+  const dragged = await info();
+  assert('lyrics-split-keeps-reading-area-and-remeasures', dragged.height >= 127 && dragged.height < 230 && Math.abs(dragged.position - (dragged.centers[1] - dragged.height / 2)) < 2, JSON.stringify(dragged));
+
+  await page.evaluate(() => {
+    document.querySelector('audio').play();
+    document.querySelector('#lyricWrap').dispatchEvent(new WheelEvent('wheel', { deltaY: 100, bubbles: true }));
+    document.querySelector('#lyrics').scrollTop += 80;
+  });
+  const browsed = await info();
+  await sleep(400);
+  const stayed = await info();
+  assert('lyrics-flow-does-not-steal-browsing', !stayed.follow && !stayed.raf && Math.abs(stayed.position - browsed.position) < 1, JSON.stringify({ browsed, stayed }));
+  await sleep(3300);
+  assert('lyrics-flow-resumes-after-browsing', (await info()).follow && (await info()).raf, JSON.stringify(await info()));
+
+  await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+  await sleep(80);
+  const reduced = await page.evaluate(() => ({ ...window.__playerDebug.lyricFlowState(), transforms: [...document.querySelectorAll('.lyric-text')].map((e) => getComputedStyle(e).transform) }));
+  assert('lyrics-reduced-motion-stops-flow-and-scaling', !reduced.raf && reduced.transforms.every((t) => t === 'matrix(1, 0, 0, 1, 0, 0)' || t === 'none'), JSON.stringify(reduced));
+  await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
+  await page.evaluate(() => document.querySelector('#scene').style.transform = 'translateX(200vw)');
+  await sleep(100);
+  assert('lyrics-offscreen-stops-flow', !(await info()).raf, JSON.stringify(await info()));
+  await page.evaluate(() => document.querySelector('#scene').style.transform = 'none');
+  await sleep(100);
+  await seekTo(8.1);
+  const bilingual = await info();
+  assert('lyrics-same-timestamp-lines-have-one-semantic-current', bilingual.index === 4 && Number.isFinite(bilingual.focus) && (await page.$$eval('.lyric-line[aria-current="true"]', (els) => els.length)) === 1, JSON.stringify(bilingual));
+  await page.setViewport({ width: 820, height: 700, deviceScaleFactor: 1 });
+  await sleep(100);
+  await seekTo(6);
+  await page.evaluate(() => document.querySelector('#queueBtn').click());
+  await sleep(100);
+  assert('lyrics-covered-by-drawer-stops-frames', !(await info()).raf, JSON.stringify(await info()));
+  await page.evaluate(() => document.querySelector('#queueBtn').click());
+  await sleep(350);
+  await page.evaluate(() => window.__playerDebug.openSearch());
+  await sleep(100);
+  assert('lyrics-covered-by-search-stops-frames', !(await info()).raf, JSON.stringify(await info()));
+  await page.evaluate(() => document.querySelector('#searchEntryBtn').click());
+  await sleep(350);
+  assert('lyrics-returning-from-overlay-resumes-frames', (await info()).raf, JSON.stringify(await info()));
+  await seekTo(16);
+  const gap = await info();
+  await sleep(220);
+  assert('lyrics-long-instrumental-holds-until-upcoming-phrase', gap.index === 5 && gap.focus === 5 && (await info()).focus === 5, JSON.stringify(gap));
+  await seekTo(27.2);
+  const last = await info();
+  assert('lyrics-last-phrase-has-finite-position-and-stops-frames', last.index === 6 && last.focus === 6 && !last.raf && Number.isFinite(last.position), JSON.stringify(last));
+  await page.close();
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+}
+await verifyLyricFlow();
+if (process.argv.includes('--lyrics-only')) {
+  fs.writeFileSync(path.join(outDir, 'verify-lyrics.json'), JSON.stringify(report, null, 2));
+  console.log(JSON.stringify({ assertions: `${report.assertions.filter((a) => a.ok).length}/${report.assertions.length}`, failed: report.assertions.filter((a) => !a.ok), runtimeErrors: report.runtimeErrors, outDir }, null, 2));
+  await browser.close(); server.close();
+  process.exit(report.assertions.some((a) => !a.ok) || report.runtimeErrors.length ? 1 : 0);
+}
+
 /* ============ 1) 六尺寸 × 浅深：自检 + 截图 ============ */
 const CASES = [
   ['card-465x930', 465, 930, 'index.html'],
@@ -882,7 +1036,7 @@ const motion = {};
   await sleep(800);
   await clickTab(page, 'imp:1');
   await sleep(300);
-  // 有歌词：3 行聚焦 —— 非邻行 opacity 应明显低于当前行
+  // 有歌词：邻近波峰更清晰，远处保留定稿的 65% 阅读底线。
   await page.evaluate(() => document.querySelectorAll('#queueList .q-row')[0].querySelector('.q-hit').click());
   await sleep(900);
   motion.focus = await page.evaluate(() => {
@@ -892,8 +1046,8 @@ const motion = {};
     const op = (e) => e ? +parseFloat(getComputedStyle(e).opacity).toFixed(2) : null;
     return { cur: op(cur), near: op(near), far: op(far), layout: document.getElementById('player').getAttribute('data-layout') };
   });
-  assert('motion-three-line-focus',
-    motion.focus.layout !== 'wide' && motion.focus.cur > motion.focus.far && motion.focus.near > motion.focus.far && motion.focus.far <= 0.3,
+  assert('motion-wave-focus-keeps-context-readable',
+    motion.focus.layout !== 'wide' && motion.focus.cur > motion.focus.far && motion.focus.near > motion.focus.far && motion.focus.far >= 0.64 && motion.focus.far <= 0.7,
     JSON.stringify(motion.focus));
 
   // 换层（motion 4）：有词曲目 ⇄ 无词曲目 互斥切换，且蒙层/渐变始终在线。
