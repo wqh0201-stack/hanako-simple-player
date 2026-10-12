@@ -1266,6 +1266,16 @@ button:disabled { cursor: default; }
   max-width: 190px;
 }
 .pop-note:empty { display: none; }
+.cover-pop {
+  width: min(300px, calc(100% - 16px));
+  min-width: 0;
+  max-height: calc(100% - 16px);
+  overflow-y: auto;
+}
+.cover-pop .pop-title, .cover-pop .pop-note { max-width: none; }
+.cover-label { display: block; margin: 6px 8px; font-size: 12px; color: var(--hk-text); }
+.cover-pop button:disabled { opacity: .5; cursor: default; }
+#importPop { max-height: calc(100% - 16px); overflow-y: auto; }
 /* 移动目标（二级浮层）：列表限高滚动，行数多时不至于竖出屏外 */
 .pop-move { min-width: 156px; }
 .pop-move-list {

@@ -200,12 +200,20 @@
             <svg class="icon icon-sm" aria-hidden="true"><use href="#i-user"></use></svg>
             <span>补全歌手</span>
           </button>
+          <button class="pop-item" data-import="covers" type="button">
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-disc"></use></svg>
+            <span>补全封面…</span>
+          </button>
           <p class="pop-note" id="importNote"></p>
         </div>
 
         <!-- 歌单删除确认（长按 / 右键切换条上的导入列表） -->
         <div class="pop pop-list" id="listPop" hidden>
           <p class="pop-title" id="listPopTitle"></p>
+          <button class="pop-item" id="listCoverBtn" type="button">
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-disc"></use></svg>
+            <span>补全封面…</span>
+          </button>
           <button class="pop-item" id="listDeleteBtn" type="button">
             <svg class="icon icon-sm" aria-hidden="true"><use href="#i-trash"></use></svg>
             <span>删除歌单</span>
@@ -214,6 +222,17 @@
             <svg class="icon icon-sm" aria-hidden="true"><use href="#i-close"></use></svg>
             <span>取消</span>
           </button>
+        </div>
+        <div class="pop cover-pop" id="coverPop" hidden role="dialog" aria-labelledby="coverTitle">
+          <p class="pop-title" id="coverTitle">补全封面</p>
+          <label class="cover-label" for="coverArtist">这组曲目的歌手</label>
+          <div class="pop-link">
+            <input class="pop-input" id="coverArtist" type="text" maxlength="80" autocomplete="off" placeholder="填写歌手名">
+            <button class="pop-go" id="coverStartBtn" type="button">开始</button>
+          </div>
+          <p class="pop-note" id="coverNote" role="status" aria-live="polite"></p>
+          <button class="pop-item" id="coverRestoreBtn" type="button"><span>恢复原封面</span></button>
+          <button class="pop-item" id="coverCloseBtn" type="button">关闭</button>
         </div>
       </section>
 
@@ -448,10 +467,11 @@
   <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
   <symbol id="i-move" viewBox="0 0 24 24"><path d="M12 4.6v14.8M4.6 12h14.8"/><path d="m9.4 7.2 2.6-2.6 2.6 2.6"/><path d="m9.4 16.8 2.6 2.6 2.6-2.6"/><path d="m7.2 9.4-2.6 2.6 2.6 2.6"/><path d="m16.8 9.4 2.6 2.6-2.6 2.6"/></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9.2" y="9.2" width="10.4" height="10.4" rx="2"/><path d="M6.6 14.8H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6.8a2 2 0 0 1 2 2v.6"/></symbol>
+  <symbol id="i-disc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2"/><path d="M7 12a5 5 0 0 1 5-5"/></symbol>
 </defs></svg>
 
 <script src="app.js" defer></script>
-<script>window.__HANA_BUILD = "1003131667";</script>
+<script>window.__HANA_BUILD = "1003131668";</script>
 <script type="module">
   import { hana } from "./sdk.js";
   window.hana = hana;

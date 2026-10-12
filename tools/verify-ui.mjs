@@ -233,6 +233,7 @@ function serveAudio(req, res) {
   return res.end(wav);
 }
 
+let coverRequests = [], coverDelay = 0, coverFail = false, coverImageBad = false;
 const server = http.createServer((req, res) => {
   const u = new URL(req.url, 'http://127.0.0.1');
   const p = u.pathname;
@@ -249,6 +250,18 @@ const server = http.createServer((req, res) => {
   }
 
   // 假后端
+  if (p === API + '/widget/api/music/cover-catalog') {
+    const kind = u.searchParams.get('kind'); coverRequests.push(kind);
+    let body;
+    const entry = { title: '稻香', songId: 185709, artists: [{ id: 6452, name: '周杰伦' }], albumId: 18877, album: '魔杰座', subType: '录音室版', published: 2008, pic: coverImageBad ? WAV_URL : COVER_SQUARE };
+    if (coverFail) body = { ok: false, error: '上游返回 -462' };
+    else if (kind === 'artist') body = { ok: true, artist: { id: 6452, name: '周杰伦' } };
+    else if (kind === 'albums') body = { ok: true, albums: [{ id: 18877, name: '魔杰座' }], more: false };
+    else if (kind === 'album') body = { ok: true, tracks: [{ ...entry, albumId: 10, album: '超时代演唱会', published: 2010 }, { ...entry, albumId: 9, album: '精选集', published: 2000 }, entry, { ...entry, songId: 185912, title: '枫', album: '11月的萧邦', published: 2005 }] };
+    else body = { ok: true, title: '周杰伦 全集' };
+    if (coverDelay) return setTimeout(() => { if (!res.destroyed) json(res, 200, body); }, coverDelay);
+    return json(res, 200, body);
+  }
   if (p === API + '/widget/api/playlist') {
     if (req.method === 'POST') {
       let body = '';
@@ -867,6 +880,81 @@ async function verifyLyricFlow() {
   assert('lyrics-last-phrase-has-finite-position-and-stops-frames', last.index === 6 && last.focus === 6 && !last.raf && Number.isFinite(last.position), JSON.stringify(last));
   await page.close();
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+}
+async function verifyCoverFill() {
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+  const bili = (id, title, list = 'imp:1') => ({ id: 'bilibili:' + id, name: title, pic: '', list, mode: '在线', url: WAV_URL });
+  const id = 'bilibili:BV16XpM6EEtF_1';
+  persistedPlaylist = [bili('BV16XpM6EEtF_1', '周杰伦 - 稻香'), bili('BV16XpM6EEtF_2', '周杰伦 - 枫'), bili('BV16XpM6EEtF_3', '周杰伦 - 稻香 (Live)'),
+    bili('BV16XpM6EEtF_1', '周杰伦 - 稻香', 'fav'), bili('BV16XpM6EEtF_1', '周杰伦 - 稻香', 'recent'),
+    { ...bili('BV16XpM6EEtF_4', '周杰伦 - 稻香'), pic: COVER },
+    { id: 'netease:1', name: '网易曲目', pic: COVER, list: 'imp:1', mode: '在线', url: WAV_URL }];
+  coverRequests = []; coverFail = coverImageBad = false; coverDelay = 0;
+  const page = await newPage();
+  await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
+  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__playerDebug && document.querySelector('#listTabs .list-tab[data-list="imp:1"]'));
+  await clickTab(page, 'imp:1');
+  const clean = await page.evaluate(() => ['周杰伦 - 枫', '周杰伦 - 默', '周杰伦 - 扯', '蔡依林、周杰伦 - 布拉格广场', '纯音乐 2011 09 07 今日から思い出 (从今天起成为回忆)', '周杰伦 - 稻香 (Live)'].map(window.__playerDebug.cleanCoverQuery));
+  assert('cover-clean-keeps-single-character-songs', clean.slice(0, 3).map(q => q.song).join(',') === '枫,默,扯');
+  assert('cover-clean-preserves-multiple-artists', clean[3].artists.join(',') === '蔡依林,周杰伦');
+  assert('cover-clean-aimer-dates-translations-and-instrumental-heading', clean[4].song === '今日から思い出' && clean[4].ok);
+  assert('cover-clean-skips-live-versions', !clean[5].ok);
+  const picked = await page.evaluate(() => {
+    const artist = { id: 6452, name: '周杰伦' }, d = window.__playerDebug;
+    const s = { title: '稻香', artists: [artist], albumId: 2, album: '魔杰座', pic: '/original', published: 2008 };
+    const songs = [{ ...s, artists: [{ id: 1, name: '翻唱者' }], album: '翻唱', published: 1990 }, { ...s, album: '演唱会', published: 2000 }, { ...s, album: '精选集', published: 1999 }, { ...s, album: '魔杰座再版', published: 2020 }, s];
+    return [d.pickCoverMatch('周杰伦 - 稻香', artist, songs), d.pickCoverMatch('周杰伦、陈奕迅 - 稻香', artist, songs), d.pickCoverMatch('周杰伦 - 稻香 (Live)', artist, songs)];
+  });
+  assert('cover-match-selects-original-before-covers-live-compilation-reissue', picked[0].album === '魔杰座' && !picked[1] && !picked[2]);
+  await page.click('#importBtn'); await page.click('[data-import="covers"]');
+  assert('cover-menu-opens-prefilled-current-list', await page.$eval('#coverArtist', el => el.value) === '周杰伦' && await page.$eval('#coverPop', el => !el.hidden));
+  for (const [width, height] of [[312, 930], [465, 930], [1040, 780]]) {
+    await page.setViewport({ width, height, deviceScaleFactor: 1 }); await sleep(70);
+    if (width >= 720) { await page.click('#queueBtn'); await sleep(400); }
+    await page.evaluate(() => window.__playerDebug.openCoverPanel('imp:1'));
+    const fits = await page.$eval('#coverPop', el => { const r = el.getBoundingClientRect(); return el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight; });
+    assert('cover-panel-fits-' + width, fits);
+    await page.screenshot({ path: path.join(outDir, 'cover-panel-' + width + '.png') });
+  }
+  await page.evaluate(() => window.__playerDebug.startCoverFill());
+  const copies = await page.evaluate(id => window.__playerDebug.coverInfo(id), id);
+  assert('cover-fill-syncs-source-favorite-and-recent-copies', copies.length === 3 && copies.every(t => t.pic === COVER_SQUARE && t.match.originalPic === '' && t.match.album === '魔杰座'), JSON.stringify(copies));
+  assert('cover-fill-preserves-live-custom-and-other-platform-covers', !persistedPlaylist.find(t => t.id.endsWith('_3')).pic && persistedPlaylist.find(t => t.id.endsWith('_4')).pic === COVER && persistedPlaylist.find(t => t.id === 'netease:1').pic === COVER);
+  assert('cover-fill-saves-match-provenance', persistedPlaylist.filter(t => t.id === id).every(t => t.coverMatch.songId === 185709 && t.coverMatch.source === 'netease'));
+  await page.evaluate(() => window.__playerDebug.startCoverFill());
+  assert('cover-repeat-preserves-original-backup', (await page.evaluate(id => window.__playerDebug.coverInfo(id), id)).every(t => t.match.originalPic === ''));
+  await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__playerDebug && document.querySelector('#listTabs .list-tab[data-list="imp:1"]'));
+  await page.evaluate(() => window.__playerDebug.openCoverPanel('imp:1'));
+  await page.evaluate(() => window.__playerDebug.restoreCovers('imp:1'));
+  assert('cover-restore-after-reload-syncs-copies-and-removes-binding', (await page.evaluate(id => window.__playerDebug.coverInfo(id), id)).every(t => t.pic === '' && !t.match) && persistedPlaylist.filter(t => t.id === id).every(t => !t.coverMatch && !t.pic));
+  coverDelay = 500;
+  await page.evaluate(() => { window.__playerDebug.startCoverFill(); });
+  await page.click('#coverCloseBtn'); await sleep(650); coverDelay = 0;
+  assert('cover-stop-prevents-commit-and-further-catalog-requests', (await page.evaluate(id => window.__playerDebug.coverInfo(id), id)).every(t => !t.match) && await page.$eval('#coverNote', el => el.textContent.includes('已停止')));
+  coverFail = true;
+  await page.evaluate(() => window.__playerDebug.startCoverFill()); coverFail = false;
+  assert('cover-metadata-failure-preserves-original', (await page.evaluate(id => window.__playerDebug.coverInfo(id), id)).every(t => !t.match) && await page.$eval('#coverNote', el => el.textContent.includes('-462')));
+  coverImageBad = true;
+  await page.evaluate(() => window.__playerDebug.startCoverFill()); coverImageBad = false;
+  assert('cover-undecodable-image-is-not-written', (await page.evaluate(id => window.__playerDebug.coverInfo(id), id)).every(t => !t.match) && await page.$eval('#coverNote', el => el.textContent.includes('失败 2 首')));
+  await page.evaluate(async () => {
+    const fetchBefore = window.fetch;
+    window.fetch = function (url, opts) { return String(url).includes('/widget/api/playlist') && opts && opts.method === 'POST' ? Promise.resolve(new Response('{}', { status: 500 })) : fetchBefore.apply(this, arguments); };
+    await window.__playerDebug.startCoverFill(); window.fetch = fetchBefore;
+  });
+  assert('cover-save-failure-rolls-back-pics-and-backups', (await page.evaluate(id => window.__playerDebug.coverInfo(id), id)).every(t => t.pic === '' && !t.match) && await page.$eval('#coverNote', el => el.textContent.includes('保存失败')));
+  await page.close();
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+}
+await verifyCoverFill();
+if (process.argv.includes('--covers-only')) {
+  fs.writeFileSync(path.join(outDir, 'verify-covers.json'), JSON.stringify(report, null, 2));
+  console.log(JSON.stringify({ assertions: `${report.assertions.filter(a => a.ok).length}/${report.assertions.length}`, failed: report.assertions.filter(a => !a.ok), runtimeErrors: report.runtimeErrors }, null, 2));
+  await browser.close(); server.closeAllConnections(); server.close();
+  process.exit(report.assertions.some(a => !a.ok) || report.runtimeErrors.length ? 1 : 0);
 }
 await verifySurfaceMotion();
 if (process.argv.includes('--surface-motion-only')) {

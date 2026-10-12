@@ -99,6 +99,7 @@
     radioPrograms: API + '/widget/api/music/radio-programs',
     biliParts: API + '/widget/api/music/bili-parts',
     biliResolve: API + '/widget/api/music/bili-resolve',
+    coverCatalog: API + '/widget/api/music/cover-catalog',
     importFile: API + '/widget/api/import-file',
     scanFolder: API + '/widget/api/scan-folder',
     playbackState: API + '/api/playback-state'
@@ -4774,6 +4775,7 @@
     if (listPop) listPop.hidden = true;
     if (movePop) movePop.hidden = true;
     if (rippleToolPop) closeRippleTool();
+    if (coverPanel && !coverJob) { coverPanel.hidden = true; ++coverPanelSeq; }
     $('importBtn').setAttribute('aria-expanded', 'false');
     moreTargetUid = null;
     moreAnchor = null;
@@ -5518,6 +5520,218 @@
       toast('歌手补全完成：' + ok + '/' + targets.length);
     });
   }
+
+  /* ---------- B站封面补全：独立于歌词清洗，手动启动，按稳定 id 同步副本 ---------- */
+  function coverKey(s) {
+    return String(s || '').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+  }
+  function cleanCoverQuery(title) {
+    var s = String(title || '').normalize('NFKC').trim();
+    var unsafe = /\blive\b|现场|演唱会|串烧|合集|digest|teaser|伴奏|off.?vocal|instrumental|karaoke/i.test(s);
+    var artists = [], split = /^(.+?)\s+[-–—]\s+(.+)$/.exec(s);
+    if (split) { artists = split[1].split(/[、/&]|\s+x\s+/i).map(function (n) { return n.trim(); }).filter(Boolean); s = split[2]; }
+    var book = /《([^》]+)》/.exec(s);
+    if (book) s = book[1];
+    s = s.replace(/^纯音乐\s*/, '').replace(/^\d{4}\s+\d{1,2}\s+\d{1,2}\s*/, '')
+      .replace(/\s*\[.*$/, '').replace(/\s*[（(][^()（）]*[)）]/g, '').trim();
+    // +、斜线可能是联唱；没有显式歌手限定时宁可保留原图。
+    if (/[+／/]/.test(s)) unsafe = true;
+    return { song: s, artists: artists, ok: !!coverKey(s) && !unsafe };
+  }
+  function pickCoverMatch(title, artist, dictionary) {
+    var q = cleanCoverQuery(title);
+    if (!q.ok || !artist) return null;
+    // 已标明其他歌手/合唱时不强行按整个合集的歌手套封面。
+    if (q.artists.length && (q.artists.length !== 1 || coverKey(q.artists[0]) !== coverKey(artist.name))) return null;
+    var hits = dictionary.filter(function (s) {
+      if (coverKey(s.title) !== coverKey(q.song)) return false;
+      if (/\blive\b|现场|演唱会|remix|混音|伴奏|instrumental|karaoke/i.test(s.title + ' ' + s.album + ' ' + s.subType)) return false;
+      var names = s.artists || [];
+      return names.length === 1 && Number(names[0].id) === Number(artist.id) && !!s.pic;
+    });
+    function compilation(s) { return /精选|精选集|best|collection|精选辑|拍档/i.test(s.album + ' ' + s.albumType) ? 1 : 0; }
+    hits.sort(function (a, b) {
+      return compilation(a) - compilation(b) || (a.published || Infinity) - (b.published || Infinity) || a.albumId - b.albumId;
+    });
+    return hits[0] || null;
+  }
+  function coverTargets(listId, includeMatched) {
+    var seen = Object.create(null);
+    return state.tracks.filter(function (t) {
+      if (t.list !== listId || t.detached || t.id.indexOf('bilibili:') !== 0 || seen[t.id]) return false;
+      seen[t.id] = true;
+      if (!includeMatched && t.raw.coverMatch) return false;
+      // 已有自选/非B站封面不覆盖。
+      return includeMatched || !t.pic || /^https?:\/\/[^/]*hdslb\.com\//i.test(t.pic);
+    });
+  }
+  var coverPanel = $('coverPop'), coverListId = '', coverJob = null, coverPanelSeq = 0;
+  function coverStatus(s) { $('coverNote').textContent = s; }
+  function coverPanelBusy(busy) {
+    $('coverArtist').disabled = busy;
+    $('coverStartBtn').disabled = busy;
+    $('coverRestoreBtn').disabled = busy;
+    $('coverCloseBtn').disabled = false;
+    $('coverCloseBtn').textContent = busy ? '停止' : '关闭';
+  }
+  async function coverData(query, signal) {
+    var res = await apiJson(ENDPOINT.coverCatalog + '?' + new URLSearchParams(query), { cache: 'no-store', signal: signal });
+    if (!res.ok || !res.body || !res.body.ok) throw new Error((res.body && res.body.error) || '封面接口请求失败');
+    return res.body;
+  }
+  function guessCoverArtist(text) {
+    // 已实测的合集标题格式；没有可靠线索就留空，让用户填写，不把 UP 主当歌手。
+    var hit = /周杰伦|陶喆|\bAimer\b/i.exec(String(text || ''));
+    return hit ? (/aimer/i.test(hit[0]) ? 'Aimer' : hit[0]) : '';
+  }
+  async function openCoverPanel(listId) {
+    if (coverJob) { placePop(coverPanel, $('importBtn')); return; }
+    coverListId = listId || state.activeList;
+    var seq = ++coverPanelSeq, list = findList(coverListId), ts = coverTargets(coverListId, true);
+    closePops();
+    $('coverTitle').textContent = '补全封面 · ' + ((list && list.name) || defaultListName(coverListId));
+    var counts = Object.create(null);
+    ts.forEach(function (t) { var q = cleanCoverQuery(t.title); if (q.artists.length === 1) counts[q.artists[0]] = (counts[q.artists[0]] || 0) + 1; });
+    var names = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; });
+    var guess = names.length === 1 ? names[0] : guessCoverArtist(list && list.name);
+    var input = $('coverArtist'); input.value = guess; coverPanelBusy(false);
+    coverStatus(ts.length ? '只处理本歌单的 B站曲目；同曲的喜欢和历史副本会同步。' : '本歌单没有 B站曲目。');
+    placePop(coverPanel, $('importBtn'));
+    input.focus();
+    if (!guess && ts.length) {
+      var bv = ts[0].id.slice('bilibili:'.length).split('_')[0];
+      // 仅当全组来自同一个视频才把视频标题当共同上下文。
+      if (ts.every(function (t) { return t.id.split(':')[1].split('_')[0] === bv; })) {
+        try {
+          var context = await coverData({ kind: 'context', bvid: bv });
+          if (seq === coverPanelSeq && !coverPanel.hidden && !coverJob && !input.value) input.value = guessCoverArtist(context.title);
+        } catch (e) { /* 上下文探测失败仍可手填，不阻塞操作。 */ }
+      }
+    }
+  }
+  function closeCoverPanel() {
+    if (coverJob) { if (!coverJob.saving) coverJob.controller.abort(); return; }
+    ++coverPanelSeq;
+    coverPanel.hidden = true;
+  }
+  function probeCoverImage(pic, signal) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image(), timer;
+      function done(ok) {
+        clearTimeout(timer); img.onload = img.onerror = null;
+        signal.removeEventListener('abort', abort);
+        if (signal.aborted) reject(new DOMException('Aborted', 'AbortError')); else resolve(ok);
+      }
+      function abort() { img.removeAttribute('src'); done(false); }
+      if (signal.aborted) { abort(); return; }
+      signal.addEventListener('abort', abort, { once: true });
+      img.crossOrigin = 'anonymous';
+      img.onload = function () { done(img.naturalWidth > 0); }; img.onerror = function () { done(false); };
+      timer = setTimeout(function () { img.removeAttribute('src'); done(false); }, 8000);
+      img.src = withSession(pic);
+    });
+  }
+  function applyCoverMatch(id, match, artist, at) {
+    var snapshots = [];
+    state.tracks.forEach(function (t) {
+      if (t.id !== id || t.detached) return;
+      // 同 id 的各列表副本保持一致，但各自备份各自的原图。
+      snapshots.push({ uid: t.uid, pic: t.pic, metadata: t.raw.coverMatch });
+      var old = t.raw.coverMatch;
+      t.raw.coverMatch = { originalPic: old && typeof old.originalPic === 'string' ? old.originalPic : t.pic,
+        source: 'netease', artistId: artist.id, artist: artist.name, songId: match.songId,
+        albumId: match.albumId, album: match.album, pic: match.pic, at: at };
+      t.pic = t.raw.pic = match.pic;
+    });
+    return snapshots;
+  }
+  function rollbackCovers(snapshots) {
+    snapshots.forEach(function (s) {
+      var t = trackByUid(s.uid); if (!t) return;
+      t.pic = t.raw.pic = s.pic;
+      if (s.metadata) t.raw.coverMatch = s.metadata; else delete t.raw.coverMatch;
+    });
+    renderQueue(); renderTrack();
+  }
+  async function startCoverFill() {
+    if (coverJob) return;
+    var listId = coverListId, targets = coverTargets(listId, false);
+    if (!targets.length) { coverStatus('没有待补全的 B站曲目；已匹配曲目会跳过。'); return; }
+    var name = $('coverArtist').value.trim();
+    if (!name) { coverStatus('请先填写这组曲目的歌手。'); $('coverArtist').focus(); return; }
+    var job = { controller: new AbortController(), saving: false }, signal = job.controller.signal;
+    coverJob = job; coverPanelBusy(true);
+    var changed = 0, skipped = 0, failed = 0, snapshots = [];
+    try {
+      coverStatus('查找歌手…');
+      var found = await coverData({ kind: 'artist', name: name }, signal), artist = found.artist;
+      var albums = [], offset = 0, dictionary = [];
+      do {
+        var page = await coverData({ kind: 'albums', id: artist.id, offset: offset }, signal);
+        albums = albums.concat(page.albums); offset += page.albums.length;
+        if (page.more && (!page.albums.length || offset > 2000)) throw new Error('专辑列表不完整，请稍后重试');
+      } while (page.more);
+      for (var i = 0; i < albums.length; i++) {
+        if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+        coverStatus('读取 ' + artist.name + ' 的专辑 ' + (i + 1) + '/' + albums.length + '…');
+        var album = await coverData({ kind: 'album', id: albums[i].id }, signal);
+        dictionary = dictionary.concat(album.tracks);
+      }
+      var ready = [], imageResults = Object.create(null);
+      for (var j = 0; j < targets.length; j++) {
+        if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+        coverStatus('匹配封面 ' + (j + 1) + '/' + targets.length + '…');
+        var t = targets[j], match = pickCoverMatch(t.title, artist, dictionary);
+        if (!match) { skipped++; continue; }
+        if (!(match.pic in imageResults)) imageResults[match.pic] = await probeCoverImage(match.pic, signal);
+        if (!imageResults[match.pic]) { failed++; continue; }
+        ready.push({ id: t.id, match: match });
+      }
+      if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+      job.saving = true;
+      $('coverCloseBtn').disabled = true;
+      // 扫描期间可能切换/删除歌单；提交前重新确认原歌单仍有该曲目，不影响其他歌单。
+      var currentIds = coverTargets(listId, false).map(function (t) { return t.id; }), at = Date.now();
+      ready.forEach(function (r) {
+        if (currentIds.indexOf(r.id) < 0) { skipped++; return; }
+        snapshots = snapshots.concat(applyCoverMatch(r.id, r.match, artist, at)); changed++;
+      });
+      if (changed) {
+        renderQueue(); renderTrack();
+        var saved = await savePlaylist();
+        if (!saved || !saved.ok) { rollbackCovers(snapshots); changed = 0; throw new Error('保存失败，已恢复原封面'); }
+      }
+      coverStatus('替换 ' + changed + ' 首 · 跳过 ' + skipped + ' 首 · 失败 ' + failed + ' 首');
+      toast('封面补全完成：' + changed + ' 首');
+    } catch (e) {
+      coverStatus(signal.aborted ? '已停止；原封面保留，已读取的专辑下次可复用。' : '补全未完成：' + e.message + '。原封面保留。');
+    } finally { if (coverJob === job) coverJob = null; coverPanelBusy(false); }
+  }
+  async function restoreCovers(listId) {
+    if (coverJob) return;
+    listId = listId || coverListId || state.activeList;
+    var ids = coverTargets(listId, true).filter(function (t) { return t.raw.coverMatch && typeof t.raw.coverMatch.originalPic === 'string'; }).map(function (t) { return t.id; });
+    if (!ids.length) { coverStatus('没有可恢复的原封面。'); return; }
+    var snapshots = [], job = { saving: true }; coverJob = job; coverPanelBusy(true); $('coverCloseBtn').disabled = true;
+    state.tracks.forEach(function (t) {
+      var m = t.raw.coverMatch;
+      if (ids.indexOf(t.id) < 0 || !m || typeof m.originalPic !== 'string') return;
+      snapshots.push({ uid: t.uid, pic: t.pic, metadata: m });
+      t.pic = t.raw.pic = m.originalPic; delete t.raw.coverMatch;
+    });
+    renderQueue(); renderTrack();
+    try {
+      var saved = await savePlaylist();
+      if (!saved || !saved.ok) throw new Error('保存失败');
+      coverStatus('已恢复 ' + ids.length + ' 首原封面，其他列表副本已同步。'); toast('已恢复原封面');
+    } catch (e) { rollbackCovers(snapshots); coverStatus('恢复失败，请稍后重试。'); }
+    finally { coverJob = null; coverPanelBusy(false); }
+  }
+  $('coverStartBtn').addEventListener('click', startCoverFill);
+  $('coverRestoreBtn').addEventListener('click', function () { restoreCovers(coverListId); });
+  $('coverCloseBtn').addEventListener('click', closeCoverPanel);
+  $('coverArtist').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); startCoverFill(); } });
+  $('listCoverBtn').addEventListener('click', function () { openCoverPanel(listDeleteTarget); });
 
   /* ============================================================
      搜索页（罐头最初需求：左下角换搜索入口 + 一个搜索页）
@@ -6476,6 +6690,7 @@
       if (kind === 'file') importLocalFiles();
       else if (kind === 'folder') pickLocalFolder();
       else if (kind === 'backfill') backfillArtists();
+      else if (kind === 'covers') openCoverPanel(state.activeList);
       return;
     }
     if (e.target.closest('#linkAddBtn')) {
@@ -6496,6 +6711,7 @@
 
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
+    if (coverPanel && !coverPanel.hidden) { e.preventDefault(); closeCoverPanel(); return; }
     if (lyricAlign && !lyricAlign.saving) { e.preventDefault(); closeLyricAlign(); return; }
     var lm = $('lyricMatchPop');
     if (lm && !lm.hidden) { closeLyricMatch(); return; }   // 手动匹配面板最上层
@@ -7194,6 +7410,12 @@
   window.__playerSelfCheck = runSelfCheck;
   /* 自检钩子：涟漪可观测状态 + 测试时手动喂波（测试用）。 */
   window.__playerDebug = {
+    cleanCoverQuery: cleanCoverQuery,
+    pickCoverMatch: pickCoverMatch,
+    openCoverPanel: openCoverPanel,
+    startCoverFill: startCoverFill,
+    restoreCovers: restoreCovers,
+    coverInfo: function (id) { return state.tracks.filter(function (t) { return t.id === id; }).map(function (t) { return { uid: t.uid, pic: t.pic, match: t.raw.coverMatch || null }; }); },
     rippleState: function () { return rippleHandle ? rippleHandle.stats() : { exists: false }; },
     ripplePoke: function (x, y, strong) { return rippleHandle ? rippleHandle.poke(x, y, strong) : 0; },
     rippleAudio: function () { return rippleHandle ? rippleHandle.audioState() : { exists: false }; },
