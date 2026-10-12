@@ -34,6 +34,7 @@ const EXCLUDE = new Set([
   ".git",
   ".github",
   ".backups",
+  ".impeccable", // 本地评审工具产物，非运行时
   "docs", // 54MB 设计稿 + 交接文档
   "node_modules",
   "dist",
