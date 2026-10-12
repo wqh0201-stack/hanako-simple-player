@@ -605,6 +605,18 @@ app-data（`~/.hanako/app-data/hanako-simple-player/`：`playlist.json` /
   断言 `welcome-song-seeds-once-when-empty` / `welcome-song-not-reseeded` /
   `first-run-card-teaches-how-to-add` / `first-run-card-hint-follows-layout`，验收 **310/310**。
   交接：`docs/player-ui/WELCOME-SONG.md`。
+- **B站合集封面补全（网易云单源）**（2026-10-12，**已部署**，构建号 1003131668，版本 **1.0.7**）：
+  当前歌单队列头部「＋」→「补全封面…」（导入歌单也可右键/长按歌单标签进入）。按歌手分页取专辑、
+  逐张读网易云官方元数据（`lib/cover-catalog.js`，路由 `/widget/api/music/cover-catalog`，kind=artist/albums/album/context）；
+  七天缓存、全实例串行 350ms、每请求最多三次；失败不缓存空结果、任一专辑失败本轮不提交。
+  歌手预填来自曲目显式前缀或已验证的合集标题（周杰伦 6452 / 陶喆 5196 / Aimer 16152），可手改，UP 主不作歌手。
+  标题归一后精确匹配（支持单字歌名/日期/译名/「纯音乐」区段）；明确 LIVE/串烧/合唱或歌手不一致保留原图；
+  排除现场/Remix/伴奏候选，优先非精选集再按最早发行日期；图片加载成功才替换。替换 `pic` 并备份 `raw.coverMatch`，
+  同稳定 B站 id 的其他列表副本同步、各自保存原图；「恢复原封面」同步所有副本、重载后仍可恢复。
+  验收：cover-catalog **8/8**（离线）、backend **32/32**、封面专项浏览器断言 **18/18**；全量 verify-ui **337/367**
+  （30 项音频/沉浸动效失败全在原始基线集合内，新增失败为零，需真机复核，**不算全量通过**）。
+  **真机验收通过（2026-10-12，罐头确认全部 ok）**。交接：`docs/player-ui/BILI-COVER-MATCH-DONE.md`；
+  接口与匹配策略已沉淀知识库 `20-资料/网易云官方元数据-歌手专辑接口与封面匹配.md`。
 - 待办：独立窗/小卡音频不中断（pagehide/beacon 落盘 + 续播，2026-10-10 两轮：快照自带曲目 +
   换曲即落盘 + 进度护栏 + 媒体时钟进度 + seek 落点前不起播 + boot 提速，构建号 1003131614，
   **真机已复核（2026-10-10，罐头确认「ok 了」）**；剩余「一小段静默」是换文档重连媒体的固有代价，
