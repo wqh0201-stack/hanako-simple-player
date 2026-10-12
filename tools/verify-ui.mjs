@@ -1800,11 +1800,10 @@ const rippleAudio = {};
   const agg = (r) => {
     const S = (r && r.S) || [];
     const max = (f) => S.length ? Math.max(...S.map(f)) : 0;
-    /* 「有界」判据：用**绝对水平 + 峰值增长**，不用均值/中位数前后半比。
-       实测对照（拆掉封顶/阻尼的坏版本）：均值·中位数比值对坏版本**无区分力**
-       （坏版本 2s 内就饱和，比值仍≈1.0），且受负载影响会假越线（实测 1.34）。
-       绝对水平区分得很干净：正常 max 0.002~0.0033；拆封顶 0.0076；拆阻尼 0.0058~0.0095；
-       两者都拆 3.8。峰值增长（后半峰 vs 前半峰）则能抓住真正“越播越大”的无界增长。 */
+    /* 前后半峰值只作诊断，不作「有界」判据：预热后的头一两秒仍可能爬升，
+       前半峰值偏低会使正常场假越线（整套复现 0.00174 → 0.00333，约 1.91 倍）。
+       全采样（含预热）的绝对上限不依赖窗口切分，也能抓住快速饱和的坏版本；
+       均值/中位数前后半比则会把这种坏版本放过（饱和后比值仍≈1.0）。 */
     const settled = S.filter((x) => x.t >= 1.5).map((x) => x.field);
     const half = Math.floor(settled.length / 2);
     const h1 = settled.slice(0, half), h2 = settled.slice(half);
@@ -1815,6 +1814,7 @@ const rippleAudio = {};
       kinds: S.length ? S[S.length - 1].kinds : null,
       maxHFast: max((x) => x.hFast || 0), maxMFast: max((x) => x.mFast || 0),
       maxWaves: max((x) => x.waves), maxAudioWaves: max((x) => x.audioWaves),
+      fieldValid: S.length > 0 && S.every((x) => Number.isFinite(x.field) && x.field >= 0),
       maxField: max((x) => x.field),
       halfMaxFirst: h1.length ? Math.max(...h1) : 0,
       halfMaxLast: h2.length ? Math.max(...h2) : 0,
@@ -1823,8 +1823,8 @@ const rippleAudio = {};
   };
 
   // ① 持续 80Hz 低音：宽缓场持续在线，预热后不持续生成短波（连续 Bass 不调 drop）
-  //    采 9s（不是 5s）：bassField 是周期 2~3s 的松弛振荡，5s 窗对半切只有 1.75s/半，
-  //    会落到不同相位而假越线（实测最坏中位数比 1.37）；9s 窗每半 >1 个周期，实测 0.91~1.12。
+  //    采 9s，覆盖预热与夹具循环；100ms 采样的 bassField 才是真实能量，
+  //    rippleState().field 在 inject() 时会置 1 作活动标记，不能拿它判断能量。
   const steady = agg(await playSynth('steady-bass', 9));
   rippleAudio.steady = steady;
   assert('ripple-steady-bass-keeps-wide-field-without-waves',
@@ -1963,13 +1963,13 @@ const rippleAudio = {};
   }
 
   // ⑦ 连续低频长播：场能量有界，不随播放时间无限增长
-  //    ① 绝对上限：正常 max 0.002~0.0033；拆封顶 0.0076；拆阻尼 0.0058~0.0095；两者都拆 3.8。
-  //    ② 峰值增长：后半段峰值不高于前半段峰值的 1.6 倍（实测正常 ≈0.9~1.2）。
+  //    守住每个样本的数值有效性 + 原有绝对上限，不用对半峰值比（受爬升/相位影响）。
+  //    同夹具对照：正常 5/5 通过（max 0.00305~0.00345）；去封顶 3/3 失败
+  //    （0.01810~0.02006）；阻尼 0.976 → 1.0 也 3/3 失败（0.00639~0.01036）。
+  //    「有场」由上面的 steady-bass 断言另验，零注入不能通过整套验收。
   assert('ripple-continuous-bass-field-bounded',
-    steady.settledN >= 8 &&
-    steady.maxField < 0.005 &&
-    steady.halfMaxLast <= Math.max(steady.halfMaxFirst, 1e-4) * 1.6,
-    JSON.stringify({ max: steady.maxField, halfMaxFirst: steady.halfMaxFirst,
+    steady.settledN >= 8 && steady.fieldValid && steady.maxField < 0.005,
+    JSON.stringify({ max: steady.maxField, fieldValid: steady.fieldValid, halfMaxFirst: steady.halfMaxFirst,
       halfMaxLast: steady.halfMaxLast, settledN: steady.settledN }));
 
   // ⑧ 倍率只改观感：不动音量、不参与起音路径（源码级守卫 §5 陷阱）
