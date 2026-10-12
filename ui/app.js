@@ -1091,6 +1091,74 @@
     var l = polarity === 'dark' ? 0.72 : 0.40;  // 深纱亮、浅纱暗
     return fromHsl(h, s, l);
   }
+
+  /* ============================================================
+     涟漪三层色（bass 光波 / 鼓点等高线 / 镲片小环）
+     ------------------------------------------------------------
+     设计约束（罐头 2026-10-12）：
+       ① 不跟歌词色（--hl-accent）混 —— 每层偏一定色相角，与歌词拉开；
+       ② “弱一档” —— 饱和度相比歌词色降一档（更素，不抢镜头）；
+       ③ 不被封面环境色吃掉 —— 与背景保持最低对比度。
+     做法：以歌词色（同 --hl-accent 的派生 h/s）为基，逐层偏色相 + 降饱和，
+     明度从设计基线出发、**仅在必要时**向远端微移，直到与背景对比达标（solveByContrast）。
+     为什么不能只固定明度：背景是封面主色，可为任意明度；中调背景上固定明度必撞车
+     （实测最弱对比 1.1，等于隐形）。
+     ============================================================ */
+  var RIPPLE_HUE_OFF = { bass: -30, kick: 16, mid: 34, hat: 60 };   // 色相偏移（度）
+  /* 饱和度倍率（“弱一档”）：相对歌词色降一档，但不降成灰 ——
+     实测降太狠（0.78）时三层在强饱和背景上会掳成一堆低饱和色，看不清。 */
+  var RIPPLE_SAT_MUL = { bass: 0.86, kick: 0.90, mid: 0.92, hat: 0.96 };
+  var RIPPLE_LIGHT_BASE = { bass: 0.60, kick: 0.60, mid: 0.61, hat: 0.62 }; // 深底明度基线
+  var RIPPLE_DARK_BASE = { bass: 0.42, kick: 0.42, mid: 0.43, hat: 0.44 };  // 浅底明度基线
+  /* 与背景的最低对比。细线/细光波要 **4.0** 才真正看得清 ——
+     实测 2.2 时「数学及格、肉眼隐形」（罐头 2026-10-12 真机反馈）。 */
+  var RIPPLE_MIN_CONTRAST = 4.0;
+  /* 对比度（WCAG 相对亮度比）：与 lumOf 同一套系数，避免两处口径不一致。 */
+  function contrastOf(a, b) {
+    var la = lumOf(a), lb = lumOf(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  }
+  /* 解一个明度：从 baseL 向两端对称扩散，取第一个对比达标的 L；
+     全都不达标时退而取对比最大者。返回 [r,g,b]。 */
+  function solveByContrast(h, s, bg, baseL, floor) {
+    floor = floor || RIPPLE_MIN_CONTRAST;
+    var best = null;
+    for (var d = 0; d <= 200; d += 2) {   // d 单位为 1/100，上限 2.0（可一路扫到两端）
+      var dd = d / 100;
+      var tries = d === 0 ? [baseL] : [baseL - dd, baseL + dd];
+      for (var i = 0; i < tries.length; i++) {
+        var L = tries[i];
+        if (L < 0.04 || L > 0.96) continue;
+        var c = fromHsl(h, s, L);
+        if (contrastOf(c, bg) >= floor) { if (!best || dd < best.d) best = { d: dd, c: c }; }
+      }
+      if (best && best.d <= dd) break;
+    }
+    if (best) return best.c;
+    var fallback = null, fbCt = -1;
+    for (var L2 = 4; L2 <= 96; L2 += 2) {
+      var c2 = fromHsl(h, s, L2 / 100);
+      var ct = contrastOf(c2, bg);
+      if (ct > fbCt) { fbCt = ct; fallback = c2; }
+    }
+    return fallback || fromHsl(h, s, 0.5);
+  }
+  /* 从「歌词色基」（同一个 h/s 派生源）生成三层色。
+     accent = 歌词色（用于反推其 h/s 基），bg = 背景主色，polarity = 'light'/'dark'。 */
+  function ripplePalette(accent, bg, polarity) {
+    var ahsl = toHsl(accent);
+    var dark = polarity !== 'light';
+    var out = {};
+    var keys = ['bass', 'kick', 'mid', 'hat'];
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      var h = ahsl[0] + RIPPLE_HUE_OFF[k];
+      var s = Math.max(0.28, Math.min(0.85, ahsl[1] * RIPPLE_SAT_MUL[k]));
+      var baseL = (dark ? RIPPLE_LIGHT_BASE : RIPPLE_DARK_BASE)[k];
+      out[k] = solveByContrast(h, s, bg, baseL);
+    }
+    return out;
+  }
   function rgbStr(c) { return 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')'; }
   /* 解析 CSS 计算出的颜色字符串 → [r,g,b]。
    * 主题变量可能是 #rrggbb / rgb(a)() / color-mix 算完的 rgb() 串；
@@ -1234,20 +1302,50 @@
     else if (toneMq.addListener) toneMq.addListener(onToneMq);
   } catch (e) { /* 老引擎：不管，启动时那一判已够用 */ }
 
+  /* 无封面 / 取色失败时的三层色：以主题底色（--hk-bg）为背景、主题强调色为基，
+     走同一套 ripplePalette（偏色相 + 弱一档 + 对比解算）。
+     为什么不让 CSS 兑底：color-mix 只能做明度/饱和差，四层会掳成一堆低饱和灰。 */
+  function applyRipplePaletteFallback() {
+    var bg = rgbStr2arr(getComputedStyle(player).getPropertyValue('--hk-bg').trim())
+      || (themePolarity() === 'light' ? [248, 244, 237] : [52, 66, 75]);
+    var accentArr = rgbStr2arr(getComputedStyle(document.documentElement).getPropertyValue('--hk-accent').trim())
+      || (themePolarity() === 'light' ? [83, 125, 150] : [201, 154, 175]);
+    var pol = lumOf(bg) > 0.5 ? 'light' : 'dark';
+    /* 主题强调色是主色，不一定是「背景撞色」；无封面时用它派生即可（相移后仍分得开）。 */
+    var pal = ripplePalette(accentArr, bg, pol);
+    player.style.setProperty('--rl-bass', rgbStr(pal.bass));
+    player.style.setProperty('--rl-kick', rgbStr(pal.kick));
+    player.style.setProperty('--rl-mid', rgbStr(pal.mid));
+    player.style.setProperty('--rl-hat', rgbStr(pal.hat));
+  }
+
   function applyAmbient(res) {
     if (!res || !res.color) {
-      /* 取色失败 / 无封面：撤掉主色底，退回主题纸面；字色跟主题 */
+      /* 取色失败 / 无封面：撤掉主色底，退回主题纸面；字色跟主题。
+         但涟漪三层色仍要算（用主题底色当背景）—— 否则交给 CSS 兑底
+         （--hk-accent 混 --hk-surface）会把四层混成一堆低饱和灰，分不出来。 */
       player.style.removeProperty('--ambient-color');
       player.style.removeProperty('--ambient-accent');
       player.classList.remove('ambient-ok');
       player.setAttribute('data-ambient', player.classList.contains('nocover') ? 'none' : themePolarity());
+      applyRipplePaletteFallback();
+      if (rippleHandle) rippleHandle.refreshPalette();
       return;
     }
     player.style.setProperty('--ambient-color', rgbStr(res.color));
     /* 当前句高亮：用背景撞色（互补色相 + 按极性定亮度），不跟随主题强调色 */
-    player.style.setProperty('--ambient-accent', rgbStr(accentFrom(res.color, res.polarity)));
+    var accent = accentFrom(res.color, res.polarity);
+    player.style.setProperty('--ambient-accent', rgbStr(accent));
+    /* 涟漪三层色：以歌词色为基逐层偏色相 + 降饱和（弱一档），明度解算保证不被背景吃掉。 */
+    var pal = ripplePalette(accent, res.color, res.polarity);
+    player.style.setProperty('--rl-bass', rgbStr(pal.bass));
+    player.style.setProperty('--rl-kick', rgbStr(pal.kick));
+    player.style.setProperty('--rl-mid', rgbStr(pal.mid));
+    player.style.setProperty('--rl-hat', rgbStr(pal.hat));
     player.classList.add('ambient-ok');
     player.setAttribute('data-ambient', res.polarity);
+    /* 涟漪三层色已变：让 canvas 重读（它只观察自身尺寸与 body class，不会自己跟）。 */
+    if (rippleHandle) rippleHandle.refreshPalette();
   }
 
   /* 取色还没回来时的临时态：先按主题极性亮字，出结果再校正 */
@@ -1712,7 +1810,7 @@
     var playing = !!(audio && !audio.paused && !audio.ended);
     var destroyed = false, inView = true, drain = 0;
     var point = null, travel = 0, emitted = 0, inputAt = 0, sinceInject = 0;
-    var low = null, lc = null, pixels = null, rgbCache = null, rgbKey = '';
+    var low = null, lc = null, pixels = null;
     var dprQuery;
     var pointerOptions = { passive: true, capture: true };
     var MAX_WAVES = 22, MAX_TRAIL = 40;
@@ -2121,9 +2219,12 @@
       bassField = fieldEnergy;   // 供 driveBass 限注入，避免连续低频无限堆积
     }
 
-    /* 把 --hl-accent 解成 [r,g,b]：能从 rgb() 串直接取就直接取，取不到用 1×1 画布兜底。 */
+    /* 把 CSS 计算后的颜色串解成 [r,g,b]：能直接取 rgb() 就取，否则用 1×1 画布兜底。
+       带一层 cache（按颜色串去重），避免每帧重复建 canvas。 */
+    var rgbCacheMap = {};
     function resolveRGB(col) {
-      if (col === rgbKey && rgbCache) return rgbCache;
+      if (!col) col = 'rgb(0,0,0)';
+      if (rgbCacheMap[col]) return rgbCacheMap[col];
       var out, m = /rgba?\(([^)]+)\)/.exec(col);
       if (m) {
         var q = m[1].split(/[,\s\/]+/);
@@ -2133,7 +2234,26 @@
         var pc = probe.getContext('2d'); pc.fillStyle = col; pc.fillRect(0, 0, 1, 1);
         var d = pc.getImageData(0, 0, 1, 1).data; out = [d[0], d[1], d[2]];
       }
-      rgbCache = out; rgbKey = col; return out;
+      rgbCacheMap[col] = out; return out;
+    }
+    /* 四类颜色（bass 光波 / 鼓点 / 军鼓 / 镲片）从 CSS 变量读。
+       变量由 applyAmbient 写入（有封面时按封面主色解算）；无封面时吃 CSS 兜底值。
+       主题/封面变化由 sync() 重读（readRippleRGB）。 */
+    var rippleRGB = { bass: [0, 0, 0], kick: [0, 0, 0], mid: [0, 0, 0], hat: [0, 0, 0], pointer: [0, 0, 0] };
+    function readRippleRGB() {
+      var cs = getComputedStyle(canvas);
+      rippleRGB.pointer = resolveRGB(cs.color);
+      rippleRGB.bass = resolveRGB((cs.getPropertyValue('--rl-bass') || '').trim() || cs.color);
+      rippleRGB.kick = resolveRGB((cs.getPropertyValue('--rl-kick') || '').trim() || cs.color);
+      rippleRGB.mid = resolveRGB((cs.getPropertyValue('--rl-mid') || '').trim() || cs.color);
+      rippleRGB.hat = resolveRGB((cs.getPropertyValue('--rl-hat') || '').trim() || cs.color);
+    }
+    function strokeOf(kind) {
+      var c = rippleRGB.kick;
+      if (kind === 'mid') c = rippleRGB.mid;
+      else if (kind === 'high') c = rippleRGB.hat;
+      else if (kind !== 'low') c = rippleRGB.pointer;
+      return 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
     }
 
     /* 歌词区衰减掩膜：用实际歌词区矩形算，布局/尺寸变化后由 sync() 重算。
@@ -2161,6 +2281,7 @@
       /* 羽化边（归一化）。 */
       var fw = 0.05, fh = 0.06;
       attMask = new Float32Array(cols * rows);
+      attMask.fill(1);   // ⚠ 默认全强度！否则封面区留在初始 0 → 光波被整片抹掉
       var MIN_W = 0.30;   // 歌词区里至少保留三成强度：水面仍在，只是不抢字
       for (var j = 0; j < rows; j++) {
         var ny = (j + 0.5) / rows;
@@ -2168,33 +2289,38 @@
         if (ny >= y0 && ny <= y1) wy = 1;
         else if (ny >= y0 - fh && ny < y0) wy = (ny - (y0 - fh)) / fh;
         else if (ny > y1 && ny <= y1 + fh) wy = ((y1 + fh) - ny) / fh;
-        if (wy <= 0) continue;
+        if (wy <= 0) continue;   // 非歌词行：保持 1（不动）
         for (var i = 0; i < cols; i++) {
           var nx = (i + 0.5) / cols;
           var wx = 0;
           if (nx >= x0 && nx <= x1) wx = 1;
           else if (nx >= x0 - fw && nx < x0) wx = (nx - (x0 - fw)) / fw;
           else if (nx > x1 && nx <= x1 + fw) wx = ((x1 + fw) - nx) / fw;
-          if (wx <= 0) continue;
+          if (wx <= 0) continue;   // 非歌词列：保持 1（不动）
           attMask[j * cols + i] = 1 - wx * wy * (1 - MIN_W);
         }
       }
     }
 
     /* 流光：把高度场当水面法线，用「边缘 + 坡度」化成明暗，低分辨率放大 —— 波过处一片柔光漫开。
-       VISUAL_GAIN（tune.visualGain）在**此处（最终绘制）**只乘一次再限幅。 */
+       VISUAL_GAIN（tune.visualGain）在**此处（最终绘制）**只乘一次再限幅。
+       ⚠ 高度场被 driveBass 封顶在 0.0009，单格梯度极小，乘子必须放大（BASS_GLOW）；
+          不放大时 alpha 只有个位数/255、肉眼看不见（实测 maxAlpha=9）。
+       网格格距恒为 4.8 CSS px（cols = width/4.8），尺度不变，
+       所以不需要按宽度补偿亮度（早先「宽窗更暗」是 attMask 老 bug 的假象）。 */
+    var BASS_GLOW = 6;          // 光波亮度补偿（针对封顶后的弱场）
     function paintField(fade, s) {
       if (!pixels) return;
-      var rgb = resolveRGB(getComputedStyle(canvas).color);
+      var rgb = rippleRGB.bass;   // bass 光波用自己的色（不再吃 --hl-accent）
       var data = pixels.data;
-      var gain = s * tune.visualGain;
+      var gain = s * tune.visualGain * BASS_GLOW;
       for (var y = 1; y < rows - 1; y++) {
         for (var x = 1; x < cols - 1; x++) {
           var i = y * cols + x, o = i * 4;
           var dx = field[i + 1] - field[i - 1], dy = field[i + cols] - field[i - cols];
           var edge = Math.abs(dx * 0.65 + dy * 0.85), slope = Math.sqrt(dx * dx + dy * dy);
           var att = attMask ? attMask[i] : 1;
-          var a = Math.min(0.64, (edge * 0.22 + slope * 0.06) * gain * att);
+          var a = Math.min(0.72, (edge * 0.22 + slope * 0.06) * gain * att);
           data[o] = rgb[0]; data[o + 1] = rgb[1]; data[o + 2] = rgb[2]; data[o + 3] = Math.round(a * 255);
         }
       }
@@ -2223,8 +2349,9 @@
       ringCalls = 0;   // 探针：本轮绘制实际画了几层环
       if (reduce && reduce.matches) return;
       computeAttMask();   // 歌词区衰减掩膜（布局/尺寸变化后重算，带 key 记忆）
-      // CSS 负责解析 var() / color-mix()，Canvas 只接收计算后的颜色。
-      ctx.strokeStyle = getComputedStyle(canvas).color;
+      /* 颜色分工：bass 光波 / 鼓点 / 军鼓 / 镲片 各吃自己的色（由 CSS 变量给，
+         随封面主色解算）；指针波与尾流仍用主题强调色。
+         颜色只在主题/封面变化时变，由 sync() 重读并缓存（不每帧 getComputedStyle）。 */
       var fade = drain > 0 ? Math.min(1, drain / 0.4) : 1;
       var s = baseStrength();
       /* 最终可见倍率：流光、主环、回声、中心小圈、尾流共用同一次 tune.visualGain（限幅）。 */
@@ -2242,6 +2369,7 @@
         var layers = 4;
         var echo = [1, 0.42, 0.24, 0.13];
         var kindMul = (audio && w.kind === 'high') ? 0.72 : 1;
+        ctx.strokeStyle = audio ? strokeOf(w.kind) : 'rgb(' + rippleRGB.pointer.join(',') + ')';
         for (var k = 0; k < layers; k++) {
           var r = radius - k * (audio ? 9 : 10 + w.power * 5) * (1 - p * 0.45);
           if (r < 3) continue;
@@ -2257,8 +2385,8 @@
         }
       }
       if (trail.length > 1) {
+        ctx.strokeStyle = 'rgb(' + rippleRGB.pointer.join(',') + ')';
         for (var t = 1; t < trail.length; t++) {
-          ctx.strokeStyle = getComputedStyle(canvas).color;
           ctx.globalAlpha = Math.max(0, 1 - trail[t].age / 0.65) * 0.45 * Math.min(1.2, vis) * fade;
           ctx.lineWidth = 0.65 + 1.8 * (1 - trail[t].age / 0.65);
           ctx.beginPath();
@@ -2337,6 +2465,7 @@
       }
       if (shot()) { stopAnalysis(); return; }   // 保留最后一帧及波的年龄（分析也真停）
       size();
+      readRippleRGB();   // 主题/封面变化后重读三层色（--rl-bass/kick/mid/hat）
       if (!blocked()) {
         /* 恢复可见：重建时间基准，清理过期起音历史，避免补发积压鼓点。 */
         if (audioReady && playing) startAnalysis(); else stopAnalysis();
@@ -2446,10 +2575,14 @@
           waves: waves.length, trail: trail.length, field: fieldEnergy, playing: playing,
           raf: !!raf, w: width, h: height, cols: cols, rows: rows,
           strength: baseStrength(), gain: tune.visualGain, audioWaves: audioWaveCount(),
+          /* 三层色（测试用）：当前实际用的 bass/kick/mid/hat RGB。 */
+          colors: { bass: rippleRGB.bass.slice(), kick: rippleRGB.kick.slice(), mid: rippleRGB.mid.slice(), hat: rippleRGB.hat.slice() },
           mask: attMask ? (function () { var m = 1; for (var i = 0; i < attMask.length; i++) if (attMask[i] < m) m = attMask[i]; return m; })() : null
         };
       },
       poke: function (x, y, strong) { drop(x, y, strong ? 1.8 : 0.8); return waves.length; },
+      /* 换歌/换主题后重读三层色（applyAmbient 写入 CSS 变量后调用）。 */
+      refreshPalette: function () { readRippleRGB(); if (!blocked()) { draw(); wake(); } },
       /* 测试用：音频链状态 / 直接喂一个低频包络 / 喂一次音频瞬态（真机走同一条 readSignal） */
       audioState: function () {
         return {
@@ -6747,6 +6880,13 @@
     lyricQueryOf: lyricQueryOf,
     pickByQuery: pickByQuery,
     lyricMatchOf: lyricMatchOf,
+    /* 涟漪三层配色（测试用）：纯函数，直接喂封面主色与极性验证派生。 */
+    ripplePalette: ripplePalette,
+    rippleAccentFrom: accentFrom,
+    rippleColorConfig: function () {
+      return { hueOff: RIPPLE_HUE_OFF, satMul: RIPPLE_SAT_MUL, lightBase: RIPPLE_LIGHT_BASE, darkBase: RIPPLE_DARK_BASE, minContrast: RIPPLE_MIN_CONTRAST };
+    },
+    contrastOf: contrastOf,
     parseLrcDocument: parseLrcDocument,
     lyricAlignState: function () {
       return { active: !!lyricAlign, dragging: !!(lyricPress && lyricPress.dragging),

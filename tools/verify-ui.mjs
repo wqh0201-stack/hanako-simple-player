@@ -1752,6 +1752,62 @@ const rippleAudio = {};
     ringLayers.low === 4 && ringLayers.mid === 4 && ringLayers.high === 4,
     JSON.stringify(ringLayers));
 
+  // ⑥f bass 光波必须真画得出来：喂持续低频后，canvas 上要有足够亮的像素。
+  //     历史上亮度公式太低（封顶后的场 × 小乘子 → alpha 只有个位数/255），肉眼看不见。
+  const glow = await page.evaluate(async () => {
+    const D = window.__playerDebug, audio = document.getElementById('audio');
+    audio.pause(); audio.loop = true;
+    audio.src = '/api/apps/hanako-simple-player/routes/_fixture/tone.wav?p=steady-bass&appSurfaceSession=fake-ticket&g=' + Math.random();
+    audio.load();
+    await new Promise((r) => { const f = () => { audio.removeEventListener('loadedmetadata', f); r(); }; audio.addEventListener('loadedmetadata', f); setTimeout(r, 1500); });
+    D.rippleClear();
+    try { await audio.play(); } catch (e) { return { playErr: String(e) }; }
+    for (let i = 0; i < 40 && !D.rippleAudio().ready; i++) await new Promise((r) => setTimeout(r, 50));
+    // 采多帧取峰值：高度场是周期性松弛振荡，单帧会撞谷底（实测同配置单帧可差 30 倍）。
+    const cv = document.getElementById('rippleCanvas');
+    const cols = D.rippleState().cols;
+    let maxA = 0, bright = 0;
+    // 分区亮度（防 attMask 只让歌词遮罩区有光波的老 bug）：左半 vs 右半
+    let leftPeak = 0, rightPeak = 0;
+    for (let n = 0; n < 45; n++) {
+      await new Promise((r) => setTimeout(r, 100));
+      const W = cv.width, H = cv.height;
+      const px = cv.getContext('2d').getImageData(0, 0, W, H).data;
+      let ma = 0, br = 0, lpk = 0, rpk = 0;
+      for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+          const a = px[(y * W + x) * 4 + 3];
+          if (a > ma) ma = a;
+          if (a > 60) br++;
+          if (x < W / 2) { if (a > lpk) lpk = a; } else { if (a > rpk) rpk = a; }
+        }
+      }
+      if (ma > maxA) maxA = ma;
+      if (br > bright) bright = br;
+      if (lpk > leftPeak) leftPeak = lpk;
+      if (rpk > rightPeak) rightPeak = rpk;
+    }
+    audio.pause();
+    return { maxAlpha: maxA, brightPx: bright, leftPeak, rightPeak, field: D.rippleState().field };
+  });
+  rippleAudio.glow = glow;
+  assert('ripple-bass-glow-actually-visible',
+    !glow.playErr && glow.maxAlpha >= 40,
+    JSON.stringify(glow));
+  // 光波要在封面区也画得出来（掩膜不能把封面区抹掉）。
+  // 历史上 attMask 默认全 0、只给歌词区赋值，封面区 att=0 → 光波被整片抹掉。
+  // 功能上很难在无词夹具里复现（attMask 只在有词且歌词层可见时才构建），
+  // 所以这里用**源码级守卫**：attMask 分配后必须先 fill(1) 再逐格降。
+  {
+    const srcGlow = fs.readFileSync(path.join(uiDir, 'app.js'), 'utf-8');
+    const seg = (srcGlow.split('function computeAttMask')[1] || '').split('function ')[0];
+    const allocIdx = seg.indexOf('attMask = new Float32Array');
+    const fillIdx = seg.indexOf('attMask.fill(1)');
+    assert('ripple-attmask-defaults-to-full-strength',
+      allocIdx >= 0 && fillIdx > allocIdx,
+      `alloc@${allocIdx} fill@${fillIdx}`);
+  }
+
   // ⑦ 连续低频长播：场能量有界，不随播放时间无限增长
   //    ① 绝对上限：正常 max 0.002~0.0033；拆封顶 0.0076；拆阻尼 0.0058~0.0095；两者都拆 3.8。
   //    ② 峰值增长：后半段峰值不高于前半段峰值的 1.6 倍（实测正常 ≈0.9~1.2）。
@@ -1827,6 +1883,71 @@ const rippleAudio = {};
   assert('ripple-crosssource-degrades-without-silencing',
     degrade.threw === true && degrade.played === true && degrade.ready === false,
     JSON.stringify(degrade));
+
+  // ⑪ 三层配色：bass/kick/mid/hat 各自成色，且都与封面环境色保对比、色相各异
+  const layerColors = await page.evaluate(() => {
+    const D = window.__playerDebug;
+    const st = D.rippleState();
+    const cs = getComputedStyle(document.getElementById('player'));
+    const readVar = (n) => {
+      const s = cs.getPropertyValue(n).trim();
+      const m = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/.exec(s);
+      return m ? [+m[1], +m[2], +m[3]] : null;
+    };
+    return {
+      colors: st.colors,
+      vars: { bass: readVar('--rl-bass'), kick: readVar('--rl-kick'), mid: readVar('--rl-mid'), hat: readVar('--rl-hat') },
+      ambient: (() => { const m = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/.exec(cs.getPropertyValue('--ambient-color').trim()); return m ? [+m[1], +m[2], +m[3]] : null; })(),
+      surface: (() => { const m = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/.exec(getComputedStyle(document.documentElement).getPropertyValue('--hk-surface').trim()); return m ? [+m[1], +m[2], +m[3]] : null; })(),
+      ambientOk: document.getElementById('player').classList.contains('ambient-ok')
+    };
+  });
+  report.layerColors = layerColors;
+  const _layHas = (c) => Array.isArray(c) && c.length === 3;
+  // ① 四层颜色互不相同（同色 = 没分层）
+  const _same = (a, b) => _layHas(a) && _layHas(b) && a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
+  assert('ripple-layer-colors-distinct',
+    _layHas(layerColors.colors && layerColors.colors.bass) &&
+    !_same(layerColors.colors.bass, layerColors.colors.kick) &&
+    !_same(layerColors.colors.kick, layerColors.colors.mid) &&
+    !_same(layerColors.colors.mid, layerColors.colors.hat),
+    JSON.stringify(layerColors.colors));
+  // ② CSS 变量与运行时取色一致（接线没错位）—— 不比 ambient，只比变量 vs 运行时
+  assert('ripple-layer-color-vars-wired',
+    !!layerColors.vars.bass &&
+    _same(layerColors.vars.bass, layerColors.colors.bass) &&
+    _same(layerColors.vars.hat, layerColors.colors.hat),
+    JSON.stringify({ vars: layerColors.vars, runtime: layerColors.colors }));
+  // ③ 三层色相都从歌词色错开（不跟歌词混）—— 纯函数直接验派生数学（不依赖页面状态）
+  const hueCheck = await page.evaluate(() => {
+    const D = window.__playerDebug;
+    const covers = [[27, 34, 51], [47, 111, 120], [110, 106, 58], [236, 229, 216], [242, 217, 224], [85, 96, 106]];
+    const toHsl = (c) => { const r = c[0] / 255, g = c[1] / 255, b = c[2] / 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0; const l = (mx + mn) / 2; if (d > 1e-6) { if (mx === r) h = ((g - b) / d + (g < b ? 6 : 0)); else if (mx === g) h = (b - r) / d + 2; else h = (r - g) / d + 4; h *= 60; } return h; };
+    const hueDist = (a, b) => { const d = Math.abs(a - b) % 360; return Math.min(d, 360 - d); };
+    const minOff = { bass: 999, kick: 999, mid: 999, hat: 999 };
+    const minCt = { bass: 999, kick: 999, mid: 999, hat: 999 };
+    for (const c of covers) {
+      const lum = 0.2126 * (c[0] / 255) + 0.7152 * (c[1] / 255) + 0.0722 * (c[2] / 255);
+      const pol = lum > 0.5 ? 'light' : 'dark';
+      const acc = D.rippleAccentFrom(c, pol);   // 与生产同一条派生路径
+      const pal = D.ripplePalette(acc, c, pol);
+      const accH = toHsl(acc);
+      for (const k of ['bass', 'kick', 'mid', 'hat']) {
+        minOff[k] = Math.min(minOff[k], hueDist(toHsl(pal[k]), accH));
+        minCt[k] = Math.min(minCt[k], D.contrastOf(pal[k], c));
+      }
+    }
+    return { minOff, minCt };
+  });
+  report.layerHueCheck = hueCheck;
+  assert('ripple-layer-hue-offset-from-lyric',
+    hueCheck.minOff.bass >= 20 && hueCheck.minOff.kick >= 10 &&
+    hueCheck.minOff.mid >= 20 && hueCheck.minOff.hat >= 40,
+    JSON.stringify(hueCheck.minOff));
+  // ④ 任何封面主色下，四层都与背景保对比 ≥ 3.8（细线要狠对比；新下限 4.0）
+  assert('ripple-layer-colors-survive-background',
+    Math.min(hueCheck.minCt.bass, hueCheck.minCt.kick, hueCheck.minCt.mid, hueCheck.minCt.hat) >= 3.8,
+    JSON.stringify(hueCheck.minCt));
 
   report.rippleAudio = rippleAudio;
   await page.close();

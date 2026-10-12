@@ -110,6 +110,14 @@
    * 注意：color-mix 里的 var 在【声明所在元素】上求值，所以这链必须写在
    * .player 作用域（那里才有 --ambient-accent），不能只写 :root。 */
   --hl-accent: var(--hk-accent);
+  /* 涟漪三层色（bass 光波 / 鼓点等高线 / 镲片小环）。
+     有封面时由 JS 写入 --rl-bass/kick/mid/hat（从歌词色派生、偏色相 + 弱一档 + 与背景保对比）。
+     无封面/取色失败时用主题强调色在 CSS 侧兜底 —— color-mix 把饱和往中性拖（弱一档），
+     色相靠 hue-rotate 拿不到，所以兜底只用明度/饱和度差，不强行变相。 */
+  --rl-bass: color-mix(in srgb, var(--hk-accent) 68%, var(--hk-surface));
+  --rl-kick: color-mix(in srgb, var(--hk-accent) 78%, var(--hk-surface));
+  --rl-mid: color-mix(in srgb, var(--hk-accent) 83%, var(--hk-surface));
+  --rl-hat: color-mix(in srgb, var(--hk-accent) 88%, var(--hk-text));
   /* 当前句柔光（正在唱的那句）：accent 光晕由内到外，叠在反差阴影之上。
    * 只加 text-shadow，不动字号/字距 —— 不重排、不 jank。 */
   --lyric-glow:
