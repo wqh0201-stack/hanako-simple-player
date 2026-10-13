@@ -1,0 +1,82 @@
+{
+  "purpose": "Q5 isolated build sync; repository source and build remain untouched",
+  "command": [
+    "node",
+    "tools/bump-build.mjs"
+  ],
+  "cwd": "/private/tmp/audio-owner-build-hraqbnft",
+  "exitCode": 0,
+  "stdout": "[bump-build] 1003131675 -> 1003131676  (同步: _build.json, index.html, standalone.html)\n",
+  "stderr": "",
+  "beforeRepository": {
+    "tools/bump-build.mjs": {
+      "sha256": "c1c981d5b06da422769a8d45fb0fabe071ac239cc8f74b9aac4aba12920aff29",
+      "bytes": 2348
+    },
+    "ui/_build.json": {
+      "sha256": "efd419034bfc2896f35ce52ad21a735dc6ebd24bb14805ec4ae9e80b7cfd072f",
+      "bytes": 22,
+      "build": "1003131675"
+    },
+    "ui/index.html": {
+      "sha256": "0520d2c26c9b98d1378657eaa91b820bc0add3fa27f3fea367891ddf93ad4438",
+      "bytes": 30088,
+      "build": "1003131675"
+    },
+    "ui/standalone.html": {
+      "sha256": "c72c8057d7386de1012faa2616f9dc1ec138204aebfd4bc375152a45c37e6afd",
+      "bytes": 30090,
+      "build": "1003131675"
+    }
+  },
+  "afterRepository": {
+    "tools/bump-build.mjs": {
+      "sha256": "c1c981d5b06da422769a8d45fb0fabe071ac239cc8f74b9aac4aba12920aff29",
+      "bytes": 2348
+    },
+    "ui/_build.json": {
+      "sha256": "efd419034bfc2896f35ce52ad21a735dc6ebd24bb14805ec4ae9e80b7cfd072f",
+      "bytes": 22,
+      "build": "1003131675"
+    },
+    "ui/index.html": {
+      "sha256": "0520d2c26c9b98d1378657eaa91b820bc0add3fa27f3fea367891ddf93ad4438",
+      "bytes": 30088,
+      "build": "1003131675"
+    },
+    "ui/standalone.html": {
+      "sha256": "c72c8057d7386de1012faa2616f9dc1ec138204aebfd4bc375152a45c37e6afd",
+      "bytes": 30090,
+      "build": "1003131675"
+    }
+  },
+  "afterMirror": {
+    "tools/bump-build.mjs": {
+      "sha256": "c1c981d5b06da422769a8d45fb0fabe071ac239cc8f74b9aac4aba12920aff29",
+      "bytes": 2348
+    },
+    "ui/_build.json": {
+      "sha256": "39472e40b062f1b7f9f774a6eeb065be7f39a72f0eb50801ecd854553cdd1e01",
+      "bytes": 22,
+      "build": "1003131676"
+    },
+    "ui/index.html": {
+      "sha256": "13f5bba4de8d9d79e61336e60b9ae9964288df9c5ae43c7d7f9797061684bfa6",
+      "bytes": 30088,
+      "build": "1003131676"
+    },
+    "ui/standalone.html": {
+      "sha256": "e972e272ed06821599066472f4dac2ff7e5deda5d49cb8c0ebd294f05ae1d46d",
+      "bytes": 30090,
+      "build": "1003131676"
+    }
+  },
+  "checks": {
+    "mirrorExitZero": true,
+    "repoByteIdentical": true,
+    "mirrorBuildsEqual": true,
+    "mirrorBuildIncremented": true,
+    "mirrorToolUnchanged": true,
+    "mirrorTwinsDifferOnlyDataShell": true
+  }
+}

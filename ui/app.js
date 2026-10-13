@@ -103,7 +103,8 @@
     coverCatalog: API + '/widget/api/music/cover-catalog',
     importFile: API + '/widget/api/import-file',
     scanFolder: API + '/widget/api/scan-folder',
-    playbackState: API + '/api/playback-state'
+    playbackState: API + '/api/playback-state',
+    audioOwner: API + '/api/audio-owner'
   };
 
   function apiJson(url, init) {
@@ -254,6 +255,284 @@
     loadError: ''
   };
 
+  /* ---------- 出声所有权：后端发证，双通道只通知/催让位 ----------
+   * BC 能构造但不互通（不透明源/不同分区）是实测反例，所以 storage 订阅常驻。
+   * 不能 set→get 自封 owner，也不能无回执超时强播；暂停确认和授权都绑定 generation。 */
+  var ownerId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  var ownerGeneration = 0;
+  var ownerRecord = null, ownerRecordKey = '', ownerSelfKey = '';
+  var ownerChannel = null, ownerSubscription = null, ownerYieldId = '';
+  var ownerSequence = 0, audioRequestGen = 0, ownerWaiting = null;
+  var needsTakeover = false, restoreAwaitHandoff = false, ownerTearingDown = false;
+  var activePlayIntent = false, teardownResumeIntent = false;
+  var ownerDocLockName = 'hana-simple-player-audio-doc';
+  var ownerDocLockHeld = false, ownerDocLockSupported = false;
+  var ownerDocLockReady = null, ownerDocLockQueued = false, ownerDocLockEpoch = 0;
+  var ownerAliveReady = null;
+  function nextOwnerRequest() { return ownerId + '-' + (++ownerSequence); }
+  function ownerKey(record) { return JSON.stringify(record); }
+  function ownerCommand(input) {
+    return apiPostJson(ENDPOINT.audioOwner, input).then(function (res) {
+      if (!res.ok || !res.body || !res.body.ok) throw new Error('audio ownership unavailable');
+      publishOwner(res.body.record);
+      observeOwner(res.body.record, true);
+      return res.body;
+    });
+  }
+  function publishOwner(record) {
+    if (!record) return;
+    ownerSelfKey = ownerKey(record);
+    if (ownerChannel) {
+      try { ownerChannel.postMessage({ type: 'owner', record: record }); } catch (e) { /* storage 仍在线 */ }
+    }
+  }
+  function pauseForOwner(takeover) {
+    // 后台文档可能到 seek 等待上限仍没加载 metadata，play() 已将 paused 置 false，
+    // 媒体时钟却还是 0。接管时保留恢复位置，避免随后 pause/timeupdate 把进度冲回 0。
+    if (takeover && audio.readyState === 0 && state.progress > 0) pendingSeek = state.progress;
+    ++audioRequestGen; ++resolveGen;
+    pendingAutoplay = false;
+    activePlayIntent = false;
+    clearInterval(seekRetryTimer); seekRetryTimer = 0;
+    lastPlayingAt = 0;
+    state.playing = false;
+    needsTakeover = !!takeover;
+    state.needsResume = false;
+    audio.pause();
+    renderPlayState(); renderResume(); msPlayback('paused');
+  }
+  function finishOwnerWait(allowed) {
+    if (!ownerWaiting) return;
+    var waiting = ownerWaiting;
+    ownerWaiting = null;
+    clearTimeout(waiting.timer);
+    waiting.resolve(!!allowed);
+  }
+  function observeOwner(record, authoritative) {
+    if (!record || typeof record.ownerId !== 'string' || typeof record.revision !== 'number') return;
+    if (ownerRecord && record.revision < ownerRecord.revision) return;
+    var key = ownerKey(record), changed = key !== ownerRecordKey;
+    ownerRecord = record; ownerRecordKey = key;
+    var pending = record.pending;
+    if (record.ownerId === ownerId && pending && pending.fromGeneration === record.generation && (ownerGeneration === record.generation || audio.paused)) {
+      if (ownerYieldId !== pending.claimId) {
+        ownerYieldId = pending.claimId;
+        var generation = record.generation;
+        pauseForOwner(!!pending.ownerId);
+        ownerGeneration = 0;
+        // pause() 同步置 paused，事件异步且已暂停时不重发；处理完成后幂等确认。
+        ownerCommand({ action: 'yield', ownerId: ownerId, generation: generation,
+          claimId: pending.claimId, snapshot: snapshot() }).catch(function () {
+          ownerYieldId = ''; // 失败不假装让位完成；下一条真实通知可重试。
+        });
+      }
+    } else if (record.ownerId && record.ownerId !== ownerId && changed) {
+      var restoring = pendingAutoplay && pendingPlayReason === 'restore';
+      if (restoring) {
+        restoreAwaitHandoff = true;
+        queueOwnerDocRecovery();
+      }
+      // 恢复时先落 seek，再经 claim 校验存活；提前取消 pendingAutoplay 会让
+      // 已拿锁的新文档永远走不到 reap，也会打断正在完成的恢复 seek。
+      if (ownerGeneration || state.playing || (pendingAutoplay && !restoring)) pauseForOwner(!!record.ownerId || !!(pending && pending.ownerId));
+      ownerGeneration = 0;
+    }
+    if (authoritative && !record.ownerId) ownerGeneration = 0;
+    if (authoritative && record.ownerId === ownerId && !pending) {
+      ownerGeneration = record.generation;
+      if (ownerWaiting && record.claimId === ownerWaiting.claimId) finishOwnerWait(true);
+    } else if (ownerWaiting && pending && pending.ownerId !== ownerId) finishOwnerWait(false);
+    if (!record.ownerId && !pending && record.cause === 'stop' && changed) {
+      restoreAwaitHandoff = false;
+      pauseForOwner(false);
+      ownerGeneration = 0;
+      finishOwnerWait(false);
+    } else if (!record.ownerId && !pending && record.resume && restoreAwaitHandoff && authoritative && !ownerTearingDown) {
+      restoreAwaitHandoff = false;
+      requestPlay('restore');
+    }
+  }
+  function refreshAudioOwner() {
+    return apiGetJson(ENDPOINT.audioOwner).then(function (res) {
+      if (res.ok && res.body && res.body.ok) observeOwner(res.body.record, true);
+    }).catch(function () { /* 读失败不授权 */ });
+  }
+  function subscribeAudioOwner() {
+    var storage = hanaStorage();
+    if (!ownerSubscription && storage && typeof storage.onChanged === 'function') {
+      ownerSubscription = storage.onChanged(function (keys) {
+        if (keys && keys.indexOf('player-audio-owner') >= 0) refreshAudioOwner();
+      });
+      refreshAudioOwner(); // onChanged 无初始推送，补一次读，关闭订阅前的竞速窗口。
+    }
+  }
+  function acquireOwnerDocLock(options) {
+    var epoch = ++ownerDocLockEpoch;
+    return new Promise(function (resolve) {
+      try {
+        navigator.locks.request(ownerDocLockName, options, function (lock) {
+          if (epoch !== ownerDocLockEpoch) { resolve(false); return; }
+          if (!lock) { resolve(false); return; }
+          ownerDocLockHeld = true;
+          resolve(true);
+          // 不在 pagehide / pause / handoff 提前释放；由浏览器在文档销毁时清账。
+          return new Promise(function () {});
+        }).catch(function (error) {
+          if (epoch !== ownerDocLockEpoch) { resolve(false); return; }
+          ownerDocLockHeld = false;
+          if (error && error.name === 'AbortError') {
+            pauseForOwner(true); finishOwnerWait(false);
+            // steal 只是撤锁，暂停仍在旧文档异步发生。主动回读并 yield，
+            // 新页必须收到后端暂停确认才播；BC/storage 通知全丢也能完成。
+            refreshAudioOwner();
+          } else ownerDocLockSupported = false;
+          resolve(false);
+        });
+      } catch (e) { ownerDocLockSupported = false; resolve(false); }
+    });
+  }
+  function initOwnerDocLock() {
+    if (ownerDocLockReady) return;
+    try {
+      ownerDocLockSupported = !!(navigator.locks && typeof navigator.locks.request === 'function');
+      if (ownerDocLockSupported) {
+        // 单独的文档存活锁永不 steal：全局锁被偷走不等于旧文档死亡。
+        // 防止“stealer 先销毁、旧页还没处理 AbortError”被误判成孤儿。
+        ownerAliveReady = new Promise(function (resolve) {
+          navigator.locks.request(ownerDocLockName + '-alive-' + ownerId, { ifAvailable: true }, function (lock) {
+            resolve(!!lock);
+            if (lock) return new Promise(function () {});
+          }).catch(function () { ownerDocLockSupported = false; resolve(false); });
+        }).catch(function () { ownerDocLockSupported = false; return false; });
+        ownerDocLockReady = acquireOwnerDocLock({ ifAvailable: true });
+      }
+    } catch (e) { ownerDocLockSupported = false; }
+    if (!ownerDocLockReady) ownerDocLockReady = Promise.resolve(false);
+  }
+  function queueOwnerDocRecovery() {
+    if (!ownerDocLockSupported || ownerDocLockQueued || ownerDocLockHeld) return;
+    ownerDocLockQueued = true;
+    acquireOwnerDocLock({}).then(function (held) {
+      ownerDocLockQueued = false;
+      // 普通排队没有超时、没有 steal；只有旧文档真正销毁才获得锁。
+      if (held && restoreAwaitHandoff && !ownerTearingDown && !pendingAutoplay) requestPlay('restore');
+    });
+  }
+  function ownerReapProof(reason) {
+    var record = ownerRecord;
+    if (!ownerDocLockSupported || !ownerDocLockHeld || !record || !record.ownerId || record.ownerId === ownerId
+      || !/^(restore|boot|user|resume|media|track|stop)$/.test(reason)) return Promise.resolve(null);
+    return ownerAliveReady.then(function (alive) {
+      if (!alive || !ownerDocLockHeld) return null;
+      return navigator.locks.request(ownerDocLockName + '-alive-' + record.ownerId, { ifAvailable: true }, function (lock) {
+        // 只有全局锁 + 对端存活锁都可用才清点，绝不把 steal 本身当死亡证明。
+        return lock && ownerDocLockHeld ? { reap: true, reapOwnerId: record.ownerId, reapGeneration: record.generation } : null;
+      }).catch(function () { return null; });
+    });
+  }
+  function initAudioOwner() {
+    initOwnerDocLock();
+    try {
+      if (typeof window.BroadcastChannel === 'function') {
+        ownerChannel = new window.BroadcastChannel('hana-simple-player-audio');
+        ownerChannel.onmessage = function (event) {
+          var record = event.data && event.data.type === 'owner' && event.data.record;
+          if (!record || ownerKey(record) === ownerSelfKey) return;
+          // 内容比较 + 精确自写记录双重收敛，不采用“忽略下一次”，接收者从不再 claim。
+          observeOwner(record, false);
+          refreshAudioOwner(); // BC 不能自封授权，获准起播仍须后端确认。
+        };
+      }
+    } catch (e) { ownerChannel = null; }
+    subscribeAudioOwner();
+  }
+  function claimAudio(reason, token) {
+    var claimId = nextOwnerRequest();
+    var explicit = /^(user|resume|media|track)$/.test(reason);
+    return ownerDocLockReady.then(function () {
+      if (token !== audioRequestGen || ownerTearingDown) return null;
+      if (ownerDocLockSupported && !ownerDocLockHeld && !explicit) {
+        needsTakeover = true; renderResume();
+        if (reason === 'restore') { restoreAwaitHandoff = true; queueOwnerDocRecovery(); }
+        return null;
+      }
+      return refreshAudioOwner().then(function () { return ownerReapProof(reason); }).then(function (proof) {
+        if (token !== audioRequestGen || ownerTearingDown) return null;
+        var input = { action: 'claim', ownerId: ownerId, claimId: claimId, reason: reason };
+        if (proof) { input.reap = true; input.reapOwnerId = proof.reapOwnerId; input.reapGeneration = proof.reapGeneration; }
+        return ownerCommand(input);
+      });
+    }).then(function (reply) {
+      if (!reply) return false;
+      // 先提交 pending 再 steal。旧页 AbortError 主动回读能看见待确认的申请。
+      if (explicit && ownerDocLockSupported && !ownerDocLockHeld) {
+        return acquireOwnerDocLock({ steal: true }).then(function () {
+          return refreshAudioOwner();
+        }).then(function () { return ownerReapProof(reason); }).then(function (proof) {
+          if (!proof || token !== audioRequestGen || ownerTearingDown) return reply;
+          return ownerCommand({ action: 'claim', ownerId: ownerId, claimId: claimId, reason: reason,
+            reap: true, reapOwnerId: proof.reapOwnerId, reapGeneration: proof.reapGeneration });
+        });
+      }
+      return reply;
+    }).then(function (reply) {
+      if (!reply) return false;
+      if (token !== audioRequestGen || ownerTearingDown) return false;
+      if (reply.granted) return true;
+      needsTakeover = true; renderResume();
+      if (reason === 'restore') { restoreAwaitHandoff = true; refreshAudioOwner(); return false; }
+      finishOwnerWait(false);
+      return new Promise(function (resolve) {
+        ownerWaiting = { claimId: claimId, resolve: resolve, timer: setTimeout(function () {
+          // 一次回读补通知丢失；不是心跳轮询，也绝不把沉默判为死亡。
+          refreshAudioOwner().then(function () { finishOwnerWait(false); });
+        }, 1500) };
+        refreshAudioOwner();
+      });
+    });
+  }
+  function requestPlay(reason) {
+    // 用户起播覆盖还在等 seek 的 boot 意图；否则后到的 loadedmetadata
+    // 会再发 restore，把刚申请的 user token 作废（并发 boot 紧接抢播的旧 flaky）。
+    if (/^(user|resume|media|track)$/.test(reason || 'user')) pendingAutoplay = false;
+    var token = ++audioRequestGen;
+    restoreAwaitHandoff = false;
+    return claimAudio(reason || 'user', token).then(function (allowed) {
+      if (!allowed || token !== audioRequestGen || !ownerGeneration || ownerTearingDown
+        || (ownerDocLockSupported && !ownerDocLockHeld)) return false;
+      needsTakeover = false;
+      activePlayIntent = true;
+      return audio.play().then(function () {
+        if (token !== audioRequestGen) return false;
+        activePlayIntent = false;
+        state.needsResume = false; renderResume(); persistNow();
+        return true;
+      }).catch(function (error) {
+        if (token !== audioRequestGen) return false;
+        activePlayIntent = false;
+        onAutoplayBlocked(error);
+        return ownerCommand({ action: 'release', ownerId: ownerId, generation: ownerGeneration,
+          claimId: nextOwnerRequest(), snapshot: snapshot() }).then(function () { return false; });
+      });
+    }).catch(function () {
+      if (token === audioRequestGen) { state.playing = false; needsTakeover = true; renderPlayState(); renderResume(); }
+      return false;
+    });
+  }
+  function pauseAll() {
+    var generation = ownerGeneration;
+    restoreAwaitHandoff = false;
+    pauseForOwner(false);
+    return ownerDocLockReady.then(function () { return refreshAudioOwner(); }).then(function () {
+      return ownerReapProof('stop');
+    }).then(function (proof) {
+      var input = { action: 'stop', ownerId: ownerId, generation: generation,
+        claimId: nextOwnerRequest(), snapshot: snapshot() };
+      if (proof) { input.reap = true; input.reapOwnerId = proof.reapOwnerId; input.reapGeneration = proof.reapGeneration; }
+      return ownerCommand(input);
+    }).catch(function () {});
+  }
+
   /* ---------- 记忆：播放状态与歌单元数据走后端路由 ----------
    * 播放状态改后端路由的原因（拖进/拖出 bug）：hana.storage.global.set 是异步 IPC，
    * 页面卸载时可能来不及发出；而「拖进/拖出 = 整份文档被换掉」需要旧文档在 pagehide
@@ -282,7 +561,7 @@
     var ct = currentTrack();
     /* 在播判定：正常看 state.playing；但卸载时若刚还在播（<1.2s），
      * 即便 audio 已被迫 pause 也仍算在播 —— 否则新文档不会续播。 */
-    var playing = !!state.playing || (unloading && lastPlayingAt && (Date.now() - lastPlayingAt) < 1200);
+    var playing = !needsTakeover && !!ownerGeneration && (!!state.playing || (unloading && lastPlayingAt && (Date.now() - lastPlayingAt) < 1200));
     return {
       currentId: state.currentUid,
       activeList: state.activeList,
@@ -315,8 +594,12 @@
     writeTimer = 0;
     lastWriteAt = Date.now();
     var snap = snapshot();
+    var generation = ownerGeneration;
     writeChain = writeChain.then(function () {
-      return apiPostJson(ENDPOINT.playbackState, snap).then(function (res) {
+      return apiJson(ENDPOINT.playbackState, { method: 'POST', headers: {
+        'Content-Type': 'application/json', 'x-player-audio-owner': ownerId,
+        'x-player-audio-generation': String(generation)
+      }, body: JSON.stringify(snap) }).then(function (res) {
         if (!res.ok) console.warn('[player] playback-state 写入失败', res.status);
       }).catch(function (e) {
         console.warn('[player] playback-state 写入异常', e);
@@ -337,6 +620,7 @@
   function beaconPlayback() {
     var snap = snapshot();
     var url = withSession(ENDPOINT.playbackState);
+    url += (url.indexOf('?') >= 0 ? '&' : '?') + 'audioOwnerId=' + encodeURIComponent(ownerId) + '&audioGeneration=' + ownerGeneration;
     var body = JSON.stringify(snap);
     try {
       if (navigator.sendBeacon) {
@@ -1948,7 +2232,11 @@
 
   function renderResume() {
     var btn = $('resumeBtn');
-    if (btn) btn.hidden = !state.needsResume;
+    if (btn) {
+      btn.hidden = !state.needsResume && !needsTakeover;
+      var label = btn.querySelector('span');
+      if (label) label.textContent = needsTakeover ? '接管播放' : '继续播放';
+    }
   }
 
   function renderProgress() {
@@ -4044,6 +4332,7 @@
      ============================================================ */
   var pendingSeek = 0;
   var pendingAutoplay = false;
+  var pendingPlayReason = 'track';
   var durSaveTimer = 0;
 
   function scheduleDurSave() {
@@ -4051,7 +4340,7 @@
     durSaveTimer = setTimeout(function () { savePlaylist(); }, 1500);
   }
 
-  function loadAudio(t, seekTo, autoplay) {
+  function loadAudio(t, seekTo, autoplay, playReason) {
     if (!t || !t.url) {
       audio.removeAttribute('src');
       try { audio.load(); } catch (e) {}
@@ -4066,10 +4355,11 @@
     }
     pendingSeek = seekTo > 0 ? seekTo : 0;
     pendingAutoplay = !!autoplay;
+    pendingPlayReason = playReason || 'track';
     scheduleSeekRetry();
     if (same && pendingAutoplay && audio.paused) {
       // 同一首（恢复场景）：直接播
-      audio.play().catch(onAutoplayBlocked);
+      requestPlay(pendingPlayReason);
       pendingAutoplay = false;
     }
   }
@@ -4082,10 +4372,26 @@
   var lastPlayingAt = 0;
 
   function flushOnTeardown() {
+    if (ownerTearingDown) return;
+    var generation = ownerGeneration, snap = snapshot();
+    snap.playing = !needsTakeover && !!generation && (state.playing || activePlayIntent);
+    teardownResumeIntent = snap.playing;
+    ownerTearingDown = true;
     unloading = true;   // 之后 audio 销毁补发的 pause 不写回
-    // 每次 pagehide / 隐藏都立即把完整快照交给宿主（sendBeacon / keepalive，跨文档可靠）。
-    // 不做「只落一次」的锁：重复落同一份快照无害，漏落才会丢状态。
-    try { beaconPlayback(); } catch (e) {}
+    pauseForOwner(needsTakeover);
+    finishOwnerWait(false);
+    // 用户选的显式交接：先停媒体，再原子保存续播意图/释放。失联绝不靠超时接管。
+    if (generation) {
+      var body = JSON.stringify({ action: 'handoff', ownerId: ownerId, generation: generation,
+        claimId: nextOwnerRequest(), snapshot: snap });
+      var url = withSession(ENDPOINT.audioOwner);
+      var sent = false;
+      try { sent = navigator.sendBeacon && navigator.sendBeacon(url, new Blob([body], { type: 'application/json' })); } catch (e) {}
+      if (!sent) apiFetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true }).catch(function () {});
+    }
+    ownerGeneration = 0;
+    if (ownerSubscription) { ownerSubscription(); ownerSubscription = null; }
+    if (ownerChannel) { ownerChannel.close(); ownerChannel = null; }
   }
   window.addEventListener('pagehide', flushOnTeardown);
   /* 有些宿主拆 iframe 时不派 pagehide/visibilitychange（直接移除节点），
@@ -4094,10 +4400,17 @@
   window.addEventListener('unload', flushOnTeardown);
   window.addEventListener('beforeunload', flushOnTeardown);
   document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'hidden') flushOnTeardown();
+    if (document.visibilityState === 'hidden') { try { beaconPlayback(); } catch (e) {} }
     else unloading = false;   // 只是被隐藏后又回来（并未真卸载）
   });
-  window.addEventListener('pageshow', function () { unloading = false; });
+  window.addEventListener('pageshow', function () {
+    if (ownerTearingDown) {
+      ownerTearingDown = false; initAudioOwner();
+      if (teardownResumeIntent) requestPlay('restore');
+      teardownResumeIntent = false;
+    }
+    unloading = false;
+  });
 
   /* play() 失败有两种完全不同的原因，别混为一谈：
    *   · NotAllowedError —— 浏览器自动播放策略拦截（没有用户手势）。这才是
@@ -4133,7 +4446,7 @@
     if (!pendingAutoplay || pendingSeek > 0) return;
     if (audio.paused) {
       pendingAutoplay = false;
-      audio.play().catch(onAutoplayBlocked);
+      requestPlay(pendingPlayReason);
     } else {
       pendingAutoplay = false;
     }
@@ -4204,6 +4517,7 @@
   });
 
   audio.addEventListener('play', function () {
+    if (!ownerGeneration || needsTakeover || ownerTearingDown || (ownerDocLockSupported && !ownerDocLockHeld)) { audio.pause(); return; }
     state.playing = true;
     state.needsResume = false;
     renderPlayState();
@@ -4214,6 +4528,7 @@
   audio.addEventListener('pause', function () {
     // 卸载逼出的暂停不写回（否则新文档永不续播）
     if (unloading) return;
+    activePlayIntent = false;
     state.playing = false;
     renderPlayState();
     msPlayback('paused');
@@ -4224,6 +4539,7 @@
     var t = currentTrack();
     if (!t || !t.url) return;
     state.playing = false;
+    activePlayIntent = false;
     renderPlayState();
     toast('播放失败：' + t.title);
   });
@@ -4309,19 +4625,18 @@
   (function bindMediaSessionActions() {
     if (!mediaSessionApi || typeof mediaSessionApi.setActionHandler !== 'function') return;
     function on(name, fn) { try { mediaSessionApi.setActionHandler(name, fn); } catch (e) {} }
-    on('play', function () { if (!currentTrack()) return; audio.play().catch(onAutoplayBlocked); persistNow(); });
-    on('pause', function () { audio.pause(); persistNow(); });
+    on('play', function () { if (currentTrack()) requestPlay('media'); });
+    on('pause', pauseAll);
     on('previoustrack', function () { msStep(-1); });
     on('nexttrack', function () { msStep(1); });
     on('stop', function () {
-      audio.pause();
       try { audio.currentTime = 0; } catch (e) {}
       state.playing = false;
       state.progress = 0;
       renderPlayState();
       renderProgress();
       syncPositionState(true);
-      persistNow();
+      pauseAll();
     });
     on('seekbackward', function (d) { msSeekBy(-((d && d.seekOffset) || 10)); });
     on('seekforward', function (d) { msSeekBy((d && d.seekOffset) || 10); });
@@ -4394,9 +4709,10 @@
   }
 
   function onTrackEnd() {
+    if (!ownerGeneration || needsTakeover || ownerTearingDown) return;
     if (state.mode === 'one') {
       audio.currentTime = 0;
-      audio.play().catch(onAutoplayBlocked);
+      requestPlay('repeat');
       return;
     }
     var i = stepIndex(1);
@@ -4468,7 +4784,7 @@
       if (lyrics) lyrics.classList.remove('is-browsing');
       flashCtlTrack();   // 曲目信息入场（从下方 5px 回位）
     }
-    state.playing = true;
+    state.playing = !changed && !!ownerGeneration && !audio.paused && !needsTakeover;
     state.needsResume = false;
     renderTrack();
     renderQueue();
@@ -4499,20 +4815,15 @@
      ============================================================ */
   $('playBtn').addEventListener('click', function () {
     if (!currentTrack()) return;
-    if (audio.paused) audio.play().catch(onAutoplayBlocked);
-    else audio.pause();
-    persistNow();
+    if (audio.paused) requestPlay('user');
+    else pauseAll();
   });
 
   /* 「继续播放」引导：自动播放被拦时点一下恢复 */
   if ($('resumeBtn')) {
     $('resumeBtn').addEventListener('click', function () {
       if (!currentTrack()) return;
-      audio.play().then(function () {
-        state.needsResume = false;
-        renderResume();
-      }).catch(function () { /* 仍被拦就留着按钮 */ });
-      persistNow();
+      requestPlay('resume');
     });
   }
 
@@ -7144,7 +7455,7 @@
     /* 先把音频发出去（发请求、连上游、缓冲都要时间），再做渲染 ——
      * 队列可能几百行，不该挡在起播前面。 */
     if (t.url) {
-      loadAudio(t, state.progress, wantPlay);
+      loadAudio(t, state.progress, wantPlay, 'restore');
     }
     renderTrack();
     renderQueue();
@@ -7158,7 +7469,7 @@
         renderTrack();
         renderQueue();
         loadLyrics(t);
-        loadAudio(t, state.progress, true);
+        loadAudio(t, state.progress, true, 'restore');
       });
     }
   }
@@ -7169,6 +7480,7 @@
   }
 
   function boot() {
+    initAudioOwner();
     renderAll();
     applyLayout();    rippleHandle = initRipples();   // 指针涟漪（不读音频；reduced-motion/截图内部自处理）
     if (rippleHandle) rippleHandle.onTune(renderRippleTune);   // 参数变化时同步面板滑杆
@@ -7216,6 +7528,7 @@
       /* 主题与存储仍等 SDK：主题订阅要 hana.theme；存储读不到绝不能回写默认值。
        * 再读存储：读到就套用真名 / 本地目录 / 分隔比例。 */
       return sdkReady.then(function () {
+        subscribeAudioOwner();
         applyHostTheme();
         applyTone();                                   // 主题值落地后重判一次底色
         return Promise.all([readLists(), storeRead(LOCALDIR_KEY), storeRead(SPLIT_KEY), storeRead(RIPPLE_TUNE_KEY)]);
@@ -7512,6 +7825,11 @@
   window.__playerSelfCheck = runSelfCheck;
   /* 自检钩子：涟漪可观测状态 + 测试时手动喂波（测试用）。 */
   window.__playerDebug = {
+    ownerId: ownerId,
+    audioOwner: function () { return { ownerId: ownerId, generation: ownerGeneration, record: ownerRecord, docLockHeld: ownerDocLockHeld, docLockSupported: ownerDocLockSupported, takeover: needsTakeover, playing: state.playing, paused: audio.paused, progress: liveProgress(), pendingSeek: pendingSeek, pendingAutoplay: pendingAutoplay, snapshot: snapshot() }; },
+    requestPlay: requestPlay,
+    pauseAll: pauseAll,
+    persistNow: persistNow,
     cleanCoverQuery: cleanCoverQuery,
     pickCoverMatch: pickCoverMatch,
     openCoverPanel: openCoverPanel,

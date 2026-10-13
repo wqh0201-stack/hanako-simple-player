@@ -1,0 +1,51 @@
+{
+  "passed": 19,
+  "total": 20,
+  "failed": [
+    {
+      "name": "takeover-pauses-preserves-progress-true",
+      "ok": false,
+      "detail": {
+        "ownerId": "mv6k402eqphcei",
+        "generation": 0,
+        "record": {
+          "ownerId": "mv6k402kt1ihvk",
+          "claimId": "mv6k402kt1ihvk-2",
+          "at": 1791888442108,
+          "revision": 3,
+          "generation": 3,
+          "pending": null,
+          "resume": false
+        },
+        "docLockHeld": false,
+        "docLockSupported": true,
+        "takeover": true,
+        "playing": false,
+        "paused": true,
+        "progress": 0,
+        "pendingSeek": 0,
+        "pendingAutoplay": false,
+        "snapshot": {
+          "currentId": "local|local-1",
+          "activeList": "local",
+          "progress": 0,
+          "volume": 0.5,
+          "muted": true,
+          "mode": "list",
+          "playing": false,
+          "shuffleTrail": [],
+          "currentTrack": {
+            "id": "local-1",
+            "name": "测试曲目 1",
+            "list": "local",
+            "mode": "本地",
+            "dur": 30,
+            "url": "/api/apps/hanako-simple-player/routes/test.wav",
+            "group": ""
+          }
+        }
+      }
+    }
+  ],
+  "outDir": "docs/player-ui/handoffs/audio-owner-1.1.1/repair2/owner-first"
+}

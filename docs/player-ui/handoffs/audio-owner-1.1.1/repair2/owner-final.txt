@@ -1,0 +1,93 @@
+{
+  "passed": 33,
+  "total": 34,
+  "failed": [
+    {
+      "name": "simultaneous-orphan-boot-only-lock-holder-reaps-one-voice",
+      "ok": false,
+      "detail": [
+        {
+          "ownerId": "mv6kuvnbkogmpy",
+          "generation": 0,
+          "record": {
+            "ownerId": "mv6kuvkxu2s2px",
+            "claimId": "mv6kuvkxu2s2px-1",
+            "at": 1791889692538,
+            "revision": 1,
+            "generation": 1,
+            "pending": null,
+            "resume": false
+          },
+          "docLockHeld": true,
+          "docLockSupported": true,
+          "takeover": false,
+          "playing": false,
+          "paused": true,
+          "progress": 3,
+          "pendingSeek": 3,
+          "pendingAutoplay": true,
+          "snapshot": {
+            "currentId": "local|local-1",
+            "activeList": "local",
+            "progress": 3,
+            "volume": 0.5,
+            "muted": true,
+            "mode": "list",
+            "playing": false,
+            "shuffleTrail": [],
+            "currentTrack": {
+              "id": "local-1",
+              "name": "测试曲目 1",
+              "list": "local",
+              "mode": "本地",
+              "dur": 30,
+              "url": "/api/apps/hanako-simple-player/routes/test.wav",
+              "group": ""
+            }
+          }
+        },
+        {
+          "ownerId": "mv6kuvoak5mua5",
+          "generation": 0,
+          "record": {
+            "ownerId": "mv6kuvkxu2s2px",
+            "claimId": "mv6kuvkxu2s2px-1",
+            "at": 1791889692538,
+            "revision": 1,
+            "generation": 1,
+            "pending": null,
+            "resume": false
+          },
+          "docLockHeld": false,
+          "docLockSupported": true,
+          "takeover": true,
+          "playing": false,
+          "paused": true,
+          "progress": 3,
+          "pendingSeek": 0,
+          "pendingAutoplay": false,
+          "snapshot": {
+            "currentId": "local|local-1",
+            "activeList": "local",
+            "progress": 3,
+            "volume": 0.5,
+            "muted": true,
+            "mode": "list",
+            "playing": false,
+            "shuffleTrail": [],
+            "currentTrack": {
+              "id": "local-1",
+              "name": "测试曲目 1",
+              "list": "local",
+              "mode": "本地",
+              "dur": 30,
+              "url": "/api/apps/hanako-simple-player/routes/test.wav",
+              "group": ""
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outDir": "docs/player-ui/handoffs/audio-owner-1.1.1/repair2/owner-final"
+}

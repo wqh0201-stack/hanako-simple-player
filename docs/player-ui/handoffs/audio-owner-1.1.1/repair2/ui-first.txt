@@ -1,0 +1,1303 @@
+{
+  "selfCheckPassed": 12,
+  "selfCheckTotal": 12,
+  "failedCases": [],
+  "narrowSelfCheck": "4/4",
+  "narrowFailed": [],
+  "assertions": "376/376",
+  "failedAssertions": [],
+  "search": {
+    "entryVisibleWide": {
+      "shown": true,
+      "searchLeftmost": true,
+      "qbRightmost": true,
+      "qbIconOnly": true,
+      "titleShown": true,
+      "playCentered": true,
+      "transport": true,
+      "flanks": true
+    },
+    "volClosed": {
+      "visibility": "hidden",
+      "h": 102
+    },
+    "volHover": {
+      "visible": true,
+      "vertical": true,
+      "above": true,
+      "inside": true,
+      "expanded": true
+    },
+    "volZ": {
+      "vol": 40,
+      "queue": 30,
+      "scrim": 28
+    },
+    "volDrag": {
+      "value": 22,
+      "audioVol": 22
+    },
+    "volMute": {
+      "muted": true,
+      "icon": "#i-volume-mute",
+      "sliderVal": "0",
+      "fill": "0%"
+    },
+    "volUnmute": {
+      "muted": false,
+      "sliderVal": 22,
+      "audioVol": 22
+    },
+    "volIcon": {
+      "low": "#i-volume-1",
+      "mid": "#i-volume-2",
+      "high": "#i-volume-3",
+      "muted": "#i-volume-mute",
+      "back": "#i-volume-3"
+    },
+    "volLeave": {
+      "hidden": true,
+      "expanded": "false"
+    },
+    "volHitDrawer": {
+      "hit": "vol",
+      "ok": true
+    },
+    "entryHiddenCard": true,
+    "titleHiddenCard": true,
+    "pageOpen": {
+      "open": true,
+      "rows": 1,
+      "favBtns": 1
+    },
+    "coversControls": {
+      "searchBottom": 680,
+      "controlsTop": 680,
+      "spW": 1040,
+      "frameW": 1040
+    },
+    "volHitSearch": {
+      "hit": "vol",
+      "ok": true
+    },
+    "afterAdd": {
+      "favOn": true,
+      "inFav": true
+    },
+    "favRows": {
+      "count": 1,
+      "hasNew": true
+    },
+    "playHit": {
+      "hits": 1
+    },
+    "afterPlay": {
+      "playing": "1",
+      "title": "点播命中曲",
+      "recentTab": true
+    },
+    "playNotLike": {
+      "favOn": false
+    },
+    "recentList": {
+      "count": 1,
+      "hasPlayed": true
+    },
+    "closed": false,
+    "toggleOpen": true,
+    "toggleClosed": false,
+    "scopeButtons": [
+      "song",
+      "artist"
+    ],
+    "scopeAfter": "artist",
+    "discover": {
+      "discoverVisible": true,
+      "hotRows": 1,
+      "hotFirst": "热门推荐 1",
+      "chartCards": 2,
+      "chartFirst": "热歌榜",
+      "radioCards": 1,
+      "radioFirst": "你，静不下来"
+    },
+    "chartOpen": {
+      "rows": 2,
+      "discoverVisible": false,
+      "first": "榜单曲 1"
+    },
+    "back1": {
+      "open": true,
+      "discover": true,
+      "label": "收起"
+    },
+    "back2": false,
+    "radioOpen": {
+      "rows": 2,
+      "first": "电台节目 1"
+    },
+    "biliProbe": {
+      "rows": 2,
+      "marks": 1,
+      "markText": "分集 12",
+      "state": {
+        "probe": {
+          "BV1Multi": 12
+        },
+        "open": [],
+        "cacheKeys": [
+          "BV1Multi"
+        ],
+        "probesLeft": 9
+      },
+      "singleMark": false
+    },
+    "biliMark": {
+      "exists": true,
+      "tag": "SPAN",
+      "role": null,
+      "tabindex": null,
+      "dataMark": false,
+      "pe": "none",
+      "hasArrow": false,
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "biliOpen": {
+      "open": true,
+      "treeInRow": true,
+      "prows": 12,
+      "firstName": "分集曲 1",
+      "firstIdx": "P1",
+      "treeTop": 196,
+      "hitBottom": 192,
+      "nextRowTop": 475,
+      "capped": "232px",
+      "discover": false,
+      "playing": "1",
+      "title": "点播命中曲",
+      "heartTop": 146,
+      "heartBottom": 176,
+      "hitTop": 146,
+      "hitBottomMain": 192,
+      "favTop": 146,
+      "thumbBg": "url(\"/api/apps/hanako-simple-player/routes/_fixture/cover.png?appSurfaceSession=fake-ticket\")"
+    },
+    "biliGuide": {
+      "exists": true,
+      "content": "none",
+      "width": "auto",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "biliClose": {
+      "open": false,
+      "prows": 0
+    },
+    "biliSingle": {
+      "playing": "1",
+      "title": "B站单曲",
+      "nocover": true,
+      "multiCoverBg": "url(\"http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/_fixture/cover.png?appSurfaceSession=fake-ticket\"), none"
+    },
+    "biliFav": {
+      "favOn": true,
+      "inFav": true
+    },
+    "biliBefore": 5,
+    "biliImport": {
+      "tabs": 6,
+      "active": "B站合集 多P",
+      "queueRows": 12,
+      "firstQueue": "分集曲 1"
+    },
+    "linkKind": {
+      "shareText": "bili",
+      "bareBv": "bili",
+      "avNum": "bili",
+      "netease": "num",
+      "plainNum": "num",
+      "junk": "unknown"
+    },
+    "biliPaste": {
+      "favRows": 3,
+      "imp1Rows": 20,
+      "imp1Before": 20,
+      "title": "在百万豪装录音棚大声听 杨丞琳《雨爱》【Hi-res】",
+      "artist": "JLRS-LeoFM",
+      "note": "已加入：在百万豪装录音棚大声听 杨丞琳《雨爱》【Hi-res】",
+      "inputCleared": true,
+      "active": "fav"
+    },
+    "biliMode": {
+      "found": true,
+      "mode": "在线",
+      "source": "online",
+      "meta": "来源·我的喜欢"
+    },
+    "biliMulti": {
+      "note": "该视频共 149 集，已加入第 6 集",
+      "hasPartsTree": false,
+      "titles": [
+        "第 6 讲",
+        "在百万豪装录音棚大声听 杨丞琳《雨爱》【Hi-res】",
+        "分集曲 1",
+        "搜索命中曲"
+      ]
+    },
+    "biliJunk": {
+      "note": "认不出这个链接：支持网易云歌曲 / 歌单，或 B站视频链接 / BV 号"
+    },
+    "numStill": {
+      "rows": 5,
+      "hasOnlineSingle": true
+    },
+    "longTitle": {
+      "long": {
+        "rowH": 55,
+        "hitTop": 146,
+        "favTop": 146,
+        "hitW": 966,
+        "rowW": 1012
+      },
+      "normal": {
+        "rowH": 55,
+        "hitTop": 201,
+        "favTop": 201,
+        "hitW": 966,
+        "rowW": 1012
+      },
+      "longTitleLen": 240
+    },
+    "lmHint": {
+      "exists": true,
+      "text": "歌词绑定后若与节奏不齐，长按歌词拖动即可对齐",
+      "fs": 11
+    },
+    "lmSwap": {
+      "exists": true,
+      "text": "换歌词",
+      "inTools": true,
+      "sameRow": true
+    },
+    "lmSwapOpen": {
+      "before": true,
+      "after": false,
+      "song": "B站单曲"
+    },
+    "lmCands": {
+      "count": 3,
+      "domRows": 3,
+      "hidden": false,
+      "list": [
+        {
+          "title": "候选歌曲 · 网易甲",
+          "author": "候选歌手",
+          "server": "netease",
+          "mid": "9001"
+        },
+        {
+          "title": "候选歌曲 · 腾讯版",
+          "author": "候选歌手",
+          "server": "tencent",
+          "mid": "9003"
+        },
+        {
+          "title": "候选歌曲 · 网易乙",
+          "author": "另一歌手",
+          "server": "netease",
+          "mid": "9002"
+        }
+      ],
+      "srcs": [
+        "网易云",
+        "QQ",
+        "网易云"
+      ],
+      "boundBefore": null
+    },
+    "lmPick": {
+      "idx": 1,
+      "want": {
+        "title": "候选歌曲 · 腾讯版",
+        "author": "候选歌手",
+        "server": "tencent",
+        "mid": "9003"
+      }
+    },
+    "lmBound": {
+      "bound": {
+        "song": "候选歌曲",
+        "artist": "候选歌手",
+        "keyword": "候选歌曲 候选歌手",
+        "server": "tencent",
+        "mid": "9003"
+      },
+      "popHidden": true
+    },
+    "page1": {
+      "rows": 30,
+      "total": 75,
+      "paginated": true,
+      "note": "共 75 条 · 来自网易云",
+      "more": true
+    },
+    "page2": {
+      "rows": 60,
+      "first": "分页曲目 1",
+      "last": "分页曲目 60",
+      "more": true
+    },
+    "page3": {
+      "rows": 75,
+      "last": "分页曲目 75",
+      "more": false,
+      "note": "共 75 条 · 来自网易云"
+    },
+    "atEnd": {
+      "rows": 75,
+      "hits": 0
+    },
+    "detailNoPaginate": {
+      "rows": 2,
+      "paginated": false,
+      "more": false
+    }
+  },
+  "wiringOk": true,
+  "migrationOk": true,
+  "lifecycleOk": true,
+  "theme": {
+    "hanaCssInject": {
+      "accent": "rgb(34, 170, 136)",
+      "body": "rgb(17, 34, 51)"
+    },
+    "realHostShape": {
+      "accent": "rgb(201, 154, 175)",
+      "body": "rgb(59, 74, 84)",
+      "onAccent": "#2A3238",
+      "appearance": "dark"
+    },
+    "palette": {
+      "sysLight": {
+        "accent": "rgb(201, 154, 175)",
+        "body": "rgb(59, 74, 84)"
+      },
+      "sysDark": {
+        "accent": "rgb(201, 154, 175)",
+        "body": "rgb(59, 74, 84)"
+      }
+    },
+    "paletteLight": {
+      "accent": "rgb(83, 125, 150)",
+      "body": "rgb(248, 244, 237)",
+      "onAccent": "#FFFDF7"
+    },
+    "fallback": {
+      "dark": {
+        "accent": "rgb(201, 154, 175)",
+        "body": "rgb(52, 66, 75)"
+      },
+      "light": {
+        "accent": "rgb(83, 125, 150)",
+        "body": "rgb(248, 244, 237)"
+      }
+    }
+  },
+  "wiring": {
+    "tabs": [
+      "我的喜欢",
+      "最近播放",
+      "本地",
+      "1",
+      "2"
+    ],
+    "activeList": "fav",
+    "localGuide": {
+      "rows": 0,
+      "hasPickBtn": true,
+      "text": "还没有选择本地文件夹"
+    },
+    "imp1": {
+      "rows": 20,
+      "first": "在线曲目 1",
+      "dup": []
+    },
+    "geoStableOnSwitch": true,
+    "imp2": {
+      "rows": 6,
+      "dup": [],
+      "titles": [
+        "在线曲目 1",
+        "在线曲目 2",
+        "在线曲目 3",
+        "搜索曲目 1",
+        "搜索曲目 2",
+        "搜索曲目 3"
+      ]
+    },
+    "crossList": {
+      "imp1Rows": 20,
+      "imp2Rows": 6,
+      "imp2HasSearch": true
+    },
+    "localAfterPick": {
+      "rows": 3,
+      "dup": [],
+      "first": "扫描曲目 1"
+    },
+    "afterPlayLocal": {
+      "playing": "1",
+      "title": "扫描曲目 1",
+      "audioPaused": false
+    },
+    "coverState": {
+      "nocover": false,
+      "titleColor": "rgb(242, 246, 250)"
+    },
+    "afterPlayOnline": {
+      "title": "在线曲目 1",
+      "lyricLines": 40,
+      "hasEmpty": false,
+      "audioPaused": false,
+      "lyricScrolling": true,
+      "nocover": false
+    },
+    "lyricBeforeHover": {
+      "clientWidth": 268,
+      "offsetWidth": 268,
+      "sb": "rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)"
+    },
+    "lyricAfterHover": {
+      "clientWidth": 268,
+      "offsetWidth": 268,
+      "sb": "color(srgb 0.94902 0.964706 0.980392 / 0.38) rgba(0, 0, 0, 0)"
+    },
+    "lyricsoffState": {
+      "wrap": "none",
+      "scrim": "block",
+      "ripple": "block"
+    },
+    "lyricsBackState": {
+      "wrap": "block"
+    },
+    "afterNext": {
+      "title": "在线曲目 2",
+      "activeList": "imp:1"
+    },
+    "searchKeyResolve": {
+      "title": "搜索曲目 1",
+      "audioPaused": false,
+      "hasSrc": true,
+      "lyricLines": 40
+    },
+    "modeTitle": "播放模式：列表循环",
+    "importPlaylist": {
+      "tabsBefore": 5,
+      "tabsAfter": 6,
+      "active": "imp:3",
+      "rows": 5
+    },
+    "rename": {
+      "hasInput": true,
+      "headerTitle": "我的歌单",
+      "tabTitle": "我的歌单"
+    },
+    "importSingle": {
+      "before": 5,
+      "after": 5,
+      "active": "imp:3",
+      "activeBefore": "imp:3",
+      "tabsBefore": 6,
+      "tabsAfter": 6,
+      "favRows": 1,
+      "hasUnitList": false
+    },
+    "removed": 1,
+    "wideDrawer": "1"
+  },
+  "four": {
+    "localMeta": "来源·本地",
+    "onlineMeta": "来源·歌单 1",
+    "queueArtists": [
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "favAfterAdd": {
+      "onRows": 1,
+      "total": 6,
+      "tabs": [
+        "fav",
+        "recent",
+        "local",
+        "imp:1",
+        "imp:2"
+      ]
+    },
+    "favList": {
+      "rows": 1,
+      "first": "在线曲目 1"
+    },
+    "favMeta": "来源·我的喜欢",
+    "favCrossList": {
+      "found": true,
+      "on": true,
+      "onRows": 1
+    },
+    "favUnfav": {
+      "afterUnfav": {
+        "onRowsImp1": 0,
+        "rowsImp1": 20
+      },
+      "favRows": 0
+    },
+    "stageFav": {
+      "before": {
+        "hidden": false,
+        "pressed": "false",
+        "hasIcon": true,
+        "svgW": 19
+      },
+      "after": {
+        "pressed": "true",
+        "on": true,
+        "rowOn": 1
+      }
+    },
+    "ctlFav": {
+      "before": {
+        "pressed": "false",
+        "text": "",
+        "hasIcon": true,
+        "isBar": true
+      },
+      "after": {
+        "pressed": "true",
+        "on": true,
+        "stageOn": true,
+        "rowOn": 1
+      }
+    },
+    "centerOnSwitch": {
+      "found": true,
+      "scrolled": true,
+      "rowMid": 112,
+      "viewMid": 112
+    },
+    "backfill": {
+      "searchHitsDelta": 3,
+      "filledRows": 3
+    },
+    "backfillIdempotent": {
+      "searchHitsDelta": 0
+    },
+    "realName": {
+      "tabs": [
+        {
+          "list": "fav",
+          "label": "我的喜欢",
+          "title": "我的喜欢"
+        },
+        {
+          "list": "recent",
+          "label": "最近播放",
+          "title": "最近播放"
+        },
+        {
+          "list": "local",
+          "label": "本地",
+          "title": "本地"
+        },
+        {
+          "list": "imp:1",
+          "label": "1",
+          "title": "歌单 1"
+        },
+        {
+          "list": "imp:2",
+          "label": "2",
+          "title": "歌单 2"
+        },
+        {
+          "list": "imp:3",
+          "label": "Can_0201",
+          "title": "Can_0201喜欢的音乐"
+        }
+      ],
+      "imported": {
+        "list": "imp:3",
+        "label": "Can_0201",
+        "title": "Can_0201喜欢的音乐"
+      }
+    },
+    "tabOverflow": {
+      "tabOverflow": {
+        "count": 9,
+        "scrollW": 550,
+        "clientW": 465,
+        "overflow": true,
+        "fadeR": true,
+        "fadeL": false,
+        "scrollLeft": 0,
+        "mask": "linear-gradient(90deg, rgba(0, 0, 0, 0) 0px, rgb(0, 0, 0) 0px, rgb(0, 0, 0) calc(100% - 22px), rgba(0, 0, 0, 0) 100%)"
+      },
+      "lastTab": {
+        "activeIsLast": true,
+        "scrollLeft": 86,
+        "rightGap": 14,
+        "fadeL": true,
+        "fadeR": false
+      }
+    },
+    "longPress": {
+      "popAfterPress": {
+        "open": true,
+        "title": "删除「歌单 2」？",
+        "activeList": "imp:2"
+      },
+      "popClosed": true,
+      "tabsUnchanged": true
+    },
+    "deletePlaying": {
+      "before": {
+        "playing": "1",
+        "title": "在线曲目 1",
+        "paused": false,
+        "rows": 20,
+        "activeList": "imp:1",
+        "currentUid": "imp:1|netease:900000"
+      },
+      "popTitle": "删除「歌单 1」？",
+      "after": {
+        "playing": "1",
+        "title": "在线曲目 1",
+        "paused": false,
+        "activeList": "local",
+        "tabs": [
+          "fav",
+          "recent",
+          "local",
+          "imp:2",
+          "imp:3",
+          "imp:4",
+          "imp:5",
+          "imp:6"
+        ]
+      }
+    },
+    "afterDelete": {
+      "tabs": [
+        "fav",
+        "recent",
+        "local",
+        "imp:2",
+        "imp:3",
+        "imp:4",
+        "imp:5",
+        "imp:6"
+      ],
+      "perList": {
+        "fav": 0,
+        "recent": 3,
+        "local": 3,
+        "imp:2": 6,
+        "imp:3": 5,
+        "imp:4": 5,
+        "imp:5": 5,
+        "imp:6": 5
+      }
+    }
+  },
+  "migration": {
+    "firstTabs": [
+      {
+        "list": "fav",
+        "label": "我的喜欢",
+        "title": "我的喜欢"
+      },
+      {
+        "list": "recent",
+        "label": "最近播放",
+        "title": "最近播放"
+      },
+      {
+        "list": "local",
+        "label": "本地",
+        "title": "本地"
+      },
+      {
+        "list": "imp:1",
+        "label": "本地音乐",
+        "title": "本地音乐"
+      },
+      {
+        "list": "imp:2",
+        "label": "鸣潮",
+        "title": "鸣潮"
+      },
+      {
+        "list": "imp:3",
+        "label": "在线音乐",
+        "title": "在线音乐"
+      },
+      {
+        "list": "imp:4",
+        "label": "未分类",
+        "title": "未分类"
+      },
+      {
+        "list": "imp:5",
+        "label": "旧包名",
+        "title": "旧包名"
+      }
+    ],
+    "firstCounts": {
+      "total": 15,
+      "per": {
+        "fav": 0,
+        "recent": 0,
+        "local": 0,
+        "imp:1": 3,
+        "imp:2": 4,
+        "imp:3": 3,
+        "imp:4": 2,
+        "imp:5": 3
+      }
+    },
+    "expectedTotal": 15,
+    "reloadTabs": [
+      "fav",
+      "recent",
+      "local",
+      "imp:1",
+      "imp:2",
+      "imp:3",
+      "imp:4",
+      "imp:5"
+    ],
+    "reloadTotal": 15,
+    "idempotent": true,
+    "norm": {
+      "oldToNew": "/api/apps/hanako-simple-player/routes/widget/api/music/go/123?server=netease",
+      "curKept": "/api/apps/hanako-simple-player/routes/widget/api/music/go/123?server=netease",
+      "localKept": "/api/apps/hanako-simple-player/routes/widget/media/x.wav",
+      "externalKept": "https://m8.music.126.net/a.mp3",
+      "appId": "hanako-simple-player"
+    },
+    "savedUrls": [
+      "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+      "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+      "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+      "/api/apps/hanako-simple-player/routes/widget/api/music/go/810000?server=netease",
+      "/api/apps/hanako-simple-player/routes/widget/api/music/go/810001?server=netease",
+      "/api/apps/hanako-simple-player/routes/widget/api/music/go/810002?server=netease"
+    ],
+    "savedOldPrefixCount": 0,
+    "savedNewPrefixCount": 6
+  },
+  "oldprefix": {
+    "saved": [
+      "/api/apps/hanako-simple-player/routes/widget/api/music/go/820001?server=netease",
+      "/api/apps/hanako-simple-player/routes/widget/api/music/go/820002?server=netease",
+      "/api/apps/hanako-simple-player/routes/widget/media/keep.wav"
+    ],
+    "oldLeft": 0,
+    "newCount": 2,
+    "localKept": 1
+  },
+  "lifecycle": {
+    "crossDocument": {
+      "before": {
+        "playing": "1",
+        "title": "在线曲目 1",
+        "cur": 1.055963
+      },
+      "saved": {
+        "currentId": "imp:1|netease:900000",
+        "activeList": "imp:1",
+        "progress": 1.1,
+        "volume": 0.8,
+        "muted": false,
+        "mode": "list",
+        "playing": true,
+        "shuffleTrail": [],
+        "currentTrack": {
+          "id": "netease:900000",
+          "name": "在线曲目 1",
+          "url": "/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease",
+          "mode": "在线",
+          "dur": 30,
+          "group": "在线音乐",
+          "list": "imp:1",
+          "pic": "/api/apps/hanako-simple-player/routes/_fixture/cover-square.png"
+        }
+      },
+      "after": {
+        "playing": "1",
+        "title": "在线曲目 1",
+        "cur": 1.903714,
+        "activeList": "imp:1",
+        "resumeHidden": true,
+        "firstPlayAt": 1.1
+      }
+    },
+    "crossOk": true,
+    "autoplayBlocked": {
+      "resumeShown": true,
+      "curTime": "0:12",
+      "seekVal": "12",
+      "playing": "0",
+      "title": "在线曲目 1"
+    },
+    "blockedOk": true,
+    "snapshotTrack": {
+      "title": "孤儿曲目",
+      "activeList": "recent",
+      "queueText": "孤儿曲目孤儿歌手0:30",
+      "cur": 5.790027
+    },
+    "snapshotTrackOk": true,
+    "seekFollow": {
+      "saved": 12.3,
+      "cur": 12.456541
+    },
+    "seekFollowOk": true
+  },
+  "ambient": {
+    "light": {
+      "polarity": "light",
+      "ambientOk": true,
+      "nocover": false,
+      "ambientColor": [
+        213,
+        217,
+        218
+      ],
+      "scene": [
+        465,
+        514
+      ],
+      "ambient": [
+        465,
+        514
+      ],
+      "player": [
+        465,
+        930
+      ],
+      "coverHasUrl": true,
+      "scrim": "block",
+      "scrimTop": 0,
+      "scrimLeft": 0,
+      "contentX": 177,
+      "lyricTop": 104,
+      "coverW": "514px",
+      "coverBox": [
+        514,
+        514
+      ],
+      "coverAnchored": true,
+      "seam": "270px",
+      "band": "120px",
+      "bottomFade": {
+        "content": "none",
+        "bg": "none"
+      },
+      "surfaceRGB": [
+        252,
+        250,
+        245
+      ],
+      "frameBg": [
+        252,
+        250,
+        245
+      ],
+      "corners": {
+        "card": {
+          "tl": 14,
+          "bl": 0
+        },
+        "win": {
+          "tl": 14,
+          "bl": 0
+        }
+      },
+      "coverMask": "linear-gradient(90deg, rgb(0, 0, 0) 210px, rgba(0, 0, 0, 0) 330px)",
+      "scrimMask": "linear-gradient(90deg, rgba(0, 0, 0, 0) 57px, rgb(0, 0, 0) 177px)",
+      "lyricsTextAlign": "left",
+      "contrastMid": {
+        "current": 8.64,
+        "near": 6.36
+      },
+      "contrastWorst": {
+        "current": 8.64,
+        "near": 6.36
+      },
+      "textColor": {
+        "current": "color(srgb 0.35051 0.186902 0.225333)",
+        "near": "color(srgb 0.216151 0.159508 0.158806 / 0.805775)"
+      }
+    },
+    "mixed": {
+      "polarity": "dark",
+      "ambientOk": true,
+      "nocover": false,
+      "ambientColor": [
+        103,
+        72,
+        41
+      ],
+      "scene": [
+        465,
+        514
+      ],
+      "ambient": [
+        465,
+        514
+      ],
+      "player": [
+        465,
+        930
+      ],
+      "coverHasUrl": true,
+      "scrim": "block",
+      "scrimTop": 0,
+      "scrimLeft": 0,
+      "contentX": 177,
+      "lyricTop": 104,
+      "coverW": "514px",
+      "coverBox": [
+        514,
+        514
+      ],
+      "coverAnchored": true,
+      "seam": "270px",
+      "band": "120px",
+      "bottomFade": {
+        "content": "none",
+        "bg": "none"
+      },
+      "surfaceRGB": [
+        252,
+        250,
+        245
+      ],
+      "frameBg": [
+        252,
+        250,
+        245
+      ],
+      "corners": {
+        "card": {
+          "tl": 14,
+          "bl": 0
+        },
+        "win": {
+          "tl": 14,
+          "bl": 0
+        }
+      },
+      "coverMask": "linear-gradient(90deg, rgb(0, 0, 0) 210px, rgba(0, 0, 0, 0) 330px)",
+      "scrimMask": "linear-gradient(90deg, rgba(0, 0, 0, 0) 57px, rgb(0, 0, 0) 177px)",
+      "lyricsTextAlign": "left",
+      "contrastMid": {
+        "current": 9.6,
+        "near": 8.33
+      },
+      "contrastWorst": {
+        "current": 9.6,
+        "near": 8.33
+      },
+      "textColor": {
+        "current": "color(srgb 0.77302 0.931922 0.940706)",
+        "near": "color(srgb 0.90337 0.956203 0.970099 / 0.860158)"
+      }
+    },
+    "dark": {
+      "polarity": "dark",
+      "ambientOk": true,
+      "nocover": false,
+      "ambientColor": [
+        11,
+        12,
+        25
+      ],
+      "scene": [
+        465,
+        514
+      ],
+      "ambient": [
+        465,
+        514
+      ],
+      "player": [
+        465,
+        930
+      ],
+      "coverHasUrl": true,
+      "scrim": "block",
+      "scrimTop": 0,
+      "scrimLeft": 0,
+      "contentX": 177,
+      "lyricTop": 104,
+      "coverW": "514px",
+      "coverBox": [
+        514,
+        514
+      ],
+      "coverAnchored": true,
+      "seam": "270px",
+      "band": "120px",
+      "bottomFade": {
+        "content": "none",
+        "bg": "none"
+      },
+      "surfaceRGB": [
+        252,
+        250,
+        245
+      ],
+      "frameBg": [
+        252,
+        250,
+        245
+      ],
+      "corners": {
+        "card": {
+          "tl": 14,
+          "bl": 0
+        },
+        "win": {
+          "tl": 14,
+          "bl": 0
+        }
+      },
+      "coverMask": "linear-gradient(90deg, rgb(0, 0, 0) 210px, rgba(0, 0, 0, 0) 330px)",
+      "scrimMask": "linear-gradient(90deg, rgba(0, 0, 0, 0) 57px, rgb(0, 0, 0) 177px)",
+      "lyricsTextAlign": "left",
+      "contrastMid": {
+        "current": 13.65,
+        "near": 12.18
+      },
+      "contrastWorst": {
+        "current": 13.65,
+        "near": 12.18
+      },
+      "textColor": {
+        "current": "color(srgb 0.917961 0.847373 0.795765)",
+        "near": "color(srgb 0.940964 0.934273 0.932505 / 0.860158)"
+      }
+    },
+    "nocover": {
+      "polarity": "none",
+      "ambientOk": false,
+      "nocover": true,
+      "ambientColor": null,
+      "scene": [
+        465,
+        514
+      ],
+      "ambient": [
+        465,
+        514
+      ],
+      "player": [
+        465,
+        930
+      ],
+      "coverHasUrl": false,
+      "scrim": "block",
+      "scrimTop": 0,
+      "scrimLeft": 0,
+      "contentX": 177,
+      "lyricTop": 104,
+      "coverW": "514px",
+      "coverBox": [
+        514,
+        514
+      ],
+      "coverAnchored": true,
+      "seam": "270px",
+      "band": "120px",
+      "bottomFade": {
+        "content": "none",
+        "bg": "none"
+      },
+      "surfaceRGB": [
+        252,
+        250,
+        245
+      ],
+      "frameBg": [
+        252,
+        250,
+        245
+      ],
+      "corners": {
+        "card": {
+          "tl": 14,
+          "bl": 0
+        },
+        "win": {
+          "tl": 14,
+          "bl": 0
+        }
+      },
+      "coverMask": "none",
+      "scrimMask": "linear-gradient(90deg, rgba(0, 0, 0, 0) 57px, rgb(0, 0, 0) 177px)",
+      "lyricsTextAlign": "left",
+      "contrastMid": {
+        "current": null,
+        "near": null
+      },
+      "contrastWorst": {
+        "current": null,
+        "near": null
+      },
+      "textColor": {
+        "current": "color(srgb 0.238667 0.305961 0.342588)",
+        "near": "color(srgb 0.233682 0.260344 0.277299 / 0.704778)"
+      }
+    },
+    "fail": {
+      "polarity": "light",
+      "ambientOk": false,
+      "nocover": false,
+      "ambientColor": null,
+      "scene": [
+        465,
+        514
+      ],
+      "ambient": [
+        465,
+        514
+      ],
+      "player": [
+        465,
+        930
+      ],
+      "coverHasUrl": true,
+      "scrim": "block",
+      "scrimTop": 0,
+      "scrimLeft": 0,
+      "contentX": 177,
+      "lyricTop": 104,
+      "coverW": "771px",
+      "coverBox": [
+        771,
+        514
+      ],
+      "coverAnchored": true,
+      "seam": "270px",
+      "band": "120px",
+      "bottomFade": {
+        "content": "none",
+        "bg": "none"
+      },
+      "surfaceRGB": [
+        252,
+        250,
+        245
+      ],
+      "frameBg": [
+        252,
+        250,
+        245
+      ],
+      "corners": {
+        "card": {
+          "tl": 14,
+          "bl": 0
+        },
+        "win": {
+          "tl": 14,
+          "bl": 0
+        }
+      },
+      "coverMask": "linear-gradient(90deg, rgb(0, 0, 0) 210px, rgba(0, 0, 0, 0) 330px)",
+      "scrimMask": "linear-gradient(90deg, rgba(0, 0, 0, 0) 57px, rgb(0, 0, 0) 177px)",
+      "lyricsTextAlign": "left",
+      "contrastMid": {
+        "current": null,
+        "near": null
+      },
+      "contrastWorst": {
+        "current": null,
+        "near": null
+      },
+      "textColor": {
+        "current": "color(srgb 0.238667 0.305961 0.342588)",
+        "near": "color(srgb 0.185184 0.192473 0.191271 / 0.805775)"
+      }
+    }
+  },
+  "darkFallback": {
+    "dark": {
+      "hkBg": "#34424B",
+      "hkText": "#E1EAF0"
+    },
+    "light": {
+      "hkBg": "#F8F4ED",
+      "hkText": "#3B3D3F"
+    },
+    "changed": true
+  },
+  "expectedProbes": [
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%91%A8%E6%9D%B0%E4%BC%A6%20-%20%E7%A8%BB%E9%A6%99",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/_fixture/audio.wav?appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog?kind=artist&name=%E5%91%A8%E6%9D%B0%E4%BC%A6 net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%202",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/go/900001?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E6%89%AB%E6%8F%8F%E6%9B%B2%E7%9B%AE%201",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E6%97%A0%E8%AF%8D%E7%BA%AF%E9%9F%B3%E4%B9%90",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/go/900099?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/ttml?id=900099&platform=ncm",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E6%90%9C%E7%B4%A2%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/go/770005?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%2016",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/go/900015?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/_fixture/tone.wav?p=steady-bass&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/_fixture/tone.wav?p=kicks&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/_fixture/tone.wav?p=mid-bursts&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/_fixture/tone.wav?p=silence&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/_fixture/tone.wav?p=dense&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/_fixture/tone.wav?p=hihats&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/_fixture/tone.wav?p=weak-mid&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/_fixture/tone.wav?p=steady-bass&appSurfaceSession=fake-ticket&g=0.6693026726507241 net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/_fixture/tone.wav?p=kicks&appSurfaceSession=fake-ticket&x=0.029742281086520994 net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E7%82%B9%E6%92%AD%E5%91%BD%E4%B8%AD%E6%9B%B2",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/go/770002?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=B%E7%AB%99%E5%8D%95%E6%9B%B2",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/go/BV1Single?server=bilibili&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/go/1460626792?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E6%90%9C%E7%B4%A2%E5%91%BD%E4%B8%AD%E6%9B%B2",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/go/770001?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%205",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/go/900004?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%203",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/go/900002?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%204",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/go/900003?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E6%97%A7%E6%9C%AC%E5%9C%B0%201",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E6%97%A7%E5%89%8D%E7%BC%80%E7%94%B2",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/go/820001?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%AD%A4%E5%84%BF%E6%9B%B2%E7%9B%AE",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/go/777777?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%208",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/go/900007?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%8D%A0%E4%BD%8D%E8%AF%8D%E7%BA%AF%E9%9F%B3%E4%B9%90",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/go/900098?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E6%97%A7%E5%96%9C%E6%AC%A2",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/go/900051?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%2012",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/go/900011?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%2013",
+    "reqfail: http://127.0.0.1:54673/api/apps/hanako-simple-player/routes/widget/api/music/go/900012?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED"
+  ],
+  "runtimeErrors": [],
+  "outDir": "docs/player-ui/handoffs/audio-owner-1.1.1/repair2/ui-first"
+}

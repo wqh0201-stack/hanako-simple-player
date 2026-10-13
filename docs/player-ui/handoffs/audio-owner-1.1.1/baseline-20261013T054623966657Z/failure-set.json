@@ -1,0 +1,19 @@
+{
+  "backend": [],
+  "ui": {
+    "failedCases": [],
+    "narrowFailed": [],
+    "failedAssertions": [],
+    "runtimeErrors": [],
+    "wiringOk": true,
+    "migrationOk": true,
+    "lifecycleOk": true
+  },
+  "knownFlakyActualResult": [
+    {
+      "name": "ripple-max-midhigh-keeps-steady-and-silence-quiet",
+      "ok": true,
+      "detail": "{\"steady\":0,\"silence\":0}"
+    }
+  ]
+}

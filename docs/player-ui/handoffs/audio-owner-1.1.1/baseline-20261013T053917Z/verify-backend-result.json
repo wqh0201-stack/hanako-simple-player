@@ -1,0 +1,8 @@
+{
+  "command": "node tools/verify-backend.mjs",
+  "startedAt": "2026-10-13T05:39:32.846237+00:00",
+  "finishedAt": "2026-10-13T05:39:32.930610+00:00",
+  "elapsedSeconds": 0.084,
+  "exitCode": 0,
+  "rawOutput": "/Volumes/SSD/hanadesk/hanako-audio-player-simple/docs/player-ui/handoffs/audio-owner-1.1.1/baseline-20261013T053917Z/verify-backend.log"
+}

@@ -1,0 +1,110 @@
+{
+  "passed": 1,
+  "total": 4,
+  "failed": [
+    {
+      "name": "unexpected-test-error",
+      "ok": false,
+      "detail": "TimeoutError: Waiting failed: 8000ms exceeded\n    at new WaitTask (/Volumes/SSD/hanadesk/鹈鹕/motion-reel/node_modules/puppeteer-core/lib/cjs/puppeteer/common/WaitTask.js:48:34)\n    at IsolatedWorld.waitForFunction (/Volumes/SSD/hanadesk/鹈鹕/motion-reel/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Realm.js:25:26)\n    at CdpFrame.waitForFunction (/Volumes/SSD/hanadesk/鹈鹕/motion-reel/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Frame.js:571:43)\n    at CdpFrame.<anonymous> (/Volumes/SSD/hanadesk/鹈鹕/motion-reel/node_modules/puppeteer-core/lib/cjs/puppeteer/util/decorators.js:109:27)\n    at CdpPage.waitForFunction (/Volumes/SSD/hanadesk/鹈鹕/motion-reel/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Page.js:1434:37)\n    at playing (file:///Volumes/SSD/hanadesk/hanako-audio-player-simple/tools/verify-audio-owner.mjs:123:30)\n    at file:///Volumes/SSD/hanadesk/hanako-audio-player-simple/tools/verify-audio-owner.mjs:136:11"
+    },
+    {
+      "name": "diagnostic",
+      "ok": false,
+      "detail": {
+        "owner": {
+          "ownerId": "mv6kd7jsud4mrc",
+          "generation": 0,
+          "record": {
+            "ownerId": "mv6kd7jwwjtn0s",
+            "claimId": "mv6kd7jwwjtn0s-1",
+            "at": 1791888868717,
+            "revision": 3,
+            "generation": 3,
+            "pending": null,
+            "resume": false
+          },
+          "docLockHeld": false,
+          "docLockSupported": true,
+          "takeover": true,
+          "playing": false,
+          "paused": true,
+          "progress": 3.067914,
+          "pendingSeek": 0,
+          "pendingAutoplay": false,
+          "snapshot": {
+            "currentId": "local|local-1",
+            "activeList": "local",
+            "progress": 3.1,
+            "volume": 0.5,
+            "muted": true,
+            "mode": "list",
+            "playing": false,
+            "shuffleTrail": [],
+            "currentTrack": {
+              "id": "local-1",
+              "name": "测试曲目 1",
+              "list": "local",
+              "mode": "本地",
+              "dur": 30,
+              "url": "/api/apps/hanako-simple-player/routes/test.wav",
+              "group": ""
+            }
+          }
+        },
+        "src": "http://127.0.0.1:50641/api/apps/hanako-simple-player/routes/test.wav?appSurfaceSession=test-ticket",
+        "ready": 4,
+        "duration": 30
+      }
+    },
+    {
+      "name": "diagnostic",
+      "ok": false,
+      "detail": {
+        "owner": {
+          "ownerId": "mv6kd7jwwjtn0s",
+          "generation": 3,
+          "record": {
+            "ownerId": "mv6kd7jwwjtn0s",
+            "claimId": "mv6kd7jwwjtn0s-1",
+            "at": 1791888868717,
+            "revision": 3,
+            "generation": 3,
+            "pending": null,
+            "resume": false
+          },
+          "docLockHeld": true,
+          "docLockSupported": true,
+          "takeover": true,
+          "playing": false,
+          "paused": true,
+          "progress": 3,
+          "pendingSeek": 0,
+          "pendingAutoplay": false,
+          "snapshot": {
+            "currentId": "local|local-1",
+            "activeList": "local",
+            "progress": 3,
+            "volume": 0.5,
+            "muted": true,
+            "mode": "list",
+            "playing": false,
+            "shuffleTrail": [],
+            "currentTrack": {
+              "id": "local-1",
+              "name": "测试曲目 1",
+              "list": "local",
+              "mode": "本地",
+              "dur": 30,
+              "url": "/api/apps/hanako-simple-player/routes/test.wav",
+              "group": ""
+            }
+          }
+        },
+        "src": "http://127.0.0.1:50641/api/apps/hanako-simple-player/routes/test.wav?appSurfaceSession=test-ticket",
+        "ready": 4,
+        "duration": 30
+      }
+    }
+  ],
+  "outDir": "docs/player-ui/handoffs/audio-owner-1.1.1/repair2/owner-fifth"
+}

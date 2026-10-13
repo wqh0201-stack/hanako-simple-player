@@ -19,6 +19,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { mergeLibrarySnapshot } from '../lib/library.js';
+import { createAudioOwner } from '../lib/audio-owner.js';
 
 const require = createRequire(import.meta.url);
 const puppeteer = require(process.env.PUPPETEER_CORE || '/Volumes/SSD/hanadesk/鹈鹕/motion-reel/node_modules/puppeteer-core');
@@ -188,6 +189,16 @@ let persistedPlaylist = null;
 let persistedLists = null, listReads = 0, listWrites = 0;
 /* 播放状态（跨文档）：POST 落盘，GET 取回 */
 let playbackState = null;
+let fixtureOwner = null;
+function resetOwnerFixture() {
+  fixtureOwner = createAudioOwner({ storage: { get: async () => null, set: async (key, record) => {
+    // 复用真实仲裁；这里只替代宿主 transport，不实现第二套假仲裁逻辑。
+    ownerFixtureRecord = JSON.parse(JSON.stringify(record));
+  } }, writePlayback: async (snapshot) => { playbackState = JSON.parse(JSON.stringify(snapshot)); } });
+  ownerFixtureRecord = null;
+}
+let ownerFixtureRecord = null;
+resetOwnerFixture();
 /* 搜索请求计数（测歌手补齐的次数 / 幂等） */
 let searchHits = 0;
 /* bili-resolve 请求计数：守「认不出的输入不发无谓请求」 */
@@ -312,6 +323,7 @@ const server = http.createServer((req, res) => {
     fixtureMode = u.searchParams.get('mode') || 'main';
     persistedPlaylist = null;
     playbackState = null;
+    resetOwnerFixture();
     persistedLists = null; listReads = 0; listWrites = 0;
     searchHits = 0;
     return json(res, 200, { ok: true, mode: fixtureMode });
@@ -320,13 +332,31 @@ const server = http.createServer((req, res) => {
     if (req.method === 'POST') {
       let body = '';
       req.on('data', (c) => (body += c));
-      req.on('end', () => {
-        try { playbackState = JSON.parse(body); } catch { playbackState = null; }
-        json(res, 200, { ok: true });
+      req.on('end', async () => {
+        try {
+          const snapshot = JSON.parse(body);
+          // Node 测试播种直接准备盘上 fixture；真实页面仍经生产写入闸门。
+          if (req.headers['x-fixture-seed'] === '1') { playbackState = snapshot; return json(res, 200, { ok: true }); }
+          json(res, 200, await fixtureOwner.savePlayback(snapshot, {
+            ownerId: req.headers['x-player-audio-owner'] || u.searchParams.get('audioOwnerId') || '',
+            generation: Number(req.headers['x-player-audio-generation'] || u.searchParams.get('audioGeneration') || 0)
+          }));
+        } catch (err) { json(res, 500, { ok: false, error: err.message }); }
       });
       return;
     }
     return json(res, 200, { ok: true, state: playbackState });
+  }
+  if (p === API + '/api/audio-owner') {
+    if (req.method === 'POST') {
+      let body = '';
+      req.on('data', c => { body += c; });
+      req.on('end', async () => {
+        try { json(res, 200, await fixtureOwner.command(JSON.parse(body))); }
+        catch (err) { json(res, err.code || 500, { ok: false, error: err.message }); }
+      });
+    } else fixtureOwner.read().then(record => json(res, 200, { ok: true, record }));
+    return;
   }
   if (p === API + '/api/track' && req.method === 'DELETE') {
     // 带上 list 时只删该列表里的那一份
@@ -575,6 +605,14 @@ const EXPECTED_PROBE = /\/(widget\/api\/lrc\/load|widget\/api\/music\/ttml)(\?|$
 
 async function newPage(opts) {
   const page = await browser.newPage();
+  if (!(opts && opts.teardown)) {
+    const close = page.close.bind(page);
+    page.close = async (...args) => {
+      // 默认段落本来就隔离卸载；先结束本段音频授权，避免已关闭的 fixture 挡下一段。
+      await page.evaluate(async () => { if (window.__playerDebug) await window.__playerDebug.pauseAll(); }).catch(() => {});
+      return close(...args);
+    };
+  }
   /* 段落间夹具隔离：**默认拦掉「页面卸载时的落盘」**。
    * 为什么：page.close() / 换页会触发 pagehide → 旧页面用 sendBeacon / keepalive fetch
    * 异步投递一个 playback-state 快照；它可能**晚于下一段落的 __fixture/reset** 到达，
@@ -814,7 +852,7 @@ async function verifyLyricFlow() {
   const paused = await info();
   await sleep(350);
   const frozen = await info();
-  await page.evaluate(() => document.querySelector('audio').play());
+  await page.evaluate(() => window.__playerDebug.requestPlay('fixture'));
   await sleep(220);
   const resumed = await info();
   assert('lyrics-pause-resume-keeps-phase', !frozen.raf && Math.abs(frozen.focus - paused.focus) < .001 && Math.abs(frozen.position - paused.position) < .01 && resumed.focus > frozen.focus && resumed.focus - frozen.focus < .5,
@@ -867,7 +905,7 @@ async function verifyLyricFlow() {
   assert('lyrics-split-keeps-reading-area-and-remeasures', dragged.height >= 127 && dragged.height < 230 && Math.abs(dragged.position - (dragged.centers[1] - dragged.height / 2)) < 2, JSON.stringify(dragged));
 
   await page.evaluate(() => {
-    document.querySelector('audio').play();
+    window.__playerDebug.requestPlay('fixture');
     document.querySelector('#lyricWrap').dispatchEvent(new WheelEvent('wheel', { deltaY: 100, bubbles: true }));
     document.querySelector('#lyrics').scrollTop += 80;
   });
@@ -989,11 +1027,12 @@ async function verifyMoodLists() {
   persistedLists = [...fixed, { id: 'imp:2', name: '后端乙' }, { id: 'imp:1', name: '后端甲' }];
   const page = await newPage();
   await page.evaluateOnNewDocument((legacy) => {
-    let h, listener;
+    let h;
+    const listeners = new Set();
     window.__legacyLists = legacy;
     window.__listsUnavailable = false;
     window.__listsDirectWrites = [];
-    window.__notifyLists = (keys) => { if (listener) listener(keys); };
+    window.__notifyLists = (keys) => { listeners.forEach(fn => fn(keys)); };
     const fetchBefore = window.fetch;
     window.fetch = function (url, opts) {
       if (window.__listsUnavailable && String(url).endsWith('/api/lists') && !(opts && opts.method)) {
@@ -1011,7 +1050,7 @@ async function verifyMoodLists() {
       if (v && v.storage && v.storage.global) {
         v.storage.global.get = (key) => Promise.resolve(key === 'player-lists' ? window.__legacyLists : null);
         v.storage.global.set = (key) => { window.__listsDirectWrites.push(key); return Promise.resolve(); };
-        v.storage.global.onChanged = (fn) => { listener = fn; return () => { listener = null; }; };
+        v.storage.global.onChanged = (fn) => { listeners.add(fn); return () => { listeners.delete(fn); }; };
       }
     } });
   }, [...fixed, { id: 'imp:1', name: '旧门甲' }, { id: 'imp:2', name: '旧门乙' }]);
@@ -2122,7 +2161,7 @@ const rippleAudio = {};
     audio.load();
     await new Promise((r) => { const f = () => { audio.removeEventListener('loadedmetadata', f); r(); }; audio.addEventListener('loadedmetadata', f); setTimeout(r, 2000); });
     D.rippleClear();   // 夹具间彻底隔离：波包/场/包络/起音历史全清
-    try { await audio.play(); } catch (e) { return { playErr: String(e) }; }
+    try { await window.__playerDebug.requestPlay('fixture'); } catch (e) { return { playErr: String(e) }; }
     // 等分析链就绪（captureStream 同源）
     for (let i = 0; i < 40 && !D.rippleAudio().ready; i++) await new Promise((r) => setTimeout(r, 50));
     const S = [];
@@ -2253,7 +2292,7 @@ const rippleAudio = {};
     audio.load();
     await new Promise((r) => { const f = () => { audio.removeEventListener('loadedmetadata', f); r(); }; audio.addEventListener('loadedmetadata', f); setTimeout(r, 1500); });
     D.rippleClear();
-    try { await audio.play(); } catch (e) { return { playErr: String(e) }; }
+    try { await window.__playerDebug.requestPlay('fixture'); } catch (e) { return { playErr: String(e) }; }
     for (let i = 0; i < 40 && !D.rippleAudio().ready; i++) await new Promise((r) => setTimeout(r, 50));
     // 采多帧取峰值：高度场是周期性松弛振荡，单帧会撞谷底（实测同配置单帧可差 30 倍）。
     const cv = document.getElementById('rippleCanvas');
@@ -2333,7 +2372,7 @@ const rippleAudio = {};
   // ⑨ 截图冻结 / reduced-motion：分析调度真停；恢复后无积压突发
   const freeze = await page.evaluate(async () => {
     const D = window.__playerDebug, audio = document.getElementById('audio');
-    try { await audio.play(); } catch (e) {}
+    try { await window.__playerDebug.requestPlay('fixture'); } catch (e) {}
     await new Promise((r) => setTimeout(r, 300));
     const playing = { analysing: D.rippleAudio().analysing, onsets: D.rippleAudio().onsets };
     document.body.classList.add('is-shot');
@@ -2364,7 +2403,7 @@ const rippleAudio = {};
     audio.load();
     await new Promise((r) => { const f = () => { audio.removeEventListener('loadedmetadata', f); r(); }; audio.addEventListener('loadedmetadata', f); setTimeout(r, 1500); });
     let played = false;
-    try { await audio.play(); played = !audio.paused; } catch (e) { played = false; }
+    try { await window.__playerDebug.requestPlay('fixture'); played = !audio.paused; } catch (e) { played = false; }
     await new Promise((r) => setTimeout(r, 600));
     const st = D.rippleAudio();
     audio.pause();
@@ -2744,7 +2783,7 @@ const rippleTool = {};
   const dragged = await info();
   assert('lyric-align-drag-changes-offset', dragged.draft > 0 && dragged.index > entered.index && dragged.saved === 0 && dragged.time > dragged.media + 0.25, JSON.stringify({ entered, dragged }));
   const scrollBefore = await page.$eval('#lyrics', (el) => el.scrollTop);
-  await page.evaluate(() => document.getElementById('audio').play());
+  await page.evaluate(() => window.__playerDebug.requestPlay('fixture'));
   await sleep(3300); // 超过原浏览态的 3s 自动回归，也跨过歌词句界
   const moving = await info();
   const scrollAfter = await page.$eval('#lyrics', (el) => el.scrollTop);
@@ -4788,7 +4827,7 @@ let lifecycle = {};
   const seed = { currentId: 'imp:1|netease:900000', activeList: 'imp:1', progress: 12, volume: 0.8, muted: false, mode: 'list', lyricsVisible: true, playing: true };
   for (let i = 0; i < 4; i++) {
     await fetch(`${BASE}${API}/api/playback-state?appSurfaceSession=fake-ticket`, {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(seed)
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-fixture-seed': '1' }, body: JSON.stringify(seed)
     });
     await sleep(150);
     const chk = await (await fetch(`${BASE}${API}/api/playback-state?appSurfaceSession=fake-ticket`)).json();
@@ -4831,7 +4870,7 @@ let lifecycle = {};
   };
   for (let i = 0; i < 4; i++) {
     await fetch(`${BASE}${API}/api/playback-state?appSurfaceSession=fake-ticket`, {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(snapSeed)
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-fixture-seed': '1' }, body: JSON.stringify(snapSeed)
     });
     await sleep(120);
     const chk = await (await fetch(`${BASE}${API}/api/playback-state?appSurfaceSession=fake-ticket`)).json();
@@ -5003,7 +5042,7 @@ let lifecycle = {};
   await page.evaluate(() => { if (window.__eteStaleTimer) window.__eteStaleTimer(); });
   await tick();
   assert('ete-pause-and-stale-timer-keep-controls', (await probe()).hidden === '0' && (await probe()).pending === 0);
-  await page.evaluate(() => document.getElementById('audio').play());
+  await page.evaluate(() => window.__playerDebug.requestPlay('fixture'));
   await sleep(80);
   assert('ete-resume-outside-starts-fresh-three-seconds', (await probe()).pending === 1 && (await probe()).hidden === '0');
   await enter();

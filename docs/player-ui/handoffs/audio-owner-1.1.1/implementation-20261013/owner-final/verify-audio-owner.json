@@ -1,0 +1,1191 @@
+{
+  "results": [
+    {
+      "name": "simultaneous-boot-one-voice-false",
+      "ok": true,
+      "detail": {
+        "sa": {
+          "ownerId": "mv6fbkbk98fm9h",
+          "generation": 0,
+          "record": {
+            "ownerId": "mv6fbkbih99kfn",
+            "claimId": "mv6fbkbih99kfn-1",
+            "at": 1791880393419,
+            "revision": 1,
+            "generation": 1,
+            "pending": null,
+            "resume": false
+          },
+          "takeover": true,
+          "playing": false,
+          "paused": true,
+          "progress": 3,
+          "pendingSeek": 3,
+          "pendingAutoplay": false,
+          "snapshot": {
+            "currentId": "local|local-1",
+            "activeList": "local",
+            "progress": 3,
+            "volume": 0.5,
+            "muted": true,
+            "mode": "list",
+            "playing": false,
+            "shuffleTrail": [],
+            "currentTrack": {
+              "id": "local-1",
+              "name": "测试曲目 1",
+              "list": "local",
+              "mode": "本地",
+              "dur": 30,
+              "url": "/api/apps/hanako-simple-player/routes/test.wav",
+              "group": ""
+            }
+          }
+        },
+        "sb": {
+          "ownerId": "mv6fbkbih99kfn",
+          "generation": 1,
+          "record": {
+            "ownerId": "mv6fbkbih99kfn",
+            "claimId": "mv6fbkbih99kfn-1",
+            "at": 1791880393419,
+            "revision": 1,
+            "generation": 1,
+            "pending": null,
+            "resume": false
+          },
+          "takeover": false,
+          "playing": true,
+          "paused": false,
+          "progress": 3.047371,
+          "pendingSeek": 0,
+          "pendingAutoplay": false,
+          "snapshot": {
+            "currentId": "local|local-1",
+            "activeList": "local",
+            "progress": 3,
+            "volume": 0.5,
+            "muted": true,
+            "mode": "list",
+            "playing": true,
+            "shuffleTrail": [],
+            "currentTrack": {
+              "id": "local-1",
+              "name": "测试曲目 1",
+              "list": "local",
+              "mode": "本地",
+              "dur": 30,
+              "url": "/api/apps/hanako-simple-player/routes/test.wav",
+              "group": ""
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "takeover-pauses-preserves-progress-false",
+      "ok": true,
+      "detail": {
+        "ownerId": "mv6fbkbih99kfn",
+        "generation": 0,
+        "record": {
+          "ownerId": "mv6fbkbk98fm9h",
+          "claimId": "mv6fbkbk98fm9h-1",
+          "at": 1791880393796,
+          "revision": 3,
+          "generation": 3,
+          "pending": null,
+          "resume": false
+        },
+        "takeover": true,
+        "playing": false,
+        "paused": true,
+        "progress": 3.062311,
+        "pendingSeek": 0,
+        "pendingAutoplay": false,
+        "snapshot": {
+          "currentId": "local|local-1",
+          "activeList": "local",
+          "progress": 3.1,
+          "volume": 0.5,
+          "muted": true,
+          "mode": "list",
+          "playing": false,
+          "shuffleTrail": [],
+          "currentTrack": {
+            "id": "local-1",
+            "name": "测试曲目 1",
+            "list": "local",
+            "mode": "本地",
+            "dur": 30,
+            "url": "/api/apps/hanako-simple-player/routes/test.wav",
+            "group": ""
+          }
+        }
+      }
+    },
+    {
+      "name": "passive-snapshot-false-owner-snapshot-protected-false",
+      "ok": true,
+      "detail": {
+        "currentId": "local|local-1",
+        "activeList": "local",
+        "progress": 3,
+        "volume": 0.5,
+        "muted": true,
+        "mode": "list",
+        "playing": true,
+        "shuffleTrail": [],
+        "currentTrack": {
+          "id": "local-1",
+          "name": "测试曲目 1",
+          "list": "local",
+          "mode": "本地",
+          "dur": 30,
+          "url": "/api/apps/hanako-simple-player/routes/test.wav",
+          "group": ""
+        }
+      }
+    },
+    {
+      "name": "takeover-chip-visible-false",
+      "ok": true
+    },
+    {
+      "name": "chip-reclaims-one-voice-false",
+      "ok": true
+    },
+    {
+      "name": "manual-pause-stops-all-false",
+      "ok": true
+    },
+    {
+      "name": "simultaneous-boot-one-voice-true",
+      "ok": true,
+      "detail": {
+        "sa": {
+          "ownerId": "mv6fbkq22ph5zm",
+          "generation": 0,
+          "record": {
+            "ownerId": "mv6fbkr09xvjvw",
+            "claimId": "mv6fbkr09xvjvw-1",
+            "at": 1791880393958,
+            "revision": 1,
+            "generation": 1,
+            "pending": null,
+            "resume": false
+          },
+          "takeover": true,
+          "playing": false,
+          "paused": true,
+          "progress": 3,
+          "pendingSeek": 3,
+          "pendingAutoplay": false,
+          "snapshot": {
+            "currentId": "local|local-1",
+            "activeList": "local",
+            "progress": 3,
+            "volume": 0.5,
+            "muted": true,
+            "mode": "list",
+            "playing": false,
+            "shuffleTrail": [],
+            "currentTrack": {
+              "id": "local-1",
+              "name": "测试曲目 1",
+              "list": "local",
+              "mode": "本地",
+              "dur": 30,
+              "url": "/api/apps/hanako-simple-player/routes/test.wav",
+              "group": ""
+            }
+          }
+        },
+        "sb": {
+          "ownerId": "mv6fbkr09xvjvw",
+          "generation": 1,
+          "record": {
+            "ownerId": "mv6fbkr09xvjvw",
+            "claimId": "mv6fbkr09xvjvw-1",
+            "at": 1791880393958,
+            "revision": 1,
+            "generation": 1,
+            "pending": null,
+            "resume": false
+          },
+          "takeover": false,
+          "playing": true,
+          "paused": false,
+          "progress": 3.099962,
+          "pendingSeek": 0,
+          "pendingAutoplay": false,
+          "snapshot": {
+            "currentId": "local|local-1",
+            "activeList": "local",
+            "progress": 3.1,
+            "volume": 0.5,
+            "muted": true,
+            "mode": "list",
+            "playing": true,
+            "shuffleTrail": [],
+            "currentTrack": {
+              "id": "local-1",
+              "name": "测试曲目 1",
+              "list": "local",
+              "mode": "本地",
+              "dur": 30,
+              "url": "/api/apps/hanako-simple-player/routes/test.wav",
+              "group": ""
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "takeover-pauses-preserves-progress-true",
+      "ok": true,
+      "detail": {
+        "ownerId": "mv6fbkr09xvjvw",
+        "generation": 0,
+        "record": {
+          "ownerId": "mv6fbkq22ph5zm",
+          "claimId": "mv6fbkq22ph5zm-1",
+          "at": 1791880394192,
+          "revision": 3,
+          "generation": 3,
+          "pending": null,
+          "resume": false
+        },
+        "takeover": true,
+        "playing": false,
+        "paused": true,
+        "progress": 3.10226,
+        "pendingSeek": 0,
+        "pendingAutoplay": false,
+        "snapshot": {
+          "currentId": "local|local-1",
+          "activeList": "local",
+          "progress": 3.1,
+          "volume": 0.5,
+          "muted": true,
+          "mode": "list",
+          "playing": false,
+          "shuffleTrail": [],
+          "currentTrack": {
+            "id": "local-1",
+            "name": "测试曲目 1",
+            "list": "local",
+            "mode": "本地",
+            "dur": 30,
+            "url": "/api/apps/hanako-simple-player/routes/test.wav",
+            "group": ""
+          }
+        }
+      }
+    },
+    {
+      "name": "passive-snapshot-false-owner-snapshot-protected-true",
+      "ok": true,
+      "detail": {
+        "currentId": "local|local-1",
+        "activeList": "local",
+        "progress": 3,
+        "volume": 0.5,
+        "muted": true,
+        "mode": "list",
+        "playing": true,
+        "shuffleTrail": [],
+        "currentTrack": {
+          "id": "local-1",
+          "name": "测试曲目 1",
+          "list": "local",
+          "mode": "本地",
+          "dur": 30,
+          "url": "/api/apps/hanako-simple-player/routes/test.wav",
+          "group": ""
+        }
+      }
+    },
+    {
+      "name": "takeover-chip-visible-true",
+      "ok": true
+    },
+    {
+      "name": "chip-reclaims-one-voice-true",
+      "ok": true
+    },
+    {
+      "name": "manual-pause-stops-all-true",
+      "ok": true
+    },
+    {
+      "name": "single-reload-explicit-handoff-resumes",
+      "ok": true,
+      "detail": {
+        "before": {
+          "ownerId": "mv6fbl19db85l2",
+          "generation": 1,
+          "record": {
+            "ownerId": "mv6fbl19db85l2",
+            "claimId": "mv6fbl19db85l2-1",
+            "at": 1791880394328,
+            "revision": 1,
+            "generation": 1,
+            "pending": null,
+            "resume": false
+          },
+          "takeover": false,
+          "playing": true,
+          "paused": false,
+          "progress": 3,
+          "pendingSeek": 0,
+          "pendingAutoplay": false,
+          "snapshot": {
+            "currentId": "local|local-1",
+            "activeList": "local",
+            "progress": 3,
+            "volume": 0.5,
+            "muted": true,
+            "mode": "list",
+            "playing": true,
+            "shuffleTrail": [],
+            "currentTrack": {
+              "id": "local-1",
+              "name": "测试曲目 1",
+              "list": "local",
+              "mode": "本地",
+              "dur": 30,
+              "url": "/api/apps/hanako-simple-player/routes/test.wav",
+              "group": ""
+            }
+          }
+        },
+        "after": {
+          "ownerId": "mv6fbl2yroa37c",
+          "generation": 3,
+          "record": {
+            "ownerId": "mv6fbl2yroa37c",
+            "claimId": "mv6fbl2yroa37c-1",
+            "at": 1791880394375,
+            "revision": 3,
+            "generation": 3,
+            "pending": null,
+            "resume": false
+          },
+          "takeover": false,
+          "playing": true,
+          "paused": false,
+          "progress": 3,
+          "pendingSeek": 0,
+          "pendingAutoplay": false,
+          "snapshot": {
+            "currentId": "local|local-1",
+            "activeList": "local",
+            "progress": 3,
+            "volume": 0.5,
+            "muted": true,
+            "mode": "list",
+            "playing": true,
+            "shuffleTrail": [],
+            "currentTrack": {
+              "id": "local-1",
+              "name": "测试曲目 1",
+              "list": "local",
+              "mode": "本地",
+              "dur": 30,
+              "url": "/api/apps/hanako-simple-player/routes/test.wav",
+              "group": ""
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "single-reclick-current-keeps-playing-state",
+      "ok": true
+    },
+    {
+      "name": "single-auto-next-unchanged",
+      "ok": true
+    },
+    {
+      "name": "late-grant-does-not-play-after-wait-ended",
+      "ok": true,
+      "detail": {
+        "ownerId": "mv6fbl8h1rwegr",
+        "generation": 3,
+        "record": {
+          "ownerId": "mv6fbl8h1rwegr",
+          "claimId": "mv6fbl8h1rwegr-1",
+          "at": 1791880396706,
+          "revision": 3,
+          "generation": 3,
+          "pending": null,
+          "resume": false
+        },
+        "takeover": true,
+        "playing": false,
+        "paused": true,
+        "progress": 3,
+        "pendingSeek": 0,
+        "pendingAutoplay": false,
+        "snapshot": {
+          "currentId": "local|local-1",
+          "activeList": "local",
+          "progress": 3,
+          "volume": 0.5,
+          "muted": true,
+          "mode": "list",
+          "playing": false,
+          "shuffleTrail": [],
+          "currentTrack": {
+            "id": "local-1",
+            "name": "测试曲目 1",
+            "list": "local",
+            "mode": "本地",
+            "dur": 30,
+            "url": "/api/apps/hanako-simple-player/routes/test.wav",
+            "group": ""
+          }
+        }
+      }
+    },
+    {
+      "name": "paused-grantee-close-releases-permit",
+      "ok": true
+    },
+    {
+      "name": "lost-handoff-remains-standby-no-timeout-play",
+      "ok": true
+    }
+  ],
+  "writes": [
+    {
+      "currentId": "local|local-1",
+      "activeList": "local",
+      "progress": 3,
+      "volume": 0.5,
+      "muted": true,
+      "mode": "list",
+      "playing": true,
+      "shuffleTrail": [],
+      "currentTrack": {
+        "id": "local-1",
+        "name": "测试曲目 1",
+        "list": "local",
+        "mode": "本地",
+        "dur": 30,
+        "url": "/api/apps/hanako-simple-player/routes/test.wav",
+        "group": ""
+      }
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/widget/api/playlist"
+    },
+    {
+      "method": "GET",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/playlist"
+    },
+    {
+      "method": "GET",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/lrc/load"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/lists"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/lrc/load"
+    },
+    {
+      "method": "GET",
+      "path": "/api/lists"
+    },
+    {
+      "method": "GET",
+      "path": "/test.wav"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "claim"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/test.wav"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/test.wav"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "claim"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "yield"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "claim"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "yield"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "stop"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/playlist"
+    },
+    {
+      "method": "GET",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/lrc/load"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/lists"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/playlist"
+    },
+    {
+      "method": "GET",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/lrc/load"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/lists"
+    },
+    {
+      "method": "GET",
+      "path": "/test.wav"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "claim"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/test.wav"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "claim"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "yield"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/test.wav"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "claim"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "yield"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "stop"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/playlist"
+    },
+    {
+      "method": "GET",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/lrc/load"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/lists"
+    },
+    {
+      "method": "GET",
+      "path": "/test.wav"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "claim"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/test.wav"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "handoff"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/playlist"
+    },
+    {
+      "method": "GET",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/lrc/load"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/lists"
+    },
+    {
+      "method": "GET",
+      "path": "/test.wav"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "claim"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/test.wav"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/lrc/load"
+    },
+    {
+      "method": "POST",
+      "path": "/widget/api/playlist"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "handoff"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/playlist"
+    },
+    {
+      "method": "GET",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/lrc/load"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/lists"
+    },
+    {
+      "method": "GET",
+      "path": "/test.wav"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "claim"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/playlist"
+    },
+    {
+      "method": "GET",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/lrc/load"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/lists"
+    },
+    {
+      "method": "GET",
+      "path": "/test.wav"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "claim"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "yield"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "handoff"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/playlist"
+    },
+    {
+      "method": "GET",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/lrc/load"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/lists"
+    },
+    {
+      "method": "GET",
+      "path": "/test.wav"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "claim"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/playlist"
+    },
+    {
+      "method": "GET",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/lrc/load"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/lists"
+    },
+    {
+      "method": "GET",
+      "path": "/test.wav"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state"
+    }
+  ],
+  "errors": []
+}

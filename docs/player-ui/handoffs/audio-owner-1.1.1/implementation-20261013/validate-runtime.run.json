@@ -1,0 +1,11 @@
+{
+  "command": [
+    "node",
+    "/Users/can/.hanako/skills/hana-app-creator/scripts/validate_app.mjs",
+    "--dir",
+    "/var/folders/5x/jxb2n8255mx70l00kz9yfby40000gn/T/audio-owner-validate-ayhau7vt/hanako-simple-player",
+    "--json"
+  ],
+  "runtimeMirror": "/var/folders/5x/jxb2n8255mx70l00kz9yfby40000gn/T/audio-owner-validate-ayhau7vt/hanako-simple-player",
+  "exitCode": 0
+}

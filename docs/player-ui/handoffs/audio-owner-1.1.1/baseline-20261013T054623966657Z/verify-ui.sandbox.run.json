@@ -1,0 +1,12 @@
+{
+  "command": "node tools/verify-ui.mjs",
+  "startedAt": "2026-10-13T05:46:50.497720+00:00",
+  "finishedAt": "2026-10-13T05:46:50.695647+00:00",
+  "exitCode": 1,
+  "stdout": "verify-ui.stdout.log",
+  "stderr": "verify-ui.stderr.log",
+  "environmentOverride": {
+    "OUT_DIR": "/Volumes/SSD/hanadesk/hanako-audio-player-simple/docs/player-ui/handoffs/audio-owner-1.1.1/baseline-20261013T054623966657Z/ui-artifacts"
+  },
+  "outputPathOnly": "OUT_DIR usages inspected: directory creation, screenshot paths, report file paths, final report outDir; no assertion or fixture condition changes."
+}

@@ -1,0 +1,426 @@
+[owner-trace] request restore 0 false 0
+[owner-trace] claim-ready restore 1 1 false false
+[owner-trace] proof restore 1 1 null
+{
+  "status": {
+    "ownerId": "mv6koymjjdftha",
+    "generation": 1,
+    "record": {
+      "ownerId": "mv6koymjjdftha",
+      "claimId": "mv6koymjjdftha-1",
+      "at": 1791889416573,
+      "revision": 1,
+      "generation": 1,
+      "pending": null,
+      "resume": false
+    },
+    "docLockHeld": false,
+    "docLockSupported": false,
+    "takeover": false,
+    "playing": true,
+    "paused": false,
+    "progress": 8.55629,
+    "pendingSeek": 0,
+    "pendingAutoplay": false,
+    "snapshot": {
+      "currentId": "local|local-1",
+      "activeList": "local",
+      "progress": 8.6,
+      "volume": 0.5,
+      "muted": true,
+      "mode": "list",
+      "playing": true,
+      "shuffleTrail": [],
+      "currentTrack": {
+        "id": "local-1",
+        "name": "测试曲目 1",
+        "list": "local",
+        "mode": "本地",
+        "dur": 30,
+        "url": "/api/apps/hanako-simple-player/routes/test.wav",
+        "group": ""
+      }
+    }
+  },
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/widget/api/playlist"
+    },
+    {
+      "method": "GET",
+      "path": "/api/playback-state"
+    },
+    {
+      "method": "GET",
+      "path": "/widget/api/lrc/load"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/api/lists"
+    },
+    {
+      "method": "GET",
+      "path": "/test.wav"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audio-owner",
+      "action": "claim",
+      "input": {
+        "action": "claim",
+        "ownerId": "mv6koymjjdftha",
+        "claimId": "mv6koymjjdftha-1",
+        "reason": "restore"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/audio-owner"
+    },
+    {
+      "method": "GET",
+      "path": "/test.wav"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state",
+      "input": {
+        "currentId": "local|local-1",
+        "activeList": "local",
+        "progress": 3,
+        "volume": 0.5,
+        "muted": true,
+        "mode": "list",
+        "playing": true,
+        "shuffleTrail": [],
+        "currentTrack": {
+          "id": "local-1",
+          "name": "测试曲目 1",
+          "list": "local",
+          "mode": "本地",
+          "dur": 30,
+          "url": "/api/apps/hanako-simple-player/routes/test.wav",
+          "group": ""
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state",
+      "input": {
+        "currentId": "local|local-1",
+        "activeList": "local",
+        "progress": 3,
+        "volume": 0.5,
+        "muted": true,
+        "mode": "list",
+        "playing": true,
+        "shuffleTrail": [],
+        "currentTrack": {
+          "id": "local-1",
+          "name": "测试曲目 1",
+          "list": "local",
+          "mode": "本地",
+          "dur": 30,
+          "url": "/api/apps/hanako-simple-player/routes/test.wav",
+          "group": ""
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state",
+      "input": {
+        "currentId": "local|local-1",
+        "activeList": "local",
+        "progress": 3.7,
+        "volume": 0.5,
+        "muted": true,
+        "mode": "list",
+        "playing": true,
+        "shuffleTrail": [],
+        "currentTrack": {
+          "id": "local-1",
+          "name": "测试曲目 1",
+          "list": "local",
+          "mode": "本地",
+          "dur": 30,
+          "url": "/api/apps/hanako-simple-player/routes/test.wav",
+          "group": ""
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state",
+      "input": {
+        "currentId": "local|local-1",
+        "activeList": "local",
+        "progress": 4.9,
+        "volume": 0.5,
+        "muted": true,
+        "mode": "list",
+        "playing": true,
+        "shuffleTrail": [],
+        "currentTrack": {
+          "id": "local-1",
+          "name": "测试曲目 1",
+          "list": "local",
+          "mode": "本地",
+          "dur": 30,
+          "url": "/api/apps/hanako-simple-player/routes/test.wav",
+          "group": ""
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state",
+      "input": {
+        "currentId": "local|local-1",
+        "activeList": "local",
+        "progress": 6.1,
+        "volume": 0.5,
+        "muted": true,
+        "mode": "list",
+        "playing": true,
+        "shuffleTrail": [],
+        "currentTrack": {
+          "id": "local-1",
+          "name": "测试曲目 1",
+          "list": "local",
+          "mode": "本地",
+          "dur": 30,
+          "url": "/api/apps/hanako-simple-player/routes/test.wav",
+          "group": ""
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state",
+      "input": {
+        "currentId": "local|local-1",
+        "activeList": "local",
+        "progress": 7.4,
+        "volume": 0.5,
+        "muted": true,
+        "mode": "list",
+        "playing": true,
+        "shuffleTrail": [],
+        "currentTrack": {
+          "id": "local-1",
+          "name": "测试曲目 1",
+          "list": "local",
+          "mode": "本地",
+          "dur": 30,
+          "url": "/api/apps/hanako-simple-player/routes/test.wav",
+          "group": ""
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/playback-state",
+      "input": {
+        "currentId": "local|local-1",
+        "activeList": "local",
+        "progress": 8.5,
+        "volume": 0.5,
+        "muted": true,
+        "mode": "list",
+        "playing": true,
+        "shuffleTrail": [],
+        "currentTrack": {
+          "id": "local-1",
+          "name": "测试曲目 1",
+          "list": "local",
+          "mode": "本地",
+          "dur": 30,
+          "url": "/api/apps/hanako-simple-player/routes/test.wav",
+          "group": ""
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "events": [
+    {
+      "type": "emptied",
+      "at": 56.299999952316284,
+      "time": 0,
+      "paused": true
+    },
+    {
+      "type": "loadedmetadata",
+      "at": 63.199999928474426,
+      "time": 3,
+      "paused": true
+    },
+    {
+      "type": "seeking",
+      "at": 63.39999997615814,
+      "time": 3,
+      "paused": true
+    },
+    {
+      "type": "play",
+      "at": 257.2999999523163,
+      "time": 3,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 262.60000002384186,
+      "time": 3,
+      "paused": false
+    },
+    {
+      "type": "seeked",
+      "at": 262.7999999523163,
+      "time": 3,
+      "paused": false
+    },
+    {
+      "type": "playing",
+      "at": 262.7999999523163,
+      "time": 3,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 791.6000000238419,
+      "time": 3.06331,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 1057.1999999284744,
+      "time": 3.329474,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 1322.3999999761581,
+      "time": 3.595245,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 1588.1000000238419,
+      "time": 3.861522,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 1852.3999999761581,
+      "time": 4.144078,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 2118.7999999523163,
+      "time": 4.410962,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 2384.6999999284744,
+      "time": 4.6543,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 2649.5,
+      "time": 4.919652,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 2915.5,
+      "time": 5.186194,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 3183.1999999284744,
+      "time": 5.454488,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 3447.6999999284744,
+      "time": 5.719643,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 3716.1999999284744,
+      "time": 6.006147,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 3978,
+      "time": 6.26853,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 4246.199999928474,
+      "time": 6.537347,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 4510.899999976158,
+      "time": 6.802613,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 4777.600000023842,
+      "time": 7.069864,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 5041.399999976158,
+      "time": 7.311122,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 5306.600000023842,
+      "time": 7.57685,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 5572.5,
+      "time": 7.860784,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 5839.199999928474,
+      "time": 8.128149,
+      "paused": false
+    },
+    {
+      "type": "timeupdate",
+      "at": 6102.699999928474,
+      "time": 8.392271,
+      "paused": false
+    }
+  ]
+}

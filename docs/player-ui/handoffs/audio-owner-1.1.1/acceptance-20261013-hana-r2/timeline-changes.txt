@@ -1,0 +1,42 @@
+# owner/paused 变化时间轴（5108 条样本，跨度 2053.6s）
+# 源：timeline-2026-10-13T11-22-45-079Z.jsonl（采样 400ms，appendFileSync 同步落盘，setsid 脱离宿主）
+# 字段：ownerId / generation / revision / pending / cause / playing / progress
++     0.0s  owner=(空)            gen=6   rev=6   pending=-              cause=stop      playing=False prog=148.9
++    74.8s  owner=mv6lf4c4pch7e5 gen=7   rev=7   pending=-              cause=None      playing=True  prog=148.9
++   100.9s  owner=(空)            gen=8   rev=8   pending=-              cause=stop      playing=False prog=20.2
++   113.0s  owner=mv6lf4c4pch7e5 gen=9   rev=9   pending=-              cause=None      playing=True  prog=20.4
++   114.2s  owner=(空)            gen=10  rev=10  pending=-              cause=stop      playing=False prog=21.3
++  1070.0s  owner=mv6lf4c4pch7e5 gen=11  rev=11  pending=-              cause=None      playing=True  prog=21.3
++  1096.2s  owner=mv6m121yoj8gjd gen=13  rev=13  pending=-              cause=None      playing=True  prog=23.6
++  1120.7s  owner=(空)            gen=14  rev=14  pending=-              cause=stop      playing=False prog=47.9
++  1139.6s  owner=mv6m121yoj8gjd gen=15  rev=15  pending=-              cause=None      playing=True  prog=47.9
++  1369.5s  owner=mv6m121yoj8gjd gen=15  rev=15  pending=-              cause=None      playing=False prog=0
++  1369.9s  owner=mv6m121yoj8gjd gen=15  rev=15  pending=-              cause=None      playing=True  prog=0
++  1448.2s  owner=(空)            gen=16  rev=16  pending=-              cause=handoff   playing=True  prog=78.2
++  1449.0s  owner=mv6m8mdrz8u4w0 gen=17  rev=17  pending=-              cause=None      playing=True  prog=78.2
++  1455.4s  owner=mv6m8q2eow7xds gen=19  rev=19  pending=-              cause=None      playing=True  prog=81.7
++  1462.7s  owner=(空)            gen=20  rev=20  pending=-              cause=stop      playing=False prog=88.9
++  1465.9s  owner=mv6m8q2eow7xds gen=21  rev=21  pending=-              cause=None      playing=False prog=88.9
++  1466.3s  owner=mv6m8q2eow7xds gen=21  rev=21  pending=-              cause=None      playing=True  prog=89.1
++  1478.7s  owner=mv6m998koiy3pd gen=23  rev=23  pending=-              cause=None      playing=True  prog=99.7
++  1481.1s  owner=mv6m998koiy3pd gen=23  rev=24  pending=mv6m9998t1hauw cause=None      playing=True  prog=100.8
++  1481.5s  owner=mv6m9998t1hauw gen=25  rev=25  pending=-              cause=None      playing=True  prog=99.7
++  1486.8s  owner=(空)            gen=26  rev=26  pending=-              cause=stop      playing=False prog=105
++  1518.1s  owner=mv6m9998t1hauw gen=27  rev=27  pending=-              cause=None      playing=True  prog=105
++  1520.9s  owner=(空)            gen=28  rev=28  pending=-              cause=stop      playing=False prog=107.1
++  1600.1s  owner=(空)            gen=30  rev=30  pending=-              cause=stop      playing=False prog=0.1
++  1602.5s  owner=mv6m9998t1hauw gen=31  rev=31  pending=-              cause=None      playing=True  prog=0.2
++  1645.9s  owner=mv6mcsk4a5tpvn gen=33  rev=33  pending=-              cause=None      playing=True  prog=39.7
++  1664.3s  owner=(空)            gen=34  rev=34  pending=-              cause=stop      playing=False prog=57.8
++  1668.4s  owner=mv6mda635o5cl9 gen=35  rev=35  pending=-              cause=None      playing=True  prog=57.8
++  1670.0s  owner=(空)            gen=36  rev=36  pending=-              cause=handoff   playing=True  prog=59.4
++  1672.8s  owner=mv6mcsk4a5tpvn gen=37  rev=37  pending=-              cause=None      playing=True  prog=58
++  1685.6s  owner=mv6mdm9eb34mm6 gen=39  rev=39  pending=-              cause=None      playing=True  prog=66.2
++  1692.1s  owner=mv6mcsk4a5tpvn gen=41  rev=41  pending=-              cause=None      playing=True  prog=70.6
++  1693.3s  owner=(空)            gen=42  rev=42  pending=-              cause=stop      playing=False prog=71.9
++  2015.5s  owner=mv6mcsk4a5tpvn gen=43  rev=43  pending=-              cause=None      playing=True  prog=71.9
++  2020.3s  owner=mv6mcsk4a5tpvn gen=43  rev=43  pending=-              cause=None      playing=False prog=0
++  2020.7s  owner=mv6mcsk4a5tpvn gen=43  rev=43  pending=-              cause=None      playing=True  prog=0
++  2023.1s  owner=mv6m9998t1hauw gen=45  rev=45  pending=-              cause=None      playing=True  prog=43.4
++  2025.9s  owner=mv6m9998t1hauw gen=45  rev=46  pending=mv6mcsk4a5tpvn cause=None      playing=True  prog=45.2
++  2026.3s  owner=mv6mcsk4a5tpvn gen=47  rev=47  pending=-              cause=None      playing=True  prog=2.3

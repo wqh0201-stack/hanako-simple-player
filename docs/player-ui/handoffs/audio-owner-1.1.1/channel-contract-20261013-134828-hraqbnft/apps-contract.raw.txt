@@ -1,0 +1,52 @@
+SOURCE /Users/can/.hanako/artifacts/server/1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133/APPS.md
+SHA256 e87f51880510f40924181d71073aa34a0a87d02055b1d70c439c25307de590de
+
+LINES 511-539
+511	| `globalState` | `ctx.storage.global` / `hana.storage.global`（跨这个应用的所有 agent 共享） |
+512	| `workspaceState` | `ctx.storage.agent(agentId?)` / `hana.storage.agent(agentId?)`（私有于一个 agent） |
+513	| 扩展自有目录（大文件） | 已有的 `ctx.dataDir` / `ctx.resources`，本节不重复 |
+514	| 钥匙串 | 还没有，登记为后续项 |
+515	
+516	**两个作用域，`get`/`getAll`/`set`/`delete`/`keys`/`onChanged` 各自一份：**
+517	
+518	```ts
+519	ctx.storage.global.get(key, fallback?)
+520	ctx.storage.global.getAll()
+521	ctx.storage.global.set(key, value)
+522	ctx.storage.global.delete(key)
+523	ctx.storage.global.keys()
+524	ctx.storage.global.onChanged((keys) => { /* 重拉需要的键 */ })
+525	
+526	ctx.storage.agent(agentId?).get(key, fallback?)   // 同上五个方法 + onChanged
+527	```
+528	
+529	`agent()` 省略 `agentId` 时，`get`/`getAll`/`set`/`delete`/`keys` 由宿主解析成**当前这次工具调用**所在的 agent（读的是模型循环调用带的那个 `callToken`，跟「apply 收到什么」一节讲的令牌同一枚），只在 `execute` 期间有效，`execute` 之外调用会抛可行动错误。`onChanged` 例外：订阅比任何一次调用都活得久，没有一个稳定的作用域可订阅，因此**省略 `agentId` 的 `onChanged` 直接抛错**，要长期订阅就传显式 `agentId`。
+530	
+531	值必须是可 JSON 序列化的任意结构，**无每键上限**。单个应用单个作用域的序列化总量超过 512KB 时宿主只记一条警告（建议改用 `ctx.dataDir`），超过 **16MB** 硬上限显式抛 `APP_STORAGE_QUOTA_EXCEEDED`，绝不截断、绝不部分写入。
+532	
+533	不占任何能力词——跟 `dataDir`/`resources` 一样，一个应用只能碰到自己的 `app-data/{appId}/storage/`，出不了圈，不需要用户额外批准。
+534	
+535	**宿主进程是唯一写者。** 落盘 `{HANA_HOME}/app-data/{appId}/storage/global.json` 与 `storage/agent-{agentId}.json`，原子写、损坏文件先备份再重建。无论写入经哪扇门——本进程的 `ctx.storage`、隔离子进程经 RPC 代理的 `ctx.storage`，还是应用卡片经 `hana.storage` 代调的宿主路由——最终都落在同一个 `AppStorageStore` 实例上；三扇门共享同一份数据，从不各自为政。
+536	
+537	**`onChanged` 跨门生效。** 任意一扇门写入后，宿主在既有的 `app_event` 通道上广播一条 `source: "server"` 的变更事件（不是 `ctx.appEvents` 那条 `source: "app:{appId}"` 的应用自报事件，应用无法伪造）；本进程、隔离子进程与已挂载的卡片各自订阅这同一条广播，按自己的作用域过滤后回调，不新开一条总线。回调只带发生变化的 `keys`，不带值——需要新值自己重拉。
+538	
+539	**卡片侧 `hana.storage`：** 卡片没有"当前调用"这个概念，`hana.storage.agent()` 省略 `agentId` 时，宿主按这张卡自己归属的 agent 解析（跟卡片实例态 `hana.state` 同一条身份铁律：取自宿主对这张卡的归属解析，从不采信 iframe 消息体自报的字段）。请求全部由宿主控制器代发（走 `GET/PUT/DELETE /api/apps/:id/storage/:scope[/:key]`，owner-only 鉴权），卡片自己永远不直连这条 HTTP 接口。
+
+LINES 1008-1015
+1008	`focus` 只接收稳定 `sessionId`，由服务端解析最新定位器，再走当前前端的会话导航并展示聊天页。它返回已打开会话的快照；目标不存在、已归档、权限不足、导航失败或被另一切换取代时显式失败。`sessionPath` 是查询结果中的当前定位器，不是身份或聚焦输入。读取订阅失败会调用 `onError` 并停止该订阅；省略错误回调时 SDK 写入控制台错误。恢复授权后重新订阅。页面重载和卸载会清理旧订阅；服务器连接变更也会终止订阅，需由新连接重新装载 App 表面，旧页面不能通过再次握手读取新服务器。
+1009	
+1010	卡片自身归属通过 `hana.surface.getContext()` 的加性字段 `embeddedSessionId` / `originSessionId` 表达，分别表示卡片所在流内会话与宿主已知的来源会话；未绑定或未记录时为 `null`，老宿主可能省略字段。旧流内卡可能没有 `cardInstanceId`，但已知的会话绑定仍可读取。切换前台不会把卡片归属改到新会话。访问凭证 `appSurfaceSession` / `pluginSurfaceSession` 不是聊天会话身份。会话 Tab 栏尚无 `contributes.sessionTabs`；使用现有 App 卡片、整页卡片或功能面板承载入口。
+1011	
+1012	
+1013	FP 和设置页可用 `hana.storage.global()`，或显式指定 agent 的存储作用域；它们不提供隐式当前 agent。使用 App 存储变更订阅或 App 自己的后端同步多个页面，不能假设不同 iframe/窗口共享 JavaScript 对象。FP 和设置页没有主卡专属的 `hana.state`、`hana.panel` 或主卡动作执行权。各页面订阅 `hana.theme` 和 `hana.lifecycle`，隐藏时减少绘制，后台任务由 App 运行时管理。`hana.theme` 始终兼容当前 `{ theme, cssUrl }`；新宿主还可提供 `appearance` 和 `palettes.light/dark` 的宿主签发 `{ theme, cssUrl }` 对。当前面沿用用户命名主题，另一面来自宿主 registry 对该 appearance 的默认主题。它们是可选元数据，App 只能消费签发的 URL，不能自行拼接另一主题 URL。宿主提供这些通道不代表第三方 Web UI 已完成拆分适配；弹窗、焦点、草稿和插件上下文仍需由该 App 验证。
+1014	
+1015	### 应用运行期读写
+
+LINES 2925-2931
+2925	
+2926	以下区分当前实现限制与明确保留的宿主权限边界。需要新能力时应扩展 App 的正式契约，不绕过隔离或转向 v1 开发。
+2927	
+2928	- **文本辅助调用使用 `ctx.models.utility`。** v2 总线不开放 `model:sample-text` 或 `utility:call-text`；App 使用宿主 utility 配置，不接受调用级 provider、key 或 endpoint。`@hana/plugin-runtime` 的 `sampleText` 仅服务已安装 v1 插件的冻结兼容层。
+2929	- **市场安装的应用没有热重载。** `import()` 按 URL 缓存，进程不会自己发现磁盘上的改动。**本地目录安装**的应用现在可以在市场「已安装」页详情点「重新加载」（或用 `extension_manager` 的 `reload` 动作）按同一条安装记录重启，不用卸载重装，见上面「执行模型与文件边界」；**市场安装**的应用没有这条路径，更新或重装仍要走安装审查。
+2930	- **成功重载或更新会刷新已打开的 App 呈现面。** 宿主按 App 的运行实例识别变化，即使版本号和页面路径不变，也会重新加载它的卡片、整页、聊天卡、设置页、功能面板（FP）和 iframe 插槽；`embedUrl` 卡片与 FP 也会刷新。重复通知、普通目录刷新和其他 App 的更新不会刷新本 App。卡片实例 ID、位置和通过 `hana.state` 保存的实例状态保持；页面内存中的临时状态需由 App 自行保存。App 文档预览/编辑器仍按其文档绑定生命周期处理，不在通用页面自动刷新范围内。此行为由宿主实现，已有 App 无需升级 SDK。
+2931	- **进程跑起来之后新扔进 `apps/` 的目录，这一轮看不见**，下次启动才会被扫到、然后问你。

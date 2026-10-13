@@ -1,0 +1,26 @@
+{
+  "sourceManifest": "/Users/can/.hanako/skills/hana-app-creator/assets/sdk/source-manifest.json",
+  "packedVersion": "1.1.0-beta",
+  "archive": "/Users/can/.hanako/skills/hana-app-creator/assets/sdk/hana-plugin-sdk-0.0.0.tgz",
+  "extractionDirectory": "/var/folders/5x/jxb2n8255mx70l00kz9yfby40000gn/T/audio-owner-sdk-3on00_6k/package",
+  "sourceHashes": {
+    "app-chrome-contract.d.ts": "77b9e24c7c1d11bbd40c681b6764029a5cee9450a60005d4124dca0d41ce6bd0",
+    "app-chrome.ts": "594643ca4dad31a1e54ee27155b94d1c62f977dd87ceceaf3f7b6ae8b7ba4f3b",
+    "app-current-view.ts": "985ec41e9c33b38a6a8a7fe68424f072e095eed7d1e206e8ac203e994b7ebc22",
+    "app-entry.ts": "7f21416b89be42a0875e837f07a9debefa636807f840978d3e018409fec8ccf4",
+    "app-ui-internals.ts": "f531020e1ea54b112851c5eea0e35f9150b17783c205c9f109e38b4501c27142",
+    "app-view-recovery.ts": "c06afc582e8fdc08d0ea861f8602fa80a6ad05b54ccc9d6ff97b48951c7421ff",
+    "app-view-state.ts": "70846992b2cab10a1924ff2a41b8cd59de3d6338f4275345d90358402684245a",
+    "host-message-source.ts": "0c68903c107ba7f5569abdd0c2c7ed5a1a0ecd182f509e9337619f3cdce4661b",
+    "index.ts": "49d7fdec7276d44e1765139e3e1ad228bad038db6c9f641215c14902e36630f1",
+    "input-panel.ts": "7baae6a0aefa6c3b2edfa975ee8bc7a525845c6c3f4e4c256c837306dc0a8e62",
+    "ui-actions.ts": "de8877aa652f1f28b2fdb48eb9c6e1a83257c857df1a1d60aefe4ec2d493533b",
+    "package.json": "09934249d427e9e743c437155e99391a6f116a126d47f8af5a27488fb34d968c",
+    "README.md": "2569d50c671cd7345b24fe197685a37c167d59fbda36fb92fe48e0823cc63ee3",
+    "scripts/build-browser.mjs": "92e6b2b05245e0f3f715191857cfdff5c960772c9a903542b0d4f0a7c4c7baaa",
+    "shared/app-view-state.ts": "07345e87a5352e39ff492f276259b2e5949d5cd37688ed4bc0a014b3a0fd6aec",
+    "scripts/sync-plugin-sdk-shared.mjs": "5ff13a4e255728f2392161987451c4470dc8801170149dbeec469ed1b92d7e39",
+    "build/pack-plugin-sdk-assets.mjs": "1bb0cd4f4aeb9c5323e1d17e601ea95bc1836b3ad2afe804459701b8afbf8bab"
+  },
+  "archiveSHA256": "5bc65f472b3fdab16a24e39aa53cfa86d6a70ff4157e0c6a32d42233dddb429a"
+}

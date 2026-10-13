@@ -1,0 +1,34 @@
+{
+  "manifestVersion": 2,
+  "id": "liveness-probe",
+  "name": "存活探针（临时）",
+  "version": "0.0.1",
+  "description": "一次性探针：验证宿主里 Web Locks 的可用性与跨文档可见性。用完即卸。",
+  "minAppVersion": "0.1017.0",
+  "entry": "index.js",
+  "icon": "assets/icon.png",
+  "capabilities": [
+    "app/tools.expose-to-model"
+  ],
+  "contributes": {
+    "cards": [
+      {
+        "id": "probe",
+        "title": "存活探针",
+        "description": "报告本文档的 origin / secure / locks 与跨文档可见性。",
+        "route": "/index.html",
+        "titleMode": "hide",
+        "detached": {
+          "route": "/standalone.html"
+        },
+        "detachedDefaultSize": {
+          "width": 720,
+          "height": 560
+        },
+        "face": {
+          "image": "face.png"
+        }
+      }
+    ]
+  }
+}

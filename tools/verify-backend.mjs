@@ -21,6 +21,7 @@ import { createList, reserveList } from '../lib/library.js';
 import { cleanMusicMetadata, singerPrefixes, pickMetadataMatch } from '../lib/music-metadata.js';
 import { createMoodCommand, MOOD_PROMPT } from '../lib/mood-command.js';
 import { apply as applyPlayer } from '../index.js';
+import { createAudioOwner } from '../lib/audio-owner.js';
 
 const routes = [];
 const app = {
@@ -634,6 +635,70 @@ const genericRejectedMood = createMoodCommand({ logger: ctx.logger, commands: {
   },
 } });
 check('mood-general-registration-rejection-does-not-trigger-alias-fallback', !(await genericRejectedMood.ensure()) && genericAttempts === 1);
+
+/* 音频授权：测真实状态机与跨 await 竞速，不复制第二套仲裁。 */
+{
+  const values = new Map(), snapshots = [];
+  let failWrite = false;
+  const owner = createAudioOwner({ storage: {
+    get: async key => values.get(key) ?? null,
+    set: async (key, value) => { if (failWrite) throw new Error('storage failed'); values.set(key, structuredClone(value)); }
+  }, writePlayback: async value => snapshots.push(structuredClone(value)) });
+  const request = (ownerId, claimId, action = 'claim', extra = {}) => ({ ownerId, claimId, action, ...extra });
+  const boots = await Promise.all([owner.command(request('A', 'A-1', 'claim', { reason: 'restore' })), owner.command(request('B', 'B-1', 'claim', { reason: 'restore' }))]);
+  check('audio-concurrent-boot-single-grant', boots.filter(x => x.granted).length === 1 && (await owner.read()).ownerId === 'A');
+  const first = await owner.read();
+  await owner.command(request('B', 'B-2'));
+  check('audio-claim-waits-for-pause', (await owner.read()).ownerId === 'A' && (await owner.read()).pending.ownerId === 'B');
+  await owner.command(request('A', 'wrong', 'yield', { generation: first.generation, snapshot: { playing: true, progress: 5 } }));
+  check('audio-stale-yield-cannot-grant', (await owner.read()).ownerId === 'A');
+  await owner.command(request('C', 'C-1'));
+  await owner.command(request('A', 'B-2', 'yield', { generation: first.generation }));
+  check('audio-later-claim-wins-without-old-ack', (await owner.read()).pending.ownerId === 'C' && (await owner.read()).ownerId === 'A');
+  await owner.command(request('A', 'C-1', 'yield', { generation: first.generation, snapshot: { playing: true, progress: 5 } }));
+  const current = await owner.read();
+  check('audio-yield-saves-false-before-grant', current.ownerId === 'C' && snapshots.at(-1).playing === false && snapshots.at(-1).progress === 5);
+  await owner.savePlayback({ playing: true, progress: 6 }, { ownerId: 'C', generation: current.generation });
+  const stale = await owner.savePlayback({ playing: true, progress: 99 }, { ownerId: 'A', generation: first.generation });
+  const passive = await owner.savePlayback({ playing: false, progress: 99 }, { ownerId: 'A', generation: first.generation });
+  check('audio-old-true-and-false-cannot-overwrite-current', !stale.accepted && !passive.accepted && snapshots.at(-1).progress === 6);
+  await owner.command(request('A', 'A-stop', 'stop', { snapshot: { playing: false } }));
+  check('audio-other-instance-stop-requires-yield', (await owner.read()).ownerId === 'C' && (await owner.read()).pending.ownerId === '');
+  await owner.command(request('C', 'A-stop', 'yield', { generation: current.generation, snapshot: { playing: false } }));
+  check('audio-stop-clears-owner-and-resume', !(await owner.read()).ownerId && !(await owner.read()).resume && snapshots.at(-1).playing === false);
+  const resumed = await owner.command(request('A', 'A-3'));
+  await owner.command(request('A', 'A-handoff', 'handoff', { generation: resumed.record.generation, snapshot: { playing: true, progress: 12 } }));
+  check('audio-explicit-handoff-keeps-resume-intent', !(await owner.read()).ownerId && (await owner.read()).resume && snapshots.at(-1).playing && snapshots.at(-1).progress === 12);
+  const reboots = await Promise.all([owner.command(request('B', 'B-reload', 'claim', { reason: 'restore' })), owner.command(request('C', 'C-reload', 'claim', { reason: 'restore' }))]);
+  check('audio-handoff-reboot-single-grant', reboots.filter(x => x.granted).length === 1);
+  const beforeFailure = await owner.read(); failWrite = true;
+  let rejected = false;
+  try { await owner.command(request('A', 'A-failed')); } catch { rejected = true; }
+  check('audio-storage-failure-never-grants', rejected && (await owner.read()).revision === beforeFailure.revision);
+  failWrite = false;
+  await owner.command(request('A', 'A-retry'));
+  check('audio-failed-command-does-not-poison-chain', (await owner.read()).pending.claimId === 'A-retry');
+
+  const orphan = await owner.read();
+  const reaped = await owner.command(request('D', 'D-restore', 'claim', { reason: 'restore',
+    reap: true, reapOwnerId: orphan.ownerId, reapGeneration: orphan.generation }));
+  check('audio-proven-orphan-reaped-before-restore-guard', reaped.granted && reaped.record.ownerId === 'D'
+    && reaped.record.revision === orphan.revision + 2 && reaped.record.generation > orphan.generation);
+  const fenced = await owner.savePlayback({ playing: true, progress: 99 }, { ownerId: orphan.ownerId, generation: orphan.generation });
+  await owner.command(request(orphan.ownerId, 'orphan-late-yield', 'yield', { generation: orphan.generation }));
+  await owner.command(request(orphan.ownerId, 'orphan-late-handoff', 'handoff', { generation: orphan.generation, snapshot: { playing: true } }));
+  check('audio-reap-fences-old-save-yield-handoff', !fenced.accepted && (await owner.read()).generation === reaped.record.generation);
+  const delayed = await owner.command(request('E', 'E-delayed', 'claim', { reason: 'restore',
+    reap: true, reapOwnerId: orphan.ownerId, reapGeneration: orphan.generation }));
+  check('audio-delayed-reap-cannot-clear-new-owner', !delayed.granted && delayed.record.ownerId === 'D'
+    && delayed.record.generation === reaped.record.generation);
+  const noProof = await owner.command(request('E', 'E-unproven', 'claim', { reason: 'restore', reap: true }));
+  check('audio-reap-without-target-proof-remains-standby', !noProof.granted && noProof.record.ownerId === 'D');
+  await owner.command(request('E', 'E-reap-stop', 'stop', { reap: true, reapOwnerId: 'D',
+    reapGeneration: reaped.record.generation, snapshot: { playing: true, progress: 6 } }));
+  check('audio-proven-orphan-stop-clears-and-saves-false', !(await owner.read()).ownerId
+    && (await owner.read()).generation > reaped.record.generation && snapshots.at(-1).playing === false);
+}
 
 fs.rmSync(dataDir, { recursive: true, force: true });
 

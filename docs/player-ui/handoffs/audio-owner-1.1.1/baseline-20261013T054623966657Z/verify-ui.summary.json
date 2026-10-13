@@ -1,0 +1,14 @@
+{
+  "selfCheckPassed": 12,
+  "selfCheckTotal": 12,
+  "failedCases": [],
+  "narrowSelfCheck": "4/4",
+  "narrowFailed": [],
+  "assertions": "376/376",
+  "failedAssertions": [],
+  "wiringOk": true,
+  "migrationOk": true,
+  "lifecycleOk": true,
+  "runtimeErrors": [],
+  "outDir": "/Volumes/SSD/hanadesk/hanako-audio-player-simple/docs/player-ui/handoffs/audio-owner-1.1.1/baseline-20261013T054623966657Z/ui-artifacts"
+}

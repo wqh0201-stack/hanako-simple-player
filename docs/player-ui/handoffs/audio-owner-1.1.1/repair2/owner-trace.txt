@@ -1,0 +1,243 @@
+[owner-trace] request restore 0 false 0
+[owner-trace] claim-ready restore 1 1 true true
+[owner-trace] proof restore 1 1 null
+[owner-trace] request restore 0 false 0
+[owner-trace] claim-ready restore 1 1 true false
+[owner-trace] request user 1 false 0
+[owner-trace] claim-ready user 2 2 true false
+[owner-trace] proof user 2 2 null
+[owner-trace] pause true 1 3.013206 3
+[owner-trace] pause true 2 3.013206 3.013206
+[owner-trace] request resume 3 false 0
+[owner-trace] claim-ready resume 4 4 true false
+[owner-trace] proof resume 4 4 null
+[owner-trace] pause true 2 3.096114 3
+[owner-trace] pause true 3 3.096214 3.096214
+[owner-trace] pause false 4 3.107014 3.013206
+[owner-trace] pause false 5 3.107014 3.107014
+[owner-trace] pause false 4 3.096214 3.096214
+[owner-trace] pause false 5 3.096214 3.096214
+[owner-trace] pause false 6 3.107014 3.107014
+[owner-trace] request restore 0 false 0
+[owner-trace] claim-ready restore 1 1 true false
+[owner-trace] request restore 0 false 0
+[owner-trace] claim-ready restore 1 1 true true
+[owner-trace] proof restore 1 1 null
+[owner-trace] request user 1 false 0
+[owner-trace] claim-ready user 2 2 true false
+[owner-trace] proof user 2 2 null
+[owner-trace] pause true 1 0 3
+[owner-trace] pause true 2 0 0
+[owner-trace] request resume 3 false 0
+[owner-trace] claim-ready resume 4 4 true false
+[owner-trace] proof resume 4 4 null
+[owner-trace] pause true 2 3.089196 3
+[owner-trace] pause true 3 3.089259 3.089259
+[owner-trace] pause false 4 0.061078 0
+[owner-trace] pause false 5 0.061175 0.061175
+[owner-trace] pause false 4 3.089259 3.089259
+[owner-trace] pause false 6 0.061175 0.061175
+[owner-trace] pause false 5 3.089259 3.089259
+[owner-trace] request restore 0 false 0
+[owner-trace] claim-ready restore 1 1 true true
+[owner-trace] proof restore 1 1 null
+[owner-trace] pause false 1 3.009305 3
+[owner-trace] request restore 0 false 0
+[owner-trace] claim-ready restore 1 1 true true
+[owner-trace] proof restore 1 1 null
+[owner-trace] pause false 1 3 0
+[owner-trace] request restore 0 false 0
+[owner-trace] claim-ready restore 1 1 true true
+[owner-trace] proof restore 1 1 null
+[owner-trace] request restore 0 false 0
+[owner-trace] claim-ready restore 1 1 true false
+[owner-trace] request user 1 false 0
+[owner-trace] claim-ready user 2 2 true false
+[owner-trace] proof user 2 2 null
+[owner-trace] pause true 1 3 3
+[owner-trace] pause true 2 3 3
+[owner-trace] pause true 2 3 3
+[owner-trace] pause true 3 3 3
+[owner-trace] request restore 0 false 0
+[owner-trace] claim-ready restore 1 1 true true
+[owner-trace] proof restore 1 1 null
+[owner-trace] request restore 0 false 0
+[owner-trace] claim-ready restore 1 1 true false
+[owner-trace] pause false 1 4.711331 4.663336
+[owner-trace] request restore 1 false 0
+[owner-trace] claim-ready restore 2 2 true true
+[owner-trace] proof restore 2 2 {"reap":true,"reapOwnerId":"mv6kq3td5oa1f0","reapGeneration":1}
+[owner-trace] pause false 2 3.062926 3
+{
+  "passed": 21,
+  "total": 24,
+  "failed": [
+    {
+      "name": "takeover-pauses-preserves-progress-true",
+      "ok": false,
+      "detail": {
+        "before": {
+          "ownerId": "mv6kpy900et32r",
+          "generation": 1,
+          "record": {
+            "ownerId": "mv6kpy900et32r",
+            "claimId": "mv6kpy900et32r-1",
+            "at": 1791889465883,
+            "revision": 1,
+            "generation": 1,
+            "pending": null,
+            "resume": false
+          },
+          "docLockHeld": true,
+          "docLockSupported": true,
+          "takeover": false,
+          "playing": true,
+          "paused": false,
+          "progress": 3,
+          "pendingSeek": 0,
+          "pendingAutoplay": false,
+          "snapshot": {
+            "currentId": "local|local-1",
+            "activeList": "local",
+            "progress": 3,
+            "volume": 0.5,
+            "muted": true,
+            "mode": "list",
+            "playing": true,
+            "shuffleTrail": [],
+            "currentTrack": {
+              "id": "local-1",
+              "name": "测试曲目 1",
+              "list": "local",
+              "mode": "本地",
+              "dur": 30,
+              "url": "/api/apps/hanako-simple-player/routes/test.wav",
+              "group": ""
+            }
+          }
+        },
+        "after": {
+          "ownerId": "mv6kpy900et32r",
+          "generation": 0,
+          "record": {
+            "ownerId": "mv6kpya8ed9mvm",
+            "claimId": "mv6kpya8ed9mvm-2",
+            "at": 1791889466198,
+            "revision": 3,
+            "generation": 3,
+            "pending": null,
+            "resume": false
+          },
+          "docLockHeld": false,
+          "docLockSupported": true,
+          "takeover": true,
+          "playing": false,
+          "paused": true,
+          "progress": 0,
+          "pendingSeek": 0,
+          "pendingAutoplay": false,
+          "snapshot": {
+            "currentId": "local|local-1",
+            "activeList": "local",
+            "progress": 0,
+            "volume": 0.5,
+            "muted": true,
+            "mode": "list",
+            "playing": false,
+            "shuffleTrail": [],
+            "currentTrack": {
+              "id": "local-1",
+              "name": "测试曲目 1",
+              "list": "local",
+              "mode": "本地",
+              "dur": 30,
+              "url": "/api/apps/hanako-simple-player/routes/test.wav",
+              "group": ""
+            }
+          }
+        },
+        "events": [
+          {
+            "type": "emptied",
+            "at": 52.39999997615814,
+            "time": 0,
+            "paused": true
+          },
+          {
+            "type": "play",
+            "at": 3218.399999976158,
+            "time": 0,
+            "paused": false
+          },
+          {
+            "type": "timeupdate",
+            "at": 3514.5999999046326,
+            "time": 0,
+            "paused": true
+          },
+          {
+            "type": "pause",
+            "at": 3516,
+            "time": 0,
+            "paused": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "unexpected-test-error",
+      "ok": false,
+      "detail": "TimeoutError: Waiting failed: 8000ms exceeded\n    at new WaitTask (/Volumes/SSD/hanadesk/鹈鹕/motion-reel/node_modules/puppeteer-core/lib/cjs/puppeteer/common/WaitTask.js:48:34)\n    at IsolatedWorld.waitForFunction (/Volumes/SSD/hanadesk/鹈鹕/motion-reel/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Realm.js:25:26)\n    at CdpFrame.waitForFunction (/Volumes/SSD/hanadesk/鹈鹕/motion-reel/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Frame.js:571:43)\n    at CdpFrame.<anonymous> (/Volumes/SSD/hanadesk/鹈鹕/motion-reel/node_modules/puppeteer-core/lib/cjs/puppeteer/util/decorators.js:109:27)\n    at CdpPage.waitForFunction (/Volumes/SSD/hanadesk/鹈鹕/motion-reel/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Page.js:1434:37)\n    at playing (file:///private/tmp/hap-owner-debug-all.mjs:129:30)\n    at file:///private/tmp/hap-owner-debug-all.mjs:210:60"
+    },
+    {
+      "name": "diagnostic",
+      "ok": false,
+      "detail": {
+        "owner": {
+          "ownerId": "mv6kq5gmj5j3su",
+          "generation": 0,
+          "record": {
+            "ownerId": "",
+            "at": 0,
+            "revision": 0,
+            "generation": 0,
+            "claimId": "",
+            "pending": null,
+            "resume": false
+          },
+          "docLockHeld": true,
+          "docLockSupported": true,
+          "takeover": false,
+          "playing": false,
+          "paused": true,
+          "progress": 3.1,
+          "pendingSeek": 0,
+          "pendingAutoplay": false,
+          "snapshot": {
+            "currentId": "local|local-1",
+            "activeList": "local",
+            "progress": 3.1,
+            "volume": 0.5,
+            "muted": true,
+            "mode": "list",
+            "playing": false,
+            "shuffleTrail": [],
+            "currentTrack": {
+              "id": "local-1",
+              "name": "测试曲目 1",
+              "list": "local",
+              "mode": "本地",
+              "dur": 30,
+              "url": "/api/apps/hanako-simple-player/routes/test.wav",
+              "group": ""
+            }
+          }
+        },
+        "src": "http://127.0.0.1:53857/api/apps/hanako-simple-player/routes/test.wav?appSurfaceSession=test-ticket",
+        "ready": 4,
+        "duration": 30
+      }
+    }
+  ],
+  "outDir": "docs/player-ui/handoffs/audio-owner-1.1.1/repair2/owner-trace"
+}

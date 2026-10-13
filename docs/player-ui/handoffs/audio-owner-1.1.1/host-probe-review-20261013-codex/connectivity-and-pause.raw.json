@@ -1,0 +1,701 @@
+{
+  "startedAt": "2026-10-13T06:43:09.627Z",
+  "scope": "system Chrome headless; local fixtures; no actual Hana surfaces",
+  "browserVersion": "Chrome/155.0.8059.40",
+  "nodeVersion": "v22.22.2",
+  "pairs": [
+    {
+      "source": "srcdoc",
+      "sandbox": null,
+      "observationWindowMs": 1200,
+      "constructed": [
+        true,
+        true
+      ],
+      "sent": 2,
+      "received": 4,
+      "reports": [
+        {
+          "at": 66,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "ready",
+            "data": {
+              "constructed": true,
+              "locationOrigin": "null",
+              "windowOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 66.09999990463257,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "ready",
+            "data": {
+              "constructed": true,
+              "locationOrigin": "null",
+              "windowOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 90.29999995231628,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "sent",
+            "data": {
+              "seq": 1
+            }
+          }
+        },
+        {
+          "at": 90.29999995231628,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "sent",
+            "data": {
+              "seq": 2
+            }
+          }
+        },
+        {
+          "at": 90.39999997615814,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "received",
+            "data": {
+              "message": {
+                "kind": "ping",
+                "seq": 1,
+                "sender": "A"
+              },
+              "eventOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 90.5,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "received",
+            "data": {
+              "message": {
+                "kind": "ping",
+                "seq": 2,
+                "sender": "B"
+              },
+              "eventOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 90.59999990463257,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "received",
+            "data": {
+              "message": {
+                "kind": "pong",
+                "seq": 1,
+                "sender": "B"
+              },
+              "eventOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 90.59999990463257,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "received",
+            "data": {
+              "message": {
+                "kind": "pong",
+                "seq": 2,
+                "sender": "A"
+              },
+              "eventOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "source": "srcdoc",
+      "sandbox": "allow-scripts",
+      "observationWindowMs": 1200,
+      "constructed": [
+        true,
+        true
+      ],
+      "sent": 2,
+      "received": 0,
+      "reports": [
+        {
+          "at": 35.5,
+          "messageOrigin": "null",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "ready",
+            "data": {
+              "constructed": true,
+              "locationOrigin": "null",
+              "windowOrigin": "null"
+            }
+          }
+        },
+        {
+          "at": 35.5,
+          "messageOrigin": "null",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "ready",
+            "data": {
+              "constructed": true,
+              "locationOrigin": "null",
+              "windowOrigin": "null"
+            }
+          }
+        },
+        {
+          "at": 49.59999990463257,
+          "messageOrigin": "null",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "sent",
+            "data": {
+              "seq": 1
+            }
+          }
+        },
+        {
+          "at": 49.59999990463257,
+          "messageOrigin": "null",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "sent",
+            "data": {
+              "seq": 2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "source": "srcdoc",
+      "sandbox": "allow-scripts allow-same-origin",
+      "observationWindowMs": 1200,
+      "constructed": [
+        true,
+        true
+      ],
+      "sent": 2,
+      "received": 4,
+      "reports": [
+        {
+          "at": 45.200000047683716,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "ready",
+            "data": {
+              "constructed": true,
+              "locationOrigin": "null",
+              "windowOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 45.200000047683716,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "ready",
+            "data": {
+              "constructed": true,
+              "locationOrigin": "null",
+              "windowOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 49.60000002384186,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "sent",
+            "data": {
+              "seq": 1
+            }
+          }
+        },
+        {
+          "at": 49.60000002384186,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "sent",
+            "data": {
+              "seq": 2
+            }
+          }
+        },
+        {
+          "at": 49.60000002384186,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "received",
+            "data": {
+              "message": {
+                "kind": "ping",
+                "seq": 1,
+                "sender": "A"
+              },
+              "eventOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 49.60000002384186,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "received",
+            "data": {
+              "message": {
+                "kind": "ping",
+                "seq": 2,
+                "sender": "B"
+              },
+              "eventOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 49.60000002384186,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "received",
+            "data": {
+              "message": {
+                "kind": "pong",
+                "seq": 1,
+                "sender": "B"
+              },
+              "eventOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 49.700000047683716,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "received",
+            "data": {
+              "message": {
+                "kind": "pong",
+                "seq": 2,
+                "sender": "A"
+              },
+              "eventOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "source": "http",
+      "sandbox": null,
+      "observationWindowMs": 1200,
+      "constructed": [
+        true,
+        true
+      ],
+      "sent": 2,
+      "received": 4,
+      "reports": [
+        {
+          "at": 32.200000047683716,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "ready",
+            "data": {
+              "constructed": true,
+              "locationOrigin": "http://127.0.0.1:54068",
+              "windowOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 36.200000047683716,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "ready",
+            "data": {
+              "constructed": true,
+              "locationOrigin": "http://127.0.0.1:54068",
+              "windowOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 50.60000002384186,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "sent",
+            "data": {
+              "seq": 1
+            }
+          }
+        },
+        {
+          "at": 50.60000002384186,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "sent",
+            "data": {
+              "seq": 2
+            }
+          }
+        },
+        {
+          "at": 50.700000047683716,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "received",
+            "data": {
+              "message": {
+                "kind": "ping",
+                "seq": 1,
+                "sender": "A"
+              },
+              "eventOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 50.700000047683716,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "received",
+            "data": {
+              "message": {
+                "kind": "ping",
+                "seq": 2,
+                "sender": "B"
+              },
+              "eventOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 50.799999952316284,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "received",
+            "data": {
+              "message": {
+                "kind": "pong",
+                "seq": 1,
+                "sender": "B"
+              },
+              "eventOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 50.799999952316284,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "received",
+            "data": {
+              "message": {
+                "kind": "pong",
+                "seq": 2,
+                "sender": "A"
+              },
+              "eventOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "source": "http",
+      "sandbox": "allow-scripts",
+      "observationWindowMs": 1200,
+      "constructed": [
+        true,
+        true
+      ],
+      "sent": 2,
+      "received": 0,
+      "reports": [
+        {
+          "at": 29.5,
+          "messageOrigin": "null",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "ready",
+            "data": {
+              "constructed": true,
+              "locationOrigin": "http://127.0.0.1:54068",
+              "windowOrigin": "null"
+            }
+          }
+        },
+        {
+          "at": 29.90000009536743,
+          "messageOrigin": "null",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "ready",
+            "data": {
+              "constructed": true,
+              "locationOrigin": "http://127.0.0.1:54068",
+              "windowOrigin": "null"
+            }
+          }
+        },
+        {
+          "at": 44.90000009536743,
+          "messageOrigin": "null",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "sent",
+            "data": {
+              "seq": 1
+            }
+          }
+        },
+        {
+          "at": 44.90000009536743,
+          "messageOrigin": "null",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "sent",
+            "data": {
+              "seq": 2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "source": "http",
+      "sandbox": "allow-scripts allow-same-origin",
+      "observationWindowMs": 1200,
+      "constructed": [
+        true,
+        true
+      ],
+      "sent": 2,
+      "received": 4,
+      "reports": [
+        {
+          "at": 29.300000071525574,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "ready",
+            "data": {
+              "constructed": true,
+              "locationOrigin": "http://127.0.0.1:54068",
+              "windowOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 29.5,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "ready",
+            "data": {
+              "constructed": true,
+              "locationOrigin": "http://127.0.0.1:54068",
+              "windowOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 32.200000047683716,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "sent",
+            "data": {
+              "seq": 1
+            }
+          }
+        },
+        {
+          "at": 32.300000071525574,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "sent",
+            "data": {
+              "seq": 2
+            }
+          }
+        },
+        {
+          "at": 32.40000009536743,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "received",
+            "data": {
+              "message": {
+                "kind": "ping",
+                "seq": 1,
+                "sender": "A"
+              },
+              "eventOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 32.40000009536743,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "received",
+            "data": {
+              "message": {
+                "kind": "ping",
+                "seq": 2,
+                "sender": "B"
+              },
+              "eventOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 32.40000009536743,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "A",
+            "kind": "received",
+            "data": {
+              "message": {
+                "kind": "pong",
+                "seq": 1,
+                "sender": "B"
+              },
+              "eventOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        },
+        {
+          "at": 32.40000009536743,
+          "messageOrigin": "http://127.0.0.1:54068",
+          "report": {
+            "probe": true,
+            "id": "B",
+            "kind": "received",
+            "data": {
+              "message": {
+                "kind": "pong",
+                "seq": 2,
+                "sender": "A"
+              },
+              "eventOrigin": "http://127.0.0.1:54068"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "pause": [
+    {
+      "stage": "before-pause",
+      "paused": false
+    },
+    {
+      "stage": "after-pause-return",
+      "paused": true,
+      "pauseEvents": 0
+    },
+    {
+      "stage": "after-microtask",
+      "paused": true,
+      "pauseEvents": 0
+    },
+    {
+      "stage": "pause-event",
+      "paused": true
+    },
+    {
+      "stage": "after-event-loop",
+      "paused": true,
+      "pauseEvents": 1
+    },
+    {
+      "stage": "pause-again-while-paused",
+      "paused": true,
+      "pauseEvents": 1
+    }
+  ],
+  "finishedAt": "2026-10-13T06:43:19.300Z"
+}

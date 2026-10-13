@@ -1,0 +1,9 @@
+{
+  "command": "node docs/player-ui/handoffs/audio-owner-1.1.1/host-probe-review-20261013-codex/connectivity-and-pause.cjs",
+  "startedAt": "2026-10-13 06:42:59 UTC",
+  "finishedAt": "2026-10-13 06:43:19 UTC",
+  "exitCode": 0,
+  "stdout": "stdout.log",
+  "stderr": "stderr.log",
+  "scope": "system Chrome headless and local HTTP/srcdoc fixtures; not Hana runtime or actual mounted App surfaces"
+}

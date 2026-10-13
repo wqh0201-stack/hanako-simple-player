@@ -1,0 +1,7 @@
+{
+  "assertions": null,
+  "failedAssertions": null,
+  "exitCode": 1,
+  "blocker": "listen EPERM 127.0.0.1 before assertions; sandbox denied loopback server binding",
+  "nextAttempt": "Same command rerun outside sandbox for local HTTP + headless Chrome."
+}

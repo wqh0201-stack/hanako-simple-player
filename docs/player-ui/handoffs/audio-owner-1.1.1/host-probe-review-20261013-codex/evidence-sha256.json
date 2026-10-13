@@ -1,0 +1,36 @@
+{
+  "artifacts": {
+    "connectivity-and-pause.cjs": "8906e3e54c4d3d68a2f06bc664bf9825dad46ba58ddbeddc6c67ece658881e6a",
+    "connectivity-and-pause.raw.json": "3f44f24e916b252c195702facd5e172b275b13c57cb2517ac06a0f1728b3597b",
+    "stdout.log": "160c432197ccf70f9ca0ab927bb9f37a28ccee4c6d90ed9f7b7793672c42e281",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run.json": "b1abdac0e1b5d456d37e3c3b3463637f37e60b9b160ca545e585715ea190a953"
+  },
+  "sourceUnchanged": {
+    "tools/verify-backend.mjs": {
+      "before": "d6d5da5e1f0ff7290839e476ff80c821dc4cba8c246c71367880121f22d1af2c",
+      "now": "d6d5da5e1f0ff7290839e476ff80c821dc4cba8c246c71367880121f22d1af2c",
+      "unchanged": true
+    },
+    "tools/verify-ui.mjs": {
+      "before": "1310ae68a4b55940d6a85aebd17637c4fd2a624ae43bfd96dcd5ae8a66891b9d",
+      "now": "1310ae68a4b55940d6a85aebd17637c4fd2a624ae43bfd96dcd5ae8a66891b9d",
+      "unchanged": true
+    },
+    "ui/app.js": {
+      "before": "934fef61e3b224eba4b07a554d99139638e5e2146dc4352f07b762b6e8c4ca01",
+      "now": "934fef61e3b224eba4b07a554d99139638e5e2146dc4352f07b762b6e8c4ca01",
+      "unchanged": true
+    },
+    "ui/_build.json": {
+      "before": "efd419034bfc2896f35ce52ad21a735dc6ebd24bb14805ec4ae9e80b7cfd072f",
+      "now": "efd419034bfc2896f35ce52ad21a735dc6ebd24bb14805ec4ae9e80b7cfd072f",
+      "unchanged": true
+    },
+    "manifest.json": {
+      "before": "8c45b510726d6f049901ded28934015a0e78141a9617d64c424deb63dc55a4bc",
+      "now": "8c45b510726d6f049901ded28934015a0e78141a9617d64c424deb63dc55a4bc",
+      "unchanged": true
+    }
+  }
+}

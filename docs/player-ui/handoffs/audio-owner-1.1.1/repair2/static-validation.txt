@@ -1,0 +1,3 @@
+(node:71036) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"ok":false,"issues":[{"code":"INVALID_MANIFEST","severity":"error","file":"manifest.json","message":"id \"hanako-simple-player\" does not match its directory name \"hanako-audio-player-simple\"","suggestion":"Correct manifest.json so the production App loader accepts it."}],"summary":{"errors":1,"warnings":0}}

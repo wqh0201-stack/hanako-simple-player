@@ -1,8 +1,9 @@
-# 独立验收清单 · /mood 一步直达 1.1.1
+# 独立验收清单 · /mood 一步直达 1.1.2
 
 > 验收方：哦鲸鲸（Hana）。实现方：Codex。
-> 配套任务书：[`TASK-mood-onestep-1.1.1.md`](../TASK-mood-onestep-1.1.1.md)。
+> 配套任务书：[`TASK-mood-onestep-1.1.2.md`](../TASK-mood-onestep-1.1.2.md)。
 > 纪律：**不把工具直测/假宿主/隔离宿主的结果当成真实会话验收**。真机项必须真机。
+> 基线：本任务在 audio-owner（1.1.1）工作树之上做；开工基线 backend 114 / UI 376 / 专项 20。
 
 ---
 
@@ -21,7 +22,7 @@
 |---|---|---|---|
 | A1 | manifest 新增两权限 | `capabilities` 含 `app/session.start-turn` 与 `app/sessions.manage` | |
 | A2 | 既有 read 权限保留 | `capabilities` 仍含 `app/sessions.read` | |
-| A3 | 版本号 | `manifest.json` version = `1.1.1` | |
+| A3 | 版本号 | `manifest.json` version = `1.1.2` | |
 | A4 | 构建号三处一致 | `ui/_build.json` / `index.html` / `standalone.html` 的 `window.__HANA_BUILD` | |
 | A5 | 官方静态校验 | `validate_app.mjs` 0 error | |
 | A6 | CHANGELOG | 有 `## 1.1.1` 段，写清对用户意味着什么 | |

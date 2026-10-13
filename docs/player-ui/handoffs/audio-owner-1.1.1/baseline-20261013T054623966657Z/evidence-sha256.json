@@ -1,0 +1,9 @@
+{
+  "verify-backend.stdout.log": "426823ddd9b0b907f781d433c94987e8970bdeb615fa76d347c693efdd17f564",
+  "verify-backend.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "verify-ui.stdout.log": "9939e7901a9b2879f6160765012c25e32ae8e7e9dfebf47c2082247305b95f81",
+  "verify-ui.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "verify-ui.sandbox.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "verify-ui.sandbox.stderr.log": "a7cc612780002f3526766e070cae0acce9eaf53d35e516e7f9266a96546c4acf",
+  "ui-artifacts/verify.json": "988c4a3edc833c15fcd181170066feec26e31c54b4db1eac29f2fcf6d9d74a29"
+}

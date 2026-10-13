@@ -1,0 +1,39 @@
+{
+  "twinHtml": true,
+  "build": "1003131680",
+  "htmlBuilds": [
+    "1003131680",
+    "1003131680"
+  ],
+  "existingNonES5Syntax": [
+    "FunctionDeclaration",
+    "AwaitExpression",
+    "FunctionDeclaration",
+    "AwaitExpression",
+    "FunctionDeclaration",
+    "AwaitExpression",
+    "AwaitExpression",
+    "AwaitExpression",
+    "AwaitExpression",
+    "AwaitExpression",
+    "FunctionDeclaration",
+    "AwaitExpression"
+  ],
+  "newNonES5Syntax": [
+    "FunctionDeclaration",
+    "AwaitExpression",
+    "FunctionDeclaration",
+    "AwaitExpression",
+    "FunctionDeclaration",
+    "AwaitExpression",
+    "AwaitExpression",
+    "AwaitExpression",
+    "AwaitExpression",
+    "AwaitExpression",
+    "FunctionDeclaration",
+    "AwaitExpression"
+  ],
+  "noNewNonES5Syntax": true,
+  "version": "1.1.1",
+  "license": true
+}

@@ -1,0 +1,155 @@
+{
+  "version": "1.1.1",
+  "build": "1003131679",
+  "baselineFailureSet": [],
+  "finalFailureSet": [],
+  "backend": {
+    "command": "node tools/verify-backend.mjs",
+    "exitCode": 0,
+    "passed": 114,
+    "total": 114,
+    "stdout": "backend-build79.stdout.log",
+    "stderr": "backend-build79.stderr.log"
+  },
+  "ui": {
+    "command": "node tools/verify-ui.mjs",
+    "exitCode": 0,
+    "passed": 376,
+    "total": 376,
+    "selfCheck": 12,
+    "narrowSelfCheck": 4,
+    "existingAssertionNamesAndOrderUnchanged": true,
+    "runtimeErrors": [],
+    "stdout": "ui-build79.stdout.log",
+    "stderr": "ui-build79.stderr.log",
+    "json": "ui-build79/verify.json"
+  },
+  "audioOwner": {
+    "command": "node tools/verify-audio-owner.mjs",
+    "exitCode": 0,
+    "passed": 20,
+    "total": 20,
+    "runtimeErrors": [],
+    "stdout": "owner-pointer-r2-build79.stdout.log",
+    "stderr": "owner-pointer-r2-build79.stderr.log",
+    "json": "owner-pointer-r2-build79/verify-audio-owner.json",
+    "assertions": [
+      {
+        "number": 1,
+        "name": "simultaneous-boot-one-voice-false",
+        "ok": true
+      },
+      {
+        "number": 2,
+        "name": "takeover-pauses-preserves-progress-false",
+        "ok": true
+      },
+      {
+        "number": 3,
+        "name": "passive-snapshot-false-owner-snapshot-protected-false",
+        "ok": true
+      },
+      {
+        "number": 4,
+        "name": "takeover-chip-visible-false",
+        "ok": true
+      },
+      {
+        "number": 5,
+        "name": "takeover-chip-pointer-reachable-false",
+        "ok": true
+      },
+      {
+        "number": 6,
+        "name": "chip-reclaims-one-voice-false",
+        "ok": true
+      },
+      {
+        "number": 7,
+        "name": "manual-pause-stops-all-false",
+        "ok": true
+      },
+      {
+        "number": 8,
+        "name": "simultaneous-boot-one-voice-true",
+        "ok": true
+      },
+      {
+        "number": 9,
+        "name": "takeover-pauses-preserves-progress-true",
+        "ok": true
+      },
+      {
+        "number": 10,
+        "name": "passive-snapshot-false-owner-snapshot-protected-true",
+        "ok": true
+      },
+      {
+        "number": 11,
+        "name": "takeover-chip-visible-true",
+        "ok": true
+      },
+      {
+        "number": 12,
+        "name": "takeover-chip-pointer-reachable-true",
+        "ok": true
+      },
+      {
+        "number": 13,
+        "name": "chip-reclaims-one-voice-true",
+        "ok": true
+      },
+      {
+        "number": 14,
+        "name": "manual-pause-stops-all-true",
+        "ok": true
+      },
+      {
+        "number": 15,
+        "name": "single-reload-explicit-handoff-resumes",
+        "ok": true
+      },
+      {
+        "number": 16,
+        "name": "single-reclick-current-keeps-playing-state",
+        "ok": true
+      },
+      {
+        "number": 17,
+        "name": "single-auto-next-unchanged",
+        "ok": true
+      },
+      {
+        "number": 18,
+        "name": "late-grant-does-not-play-after-wait-ended",
+        "ok": true
+      },
+      {
+        "number": 19,
+        "name": "paused-grantee-close-releases-permit",
+        "ok": true
+      },
+      {
+        "number": 20,
+        "name": "lost-handoff-remains-standby-no-timeout-play",
+        "ok": true
+      }
+    ]
+  },
+  "staticValidation": {
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 1,
+    "warningCodes": [
+      "DYNAMIC_DEPENDENCIES_NOT_PROVEN"
+    ],
+    "json": "validate-build79.stdout.log",
+    "run": "validate-build79.run.json"
+  },
+  "runtimeSourceMatchesBuild79": true,
+  "twinsOnlyDataShellDifference": true,
+  "manifestAndPackageVersion": "1.1.1",
+  "source": "final-source-after-pointer.json",
+  "hanaRealAcceptance": "pending",
+  "productionDeployment": "not performed by Codex"
+}

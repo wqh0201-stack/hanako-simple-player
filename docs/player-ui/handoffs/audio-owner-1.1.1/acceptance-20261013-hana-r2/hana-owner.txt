@@ -1,0 +1,7 @@
+{
+  "passed": 34,
+  "total": 34,
+  "failed": [],
+  "outDir": "/tmp/hap-r2-owner"
+}
+EXIT=0

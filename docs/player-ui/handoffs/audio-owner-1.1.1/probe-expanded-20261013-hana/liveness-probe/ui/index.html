@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>存活探针</title>
+<style>
+  html, body { margin: 0; background: #34424B; color: #E1EAF0; }
+  body { font: 400 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; padding: 12px 14px 18px; }
+  h1 { font: 600 15px/1.4 -apple-system, "PingFang SC", sans-serif; margin: 0 0 8px; }
+  .tag { display: inline-block; padding: 1px 7px; border-radius: 5px; background: #414D56; font-size: 11px; }
+  .ok { color: #9BD3A6; } .no { color: #E1A0A0; } .dim { color: #9FB1BC; }
+  table { border-collapse: collapse; margin: 8px 0 12px; }
+  td { padding: 3px 12px 3px 0; vertical-align: top; font-size: 13px; }
+  td.k { color: #9FB1BC; white-space: nowrap; }
+  pre { background: #414D56; border-radius: 6px; padding: 10px; overflow: auto; font-size: 11.5px; line-height: 1.5; }
+  button { font: inherit; padding: 4px 10px; border-radius: 6px; border: 1px solid #5A6A75; background: #414D56; color: #E1EAF0; cursor: pointer; }
+  .verdict { margin: 6px 0 2px; font-size: 13px; }
+</style>
+</head>
+<body data-shell="card">
+<h1>存活探针 <span class="tag" id="shell">card</span> <span class="tag dim" id="state">boot…</span></h1>
+<div id="head"></div>
+<div class="verdict" id="verdict"></div>
+<div><button id="resend" type="button">重新探测并上报</button> <span class="dim" id="sendinfo"></span></div>
+<pre id="json">…</pre>
+
+<script>
+/* 探针设计（锁名全为临时名，绝不使用生产音频锁名）：
+ *   身份锁 hana-liveness-probe-id-<docId>：名字唯一，必得；持到文档销毁。
+ *     → 用 query() 反查它的 clientId，就是本档的 clientId。
+ *   共享锁 hana-liveness-probe-shared：所有探针文档竞争。
+ *     → 抢到 = 本档是当前持有者；抢不到但 query 里看得见他档持有 = 跨文档共享成立。
+ *   每份心跳都带完整 query 快照，故任一报告都能反推「现在有几份探针文档、分别是谁」。
+ * 注意：持锁回调用一个永不 resolve 的 promise，因此**不能 await 那次 request**。
+ */
+(async function () {
+  var shell = document.body.getAttribute('data-shell') || 'card';
+  document.getElementById('shell').textContent = shell;
+  var stateEl = document.getElementById('state');
+  var head = document.getElementById('head');
+  var verdictEl = document.getElementById('verdict');
+  var jsonEl = document.getElementById('json');
+  var sendinfo = document.getElementById('sendinfo');
+
+  var SHARED = 'hana-liveness-probe-shared';
+  var ID_PREFIX = 'hana-liveness-probe-id-';
+  function rnd(p) { return p + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8); }
+  var docId = rnd('doc');
+  var ID_LOCK = ID_PREFIX + docId;
+  var sessionValue = new URLSearchParams(location.search).get('appSurfaceSession') || null;
+
+  var myClientId = null, identitySettled = false;
+  var sharedAttempted = false, sharedGot = null, sharedHeldBefore = null;
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]; }); }
+  function snap(q) { return q.held.map(function (l) { return { name: l.name, mode: l.mode, clientId: l.clientId }; }); }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  // 发起持锁（不 await）：拿到锁时回调返回永不 resolve 的 promise。
+  function requestHold(name, opts) {
+    var st = { got: null, done: false };
+    try {
+      var p = navigator.locks.request(name, opts || {}, function (lock) {
+        st.got = !!lock; st.done = true;
+        if (lock) return new Promise(function () {});
+      });
+      if (p && p.then) p.then(function () { st.done = true; }, function () { st.done = true; });
+    } catch (e) { st.error = e.name + ': ' + e.message; st.done = true; }
+    return st;
+  }
+  async function settle(st, ms) { var end = Date.now() + ms; while (!st.done && Date.now() < end) await sleep(50); return st; }
+
+  async function ensureIdentity() {
+    if (!identitySettled) { requestHold(ID_LOCK, {}); await sleep(300); identitySettled = true; }
+    var q = await navigator.locks.query();
+    var mine = q.held.filter(function (l) { return l.name === ID_LOCK; });
+    myClientId = mine.length ? mine[0].clientId : null;
+    return q;
+  }
+
+  async function ensureShared() {
+    var q = await navigator.locks.query();
+    if (!sharedAttempted) {
+      sharedAttempted = true;
+      sharedHeldBefore = q.held.filter(function (l) { return l.name === SHARED; }).map(function (l) { return l.clientId; });
+      var st = requestHold(SHARED, { ifAvailable: true });
+      await settle(st, 800);
+      sharedGot = st.got;
+    }
+    return sharedGot;
+  }
+
+  function build(q, opts) {
+    var held = snap(q);
+    var out = Object.assign({
+      docId: docId, shell: shell, at: Date.now(),
+      origin: location.origin,
+      isTop: (function () { try { return window.top === window; } catch (e) { return 'cross-origin'; } })(),
+      isSecureContext: window.isSecureContext,
+      hasNavigatorLocks: !!(navigator.locks && navigator.locks.request && navigator.locks.query),
+      hasBroadcastChannel: typeof BroadcastChannel === 'function',
+      frameElement: (function () { try { var fe = window.frameElement; if (!fe) return null; return { sandbox: fe.getAttribute('sandbox'), tag: fe.tagName }; } catch (e) { return 'unreadable:' + e.name; } })(),
+      hasHanaSdk: !!(window.hana),
+      sessionValuePresent: !!sessionValue,
+      identityLockName: ID_LOCK,
+      myClientId: myClientId,
+      sharedIfAvailableGot: sharedGot,
+      sharedHeldBefore: sharedHeldBefore,
+      queryOk: true,
+      heldNow: held,
+      sharedHeldNow: held.filter(function (l) { return l.name === SHARED; }).map(function (l) { return l.clientId; }),
+      liveProbeDocs: held.filter(function (l) { return l.name.indexOf(ID_PREFIX) === 0; }).map(function (l) { return l.name.slice(ID_PREFIX.length) + '@' + l.clientId; }),
+    }, opts || {});
+    out.liveProbeDocCount = out.liveProbeDocs.length;
+    out.verdict = sharedGot
+      ? '抢到共享锁 → 本档是当前持有者（myClientId=' + myClientId + '）'
+      : '抢不到共享锁；持有者=' + (out.sharedHeldNow.join(',') || '（query 暂无）') + '（myClientId=' + myClientId + '）' +
+        (out.sharedHeldNow.length && out.sharedHeldNow.indexOf(myClientId) === -1 ? ' → 看见他档持有 = 跨文档共享成立' : '');
+    return out;
+  }
+
+  function render(out) {
+    stateEl.textContent = 'ready'; stateEl.className = 'tag ok';
+    head.innerHTML =
+      '<table>' +
+      '<tr><td class="k">文档</td><td>' + esc(out.docId) + '（' + esc(out.shell) + '）</td></tr>' +
+      '<tr><td class="k">本档 clientId</td><td>' + esc(out.myClientId) + '</td></tr>' +
+      '<tr><td class="k">origin</td><td>' + esc(out.origin) + '</td></tr>' +
+      '<tr><td class="k">在 iframe 里?</td><td>' + esc(out.isTop === false) + '</td></tr>' +
+      '<tr><td class="k">secure</td><td class="' + (out.isSecureContext ? 'ok' : 'no') + '">' + out.isSecureContext + '</td></tr>' +
+      '<tr><td class="k">navigator.locks</td><td class="' + (out.hasNavigatorLocks ? 'ok' : 'no') + '">' + out.hasNavigatorLocks + '</td></tr>' +
+      '<tr><td class="k">query()</td><td class="' + (out.queryOk ? 'ok' : 'no') + '">' + (out.queryOk ? 'ok' : esc(out.queryError || 'no')) + '</td></tr>' +
+      '<tr><td class="k">抢到共享锁</td><td class="' + (out.sharedIfAvailableGot ? 'ok' : 'no') + '">' + esc(out.sharedIfAvailableGot) + '</td></tr>' +
+      '<tr><td class="k">共享锁当前持有</td><td>' + esc((out.sharedHeldNow || []).join(', ') || '（无）') + '</td></tr>' +
+      '<tr><td class="k">活着的探针文档</td><td>' + esc((out.liveProbeDocCount || 0) + ' 份：' + ((out.liveProbeDocs || []).join(' , ') || '—')) + '</td></tr>' +
+      '</table>';
+    verdictEl.textContent = out.verdict || '';
+    jsonEl.textContent = JSON.stringify(out, null, 2);
+  }
+
+  async function report(out) {
+    var attempts = [];
+    var h = { 'Content-Type': 'application/json' };
+    if (sessionValue) h['X-Hana-App-Surface-Session'] = sessionValue;
+    try {
+      var r = await fetch(location.origin + '/api/apps/liveness-probe/routes/api/report', { method: 'POST', headers: h, body: JSON.stringify(out), credentials: 'include' });
+      attempts.push('header ' + r.status);
+      if (!r.ok && sessionValue) {
+        var r2 = await fetch(location.origin + '/api/apps/liveness-probe/routes/api/report?appSurfaceSession=' + encodeURIComponent(sessionValue), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(out), credentials: 'include' });
+        attempts.push('query ' + r2.status);
+      }
+    } catch (e) { attempts.push('✗ ' + (e && e.name)); }
+    sendinfo.textContent = '上报：' + attempts.join(' | ');
+    document.getElementById('json').setAttribute('data-report-status', attempts.join(' | '));
+  }
+
+  async function round(firstTime) {
+    stateEl.textContent = 'probing…'; stateEl.className = 'tag dim';
+    if (!navigator.locks || !navigator.locks.query) {
+      var bad = { docId: docId, shell: shell, at: Date.now(), origin: location.origin,
+        isSecureContext: window.isSecureContext, hasNavigatorLocks: false,
+        verdict: 'navigator.locks 不可用 → 方案判废' };
+      render(bad); await report(bad); return;
+    }
+    var q;
+    try { q = await ensureIdentity(); }
+    catch (e) {
+      var e1 = build({ held: [] }, { queryOk: false, queryError: e.name + ': ' + e.message, verdict: 'query() ' + e.name + ' → 源不透明，方案判废' });
+      render(e1); await report(e1); return;
+    }
+    await ensureShared();
+    q = await navigator.locks.query();
+    var out = build(q, { href: location.href, bootedAt: Date.now() });
+    render(out); await report(out);
+  }
+
+  document.getElementById('resend').addEventListener('click', function () { round(); });
+  await round(true);
+  setInterval(function () { round(); }, 4000);
+})();
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-# 任务书 · /mood 一步直达（目标版本 1.1.1）
+# 任务书 · /mood 一步直达（目标版本 1.1.2）
 
 > 交付对象：codex。验收方：哦鲸鲸（本仓库常驻 agent）。
 > 本文件是**唯一的需求来源**；与代码注释冲突时以本文件为准，与 `AGENTS.md` 冲突时以 `AGENTS.md` 为准。
@@ -18,9 +18,28 @@
 
 ---
 
+## 0.5 基线（重要，动手前先读）
+
+**本任务在 audio-owner（出声唯一化）的工作树之上做。** 该任务目标版本为 **1.1.1**，
+实现已完成、**待独立验收**、源码**尚未提交**。基线现状：
+
+- `manifest.json` / `package.json` version = `1.1.1`；构建号 `1003131679`。
+- 工作树有未提交改动（`lib/audio-owner.js`、`lib/register-routes.js`、`ui/app.js`、
+  `ui/index.html`、`ui/standalone.html`、`tools/verify-*.mjs`、`docs/CHANGELOG.md` 等）。
+- 开工基线：backend **114/114**、UI **376/376**（+ 专项 `verify-audio-owner.mjs` 20/20），
+  失败集合 `[]`。**这就是你的基线，不是历史上的 102/366。**
+
+**纪律**：
+1. **不得回退、覆盖或顺手改 audio-owner 的在途改动**；两者都改到同一文件时做**合并**，
+   不是覆盖。
+2. 因为 1.1.1 已被 audio-owner 占用，**本任务版本号是 `1.1.1 → 1.1.2`**。
+3. 若发现 audio-owner 的改动与本任务冲突到无法安全合并，**先回报 Hana**，别硬改。
+
+---
+
 ## 1. 背景与已核实事实（可直接信，别再猜）
 
-### 1.1 现状（1.1.0）
+### 1.1 现状（1.1.0 引入 /mood 提示牌，1.1.1 未动它）
 
 `/mood` 是 v2 App 斜杠命令。宿主把 `/mood` 派发给 App 自己的 handler，handler 回一句话，
 宿主渲染成输入框上方约 3 秒消失的浮提示，**不进会话、不唤醒模型**。所以 1.1.0 是「提示牌」。
@@ -143,9 +162,9 @@ handler 改为 async，流程：
 ## 4. 交付与部署（严格按 AGENTS.md §4）
 
 1. 改 `manifest.json`、`lib/mood-command.js`（必要时 `tools/verify-mood-host.mjs`）。
-2. `manifest.json` 版本 `1.1.0 → 1.1.1`。
+2. `manifest.json` / `package.json` 版本 `1.1.1 → 1.1.2`。
 3. `node tools/bump-build.mjs`（同步构建号）。
-4. `CHANGELOG.md` 新增 `## 1.1.1` 段，写「对用户意味着什么」。
+4. `CHANGELOG.md` 新增 `## 1.1.2` 段，写「对用户意味着什么」。
 5. 技术交接 `docs/player-ui/handoffs/MOOD-ONESTEP-DONE.md`：改动文件与原因、原始输出、断言编号、
    版本与构建号、开放问题、待 Hana 真机验收项。
 6. 完成后直接给 Hana 发消息（协作约定已在 `docs/COLLABORATION-HANA-CODEX.md`）。
@@ -156,7 +175,7 @@ handler 改为 async，流程：
 
 **A. 静态**
 - [ ] `manifest.json` capabilities 含 `app/session.start-turn`、`app/sessions.manage`，且仍含 `app/sessions.read`
-- [ ] 版本 = `1.1.1`；构建号已 bump 且三处一致
+- [ ] 版本 = `1.1.2`；构建号已 bump 且三处一致
 - [ ] 官方静态校验 0 error
 
 **B. 后端 / 宿主派发（`tools/verify-mood-host.mjs`，隔离无模型宿主）**
@@ -178,7 +197,8 @@ handler 改为 async，流程：
 
 ## 6. 边界说明
 
-- 本任务**不改** `ui/`，但仍按 §4 整包同步 `ui/` 再 reload（构建号变了）。
+- 本任务**不改** `ui/`（audio-owner 已改过 `ui/app.js` 等，别动它的部分），但仍按 §4 整包同步
+  `ui/` 再 reload（构建号变了）。
 - `sessions.manage` 是宽口径权限（含归档/删除等会话写入）。本任务代码只用 `session:send` 与
   `session:list`，**不要**顺手加别的会话写入动作。
 - 发版（tag / Release / 市场 PR 更新）由 Hana 在真机验收通过后执行，需用户点头，**不在本任务范围**。

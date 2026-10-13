@@ -1,0 +1,221 @@
+SOURCE /var/folders/5x/jxb2n8255mx70l00kz9yfby40000gn/T/audio-owner-sdk-3on00_6k/package/dist/index.js
+SHA256 46c0d02b350aff23fca35c98e49186e90a3de767f191849949b5cf40f1b22983
+
+LINES 480-497
+480	/**
+481	 * Whether an incoming `APP_STORAGE_CHANGED` event's (always-resolved) scope
+482	 * matches one `onChanged` subscriber's own (never `"agent"` with no
+483	 * `agentId` — `makeAppStorageScope` refuses to register that one) scope.
+484	 */
+485	function appStorageScopesMatch(subscriberScope, eventScope) {
+486	    if (typeof eventScope !== 'object' || eventScope === null)
+487	        return false;
+488	    const es = eventScope;
+489	    if (subscriberScope.kind === 'global')
+490	        return es.kind === 'global';
+491	    return es.kind === 'agent' && es.agentId === subscriberScope.agentId;
+492	}
+493	export function createHanaPluginSdk(options = {}) {
+494	    const targetWindow = options.targetWindow ?? getBrowserWindow();
+495	    const parentWindow = options.parentWindow ?? targetWindow.parent;
+496	    const targetOrigin = resolveTargetOrigin(targetWindow, options.targetOrigin);
+497	    const requestTimeoutMs = options.requestTimeoutMs ?? 10_000;
+
+LINES 985-995
+985	        if (message.type === APP_STORAGE_HOST_EVENT.CHANGED) {
+986	            if (typeof message.payload !== 'object' || message.payload === null)
+987	                return;
+988	            const payload = message.payload;
+989	            const rawKeys = payload.keys;
+990	            const keys = Array.isArray(rawKeys) ? rawKeys.filter((k) => typeof k === 'string') : [];
+991	            for (const entry of appStorageChangedSubscribers) {
+992	                if (appStorageScopesMatch(entry.scope, payload.scope))
+993	                    entry.callback(keys.slice());
+994	            }
+995	            return;
+
+LINES 1045-1094
+1045	    function request(type, payload, requestOptions = {}) {
+1046	        const id = idFactory();
+1047	        const timeoutMs = requestOptions.timeoutMs ?? requestTimeoutMs;
+1048	        return new Promise((resolve, reject) => {
+1049	            let unsubscribe = () => { };
+1050	            const cleanup = () => {
+1051	                unsubscribe();
+1052	                targetWindow.clearTimeout(timeout);
+1053	            };
+1054	            const onMessage = (data) => {
+1055	                const parsed = parsePluginUiMessage(data);
+1056	                if (!parsed.ok)
+1057	                    return;
+1058	                const message = parsed.value;
+1059	                if (message.id !== id || message.type !== type)
+1060	                    return;
+1061	                if (message.kind === 'response') {
+1062	                    cleanup();
+1063	                    resolve(message.payload);
+1064	                }
+1065	                if (message.kind === 'error' && message.error) {
+1066	                    cleanup();
+1067	                    reject(new HanaPluginError(message.error));
+1068	                }
+1069	            };
+1070	            const timeout = targetWindow.setTimeout(() => {
+1071	                cleanup();
+1072	                reject(new HanaPluginError({
+1073	                    code: 'TIMEOUT',
+1074	                    message: `Plugin host request timed out: ${type}.`,
+1075	                }));
+1076	            }, timeoutMs);
+1077	            const message = {
+1078	                protocol: PLUGIN_UI_PROTOCOL,
+1079	                version: PLUGIN_UI_PROTOCOL_VERSION,
+1080	                id,
+1081	                kind: 'request',
+1082	                type,
+1083	            };
+1084	            if (payload !== undefined)
+1085	                message.payload = payload;
+1086	            try {
+1087	                unsubscribe = subscribeHost(onMessage);
+1088	                post(message, (error) => { cleanup(); reject(error); });
+1089	            }
+1090	            catch (error) {
+1091	                cleanup();
+1092	                reject(error);
+1093	            }
+1094	        });
+
+LINES 1096-1135
+1096	    /**
+1097	     * One `hana.storage.global` / `hana.storage.agent(id)` handle. `scope` is
+1098	     * resolved once, at the point `.global`/`.agent(...)` is called, and every
+1099	     * method below just forwards it — the host resolves an omitted `agentId`
+1100	     * (this card's own bound agent) fresh on every `get`/`set`/`delete`/`keys`
+1101	     * request, same as it always would. `onChanged` cannot do that: a
+1102	     * subscription outlives any one request, so it needs one fixed scope to
+1103	     * filter incoming `APP_STORAGE_CHANGED` events against, and this SDK has
+1104	     * no local way to learn "this card's own agentId" outside of a request —
+1105	     * so it refuses immediately when `scope` still has no resolved `agentId`.
+1106	     */
+1107	    function makeAppStorageScope(scope) {
+1108	        return {
+1109	            get(key, options) {
+1110	                return request(APP_STORAGE_CAPABILITY.GET, { scope, key }, options);
+1111	            },
+1112	            getAll(options) {
+1113	                return request(APP_STORAGE_CAPABILITY.GET_ALL, { scope }, options);
+1114	            },
+1115	            set(key, value, options) {
+1116	                return request(APP_STORAGE_CAPABILITY.SET, { scope, key, value }, options);
+1117	            },
+1118	            delete(key, options) {
+1119	                return request(APP_STORAGE_CAPABILITY.DELETE, { scope, key }, options);
+1120	            },
+1121	            keys(options) {
+1122	                return request(APP_STORAGE_CAPABILITY.KEYS, { scope }, options);
+1123	            },
+1124	            onChanged(callback) {
+1125	                if (scope.kind === 'agent' && !scope.agentId) {
+1126	                    throw new Error('hana.storage.agent() with no agentId cannot subscribe with onChanged — a subscription '
+1127	                        + 'outlives any single request, so pass an explicit agentId to subscribe to a stable scope.');
+1128	                }
+1129	                const entry = { scope, callback };
+1130	                appStorageChangedSubscribers.add(entry);
+1131	                return () => {
+1132	                    appStorageChangedSubscribers.delete(entry);
+1133	                };
+1134	            },
+1135	        };
+
+SOURCE /var/folders/5x/jxb2n8255mx70l00kz9yfby40000gn/T/audio-owner-sdk-3on00_6k/package/dist/index.d.ts
+SHA256 9c1157435e0aa8284467f088b5da3ddd6084029a1595fddf9d9302ba9f122617
+
+LINES 164-173
+164	 * `AppStorageScope`（server/composition/plugin-context-v2.ts 的 ctx.storage）
+165	 * 同构——无每键上限，只有整作用域配额；`onChanged` 见 `agent()` 自身的文档。
+166	 */
+167	export interface HanaAppStorageScope {
+168	    get(key: string, options?: HanaPluginRequestOptions): Promise<AppStorageGetResult>;
+169	    getAll(options?: HanaPluginRequestOptions): Promise<AppStorageGetAllResult>;
+170	    set(key: string, value: unknown, options?: HanaPluginRequestOptions): Promise<AppStorageSetResult>;
+171	    delete(key: string, options?: HanaPluginRequestOptions): Promise<AppStorageDeleteResult>;
+172	    keys(options?: HanaPluginRequestOptions): Promise<AppStorageKeysResult>;
+173	    onChanged(callback: (keys: string[]) => void): () => void;
+
+SOURCE /var/folders/5x/jxb2n8255mx70l00kz9yfby40000gn/T/audio-owner-sdk-3on00_6k/package/dist/host-message-source.js
+SHA256 608a0b95bbaaecaf837f670e36ff20eb8e043a178336e9f5e55370c1ea8187fe
+
+LINES 1-19
+1	/** Resolves the host origin shared by iframe responses and App event subscriptions. */
+2	export function resolveTargetOrigin(targetWindow, explicit) {
+3	    if (explicit)
+4	        return explicit;
+5	    const hostOrigin = new URLSearchParams(targetWindow.location.search).get('hana-host-origin');
+6	    if (hostOrigin)
+7	        return hostOrigin;
+8	    try {
+9	        return new URL(targetWindow.document.referrer).origin;
+10	    }
+11	    catch {
+12	        return '*';
+13	    }
+14	}
+15	export function isTrustedHostEvent(event, parentWindow, targetOrigin) {
+16	    if (event.source !== parentWindow)
+17	        return false;
+18	    return targetOrigin === '*' || event.origin === targetOrigin;
+19	}
+
+SOURCE /Volumes/SSD/hanadesk/hanako-audio-player-simple/ui/sdk.js
+SHA256 79dadec32a64f0a1812b33d576432b2f074c8fa2c615e6a0a8d9ee01e94b8e1a
+
+LINES 875-890
+875	    if (message.type === PLUGIN_UI_HOST_EVENT.STORAGE_CHANGED) {
+876	      if (typeof message.payload !== "object" || message.payload === null) return;
+877	      const rawKeys = message.payload.keys;
+878	      const keys = Array.isArray(rawKeys) ? rawKeys.filter((k) => typeof k === "string") : [];
+879	      for (const callback of storageChangedSubscribers) callback(keys.slice());
+880	      return;
+881	    }
+882	    if (message.type === APP_STORAGE_HOST_EVENT.CHANGED) {
+883	      if (typeof message.payload !== "object" || message.payload === null) return;
+884	      const payload = message.payload;
+885	      const rawKeys = payload.keys;
+886	      const keys = Array.isArray(rawKeys) ? rawKeys.filter((k) => typeof k === "string") : [];
+887	      for (const entry of appStorageChangedSubscribers) {
+888	        if (appStorageScopesMatch(entry.scope, payload.scope)) entry.callback(keys.slice());
+889	      }
+890	      return;
+
+LINES 954-983
+954	  function makeAppStorageScope(scope) {
+955	    return {
+956	      get(key, options2) {
+957	        return request(APP_STORAGE_CAPABILITY.GET, { scope, key }, options2);
+958	      },
+959	      getAll(options2) {
+960	        return request(APP_STORAGE_CAPABILITY.GET_ALL, { scope }, options2);
+961	      },
+962	      set(key, value, options2) {
+963	        return request(APP_STORAGE_CAPABILITY.SET, { scope, key, value }, options2);
+964	      },
+965	      delete(key, options2) {
+966	        return request(APP_STORAGE_CAPABILITY.DELETE, { scope, key }, options2);
+967	      },
+968	      keys(options2) {
+969	        return request(APP_STORAGE_CAPABILITY.KEYS, { scope }, options2);
+970	      },
+971	      onChanged(callback) {
+972	        if (scope.kind === "agent" && !scope.agentId) {
+973	          throw new Error(
+974	            "hana.storage.agent() with no agentId cannot subscribe with onChanged \u2014 a subscription outlives any single request, so pass an explicit agentId to subscribe to a stable scope."
+975	          );
+976	        }
+977	        const entry = { scope, callback };
+978	        appStorageChangedSubscribers.add(entry);
+979	        return () => {
+980	          appStorageChangedSubscribers.delete(entry);
+981	        };
+982	      }
+983	    };
