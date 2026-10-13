@@ -47,9 +47,9 @@ const EXCLUDE = new Set([
 
 /**
  * tools/ 不能整目录排除：里面混着两种东西——
- *   运行时工具（lib/register-tools.js 直接 import 的三个），包必须带；
+ *   运行时工具（lib/register-tools.js 直接 import），包必须带；
  *   开发脚本（verify-* / bump-build / pack-release 等 .mjs），不该进包。
- * 所以这里显式列白名单，只放行运行时那三个。
+ * 所以这里显式列白名单，只放行运行时工具。
  * ⚠️ 漏一个就是装载期 import 失败（2026-10-11 踩过：tools/play.js 缺失 →
  *    plugin failed to load: Cannot find module）。
  */
@@ -57,6 +57,8 @@ const TOOLS_RUNTIME = new Set([
   "play.js",
   "list-music.js",
   "bind-banner.js",
+  "create-list.js",
+  "search-music.js",
 ]);
 
 /**

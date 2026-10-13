@@ -18,6 +18,7 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { mergeLibrarySnapshot } from '../lib/library.js';
 
 const require = createRequire(import.meta.url);
 const puppeteer = require(process.env.PUPPETEER_CORE || '/Volumes/SSD/hanadesk/鹈鹕/motion-reel/node_modules/puppeteer-core');
@@ -184,6 +185,7 @@ const OLDPREFIX_TRACKS = [
 /* 假后端状态：POST /playlist 会落盘，GET 优先返回落盘值（测迁移幂等） */
 let fixtureMode = 'main';
 let persistedPlaylist = null;
+let persistedLists = null, listReads = 0, listWrites = 0;
 /* 播放状态（跨文档）：POST 落盘，GET 取回 */
 let playbackState = null;
 /* 搜索请求计数（测歌手补齐的次数 / 幂等） */
@@ -250,6 +252,33 @@ const server = http.createServer((req, res) => {
   }
 
   // 假后端
+  if (p === API + '/api/lists/allocate') {
+    let body = '';
+    req.on('data', (c) => (body += c));
+    req.on('end', () => {
+      const input = JSON.parse(body), all = persistedLists || [];
+      const ids = [...all.map(x => x.id), ...(persistedPlaylist || TRACKS).map(x => x.list)];
+      const max = Math.max(0, ...ids.map(x => Number(/^imp:(\d+)$/.exec(x || '')?.[1]) || 0));
+      const list = { id: 'imp:' + (max + 1), name: input.name || (input.prefix || '歌单') + ' ' + (max + 1) };
+      persistedLists = [...all, list];
+      json(res, 200, { ok: true, list });
+    });
+    return;
+  }
+  if (p === API + '/api/lists') {
+    if (req.method === 'POST' || req.method === 'PUT') {
+      let body = '';
+      req.on('data', (c) => (body += c));
+      req.on('end', () => {
+        persistedLists = JSON.parse(body).lists;
+        listWrites++;
+        json(res, 200, { ok: true, lists: persistedLists });
+      });
+      return;
+    }
+    listReads++;
+    return json(res, 200, { ok: true, lists: persistedLists || [] });
+  }
   if (p === API + '/widget/api/music/cover-catalog') {
     const kind = u.searchParams.get('kind'); coverRequests.push(kind);
     let body;
@@ -267,7 +296,11 @@ const server = http.createServer((req, res) => {
       let body = '';
       req.on('data', (c) => (body += c));
       req.on('end', () => {
-        try { const j = JSON.parse(body); persistedPlaylist = Array.isArray(j.tracks) ? j.tracks : null; } catch { persistedPlaylist = null; }
+        try {
+          const j = JSON.parse(body);
+          persistedPlaylist = Array.isArray(j.tracks) ? (j.baseTracks ? mergeLibrarySnapshot(persistedPlaylist || (fixtureMode === 'migrate' ? OLD_TRACKS : fixtureMode === 'oldprefix' ? OLDPREFIX_TRACKS : fixtureMode === 'empty' ? [] : TRACKS), j.baseTracks, j.tracks,
+            t => String(t.list || '') + '|' + String(t.id || t.url || t.name || '')) : j.tracks) : null;
+        } catch { persistedPlaylist = null; }
         json(res, 200, { ok: true, count: persistedPlaylist ? persistedPlaylist.length : 0 });
       });
       return;
@@ -279,6 +312,7 @@ const server = http.createServer((req, res) => {
     fixtureMode = u.searchParams.get('mode') || 'main';
     persistedPlaylist = null;
     playbackState = null;
+    persistedLists = null; listReads = 0; listWrites = 0;
     searchHits = 0;
     return json(res, 200, { ok: true, mode: fixtureMode });
   }
@@ -948,6 +982,84 @@ async function verifyCoverFill() {
   assert('cover-save-failure-rolls-back-pics-and-backups', (await page.evaluate(id => window.__playerDebug.coverInfo(id), id)).every(t => t.pic === '' && !t.match) && await page.$eval('#coverNote', el => el.textContent.includes('保存失败')));
   await page.close();
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+}
+async function verifyMoodLists() {
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+  const fixed = [{ id: 'fav', name: '我的喜欢' }, { id: 'recent', name: '最近播放' }, { id: 'local', name: '本地' }];
+  persistedLists = [...fixed, { id: 'imp:2', name: '后端乙' }, { id: 'imp:1', name: '后端甲' }];
+  const page = await newPage();
+  await page.evaluateOnNewDocument((legacy) => {
+    let h, listener;
+    window.__legacyLists = legacy;
+    window.__listsUnavailable = false;
+    window.__listsDirectWrites = [];
+    window.__notifyLists = (keys) => { if (listener) listener(keys); };
+    const fetchBefore = window.fetch;
+    window.fetch = function (url, opts) {
+      if (window.__listsUnavailable && String(url).endsWith('/api/lists') && !(opts && opts.method)) {
+        return Promise.resolve(new Response(JSON.stringify({ ok: false }), { status: 200 }));
+      }
+      return fetchBefore.apply(this, arguments).then((res) => {
+        if (String(url).endsWith('/api/lists') && opts && opts.method === 'POST') {
+          setTimeout(() => window.__notifyLists(['player-lists']), 0);
+        }
+        return res;
+      });
+    };
+    Object.defineProperty(window, 'hana', { configurable: true, get() { return h; }, set(v) {
+      h = v;
+      if (v && v.storage && v.storage.global) {
+        v.storage.global.get = (key) => Promise.resolve(key === 'player-lists' ? window.__legacyLists : null);
+        v.storage.global.set = (key) => { window.__listsDirectWrites.push(key); return Promise.resolve(); };
+        v.storage.global.onChanged = (fn) => { listener = fn; return () => { listener = null; }; };
+      }
+    } });
+  }, [...fixed, { id: 'imp:1', name: '旧门甲' }, { id: 'imp:2', name: '旧门乙' }]);
+  await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
+  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__playerDebug && window.__playerDebug.listsInfo().some(l => l.name === '后端甲'));
+  assert('mood-lists-backend-priority-and-order', (await page.evaluate(() => window.__playerDebug.listsInfo())).map(l => l.name).join(',') === '我的喜欢,最近播放,本地,后端乙,后端甲');
+  await clickTab(page, 'imp:1');
+  await page.evaluate(() => document.getElementById('renameBtn').click());
+  await page.$eval('#listNameInput', el => { el.value = '改名持久化'; el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); });
+  await page.waitForFunction(async (api) => (await fetch(api + '/api/lists?appSurfaceSession=fake-ticket').then(r => r.json())).lists.some(l => l.name === '改名持久化'), {}, API);
+  assert('mood-lists-rename-backend-persistence', persistedLists.find(l => l.id === 'imp:1').name === '改名持久化');
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__playerDebug && window.__playerDebug.listsInfo().some(l => l.name === '改名持久化'));
+  assert('mood-lists-rename-survives-reload', await page.evaluate(() => window.__playerDebug.listsInfo().some(l => l.name === '改名持久化')));
+  await page.evaluate(() => {
+    window.__listRenders = 0;
+    window.__listObserver = new MutationObserver(() => window.__listRenders++);
+    window.__listObserver.observe(document.getElementById('listTabs'), { childList: true, subtree: true });
+    window.__notifyLists(['player-lists']);
+  });
+  await sleep(250);
+  assert('mood-lists-own-echo-no-rerender', await page.evaluate(() => window.__listRenders === 0));
+  const writes = listWrites;
+  persistedLists.push({ id: 'imp:9', name: '今日心情' });
+  if (!persistedPlaylist) persistedPlaylist = TRACKS.map(t => ({ ...t }));
+  persistedPlaylist.push({ id: 'netease:890001', name: '新心情曲', url: goUrl(890001), mode: '在线', dur: 180, group: '在线音乐', list: 'imp:9' });
+  await page.evaluate(() => window.__notifyLists(['player-lists']));
+  await page.waitForFunction(() => window.__playerDebug.listTracks('imp:9').length === 1);
+  assert('mood-lists-external-create-shows-tracks-immediately', await page.evaluate(() => window.__playerDebug.listsInfo().some(l => l.name === '今日心情')));
+  assert('mood-lists-broadcast-does-not-write-back', listWrites === writes);
+  persistedPlaylist = persistedPlaylist.filter(t => t.list !== 'imp:9').concat({ id: 'netease:890002', name: '覆盖心情曲', url: goUrl(890002), mode: '在线', dur: 190, group: '在线音乐', list: 'imp:9' });
+  await page.evaluate(() => window.__notifyLists(['player-library-revision']));
+  await page.waitForFunction(() => window.__playerDebug.listTracks('imp:9').some(t => t.title === '覆盖心情曲'));
+  assert('mood-lists-same-name-replacement-refreshes-tracks', await page.evaluate(() => window.__playerDebug.listTracks('imp:9').length === 1));
+  assert('mood-lists-no-direct-storage-write', await page.evaluate(() => !window.__listsDirectWrites.includes('player-lists')));
+  await page.evaluateOnNewDocument(() => { window.__listsUnavailable = true; });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__playerDebug && window.__playerDebug.listsInfo().some(l => l.name === '旧门甲'));
+  assert('mood-lists-backend-unavailable-legacy-fallback', await page.evaluate(() => window.__playerDebug.listsInfo().some(l => l.name === '旧门乙')));
+  await page.close();
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+}
+await verifyMoodLists();
+if (process.argv.includes('--lists-only')) {
+  console.log(JSON.stringify({ assertions: `${report.assertions.filter(a => a.ok).length}/${report.assertions.length}`, failed: report.assertions.filter(a => !a.ok), runtimeErrors: report.runtimeErrors }, null, 2));
+  await browser.close(); server.closeAllConnections(); server.close();
+  process.exit(report.assertions.some(a => !a.ok) || report.runtimeErrors.length ? 1 : 0);
 }
 await verifyCoverFill();
 if (process.argv.includes('--covers-only')) {
@@ -3693,13 +3805,13 @@ const rippleTool = {};
 
   /* 欢迎歌：只在「列表确实读到、且为空、且没播过」时播一次，单独放一个歌单。
    * 夹具此时有曲目（imp:1/imp:2）→ 不应当被播种；先验这道闸。 */
-  s.welcome = await page.evaluate(() => {
+  s.welcome = await page.evaluate(async () => {
     const D = window.__playerDebug;
     const r = {};
-    r.whenHasTracks = D.welcomeSeedTry({ ok: true, value: null });   // 有曲目 → 不播
-    r.whenUnreadable = D.welcomeSeedTry({ ok: false, value: null }); // 读不到 → 不播
-    r.whenSeen = D.welcomeSeedTry({ ok: true, value: 1 });           // 播过 → 不播
-    r.whenEmpty = D.welcomeSeedTry({ ok: true, value: null }, 'empty');   // 空且未播 → 播
+    r.whenHasTracks = await D.welcomeSeedTry({ ok: true, value: null });   // 有曲目 → 不播
+    r.whenUnreadable = await D.welcomeSeedTry({ ok: false, value: null }); // 读不到 → 不播
+    r.whenSeen = await D.welcomeSeedTry({ ok: true, value: 1 });           // 播过 → 不播
+    r.whenEmpty = await D.welcomeSeedTry({ ok: true, value: null }, 'empty');   // 空且未播 → 播
     return r;
   });
   assert('welcome-song-seeds-once-when-empty',

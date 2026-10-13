@@ -13,6 +13,8 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { publishLibraryChange } from "../lib/library.js";
+import { listsFor } from "../lib/lists.js";
 
 const NAME = "hana_simple_play";
 
@@ -60,8 +62,7 @@ export function makePlayTool(ctx, state) {
    * 份列表。v1 里 play 写 queue.json、UI 读 playlist.json，两个仓 —— 结果工具
    * 播的歌在界面上看不到。v2 不再延续这个分裂。
    *
-   * 前端每 30 秒会拉取并合并一次，所以这里的写入不会与它冲突；真正同时发生时
-   * 最坏也只是等下一轮合并回来。
+   * 没有定时合并；写后更新宿主存储哨兵，已开的卡片经 global.onChanged 重拉。
    */
   function appendToPlaylist(entry) {
     let list = [];
@@ -80,6 +81,7 @@ export function makePlayTool(ctx, state) {
 
     try {
       fs.writeFileSync(playlistPath, JSON.stringify(list, null, 2), "utf-8");
+      return true;
     } catch (err) {
       ctx.logger?.warn?.(`hana_simple_play: 写入播放列表失败 ${err?.message || err}`);
     }
@@ -99,12 +101,17 @@ export function makePlayTool(ctx, state) {
       const name = (title || "").trim() || deriveTitle(src);
       const remote = isRemote(src);
 
-      appendToPlaylist({
-        name,
-        url: src,
-        mode: remote ? "在线" : "本地",
-        dur: 0,
-        group: remote ? "在线音乐" : "本地音乐",
+      await listsFor(ctx).serial(async () => {
+        const saved = appendToPlaylist({
+          name,
+          url: src,
+          mode: remote ? "在线" : "本地",
+          dur: 0,
+          group: remote ? "在线音乐" : "本地音乐",
+        });
+        if (saved && ctx.storage?.global?.set) {
+          await publishLibraryChange(ctx);
+        }
       });
 
       // 记住这次调用所在的会话：卡片自己拿不到 sessionPath（hana.surface.getContext

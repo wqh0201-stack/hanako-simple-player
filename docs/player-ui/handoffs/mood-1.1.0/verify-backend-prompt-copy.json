@@ -1,0 +1,517 @@
+{
+  "passed": 102,
+  "total": 102,
+  "failed": [],
+  "results": [
+    {
+      "name": "cross-list-kept",
+      "ok": true,
+      "detail": "[\"imp:1\",\"imp:2\"]"
+    },
+    {
+      "name": "same-list-deduped",
+      "ok": true,
+      "detail": "[{\"id\":\"netease:1\",\"name\":\"b\",\"list\":\"imp:1\"}]"
+    },
+    {
+      "name": "legacy-url-by-list",
+      "ok": true,
+      "detail": "[\"\",\"imp:2\"]"
+    },
+    {
+      "name": "delete-with-list",
+      "ok": true,
+      "detail": "[{\"id\":\"netease:9\",\"name\":\"s\",\"list\":\"imp:2\"}]"
+    },
+    {
+      "name": "delete-without-list-legacy",
+      "ok": true,
+      "detail": "[]"
+    },
+    {
+      "name": "playback-roundtrip",
+      "ok": true,
+      "detail": "{\"ok\":true,\"state\":{\"currentId\":\"imp:1|netease:1\",\"activeList\":\"imp:1\",\"progress\":12.5,\"volume\":0.8,\"muted\":false,\"mode\":\"list\",\"lyricsVisible\":true,\"playing\":true}}"
+    },
+    {
+      "name": "playback-reject-invalid",
+      "ok": true,
+      "detail": "{\"status\":400,\"body\":{\"ok\":false,\"error\":\"invalid state\"}}"
+    },
+    {
+      "name": "playlist-meta-netease",
+      "ok": true,
+      "detail": "{\"ok\":true,\"tracks\":[{\"id\":\"netease:1\",\"title\":\"t\",\"author\":\"a\",\"url\":\"/api/apps/hap-be-AK36Jv/routes/widget/api/music/go/1?server=netease\",\"pic\":\"\",\"lrc\":\"\",\"dur\":0}],\"host\":\"met.liiiu.cn\",\"meta\":{\"name\":\"Can_0201喜欢的音乐\",\"creator\":\"Can_0201\",\"cover\":\"http://c/x.jpg\",\"trackCount\":905}}"
+    },
+    {
+      "name": "playlist-meta-netease-fetched",
+      "ok": true,
+      "detail": "[\"https://met.liiiu.cn/meting/api?server=netease&type=playlist&id=12881021\",\"https://music.163.com/api/v6/playlist/detail?id=12881021&n=1\"]"
+    },
+    {
+      "name": "playlist-meta-skip-non-netease",
+      "ok": true,
+      "detail": "{\"body\":{\"ok\":true,\"tracks\":[{\"id\":\"tencent:1\",\"title\":\"t\",\"author\":\"a\",\"url\":\"/api/apps/hap-be-AK36Jv/routes/widget/api/music/go/1?server=tencent\",\"pic\":\"\",\"lrc\":\"\",\"dur\":0}],\"host\":\"met.liiiu.cn\"},\"netCalls\":[\"https://met.liiiu.cn/meting/api?server=tencent&type=playlist&id=12881021\"]}"
+    },
+    {
+      "name": "search-netease-shape",
+      "ok": true,
+      "detail": "{\"ok\":true,\"results\":[{\"id\":\"netease:509781655\",\"title\":\"想你就写信 (Live)\",\"author\":\"周杰伦 / 李硕\",\"pic\":\"http://p1.music.126.net/a.jpg\",\"lrc\":\"\",\"dur\":238.698,\"url\":\"/api/apps/hap-be-AK36Jv/routes/widget/api/music/go/509781655?server=netease\"},{\"id\":\"netease:210049\",\"title\":\"布拉格广场\",\"author\":\"蔡依林 / 周杰伦\",\"pic\":\"http://p1.music.126.net/b.jpg\",\"lrc\":\"\",\"dur\":245,\"url\":\"/api/apps/hap-be-AK36Jv/routes/widget/api/music/go/210049?server=netease\"}],\"host\":\"music.163.com\",\"total\":274}"
+    },
+    {
+      "name": "search-netease-official-endpoint",
+      "ok": true,
+      "detail": "[\"https://music.163.com/api/cloudsearch/pc?s=%E5%91%A8%E6%9D%B0%E4%BC%A6&type=1&offset=0&limit=30\"]"
+    },
+    {
+      "name": "search-netease-total-precise",
+      "ok": true,
+      "detail": "274"
+    },
+    {
+      "name": "search-netease-offset-passthrough",
+      "ok": true,
+      "detail": "[\"https://music.163.com/api/cloudsearch/pc?s=%E5%91%A8%E6%9D%B0%E4%BC%A6&type=1&offset=30&limit=30\"]"
+    },
+    {
+      "name": "search-bili-shape",
+      "ok": true,
+      "detail": "{\"ok\":true,\"results\":[{\"id\":\"bilibili:BV1FPjy6TEiE\",\"title\":\"周杰伦 测试\",\"author\":\"UP主甲\",\"pic\":\"https://i2.hdslb.com/a.jpg\",\"dur\":270,\"url\":\"/api/apps/hap-be-AK36Jv/routes/widget/api/music/go/BV1FPjy6TEiE?server=bilibili\"},{\"id\":\"bilibili:BV16XpM6EEtF\",\"title\":\"第二首\",\"author\":\"UP主乙\",\"pic\":\"https://i2.hdslb.com/b.jpg\",\"dur\":192,\"url\":\"/api/apps/hap-be-AK36Jv/routes/widget/api/music/go/BV16XpM6EEtF?server=bilibili\"}],\"host\":\"api.bilibili.com\",\"total\":1000}"
+    },
+    {
+      "name": "search-bili-first-page",
+      "ok": true,
+      "detail": "[\"https://api.bilibili.com/x/web-interface/wbi/search/type?search_type=video&keyword=%E5%91%A8%E6%9D%B0%E4%BC%A6&page=1&page_size=30\"]"
+    },
+    {
+      "name": "search-bili-total-approx",
+      "ok": true,
+      "detail": "1000"
+    },
+    {
+      "name": "search-bili-page-from-offset",
+      "ok": true,
+      "detail": "[\"https://api.bilibili.com/x/web-interface/wbi/search/type?search_type=video&keyword=%E5%91%A8%E6%9D%B0%E4%BC%A6&page=2&page_size=30\"]"
+    },
+    {
+      "name": "search-meting-untouched",
+      "ok": true,
+      "detail": "{\"body\":{\"ok\":true,\"results\":[{\"id\":\"tencent:1\",\"title\":\"t\",\"author\":\"a\",\"url\":\"/api/apps/hap-be-AK36Jv/routes/widget/api/music/go/1?server=tencent\",\"pic\":\"\",\"lrc\":\"\",\"dur\":0}],\"host\":\"met.liiiu.cn\",\"total\":1},\"netCalls\":[\"https://met.liiiu.cn/meting/api?server=tencent&type=search&id=%E5%91%A8%E6%9D%B0%E4%BC%A6\"]}"
+    },
+    {
+      "name": "bili-parts-shape",
+      "ok": true,
+      "detail": "{\"ok\":true,\"results\":[{\"id\":\"bilibili:BV1CAxaeHEeH_111\",\"title\":\"01 第一首\",\"author\":\"\",\"pic\":\"\",\"dur\":240,\"page\":1,\"cid\":111,\"url\":\"/api/apps/hap-be-AK36Jv/routes/widget/api/music/go/BV1CAxaeHEeH_111?server=bilibili\"},{\"id\":\"bilibili:BV1CAxaeHEeH_222\",\"title\":\"02 第二首\",\"author\":\"\",\"pic\":\"\",\"dur\":260,\"page\":2,\"cid\":222,\"url\":\"/api/apps/hap-be-AK36Jv/routes/widget/api/music/go/BV1CAxaeHEeH_222?server=bilibili\"},{\"id\":\"bilibili:BV1CAxaeHEeH_333\",\"title\":\"03 第三首\",\"author\":\"\",\"pic\":\"\",\"dur\":210,\"page\":3,\"cid\":333,\"url\":\"/api/apps/hap-be-AK36Jv/routes/widget/api/music/go/BV1CAxaeHEeH_333?server=bilibili\"}],\"videos\":3,\"bvid\":\"BV1CAxaeHEeH\",\"host\":\"api.bilibili.com\"}"
+    },
+    {
+      "name": "bili-parts-endpoint",
+      "ok": true,
+      "detail": "[\"https://api.bilibili.com/x/player/pagelist?bvid=BV1CAxaeHEeH\"]"
+    },
+    {
+      "name": "bili-parts-reject-invalid",
+      "ok": true,
+      "detail": "{\"status\":400,\"body\":{\"ok\":false,\"error\":\"bvid required\"}}"
+    },
+    {
+      "name": "bili-resolve-shape",
+      "ok": true,
+      "detail": "{\"ok\":true,\"track\":{\"id\":\"bilibili:BV118411B7XU\",\"title\":\"在百万豪装录音棚大声听 杨丞琳《雨爱》【Hi-res】\",\"author\":\"JLRS-LeoFM\",\"pic\":\"https://i1.hdslb.com/bfs/archive/rain.jpg\",\"dur\":263,\"page\":1,\"cid\":1262792384,\"url\":\"/api/apps/hap-be-AK36Jv/routes/widget/api/music/go/BV118411B7XU?server=bilibili\"},\"parts\":1,\"multi\":false,\"bvid\":\"BV118411B7XU\",\"host\":\"api.bilibili.com\"}"
+    },
+    {
+      "name": "bili-resolve-share-text-endpoint",
+      "ok": true,
+      "detail": "[\"https://api.bilibili.com/x/web-interface/view?bvid=BV118411B7XU\"]"
+    },
+    {
+      "name": "bili-resolve-bare-bv",
+      "ok": true,
+      "detail": "{\"ok\":true,\"track\":{\"id\":\"bilibili:BV118411B7XU\",\"title\":\"在百万豪装录音棚大声听 杨丞琳《雨爱》【Hi-res】\",\"author\":\"JLRS-LeoFM\",\"pic\":\"https://i1.hdslb.com/bfs/archive/rain.jpg\",\"dur\":263,\"page\":1,\"cid\":1262792384,\"url\":\"/api/apps/hap-be-AK36Jv/routes/widget/api/music/go/BV118411B7XU?server=bilibili\"},\"parts\":1,\"multi\":false,\"bvid\":\"BV118411B7XU\",\"host\":\"api.bilibili.com\"}"
+    },
+    {
+      "name": "bili-resolve-av",
+      "ok": true,
+      "detail": "{\"id\":\"bilibili:BV1CAxaeHEeH\",\"multi\":true,\"parts\":149,\"netCalls\":[\"https://api.bilibili.com/x/web-interface/view?bvid=BV118411B7XU\",\"https://api.bilibili.com/x/web-interface/view?bvid=BV118411B7XU\",\"https://api.bilibili.com/x/web-interface/view?aid=233268574\"]}"
+    },
+    {
+      "name": "bili-resolve-multi-pick",
+      "ok": true,
+      "detail": "{\"id\":\"bilibili:BV1CAxaeHEeH_26000000005\",\"title\":\"第 6 讲\",\"author\":\"宋浩老师官方\",\"pic\":\"https://i2.hdslb.com/bfs/archive/abc.jpg\",\"dur\":605,\"page\":6,\"cid\":26000000005,\"url\":\"/api/apps/hap-be-AK36Jv/routes/widget/api/music/go/BV1CAxaeHEeH_26000000005?server=bilibili\"}"
+    },
+    {
+      "name": "bili-resolve-reject-unknown",
+      "ok": true,
+      "detail": "{\"res\":{\"status\":400,\"body\":{\"ok\":false,\"error\":\"没认出 B站视频，看看链接里有没有 BV 号\"}},\"netCalls\":[]}"
+    },
+    {
+      "name": "bili-resolve-b23-explicit-hint",
+      "ok": true,
+      "detail": "{\"res\":{\"status\":400,\"body\":{\"ok\":false,\"error\":\"b23.tv 短链暂不支持；在 B站 App 里点「复制链接」（不是「分享」），拿到的是带 BV 号的完整链接\"}},\"netCalls\":[]}"
+    },
+    {
+      "name": "parse-bili-input-boundaries",
+      "ok": true,
+      "detail": "[{\"bvid\":\"BV118411B7XU\",\"aid\":0,\"page\":0},{\"bvid\":\"\",\"aid\":123456,\"page\":0},null]"
+    },
+    {
+      "name": "tool-new-track-prepends",
+      "ok": true,
+      "detail": "[{\"name\":\"新歌\",\"url\":\"https://example.com/new.mp3\",\"mode\":\"在线\",\"dur\":0,\"group\":\"在线音乐\"},{\"name\":\"旧甲\",\"url\":\"https://example.com/a.mp3\"},{\"name\":\"旧乙\",\"url\":\"https://example.com/b.mp3\"}]"
+    },
+    {
+      "name": "tool-existing-track-keeps-position",
+      "ok": true,
+      "detail": "[{\"name\":\"新歌\",\"url\":\"https://example.com/new.mp3\",\"mode\":\"在线\",\"dur\":0,\"group\":\"在线音乐\"},{\"name\":\"旧甲更新\",\"url\":\"https://example.com/a.mp3\",\"mode\":\"在线\",\"dur\":0,\"group\":\"在线音乐\"},{\"name\":\"旧乙\",\"url\":\"https://example.com/b.mp3\"}]"
+    },
+    {
+      "name": "lists-put-get-shared-key",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "lists-renamed-name-on-disk",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "lists-reject-not-array-without-write",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "lists-reject-empty-id-without-write",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "lists-reject-missing-fixed-without-write",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "lists-reject-blank-name-without-write",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "lists-reject-duplicate-id-without-write",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "lists-stale-ui-save-preserves-agent-list",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "create-list-allocates-above-metadata-and-orphan-tracks",
+      "ok": true,
+      "detail": "{\"listId\":\"imp:9\",\"name\":\"今日心情\",\"count\":1,\"created\":true,\"replaced\":false}"
+    },
+    {
+      "name": "create-list-keeps-existing-id-url-and-unknown-fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "create-list-other-lists-unchanged",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "create-list-backup-before-write",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "create-list-same-name-replaces-and-dedupes",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "create-list-same-name-publishes-content-revision",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "create-list-empty-replacement-keeps-name",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "create-list-long-special-name-is-data-not-path",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "create-list-reject-blank-name-without-write",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "create-list-reject-missing-source-without-write",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "create-list-reject-bad-tracks-without-write",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "create-list-reject-bad-duration-without-write",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "create-list-and-ui-reservation-share-one-number-sequence",
+      "ok": true,
+      "detail": "[\"imp:11\",\"imp:12\",\"imp:13\",\"imp:14\"]"
+    },
+    {
+      "name": "create-list-concurrent-same-name-one-list",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "create-list-storage-failure-rolls-back-playlist",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "create-list-queue-recovers-after-failure",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "list-music-metadata-counts-independent-of-track-filter",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "lists-allocate-route-persists-reservation",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "clean-preserves-version-DJ版",
+      "ok": true,
+      "detail": "{\"name\":\"歌曲 (DJ版)\",\"author\":\"\"}"
+    },
+    {
+      "name": "clean-preserves-version-曼波版",
+      "ok": true,
+      "detail": "{\"name\":\"歌曲 (曼波版)\",\"author\":\"\"}"
+    },
+    {
+      "name": "clean-preserves-version-Live",
+      "ok": true,
+      "detail": "{\"name\":\"歌曲 (Live)\",\"author\":\"\"}"
+    },
+    {
+      "name": "clean-preserves-version-Remix",
+      "ok": true,
+      "detail": "{\"name\":\"歌曲 (Remix)\",\"author\":\"\"}"
+    },
+    {
+      "name": "clean-preserves-version-伴奏",
+      "ok": true,
+      "detail": "{\"name\":\"歌曲 (伴奏)\",\"author\":\"\"}"
+    },
+    {
+      "name": "clean-preserves-version-cover",
+      "ok": true,
+      "detail": "{\"name\":\"歌曲 (cover)\",\"author\":\"\"}"
+    },
+    {
+      "name": "clean-preserves-version-ver.2",
+      "ok": true,
+      "detail": "{\"name\":\"歌曲 (ver.2)\",\"author\":\"\"}"
+    },
+    {
+      "name": "clean-book-name-and-singer-without-up",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "clean-singer-prefix-threshold-three",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "clean-prefix-below-three-is-not-split",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "clean-japanese-romanized-alias-not-mis-split",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "clean-up-singer-conservative",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "match-name-and-nearest-duration",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "match-version-does-not-collapse-to-studio",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "match-duration-soft-sixty-second-boundary",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "search-default-bili-clean-metadata-preserves-play-source",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "search-secondary-lyric-and-duration-in-seconds",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "search-unmatched-preserves-source-and-cover",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "search-huge-duration-gap-marks-without-dropping",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "search-lyric-failure-keeps-matched-song",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "search-cookie-default-netease-no-source-mix",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "search-explicit-provider-wins",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "search-limit-clamped-at-thirty",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "search-rejects-empty-query-and-invalid-provider",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "playlist-route-write-publishes-global-revision",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "play-tool-write-publishes-global-revision",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "lists-ui-order-change-persists",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-first-registration-awaits-receipt-and-list-own",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-handler-single-guidance-reply-with-contextual-example",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-dispose-removes-command-and-prevents-late-registration",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-no-engine-does-not-enqueue-doomed-registration",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-event-driven-recovery-without-timer",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-asynchronous-ready-rejection-not-success",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-ready-alone-does-not-prove-registration",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "app-startup-registers-mood-before-tool-or-session-event",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "app-startup-does-not-write-player-storage",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "app-teardown-disposes-mood-command",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "playlist-stale-ui-save-keeps-agent-created-tracks",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "playlist-stale-ui-save-merges-only-local-fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "playlist-ui-delete-still-applies-with-snapshot",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "playlist-stale-ui-save-does-not-resurrect-external-deletion",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-alias-rejection-disposes-and-registers-ascii-once",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-ascii-fallback-does-not-advertise-unavailable-alias",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-general-registration-rejection-does-not-trigger-alias-fallback",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

@@ -9,6 +9,7 @@
 import { createPlayerState } from "./lib/state.js";
 import { registerTools } from "./lib/register-tools.js";
 import { registerRoutes } from "./lib/register-routes.js";
+import { createMoodCommand } from "./lib/mood-command.js";
 
 export const name = "hanako-simple-player";
 
@@ -18,14 +19,15 @@ export async function apply(ctx) {
     logger: ctx.logger,
   });
 
-  const unregisterTools = registerTools(ctx, state);
+  const mood = createMoodCommand(ctx);
+  const unregisterTools = registerTools(ctx, state, mood);
   const unregisterRoutes = await ctx.routes.register((app) => {
-    registerRoutes(app, { ctx, state });
+    registerRoutes(app, { ctx, state, mood });
   });
-
-
-
+  // 不写任何列表 storage；首次注册直接验证回执，普通真机装载不需要等一次会话事件。
+  await mood.ensure();
   return () => {
+    mood.dispose();
     try {
       unregisterTools?.();
     } catch {

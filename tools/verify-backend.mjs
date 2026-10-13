@@ -14,11 +14,19 @@ import path from 'node:path';
 import { registerRoutes } from '../lib/register-routes.js';
 import { parseBiliInput } from '../lib/bilibili.js';
 import { makePlayTool } from './play.js';
+import { makeListMusicTool } from './list-music.js';
+import { makeCreateListTool } from './create-list.js';
+import { makeSearchMusicTool } from './search-music.js';
+import { createList, reserveList } from '../lib/library.js';
+import { cleanMusicMetadata, singerPrefixes, pickMetadataMatch } from '../lib/music-metadata.js';
+import { createMoodCommand, MOOD_PROMPT } from '../lib/mood-command.js';
+import { apply as applyPlayer } from '../index.js';
 
 const routes = [];
 const app = {
   get: (p, h) => routes.push(['GET', p, h]),
   post: (p, h) => routes.push(['POST', p, h]),
+  put: (p, h) => routes.push(['PUT', p, h]),
   delete: (p, h) => routes.push(['DELETE', p, h])
 };
 
@@ -110,7 +118,16 @@ const netFetch = async (url) => {
   return { ok: true, json: async () => ([{ id: '1', title: 't', author: 'a', url: 'http://node/1?server=tencent&type=url&id=1', pic: '', lrc: '' }]) };
 };
 
-const ctx = { dataDir, logger: { warn() {}, info() {}, error() {} }, resources: {}, storage: { global: {} }, tools: {}, network: { fetch: netFetch } };
+const storagePath = path.join(dataDir, 'global.json');
+const storage = {
+  async get(key, fallback) { return fs.existsSync(storagePath) ? JSON.parse(fs.readFileSync(storagePath, 'utf8'))[key] ?? fallback : fallback; },
+  async set(key, value) {
+    const all = fs.existsSync(storagePath) ? JSON.parse(fs.readFileSync(storagePath, 'utf8')) : {};
+    all[key] = value;
+    fs.writeFileSync(storagePath, JSON.stringify(all));
+  }
+};
+const ctx = { dataDir, logger: { warn() {}, info() {}, error() {} }, resources: {}, storage: { global: storage }, tools: {}, network: { fetch: netFetch } };
 registerRoutes(app, { ctx, state: {} });
 
 const handler = (method, p) => {
@@ -374,6 +391,249 @@ check('tool-new-track-prepends', toolTracks.map((t) => t.name).join(',') === '�
 await playTool.execute({ source: 'https://example.com/a.mp3', title: '旧甲更新' });
 toolTracks = JSON.parse(fs.readFileSync(toolPlaylistPath, 'utf8'));
 check('tool-existing-track-keeps-position', toolTracks.map((t) => t.name).join(',') === '新歌,旧甲更新,旧乙', JSON.stringify(toolTracks));
+
+/* 元数据先验整份再写；前端与工具通过同一宿主键读回名字。 */
+const fixedLists = [{ id: 'fav', name: '我的喜欢' }, { id: 'recent', name: '最近播放' }, { id: 'local', name: '本地' }];
+const listSeed = [...fixedLists, { id: 'imp:4', name: '四号' }];
+const PUT_LISTS = handler('PUT', '/api/lists');
+const GET_LISTS = handler('GET', '/api/lists');
+const putLists = (lists, baseLists) => PUT_LISTS(fakeC({ json: { lists, ...(baseLists ? { baseLists } : {}) } }));
+const listsSaved = await putLists(listSeed);
+check('lists-put-get-shared-key', listsSaved.status === 200 && JSON.stringify((await GET_LISTS(fakeC({}))).body.lists) === JSON.stringify(listSeed));
+check('lists-renamed-name-on-disk', JSON.parse(fs.readFileSync(storagePath, 'utf8'))['player-lists'][3].name === '四号');
+const priorLists = fs.readFileSync(storagePath, 'utf8');
+for (const [label, bad] of [
+  ['not-array', {}], ['empty-id', [...fixedLists, { id: '', name: '空' }]],
+  ['missing-fixed', fixedLists.slice(1)], ['blank-name', [...fixedLists, { id: 'imp:5', name: ' ' }]],
+  ['duplicate-id', [...fixedLists, fixedLists[0]]]
+]) {
+  const res = await putLists(bad);
+  check('lists-reject-' + label + '-without-write', res.status === 400 && fs.readFileSync(storagePath, 'utf8') === priorLists);
+}
+await putLists([...listSeed, { id: 'imp:5', name: 'agent新建' }]);
+const mergedLists = await putLists([...fixedLists, { id: 'imp:4', name: '手动改名' }], listSeed);
+check('lists-stale-ui-save-preserves-agent-list', mergedLists.body.lists.some((x) => x.id === 'imp:5') && mergedLists.body.lists.find((x) => x.id === 'imp:4').name === '手动改名');
+
+const source44 = '/api/apps/hanako-simple-player/routes/widget/api/music/go/44?server=netease';
+const retained = [
+  { id: 'netease:44', url: source44, name: '原曲', list: 'fav', author: '原歌手', pic: 'keep-cover', lyricOffset: 55 },
+  { id: 'bilibili:BV118411B7XU', url: '/api/apps/hanako-simple-player/routes/widget/api/music/go/BV118411B7XU?server=bilibili', name: '孤单', list: 'imp:8' }
+];
+fs.writeFileSync(playlistPath, JSON.stringify(retained));
+const originalBytes = fs.readFileSync(playlistPath, 'utf8');
+const createTool = makeCreateListTool(ctx);
+const unwrap = (r) => JSON.parse(r.content[0].text);
+const fresh = unwrap(await createTool.execute({ name: '今日心情', tracks: [{ source: source44, name: '干净名字' }] }));
+check('create-list-allocates-above-metadata-and-orphan-tracks', fresh.listId === 'imp:9' && fresh.created && !fresh.replaced && fresh.count === 1, JSON.stringify(fresh));
+check('create-list-keeps-existing-id-url-and-unknown-fields', readDisk().find(x => x.list === fresh.listId).id === 'netease:44' && readDisk().find(x => x.list === fresh.listId).url === source44 && readDisk().find(x => x.list === fresh.listId).lyricOffset === 55);
+check('create-list-other-lists-unchanged', JSON.stringify(readDisk().filter(x => x.list !== fresh.listId)) === JSON.stringify(retained));
+const backups = () => fs.readdirSync(dataDir).filter(x => x.startsWith('playlist.json.bak-'));
+check('create-list-backup-before-write', backups().length === 1 && fs.readFileSync(path.join(dataDir, backups()[0]), 'utf8') === originalBytes);
+const replaced = unwrap(await createTool.execute({ name: '今日心情', tracks: [{ source: source44 }, { source: source44 }] }));
+check('create-list-same-name-replaces-and-dedupes', replaced.listId === fresh.listId && !replaced.created && replaced.replaced && replaced.count === 1 && readDisk().filter(x => x.list === fresh.listId).length === 1);
+check('create-list-same-name-publishes-content-revision', typeof (await storage.get('player-library-revision')) === 'string');
+const empty = await createList(ctx, { name: '今日心情', tracks: [] });
+check('create-list-empty-replacement-keeps-name', empty.replaced && empty.count === 0 && !readDisk().some(x => x.list === empty.listId) && (await storage.get('player-lists')).some(x => x.id === empty.listId));
+const specialName = '/:*?"<>|'.repeat(100);
+const special = await createList(ctx, { name: specialName, tracks: [] });
+check('create-list-long-special-name-is-data-not-path', special.name === specialName && (await storage.get('player-lists')).some(x => x.name === specialName));
+const beforeBad = fs.readFileSync(playlistPath, 'utf8'), backupCount = backups().length;
+for (const [label, args] of [
+  ['blank-name', { name: ' ', tracks: [] }], ['missing-source', { name: '今日心情', tracks: [{ source: source44 }, {}] }],
+  ['bad-tracks', { name: '今日心情', tracks: null }], ['bad-duration', { name: '今日心情', tracks: [{ source: source44, dur: -1 }] }]
+]) {
+  const res = await createTool.execute(args);
+  check('create-list-reject-' + label + '-without-write', res.isError && fs.readFileSync(playlistPath, 'utf8') === beforeBad && backups().length === backupCount);
+}
+const raced = await Promise.all([
+  createList(ctx, { name: '并发甲', tracks: [] }), reserveList(ctx, { name: 'UI预留' }),
+  createList(ctx, { name: '并发乙', tracks: [] }), createList(ctx, { name: '并发丙', tracks: [] }),
+]);
+const raceIds = raced.map(x => x.listId || x.id);
+check('create-list-and-ui-reservation-share-one-number-sequence', new Set(raceIds).size === 4 && raceIds.join(',') === 'imp:11,imp:12,imp:13,imp:14', JSON.stringify(raceIds));
+const sameRace = await Promise.all([createList(ctx, { name: '并发同名', tracks: [] }), createList(ctx, { name: '并发同名', tracks: [{ source: source44 }] })]);
+check('create-list-concurrent-same-name-one-list', sameRace[0].created && sameRace[1].replaced && sameRace[0].listId === sameRace[1].listId && readDisk().filter(x => x.list === sameRace[0].listId).length === 1);
+const beforeFailure = fs.readFileSync(playlistPath, 'utf8'), setBefore = storage.set;
+storage.set = async () => { throw new Error('storage denied'); };
+const failedSave = await createTool.execute({ name: '失败歌单', tracks: [{ source: source44 }] });
+storage.set = setBefore;
+check('create-list-storage-failure-rolls-back-playlist', failedSave.isError && fs.readFileSync(playlistPath, 'utf8') === beforeFailure && !(await storage.get('player-lists')).some(x => x.name === '失败歌单'));
+await createList(ctx, { name: '失败后恢复', tracks: [] });
+check('create-list-queue-recovers-after-failure', (await storage.get('player-lists')).some(x => x.name === '失败后恢复'));
+const music = unwrap(await makeListMusicTool(ctx).execute({ keyword: '原曲', limit: 1 }));
+check('list-music-metadata-counts-independent-of-track-filter', music.lists.find(x => x.id === sameRace[0].listId).count === 1 && music.returned === 1 && music.tracks[0].source === source44);
+const allocRes = await handler('POST', '/api/lists/allocate')(fakeC({ json: { prefix: '歌单' } }));
+check('lists-allocate-route-persists-reservation', allocRes.status === 200 && (await storage.get('player-lists')).some(x => x.id === allocRes.body.list.id));
+
+for (const version of ['DJ版', '曼波版', 'Live', 'Remix', '伴奏', 'cover', 'ver.2']) {
+  const clean = cleanMusicMetadata({ title: `2011 09 07 【字幕组】歌曲（${version}）(中文翻译) Hi-res MV` });
+  check('clean-preserves-version-' + version, clean.name === `歌曲 (${version})`, JSON.stringify(clean));
+}
+const cleanBook = cleanMusicMetadata({ title: '【A-SOUL/向晚】南拳妈妈《下雨天》(中文翻译)[出自动画] MV', author: '账号已注销' });
+check('clean-book-name-and-singer-without-up', cleanBook.name === '下雨天' && cleanBook.author === '南拳妈妈');
+const prefixCounts = singerPrefixes([{ name: '周杰伦 - 稻香' }, { name: '周杰伦 - 枫' }, { name: '周杰伦 - 晴天' }, { name: '晩餐歌 - Bansanka' }, { name: '革命道中 - On The Way' }]);
+check('clean-singer-prefix-threshold-three', cleanMusicMetadata({ title: '周杰伦 - 稻香' }, { prefixes: prefixCounts }).name === '稻香');
+check('clean-prefix-below-three-is-not-split', cleanMusicMetadata({ title: '周杰伦 - 稻香' }, { prefixes: singerPrefixes([{ name: '周杰伦 - 枫' }, { name: '周杰伦 - 晴天' }]) }).name === '周杰伦 - 稻香');
+check('clean-japanese-romanized-alias-not-mis-split', cleanMusicMetadata({ title: '晩餐歌 - Bansanka' }, { prefixes: prefixCounts }).author === '' && cleanMusicMetadata({ title: '革命道中 - On The Way' }, { prefixes: prefixCounts }).name === '革命道中 - On The Way');
+check('clean-up-singer-conservative', ['', '账号已注销', 'A-SOUL/向晚', '歌手123', '歌手(翻唱)', '歌手｜UP'].every(author => cleanMusicMetadata({ title: '歌曲', author }).author === ''));
+const candidates = [{ id: '1', title: '下雨天', dur: 200 }, { id: '2', title: '下雨天 (Live)', dur: 263 }, { id: '3', title: '下雨天', dur: 262 }];
+check('match-name-and-nearest-duration', pickMetadataMatch({ name: '下雨天' }, 263, candidates).hit.id === '3');
+check('match-version-does-not-collapse-to-studio', pickMetadataMatch({ name: '下雨天(Live)' }, 263, candidates).hit.id === '2' && pickMetadataMatch({ name: '下雨天(Remix)' }, 263, candidates) === null);
+check('match-duration-soft-sixty-second-boundary', !pickMetadataMatch({ name: '下雨天' }, 322, candidates).suspect && pickMetadataMatch({ name: '下雨天' }, 323, candidates).suspect);
+
+const searchCalls = [];
+let searchMissing = false, lyricFails = false, rawDuration = '4:23';
+const searchCtx = { ...ctx, network: { async fetch(url, opts) {
+  searchCalls.push({ url, cookie: !!opts?.headers?.Cookie });
+  if (url.includes('/search/type')) return { ok: true, json: async () => ({ data: { result: [{ bvid: 'BV118411B7XU', title: '2011 09 07 【字幕组】南拳妈妈《下雨天》(中文翻译) Hi-res MV', author: 'UP主甲', pic: '//i1.hdslb.com/raw.jpg', duration: rawDuration }] } }) };
+  if (url.includes('cloudsearch')) return { ok: true, json: async () => ({ code: 200, result: { songs: searchMissing ? [] : [
+    { id: 101, name: '下雨天', ar: [{ name: '南拳妈妈' }], al: { picUrl: 'https://p1.music.126.net/far.jpg' }, dt: 200000 },
+    { id: 102, name: '下雨天 (Live)', ar: [{ name: '翻唱歌手' }], al: { picUrl: 'https://p1.music.126.net/live.jpg' }, dt: 263000 },
+    { id: 103, name: '下雨天', ar: [{ name: '南拳妈妈' }], al: { picUrl: 'https://p1.music.126.net/near.jpg' }, dt: 262000 }
+  ] } }) };
+  if (url.includes('type=lrc')) { if (lyricFails) throw new Error('lyric unavailable'); return { ok: true, text: async () => '[00:01.00]测试歌词' }; }
+  return { ok: true, json: async () => [{ id: 'qq44', title: '下雨天', author: '南拳妈妈', url: 'https://node/?server=tencent&type=url&id=qq44' }] };
+} } };
+const searchTool = makeSearchMusicTool(searchCtx);
+const biliFound = unwrap(await searchTool.execute({ keyword: '下雨天' }));
+check('search-default-bili-clean-metadata-preserves-play-source', biliFound.server === 'bilibili' && biliFound.tracks[0].source.endsWith('/BV118411B7XU?server=bilibili') && biliFound.tracks[0].name === '下雨天' && biliFound.tracks[0].author === '南拳妈妈' && biliFound.tracks[0].pic.endsWith('/near.jpg'));
+check('search-secondary-lyric-and-duration-in-seconds', biliFound.tracks[0].matched && biliFound.tracks[0].lrc.includes('测试歌词') && biliFound.tracks[0].lrcUrl.includes('id=103') && biliFound.tracks[0].dur === 263);
+searchMissing = true;
+const missing = unwrap(await searchTool.execute({ keyword: '下雨天' }));
+check('search-unmatched-preserves-source-and-cover', missing.tracks.length === 1 && !missing.tracks[0].matched && missing.tracks[0].pic.endsWith('/raw.jpg') && missing.tracks[0].source === biliFound.tracks[0].source);
+searchMissing = false; rawDuration = '8:23';
+const suspect = unwrap(await searchTool.execute({ keyword: '下雨天' }));
+check('search-huge-duration-gap-marks-without-dropping', suspect.tracks[0].matched && suspect.tracks[0].matchWarning.includes('存疑'));
+rawDuration = '4:23'; lyricFails = true;
+const noLyric = unwrap(await searchTool.execute({ keyword: '下雨天' }));
+check('search-lyric-failure-keeps-matched-song', noLyric.tracks[0].matched && noLyric.tracks[0].lrc === '' && noLyric.tracks[0].source === biliFound.tracks[0].source);
+lyricFails = false;
+fs.writeFileSync(path.join(dataDir, 'cookies.env'), 'NETEASE_COOKIE=MUSIC_U=fixture\n');
+searchCalls.length = 0;
+const neteaseFound = unwrap(await searchTool.execute({ keyword: '下雨天' }));
+check('search-cookie-default-netease-no-source-mix', neteaseFound.server === 'netease' && neteaseFound.tracks.every(x => x.source.includes('server=netease')) && !searchCalls.some(x => x.url.includes('bilibili')) && searchCalls.some(x => x.cookie));
+const override = unwrap(await searchTool.execute({ keyword: '下雨天', server: 'tencent' }));
+check('search-explicit-provider-wins', override.server === 'tencent' && override.tracks[0].source.endsWith('/qq44?server=tencent'));
+searchCalls.length = 0;
+await searchTool.execute({ keyword: '下雨天', limit: 100 });
+check('search-limit-clamped-at-thirty', searchCalls[0].url.includes('limit=30'));
+check('search-rejects-empty-query-and-invalid-provider', (await searchTool.execute({ keyword: '' })).isError && (await searchTool.execute({ keyword: '下雨天', server: 'bad' })).isError);
+fs.unlinkSync(path.join(dataDir, 'cookies.env'));
+const revisionBeforeRoute = await storage.get('player-library-revision');
+await POST_PLAYLIST(fakeC({ json: { tracks: readDisk() } }));
+check('playlist-route-write-publishes-global-revision', (await storage.get('player-library-revision')) !== revisionBeforeRoute);
+const revisionBeforePlay = await storage.get('player-library-revision');
+await makePlayTool(ctx, {}).execute({ source: 'https://example.com/notified.mp3' });
+check('play-tool-write-publishes-global-revision', (await storage.get('player-library-revision')) !== revisionBeforePlay);
+const orderedBase = (await storage.get('player-lists'));
+const orderedNext = [...orderedBase].reverse();
+await putLists(orderedNext, orderedBase);
+check('lists-ui-order-change-persists', JSON.stringify(await storage.get('player-lists')) === JSON.stringify(orderedNext));
+
+/* 注册的唯一成功判据是 listOwn；装载时 ready 的异步拒绝也必须能被捕获。 */
+let ownCommands = [], commandAttempts = 0, commandReady = true;
+let registeredMood;
+const commandCtx = { logger: ctx.logger, commands: {
+  async listOwn() { if (!commandReady) throw new Error('engine unavailable'); return ownCommands; },
+  register(registration) {
+    commandAttempts++;
+    registeredMood = registration;
+    const off = () => { ownCommands = []; };
+    off.ready = Promise.resolve().then(() => { ownCommands = [{ name: registration.name, usage: registration.usage }]; });
+    return off;
+  },
+} };
+const mood = createMoodCommand(commandCtx);
+const registrationResults = await Promise.all([mood.ensure(), mood.ensure(), mood.ensure()]);
+check('mood-first-registration-awaits-receipt-and-list-own', registrationResults.every(Boolean) && commandAttempts === 1 && ownCommands[0].name === 'mood');
+// 使用真实子进程 invocation 的四个可序列化字段，不再由 mock 注入 reply。
+const moodReply = await registeredMood.handler({ commandName: 'mood', rawText: '/mood', args: '', sessionPath: '/test/session.jsonl' });
+check('mood-handler-single-guidance-reply-with-contextual-example', registeredMood.aliases[0] === '心情' && moodReply === MOOD_PROMPT && moodReply.includes('建个安静的心情歌单'));
+mood.dispose();
+check('mood-dispose-removes-command-and-prevents-late-registration', ownCommands.length === 0 && !(await mood.ensure()) && commandAttempts === 1);
+commandReady = false;
+const lateMood = createMoodCommand(commandCtx);
+check('mood-no-engine-does-not-enqueue-doomed-registration', !(await lateMood.ensure()) && commandAttempts === 1);
+commandReady = true;
+check('mood-event-driven-recovery-without-timer', await lateMood.ensure() && commandAttempts === 2);
+lateMood.dispose();
+let rejectedDisposed = false;
+const rejectedMood = createMoodCommand({ logger: ctx.logger, commands: {
+  listOwn: async () => [], register() {
+    const off = () => { rejectedDisposed = true; };
+    off.ready = Promise.reject(new Error('registration rejected'));
+    return off;
+  },
+} });
+check('mood-asynchronous-ready-rejection-not-success', !(await rejectedMood.ensure()) && rejectedDisposed);
+const unlistedMood = createMoodCommand({ logger: ctx.logger, commands: {
+  listOwn: async () => [], register() { const off = () => {}; off.ready = Promise.resolve(); return off; },
+} });
+check('mood-ready-alone-does-not-prove-registration', !(await unlistedMood.ensure()));
+const registeredTools = [];
+const setupStorageBefore = fs.readFileSync(storagePath, 'utf8');
+const stopPlayer = await applyPlayer({ ...ctx, commands: commandCtx.commands,
+  bus: { subscribe: () => () => {} },
+  tools: { register: tool => { registeredTools.push(tool.name); return () => {}; } },
+  routes: { register: callback => { callback(app); return () => {}; } },
+});
+check('app-startup-registers-mood-before-tool-or-session-event', ownCommands.some(x => x.name === 'mood') && registeredTools.length === 5);
+check('app-startup-does-not-write-player-storage', fs.readFileSync(storagePath, 'utf8') === setupStorageBefore);
+stopPlayer();
+check('app-teardown-disposes-mood-command', ownCommands.length === 0);
+
+const staleBase = [
+  { id: 'netease:44', url: source44, name: '原曲', list: 'fav', pic: 'old' },
+  { id: 'netease:45', url: source44.replace('/44?', '/45?'), name: '将被删', list: 'fav' },
+];
+await POST_PLAYLIST(fakeC({ json: { tracks: staleBase } }));
+const racingList = await createList(ctx, { name: '保存竞态', tracks: [{ source: source44 }] });
+const diskDuringRace = readDisk();
+diskDuringRace.find(t => t.list === 'fav' && t.id === 'netease:44').pic = 'agent-new-cover';
+fs.writeFileSync(playlistPath, JSON.stringify(diskDuringRace));
+await POST_PLAYLIST(fakeC({ json: { baseTracks: staleBase, tracks: [{ ...staleBase[0], name: 'UI改名' }] } }));
+check('playlist-stale-ui-save-keeps-agent-created-tracks', readDisk().some(t => t.list === racingList.listId));
+check('playlist-stale-ui-save-merges-only-local-fields', readDisk().find(t => t.list === 'fav').name === 'UI改名' && readDisk().find(t => t.list === 'fav').pic === 'agent-new-cover');
+check('playlist-ui-delete-still-applies-with-snapshot', !readDisk().some(t => t.id === 'netease:45'));
+const beforeDelete = readDisk();
+fs.writeFileSync(playlistPath, JSON.stringify(beforeDelete.filter(t => t.list !== 'fav')));
+await POST_PLAYLIST(fakeC({ json: { baseTracks: beforeDelete, tracks: beforeDelete } }));
+check('playlist-stale-ui-save-does-not-resurrect-external-deletion', !readDisk().some(t => t.list === 'fav'));
+
+/* 真实宿主的中文 alias 拒绝会回滚主名；清理回执后只降级一次并回读目录。 */
+let aliasOwn = [], aliasAttempts = [], aliasReleased = false, asciiRegistration;
+const aliasMood = createMoodCommand({ logger: ctx.logger, commands: {
+  listOwn: async () => aliasOwn,
+  register(registration) {
+    aliasAttempts.push(registration);
+    const off = () => { aliasOwn = []; };
+    off.disposeAsync = async () => { off(); aliasReleased = true; };
+    off.ready = Promise.resolve().then(() => {
+      if (registration.aliases?.includes('心情')) {
+        aliasOwn = [];
+        throw new Error('v2 app "hanako-simple-player" could not register command alias "心情": it is invalid, reserved, or already taken.');
+      }
+      if (!aliasReleased) throw new Error('failed registration was not disposed');
+      asciiRegistration = registration;
+      aliasOwn = [{ name: registration.name }];
+    });
+    return off;
+  },
+} });
+const aliasResults = await Promise.all([aliasMood.ensure(), aliasMood.ensure()]);
+check('mood-alias-rejection-disposes-and-registers-ascii-once', aliasResults.every(Boolean) && aliasAttempts.length === 2 && aliasReleased && aliasOwn[0]?.name === 'mood');
+check('mood-ascii-fallback-does-not-advertise-unavailable-alias', !asciiRegistration?.aliases && !asciiRegistration?.usage.includes('心情）'));
+aliasMood.dispose();
+let genericAttempts = 0;
+const genericRejectedMood = createMoodCommand({ logger: ctx.logger, commands: {
+  listOwn: async () => [], register() {
+    genericAttempts++;
+    const off = () => {};
+    off.ready = Promise.reject(new Error('permission denied'));
+    return off;
+  },
+} });
+check('mood-general-registration-rejection-does-not-trigger-alias-fallback', !(await genericRejectedMood.ensure()) && genericAttempts === 1);
 
 fs.rmSync(dataDir, { recursive: true, force: true });
 

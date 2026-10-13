@@ -82,6 +82,7 @@
 
   var ENDPOINT = {
     playlist: API + '/widget/api/playlist',
+    lists: API + '/api/lists',
     track: API + '/api/track',
     nowPlaying: API + '/api/now-playing',
     lrcLoad: API + '/widget/api/lrc/load',
@@ -253,12 +254,12 @@
     loadError: ''
   };
 
-  /* ---------- 记忆：播放状态走后端路由，歌单元数据走 hana.storage.global ----------
+  /* ---------- 记忆：播放状态与歌单元数据走后端路由 ----------
    * 播放状态改后端路由的原因（拖进/拖出 bug）：hana.storage.global.set 是异步 IPC，
    * 页面卸载时可能来不及发出；而「拖进/拖出 = 整份文档被换掉」需要旧文档在 pagehide
    * 时把快照可靠地交给宿主。后端路由可以用 sendBeacon / keepalive fetch，专为卸载时
    * 发一次请求设计，能跨文档存活。快照落 app-data/playback.json。
-   * 歌单元数据（顺序 + 名字）与本地文件夹路径仍走 hana.storage.global，它们不涉及卸载竞速。 */
+   * 歌单元数据走后端的同一宿主键；本地文件夹仍走 hana.storage.global，它们不涉及卸载竞速。 */
   function hanaStorage() {
     return (window.hana && window.hana.storage && window.hana.storage.global) || null;
   }
@@ -365,7 +366,7 @@
   }
 
   /* ---------- 歌单：列表元数据 + 本地固定文件夹 ----------
-   * 列表元数据（顺序 + 原始名）与本地文件夹路径都存 hana.storage.global；
+   * 列表元数据由后端读写同一个 player-lists 键；本地文件夹仍走 hana.storage.global。
    * 曲目本身仍写在 playlist.json（每条带 list 字段）。
    * 宿主存储不可用时（纯浏览器 / 无宿主 / 卡在 SDK 落地前）退化为内存态：
    * 功能照常，只是不跨重启。绝不写 localStorage（契约）。 */
@@ -459,15 +460,100 @@
     if (id) return defaultListName(id);
     return t.mode === '在线' ? '在线' : '本地';
   }
-  function nextImportId() {
-    var max = 0;
-    for (var i = 0; i < state.lists.length; i++) {
-      var m = /^imp:(\d+)$/.exec(state.lists[i].id);
-      if (m) max = Math.max(max, parseInt(m[1], 10));
-    }
-    return 'imp:' + (max + 1);
+  function nextImportId(name, prefix) {
+    libraryEdit++;
+    var reservation = listsSaveChain.then(function () {
+      return apiPostJson(ENDPOINT.lists + '/allocate', { name: name, prefix: prefix || '歌单' });
+    }).then(function (res) {
+      if (!res.ok || !res.body || !res.body.ok || !res.body.list) throw new Error('无法分配歌单编号');
+      return res.body.list.id;
+    });
+    listsSaveChain = reservation.catch(function (e) { console.warn('[player] 歌单创建失败', e); });
+    return reservation; // 编号只有后端一套；后端不可用时明确失败，不在前端猜号。
   }
-  function saveLists() { storeSet(LISTS_KEY, state.lists); }
+  var listsSaveChain = Promise.resolve();
+  var listsBase = null;
+  var libraryEdit = 0;
+  function copyLists(lists) {
+    return lists.map(function (l) { return { id: l.id, name: l.name }; });
+  }
+  function readLists() {
+    return apiGetJson(ENDPOINT.lists).then(function (res) {
+      if (res.ok && res.body && res.body.ok && Array.isArray(res.body.lists) && res.body.lists.length) {
+        return { ok: true, value: res.body.lists };
+      }
+      return storeRead(LISTS_KEY);
+    }).catch(function () { return storeRead(LISTS_KEY); });
+  }
+  function saveLists() {
+    var snapshot = copyLists(state.lists), base = listsBase;
+    if (base && listNamesKey(base) === listNamesKey(snapshot)) return listsSaveChain;
+    listsBase = snapshot;
+    libraryEdit++;
+    listsSaveChain = listsSaveChain.then(function () {
+      var payload = { lists: snapshot };
+      if (base) payload.baseLists = base;
+      return apiPostJson(ENDPOINT.lists, payload).then(function (res) {
+        if (!res.ok || !res.body || !res.body.ok) throw new Error('lists 写入失败 ' + res.status);
+        return res;
+      });
+    }).catch(function (e) {
+      listsBase = null; // 下次明确全量保存；不能把失败快照当作已落盘。
+      console.warn('[player] 歌单名保存失败', e);
+      toast('歌单名保存失败，请稍后重试');
+    });
+    return listsSaveChain;
+  }
+
+  var listsUnsubscribe = null, listsRefreshing = false, listsDirty = false;
+  function refreshLibrary() {
+    listsDirty = true;
+    if (listsRefreshing) return;
+    listsRefreshing = true;
+    function pull() {
+      listsDirty = false;
+      // 自己的写广播也重拉，等本地保存链落定再比内容，避免读取尚未写完的曲目。
+      Promise.all([listsSaveChain, saveChain]).then(function () {
+        var edit = libraryEdit;
+        return Promise.all([readLists(), loadPlaylist()]).then(function (values) {
+          if (edit !== libraryEdit) { listsDirty = true; return; }
+          var read = values[0], tracks = values[1];
+          if (!read.ok || !Array.isArray(read.value)) return;
+          var oldNames = listNamesKey(), oldTracks = JSON.stringify(state.tracks.filter(function (t) { return !t.detached; }).map(function (t) { return t.raw; }));
+          var current = currentTrack();
+          playlistBase = JSON.parse(JSON.stringify(tracks.map(function (t) { return t.raw; })));
+          // audio 的 loadedmetadata 会补运行时时长；比较盘上 raw，不能把那种补值当外部改动。
+          var changedTracks = oldTracks !== JSON.stringify(tracks.map(function (t) { return t.raw; }));
+          state.lists = copyLists(read.value);
+          listsBase = copyLists(state.lists);
+          if (!findList(state.activeList)) state.activeList = 'local';
+          if (changedTracks) {
+            if (current && !tracks.some(function (t) { return t.uid === current.uid; })) {
+              current.detached = true; tracks.push(current); // 已移除的当前录音仍可播完。
+            }
+            applyTracks(tracks);
+          }
+          // 不忽略「下一条」广播；即使自己写回也只按内容决定是否重渲染。
+          if (oldNames !== listNamesKey() || changedTracks) renderAll();
+        });
+      }).catch(function (e) { console.warn('[player] 歌单刷新失败', e); }).then(function () {
+        if (listsDirty) pull();
+        else listsRefreshing = false;
+      });
+    }
+    pull();
+  }
+  function subscribeLists() {
+    var st = hanaStorage();
+    if (listsUnsubscribe || !st || typeof st.onChanged !== 'function') return;
+    listsUnsubscribe = st.onChanged(function (keys) {
+      if (keys.indexOf(LISTS_KEY) >= 0 || keys.indexOf('player-library-revision') >= 0) refreshLibrary();
+    });
+  }
+  window.addEventListener('pagehide', function () {
+    if (listsUnsubscribe) { listsUnsubscribe(); listsUnsubscribe = null; }
+  });
+  window.addEventListener('pageshow', subscribeLists);
 
   /* ---------- 我的喜欢（fav 固定列表）----------
    * 判定用**稳定 id**（不是 uid）：同一首歌在不同列表里 uid 不同，用 uid 判会
@@ -766,27 +852,25 @@
     };
   }
   function maybeSeedWelcome(read) {
-    if (SHOT) return false;                       // 截图模式不打扰（保持出图确定性）
-    if (!read || read.ok !== true) return false;  // 读不到 → 不播
-    if (read.value) return false;                 // 播过 → 不补
-    if (state.tracks.length) return false;        // 已有曲目 → 不碰用户数据
-    var id = nextImportId();
-    state.lists.push({ id: id, name: WELCOME_LIST_NAME });
-    saveLists();
-    mergeTracks([welcomeTrack()], id);
-    savePlaylist();
-    storeSet(WELCOME_KEY, 1);
-    state.activeList = id;                        // 落到欢迎歌单，首屏就能看到它
-    var wt = null;
-    for (var i = 0; i < state.tracks.length; i++) {
-      if (state.tracks[i].id === WELCOME_TRACK_ID && state.tracks[i].list === id) { wt = state.tracks[i]; break; }
-    }
-    if (wt && !state.currentUid) state.currentUid = wt.uid;
-    renderAll();
-    /* 「默认待播放」：把音轨先挂上（不自动出音），点播放键直接能响。 */
-    if (wt) loadAudio(wt, 0, false);
-    persistNow();
-    return true;
+    if (SHOT || !read || read.ok !== true || read.value || state.tracks.length) return Promise.resolve(false);
+    return nextImportId(WELCOME_LIST_NAME).then(function (id) {
+      state.lists.push({ id: id, name: WELCOME_LIST_NAME });
+      saveLists();
+      mergeTracks([welcomeTrack()], id);
+      savePlaylist();
+      storeSet(WELCOME_KEY, 1);
+      state.activeList = id;                        // 落到欢迎歌单，首屏就能看到它
+      var wt = null;
+      for (var i = 0; i < state.tracks.length; i++) {
+        if (state.tracks[i].id === WELCOME_TRACK_ID && state.tracks[i].list === id) { wt = state.tracks[i]; break; }
+      }
+      if (wt && !state.currentUid) state.currentUid = wt.uid;
+      renderAll();
+      /* 「默认待播放」：把音轨先挂上（不自动出音），点播放键直接能响。 */
+      if (wt) loadAudio(wt, 0, false);
+      persistNow();
+      return true;
+    });
   }
 
   /* ---------- 播放列表：读写都走后端（与工具侧共用 playlist.json） ---------- */
@@ -800,17 +884,23 @@
   }
 
   var saveChain = Promise.resolve();
+  var playlistBase = null;
   function savePlaylist() {
+    libraryEdit++;
     /* detached 曲目（删列表时被豁免、只为播完当前那首的运行时条目）不回写盘：
      * 否则下次启动会按它的 list 把已删列表重建出来。 */
     var payload = { tracks: state.tracks.filter(function (t) { return !t.detached; }).map(toStoredTrack) };
+    if (playlistBase) payload.baseTracks = playlistBase;
+    playlistBase = JSON.parse(JSON.stringify(payload.tracks));
     saveChain = saveChain.then(function () {
       return apiPostJson(ENDPOINT.playlist, payload).then(function (res) {
         if (!res.ok) console.warn('[player] playlist 写入失败', res.status);
+        if (!res.ok) playlistBase = null;
         return res;
       });
     }).catch(function (e) {
       console.warn('[player] playlist 写入异常', e);
+      playlistBase = null;
     });
     return saveChain;
   }
@@ -5230,12 +5320,13 @@
 
   /* 新建一个导入列表并切过去 */
   function newImportList(namePrefix) {
-    var id = nextImportId();
-    var l = { id: id, name: namePrefix + ' ' + id.replace(/^imp:/, '') };
-    state.lists.push(l);
-    saveLists();
-    state.activeList = id;
-    return id;
+    return nextImportId(undefined, namePrefix).then(function (id) {
+      var l = { id: id, name: namePrefix + ' ' + id.replace(/^imp:/, '') };
+      state.lists.push(l);
+      saveLists();
+      state.activeList = id;
+      return id;
+    });
   }
 
   /* 单曲 / 本地文件的归处（拍板 1，**仅本地文件那条路**）：归到**当前激活列表**；
@@ -5244,18 +5335,19 @@
    * ⚠️ 链接导入（网易云单曲 / B站视频）**不再走这里** —— 它改用 resolveLinkTarget()
    * 直落「我的喜欢」（见下），否则在 fav/recent/local 页粘链接会偷偷长出一个「单曲」歌单。 */
   function resolveImportTarget(nameIfLocal) {
-    if (/^imp:/.test(state.activeList) && findList(state.activeList)) return state.activeList;
+    if (/^imp:/.test(state.activeList) && findList(state.activeList)) return Promise.resolve(state.activeList);
     for (var i = 0; i < state.lists.length; i++) {
       if (state.lists[i].id !== 'local' && state.lists[i].name === nameIfLocal) {
         state.activeList = state.lists[i].id;
-        return state.lists[i].id;
+        return Promise.resolve(state.lists[i].id);
       }
     }
-    var id = nextImportId();
-    state.lists.push({ id: id, name: nameIfLocal });
-    saveLists();
-    state.activeList = id;
-    return id;
+    return nextImportId(nameIfLocal).then(function (id) {
+      state.lists.push({ id: id, name: nameIfLocal });
+      saveLists();
+      state.activeList = id;
+      return id;
+    });
   }
 
   /* 链接导入的落点（拍板）：**直落「我的喜欢」**，不新建列表、不切激活列表。
@@ -5355,26 +5447,27 @@
         return;
       }
       var list = isPlaylist ? (res.body.tracks || []) : (res.body.track ? [res.body.track] : []);
-      var targetId = isPlaylist ? newImportList('歌单') : resolveLinkTarget();
-      /* 歌单真名（netease 官方接口给的 meta.name）：写进列表元数据，切换条显示压缩名。
-       * 后端取不到时 meta 缺失，列表保持自动名「歌单 N」（切换条退回编号）。 */
-      if (isPlaylist) {
-        var meta = res.body.meta;
-        var metaName = meta && String(meta.name || '').trim();
-        if (metaName) {
-          var nl = findList(targetId);
-          if (nl) {
-            nl.name = metaName;
-            if (meta.creator) nl.creator = String(meta.creator).trim();
-            saveLists();
+      return Promise.resolve(isPlaylist ? newImportList('歌单') : resolveLinkTarget()).then(function (targetId) {
+        /* 歌单真名（netease 官方接口给的 meta.name）：写进列表元数据，切换条显示压缩名。
+         * 后端取不到时 meta 缺失，列表保持自动名「歌单 N」（切换条退回编号）。 */
+        if (isPlaylist) {
+          var meta = res.body.meta;
+          var metaName = meta && String(meta.name || '').trim();
+          if (metaName) {
+            var nl = findList(targetId);
+            if (nl) {
+              nl.name = metaName;
+              if (meta.creator) nl.creator = String(meta.creator).trim();
+              saveLists();
+            }
           }
         }
-      }
-      var added = mergeTracks(list, targetId);
-      if (isPlaylist) afterImport(added, '在线歌单');
-      else afterImportToFav(added);
-      var input = $('linkInput');
-      if (input) input.value = '';
+        var added = mergeTracks(list, targetId);
+        if (isPlaylist) afterImport(added, '在线歌单');
+        else afterImportToFav(added);
+        var input = $('linkInput');
+        if (input) input.value = '';
+      });
     }).catch(function () { setNote('解析失败：网络错误'); });
   }
 
@@ -5452,8 +5545,9 @@
       })).then(function (items) {
         // 本地文件不再往「本地列表」（那严格等于固定文件夹），归到当前导入列表；
         // 当前页是本地时新建/复用名为「本地文件」的导入列表。
-        var target = resolveImportTarget('本地文件');
-        afterImport(mergeTracks(items.filter(Boolean), target), '本地文件');
+        return resolveImportTarget('本地文件').then(function (target) {
+          afterImport(mergeTracks(items.filter(Boolean), target), '本地文件');
+        });
       });
     }).catch(function (e) {
       setNote(e && e.message ? e.message : '文件选择不可用');
@@ -5924,22 +6018,23 @@
     var parts = biliPartsCache[bv];
     if (!Array.isArray(parts) || !parts.length) { toast('分集还没拉到，稍后再试'); return; }
     var nameRaw = String(r.title || 'B站合集').trim() || 'B站合集';
-    var id = nextImportId();
-    state.lists.push({ id: id, name: nameRaw });
-    saveLists();
-    var items = parts.map(function (p) {
-      var o = Object.assign({}, p);
-      o.list = id;
-      o.mode = '在线';
-      o.group = '在线音乐';
-      if (!o.title && o.page) o.title = 'P' + o.page;
-      return o;
-    });
-    var added = mergeTracks(items, id);
-    state.activeList = id;
-    savePlaylist();
-    renderAll();
-    toast('已导入「' + nameRaw + '」共 ' + added + ' 首');
+    return nextImportId(nameRaw).then(function (id) {
+      state.lists.push({ id: id, name: nameRaw });
+      saveLists();
+      var items = parts.map(function (p) {
+        var o = Object.assign({}, p);
+        o.list = id;
+        o.mode = '在线';
+        o.group = '在线音乐';
+        if (!o.title && o.page) o.title = 'P' + o.page;
+        return o;
+      });
+      var added = mergeTracks(items, id);
+      state.activeList = id;
+      savePlaylist();
+      renderAll();
+      toast('已导入「' + nameRaw + '」共 ' + added + ' 首');
+    }).catch(function (e) { toast(e.message || '歌单创建失败'); });
   }
 
   /* 把某条视频的全部分集加入「我的喜欢」 */
@@ -7069,10 +7164,8 @@
   }
 
   /* 列表名快照：只在真名确实变了才重渲染 */
-  function listNamesKey() {
-    var out = [];
-    for (var i = 0; i < state.lists.length; i++) out.push(state.lists[i].id + '=' + (state.lists[i].name || ''));
-    return out.join('|');
+  function listNamesKey(lists) {
+    return JSON.stringify(copyLists(lists || state.lists));
   }
 
   function boot() {
@@ -7103,6 +7196,7 @@
       /* 先用派生名把列表立起来：首屏不等存储读取（宿主桥没应答时不至于卡住） */
       if (tracks) {
         listsLoaded = true;
+        playlistBase = JSON.parse(JSON.stringify(tracks.map(function (t) { return t.raw; })));
         var needsAssign = migrateLists(tracks, null);
         applyTracks(tracks);                             // 先落 state.tracks
         if (needsAssign) savePlaylist();                 // 再回写（savePlaylist 读的是 state.tracks）
@@ -7124,7 +7218,7 @@
       return sdkReady.then(function () {
         applyHostTheme();
         applyTone();                                   // 主题值落地后重判一次底色
-        return Promise.all([storeRead(LISTS_KEY), storeRead(LOCALDIR_KEY), storeRead(SPLIT_KEY), storeRead(RIPPLE_TUNE_KEY)]);
+        return Promise.all([readLists(), storeRead(LOCALDIR_KEY), storeRead(SPLIT_KEY), storeRead(RIPPLE_TUNE_KEY)]);
       });
     }).then(function (reads) {
       var listsRead = reads[0], dirRead = reads[1], splitRead = reads[2], tuneRead = reads[3];
@@ -7136,18 +7230,26 @@
         rippleHandle.setTune(tuneRead.value);
         renderRippleTune();
       }
-      if (listsRead.ok && state.tracks.length) {
+      if (listsRead.ok) {
         var before = listNamesKey();
         if (migrateLists(state.tracks, listsRead.value)) savePlaylist();
+        if (Array.isArray(listsRead.value) && listsRead.value.length) {
+          // 顺序也是 player-lists 的数据；迁移派生的缺项只追加，不重排用户已存顺序。
+          var derived = state.lists;
+          state.lists = copyLists(listsRead.value);
+          derived.forEach(function (l) { if (!findList(l.id)) state.lists.push(l); });
+          listsBase = copyLists(listsRead.value);
+        }
         saveLists();
         if (before !== listNamesKey()) renderAll();
       }
+      subscribeLists();
       /* 首次使用提示与欢迎歌：各读各自专用的 key（不拿 listsRead 代表一切）。
        * 欢迎歌只在「列表确实读到且为空」时播一次 —— 加载失败（listsLoaded=false）不播。 */
       storeRead(FIRST_RUN_KEY).then(maybeShowFirstRun);
       storeRead(WELCOME_KEY).then(function (w) {
-        if (listsLoaded && !state.tracks.length) maybeSeedWelcome(w);
-      });
+        if (listsLoaded && !state.tracks.length) return maybeSeedWelcome(w);
+      }).catch(function (e) { console.warn('[player] 欢迎歌播种失败', e); });
     });
   }
 
@@ -7556,24 +7658,25 @@
       });
       state.tracks = state.tracks.filter(function (t) { return !stale[t.list]; });
       if (scenario === 'empty') { state.tracks = []; state.activeList = 'fav'; }
-      var ok = maybeSeedWelcome(read);
-      var list = null;
-      for (var i = 0; i < state.lists.length; i++) if (state.lists[i].name === WELCOME_LIST_NAME) list = state.lists[i];
-      var inList = list ? state.tracks.filter(function (t) { return t.list === list.id; }) : [];
-      var out = {
-        seeded: ok,
-        listId: list ? list.id : null,
-        listName: list ? list.name : null,
-        count: inList.length,
-        trackId: inList[0] ? inList[0].id : null,
-        trackUrl: inList[0] ? inList[0].url : null,
-        activeList: state.activeList,
-        favCount: state.tracks.filter(function (t) { return t.list === 'fav'; }).length
-      };
-      /* 还原（隔离）：场景只是探条件，不该改动主夹具。 */
-      state.tracks = snapTracks; state.lists = snapLists; state.activeList = snapActive; state.currentUid = snapUid;
-      renderAll();
-      return out;
+      return maybeSeedWelcome(read).then(function (ok) {
+        var list = null;
+        for (var i = 0; i < state.lists.length; i++) if (state.lists[i].name === WELCOME_LIST_NAME) list = state.lists[i];
+        var inList = list ? state.tracks.filter(function (t) { return t.list === list.id; }) : [];
+        var out = {
+          seeded: ok,
+          listId: list ? list.id : null,
+          listName: list ? list.name : null,
+          count: inList.length,
+          trackId: inList[0] ? inList[0].id : null,
+          trackUrl: inList[0] ? inList[0].url : null,
+          activeList: state.activeList,
+          favCount: state.tracks.filter(function (t) { return t.list === 'fav'; }).length
+        };
+        /* 还原（隔离）：场景只是探条件，不该改动主夹具。 */
+        state.tracks = snapTracks; state.lists = snapLists; state.activeList = snapActive; state.currentUid = snapUid;
+        renderAll();
+        return out;
+      });
     },
     welcomeTrack: welcomeTrack,
     clearSearch: clearSearch,

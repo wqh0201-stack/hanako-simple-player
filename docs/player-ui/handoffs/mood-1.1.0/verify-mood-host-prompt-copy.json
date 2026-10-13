@@ -1,0 +1,29 @@
+{
+  "passed": 1,
+  "total": 1,
+  "failed": [],
+  "results": [
+    {
+      "name": "mood-host-dispatch-client-receives-prompt",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "evidence": {
+    "fixture": "/var/folders/5x/jxb2n8255mx70l00kz9yfby40000gn/T/hap-mood-host-NuS1VR",
+    "modelTurnStarted": false,
+    "hostArtifact": "1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133",
+    "moodModuleSha256": "9740183f0f5163db7b045e2ff2d7046c2478334bf326d6375c63d7e774dd9900",
+    "command": {
+      "name": "mood",
+      "aliases": [],
+      "source": "app"
+    },
+    "received": {
+      "type": "slash_result",
+      "text": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。",
+      "level": "success"
+    },
+    "sessionHistoryUnchanged": true
+  }
+}

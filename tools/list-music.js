@@ -11,11 +11,12 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { listsFor } from "../lib/lists.js";
 
 const NAME = "hana_simple_list_music";
 
 const DESCRIPTION =
-  "列出音频播放器音乐库中的可播曲目（名称 + 可播地址）。" +
+  "列出音频播放器的歌单（id、名称、曲目数）和音乐库中的可播曲目（名称 + 可播地址）。" +
   "播放前先调用本工具查找真实存在的曲目，再把返回的 source 原样传给 hana_simple_play。" +
   "支持按关键词、分组过滤。";
 
@@ -69,6 +70,9 @@ export function makeListMusicTool(ctx) {
         ctx.logger?.warn?.(`hana_simple_list_music: 读取播放列表失败 ${err?.message || err}`);
       }
       if (!Array.isArray(tracks)) tracks = [];
+      const lists = (await listsFor(ctx).read()).map((list) => ({
+        ...list, count: tracks.filter((track) => track?.list === list.id).length,
+      }));
 
       const max = Math.min(Math.max(Number(limit) || 20, 1), 50);
       const kw = String(keyword || "").trim().toLowerCase();
@@ -82,6 +86,9 @@ export function makeListMusicTool(ctx) {
         name: String(t.name || ""),
         source: toPlayable(t.url),
         group: String(t.group || ""),
+        list: String(t.list || ""),
+        author: String(t.author || ""), pic: String(t.pic || ""),
+        lrcUrl: String(t.lrcUrl || ""), dur: Number(t.dur) || 0,
       }));
 
       return {
@@ -89,7 +96,7 @@ export function makeListMusicTool(ctx) {
           {
             type: "text",
             text: JSON.stringify(
-              { total: hits.length, returned: sample.length, tracks: sample },
+              { lists, total: hits.length, returned: sample.length, tracks: sample },
               null,
               2,
             ),

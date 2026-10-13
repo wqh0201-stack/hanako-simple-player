@@ -101,6 +101,7 @@
 | 版本变更、每版给用户带来什么 | [`docs/CHANGELOG.md`](docs/CHANGELOG.md) |
 | 踩过的坑、根因、「别改回 XX」 | [`docs/PITFALLS.md`](docs/PITFALLS.md) |
 | 待办、待真机验收、评审遗留 | [`docs/TODO.md`](docs/TODO.md) |
+| **Hana 发任务 → Codex 执行 → 直接回 Hana 验收** | [`docs/COLLABORATION-HANA-CODEX.md`](docs/COLLABORATION-HANA-CODEX.md) |
 | **对外发版**（封包 → GitHub Release → 市场 PR） | 知识库 `/Volumes/SSD/知识库/20-资料/Hana App 发版到市场（本地封包-GitHub Release-market PR）.md`；本仓登记记录 [`docs/player-ui/handoffs/MARKET-ENROLL-1.0.0.md`](docs/player-ui/handoffs/MARKET-ENROLL-1.0.0.md) |
 | 每轮详细技术交接（改了什么文件 / 断言编号） | [`docs/player-ui/handoffs/`](docs/player-ui/handoffs/)（46 份，索引见 [`docs/player-ui/README.md`](docs/player-ui/README.md)） |
 | 前端契约与重构背景 | `docs/player-ui/CONTRACT.md`、`docs/player-ui/REFACTOR-BRIEF.md` |
@@ -127,3 +128,11 @@ SDK 默认把宿主主题样式表注入页面（`ui/sdk.js` 的 `followHostThem
 角上露出卡面色而不是页面色。想跟随圆角偏好写 `calc(14px * var(--corner-radius-scale, 1))`。
 
 通用：小圆角约 5px；只 SVG 线描图标（禁 emoji）；字号 ≥ 11px；禁左竖线当区块装饰。
+
+## 7. 常驻协作方式
+
+本项目固定采用 **Hana 发任务、Codex 实现与自验、Hana 独立验收**。
+开工、宿主探查、交接或返修前读 [协作约定](docs/COLLABORATION-HANA-CODEX.md)。
+用户已授权 Codex 通过 **Computer Use** 激活桌面 **HanaAgent**，在对应项目会话直接发送
+探查请求、进度、交接及返修回复；在此范围沿用授权，无需每次重新确认。
+共享仓库承接任务书、原始输出和验收报告；发送后确认消息已提交，验收结论以证据为准。

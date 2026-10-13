@@ -1,0 +1,35 @@
+{
+  "passed": 0,
+  "total": 1,
+  "failed": [
+    {
+      "name": "mood-host-dispatch-client-receives-prompt",
+      "ok": false,
+      "detail": "client did not receive MOOD_PROMPT: {\"type\":\"slash_result\",\"text\":\"[命令错误] reply is not a function\\n用法：/mood · 生成今日心情歌单\",\"level\":\"success\"}"
+    }
+  ],
+  "results": [
+    {
+      "name": "mood-host-dispatch-client-receives-prompt",
+      "ok": false,
+      "detail": "client did not receive MOOD_PROMPT: {\"type\":\"slash_result\",\"text\":\"[命令错误] reply is not a function\\n用法：/mood · 生成今日心情歌单\",\"level\":\"success\"}"
+    }
+  ],
+  "evidence": {
+    "fixture": "/var/folders/5x/jxb2n8255mx70l00kz9yfby40000gn/T/hap-mood-host-bf8jEf",
+    "modelTurnStarted": false,
+    "hostArtifact": "1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133",
+    "moodModuleSha256": "261b7c80c54378ca207f90e8915d8b7c3d9e3949e40e8ff9bbed1c34560badc5",
+    "command": {
+      "name": "mood",
+      "aliases": [],
+      "source": "app"
+    },
+    "received": {
+      "type": "slash_result",
+      "text": "[命令错误] reply is not a function\n用法：/mood · 生成今日心情歌单",
+      "level": "success"
+    },
+    "sessionHistoryUnchanged": true
+  }
+}
