@@ -1882,30 +1882,28 @@ const motion = {};
     JSON.stringify(lastTab));
   await page.screenshot({ path: path.join(outDir, 'list-tabs-overflow-465x930-light.png') });
 
-  // ---- (f) 长按导入列表 → 弹删除浮层（不误切列表），取消后无变化
+  // ---- (f) 用户新要求：长按只排序；没有移动不弹菜单、不误切列表。
   await clickTab(page, 'imp:2');
   await sleep(200);
   const tabsBeforePress = (await tabInfo2()).map((t) => t.list).join(',');
-  await page.evaluate(() => {
-    const tab = document.querySelector('#listTabs .list-tab[data-list="imp:2"]');
-    tab.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-  });
+  const heldTab = await page.$('#listTabs .list-tab[data-list="imp:2"]');
+  await heldTab.evaluate(el => el.scrollIntoView({ inline: 'nearest', block: 'nearest' }));
+  const heldBox = await heldTab.boundingBox();
+  await page.mouse.move(heldBox.x + heldBox.width / 2, heldBox.y + heldBox.height / 2);
+  await page.mouse.down();
   await sleep(700);
   const popAfterPress = await page.evaluate(() => ({
     open: !document.getElementById('listPop').hidden,
+    lifted: !!document.querySelector('.reorder-ghost'),
     title: document.getElementById('listPopTitle').textContent,
     activeList: document.querySelector('#listTabs .list-tab.is-active').getAttribute('data-list')
   }));
-  await page.evaluate(() => {
-    const tab = document.querySelector('#listTabs .list-tab[data-list="imp:2"]');
-    tab.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
-  });
-  await page.evaluate(() => document.getElementById('listCancelBtn').click());
+  await page.mouse.up();
   await sleep(200);
   const popClosed = await page.evaluate(() => document.getElementById('listPop').hidden);
   w2.longPress = { popAfterPress, popClosed, tabsUnchanged: (await tabInfo2()).map((t) => t.list).join(',') === tabsBeforePress };
-  assert('list-longpress-opens-pop',
-    popAfterPress.open === true && popAfterPress.title.indexOf('删除') === 0 && popAfterPress.activeList === 'imp:2',
+  assert('list-longpress-arms-sort-without-menu',
+    popAfterPress.open === false && popAfterPress.lifted === true && popAfterPress.activeList === 'imp:2',
     JSON.stringify(w2.longPress));
   assert('list-longpress-cancel', popClosed === true && w2.longPress.tabsUnchanged === true, JSON.stringify(w2.longPress));
 

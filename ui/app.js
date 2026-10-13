@@ -792,6 +792,7 @@
   var listsUnsubscribe = null, listsRefreshing = false, listsDirty = false;
   function refreshLibrary() {
     listsDirty = true;
+    if (reorderGesture && reorderGesture.armed) return;
     if (listsRefreshing) return;
     listsRefreshing = true;
     function pull() {
@@ -800,6 +801,7 @@
       Promise.all([listsSaveChain, saveChain]).then(function () {
         var edit = libraryEdit;
         return Promise.all([readLists(), loadPlaylist()]).then(function (values) {
+          if (reorderGesture && reorderGesture.armed) { listsDirty = true; return; }
           if (edit !== libraryEdit) { listsDirty = true; return; }
           var read = values[0], tracks = values[1];
           if (!read.ok || !Array.isArray(read.value)) return;
@@ -821,7 +823,7 @@
           if (oldNames !== listNamesKey() || changedTracks) renderAll();
         });
       }).catch(function (e) { console.warn('[player] 歌单刷新失败', e); }).then(function () {
-        if (listsDirty) pull();
+        if (listsDirty && !(reorderGesture && reorderGesture.armed)) pull();
         else listsRefreshing = false;
       });
     }
@@ -2070,7 +2072,7 @@
       var active = l.id === state.activeList;
       html += '<button class="list-tab' + (active ? ' is-active' : '') + '" id="listTab' + i + '" type="button" role="tab"' +
         ' aria-selected="' + (active ? 'true' : 'false') + '" data-list="' + esc(l.id) + '"' +
-        ' title="' + esc(l.name || label) + '">' + esc(label) + '</button>';
+        ' aria-keyshortcuts="Alt+Shift+ArrowLeft Alt+Shift+ArrowRight" aria-description="长按拖动排序" title="' + esc(l.name || label) + '">' + esc(label) + '</button>';
     }
     listTabs.innerHTML = html;
     if (state.activeList !== lastActiveTabId) {
@@ -2167,6 +2169,21 @@
   });
 
   function renderQueue() {
+    if (reorderGesture && reorderGesture.armed) {
+      if (state.activeList !== reorderGesture.list) cancelReorder(false);
+      else {
+        // 播放与元数据可以更新；握住的 DOM 和几何在落位之前保留。
+        queueList.querySelectorAll('.q-row').forEach(function (row) {
+          row.classList.toggle('is-current', row.getAttribute('data-uid') === state.currentUid);
+        });
+        return;
+      }
+    }
+    var focused = document.activeElement;
+    var focusedRow = focused && focused.closest && focused.closest('.q-hit') ? focused.closest('.q-row') : null;
+    var focusedTab = focused && focused.closest ? focused.closest('.list-tab') : null;
+    var focusUid = focusedRow ? focusedRow.getAttribute('data-uid') : null;
+    var focusList = focusedTab ? focusedTab.getAttribute('data-list') : null;
     if (queueSearchList !== state.activeList) {
       queueSearchList = state.activeList;
       queueSearchOpen = false;
@@ -2181,7 +2198,9 @@
       var t = vis[i];
       var cur = t.uid === state.currentUid;
       html += '<li class="q-row' + (cur ? ' is-current' : '') + '" id="qRow' + i + '" data-id="' + esc(t.id) + '" data-uid="' + esc(t.uid) + '">' +
-        '<button class="q-hit" id="qHit' + i + '" type="button" title="' + esc(t.title + (t.artist ? ' — ' + t.artist : '')) + '">' +
+        '<button class="q-hit" id="qHit' + i + '" type="button"' +
+          (state.activeList !== 'recent' && !queueSearchText(queueSearchQuery) ? ' aria-keyshortcuts="Alt+Shift+ArrowUp Alt+Shift+ArrowDown" aria-description="长按拖动排序"' : (queueSearchText(queueSearchQuery) ? ' aria-description="清空搜索后可拖动排序"' : '')) +
+          ' title="' + esc(t.title + (t.artist ? ' — ' + t.artist : '')) + '">' +
           '<span class="q-cover"></span>' +
           '<span class="q-meta">' +
             '<span class="q-title">' + esc(t.title) + '</span>' +
@@ -2212,12 +2231,21 @@
     if (qt && !renaming) qt.textContent = (act && act.name) || '播放队列';
     var rb = $('renameBtn');
     if (rb) rb.hidden = !(act && act.id !== 'local' && act.id !== 'fav' && act.id !== 'recent');
+    if (focusUid || focusList) {
+      var entries = (focusUid ? queueList : listTabs).querySelectorAll(focusUid ? '.q-row' : '.list-tab');
+      var found = Array.prototype.find.call(entries, function (el) { return el.getAttribute(focusUid ? 'data-uid' : 'data-list') === (focusUid || focusList); });
+      if (found) {
+        var focusTarget = focusUid ? found.querySelector('.q-hit') : found;
+        try { focusTarget.focus({ preventScroll: true }); } catch (e) { focusTarget.focus(); }
+      }
+    }
   }
 
   /* 把正在播的那首滚进队列可视区中部。切列表 / 切歌时调（罐头拍板）。
    * 为什么不在 renderQueue 里无条件重建后就居中：点心/移出等操作也会重渲染，
    * 那时不该抢用户的滚动位置。所以只在两个明确时机调。 */
   function centerCurrentInQueue() {
+    if (reorderGesture && reorderGesture.armed) return;
     if (!queueList) return;
     var row = queueList.querySelector('.q-row.is-current');
     if (!row) return;
@@ -5198,6 +5226,309 @@
     pop.style.left = left + 'px';
   }
 
+  /* ---------- 长按排序：稳定 DOM、局部弹簧、松手一次提交 ---------- */
+  var reorderGesture = null, reorderPending = false, reorderClick = null;
+  var REORDER_HOLD_MS = 450, REORDER_SLOP = 8;
+
+  function movedBefore(items, key, beforeKey, keyOf) {
+    var source = null, rest = [];
+    items.forEach(function (item) { if (keyOf(item) === key) source = item; else rest.push(item); });
+    if (!source) return null;
+    var at = beforeKey === null ? rest.length : rest.findIndex(function (item) { return keyOf(item) === beforeKey; });
+    if (at < 0) return null;
+    rest.splice(at, 0, source);
+    return rest;
+  }
+  function restoreReorderKeys(items, keys, keyOf) {
+    var byKey = Object.create(null), known = Object.create(null), at = 0;
+    items.forEach(function (item) { byKey[keyOf(item)] = item; });
+    var ordered = keys.filter(function (key) { known[key] = true; return !!byKey[key]; });
+    return items.map(function (item) { return known[keyOf(item)] ? byKey[ordered[at++]] : item; });
+  }
+  function putTrackOrder(list, own) {
+    var at = 0;
+    state.tracks = state.tracks.map(function (t) { return t.list === list && !t.detached ? own[at++] : t; });
+  }
+  function submitReorder(kind, key, beforeKey, list) {
+    if (reorderPending) return false;
+    var keyOf = kind === 'tabs' ? function (l) { return l.id; } : function (t) { return t.uid; };
+    var own = kind === 'tabs' ? state.lists : state.tracks.filter(function (t) { return t.list === list && !t.detached; });
+    var next = movedBefore(own, key, beforeKey, keyOf);
+    if (!next) { toast('列表已更新，请重新拖动'); refreshLibrary(); return false; }
+    var previous = own.map(keyOf), target = kind === 'tracks' ? trackByUid(key) : null;
+    var anchor = kind === 'tracks' && beforeKey ? trackByUid(beforeKey) : null;
+    var payload = kind === 'tabs' ? { id: key, beforeId: beforeKey } : {
+      list: list, id: target.id, url: target.raw.url || target.url,
+      beforeId: anchor ? anchor.id : null, beforeUrl: anchor ? (anchor.raw.url || anchor.url) : null
+    };
+    if (kind === 'tabs') { state.lists = next; listsBase = copyLists(next); }
+    else { putTrackOrder(list, next); playlistBase = state.tracks.filter(function (t) { return !t.detached; }).map(toStoredTrack); }
+    libraryEdit++;
+    reorderPending = true;
+    // 同一页面的改名、导入、切歌落盘先落定，服务器也使用同一个串行写者。
+    var pending = Promise.all([listsSaveChain, saveChain]).then(function () {
+      return apiPostJson(kind === 'tabs' ? ENDPOINT.lists + '/reorder' : API + '/api/playlist/reorder', payload);
+    }).then(function (res) {
+      if (!res.ok || !res.body || !res.body.ok) throw new Error((res.body && res.body.error) || '排序写入失败');
+    }).catch(function (err) {
+      // 只恢复排序，不能拿整份旧快照覆盖期间的新曲目、改名或删除。
+      if (kind === 'tabs') { state.lists = restoreReorderKeys(state.lists, previous, keyOf); listsBase = null; }
+      else {
+        var latest = state.tracks.filter(function (t) { return t.list === list && !t.detached; });
+        putTrackOrder(list, restoreReorderKeys(latest, previous, keyOf)); playlistBase = null;
+      }
+      libraryEdit++;
+      console.warn('[player] 排序保存失败', err);
+      toast('排序未保存，已恢复并重新同步列表');
+    });
+    if (kind === 'tabs') listsSaveChain = pending;
+    else saveChain = pending;
+    pending.then(function () {
+      reorderPending = false;
+      renderQueue();
+      refreshLibrary();
+    });
+    return true;
+  }
+
+  function reorderLayout(p) {
+    var order = p.items.slice(), source = order.splice(p.originalIndex, 1)[0];
+    order.splice(p.index, 0, source);
+    var pos = p.first;
+    order.forEach(function (item) { item.dest = pos; item.target = pos - item.start; pos += item.size + p.gap; });
+    p.order = order;
+  }
+  function reorderSpring(item, field, velocity, target, dt) {
+    // 两个小步限制低帧率数值误差；阻尼略低于临界值，只有克制的回弹。
+    for (var i = 0; i < 2; i++) {
+      item[velocity] += (520 * (target - item[field]) - 32 * item[velocity]) * dt / 2;
+      item[field] += item[velocity] * dt / 2;
+    }
+  }
+  function reorderFrame(now) {
+    var p = reorderGesture;
+    if (!p || !p.armed) return;
+    var dt = Math.min(0.034, Math.max(0.001, (now - (p.lastFrame || now - 16)) / 1000));
+    p.lastFrame = now;
+    var scroll = p.horizontal ? p.container.scrollLeft : p.container.scrollTop;
+    if (p.phase === 'drag') {
+      var bounds = p.container.getBoundingClientRect();
+      var low = p.horizontal ? bounds.left : bounds.top, high = p.horizontal ? bounds.right : bounds.bottom;
+      var edge = Math.min(40, (high - low) / 4), speed = 0;
+      if (p.pointer < low + edge) speed = -Math.pow(Math.min(1, (low + edge - p.pointer) / edge), 2) * 420;
+      else if (p.pointer > high - edge) speed = Math.pow(Math.min(1, (p.pointer - high + edge) / edge), 2) * 420;
+      if (p.moved && speed) {
+        if (p.horizontal) p.container.scrollLeft += speed * dt;
+        else p.container.scrollTop += speed * dt;
+        scroll = p.horizontal ? p.container.scrollLeft : p.container.scrollTop;
+      }
+      // 中心可以到首尾边缘；否则等高行被边界钳住，会永远跨不过首项/末项中心。
+      p.ghostPos = Math.max(p.first - p.source.size / 2, Math.min(p.last - p.source.size / 2, p.source.start + p.pointer - p.down + scroll - p.scrollStart));
+      var center = p.ghostPos + p.source.size / 2;
+      while (p.index < p.items.length - 1) {
+        var right = p.order[p.index + 1];
+        if (center <= right.dest + right.size / 2 + 4) break;
+        p.index++; reorderLayout(p);
+      }
+      while (p.index > 0) {
+        var left = p.order[p.index - 1];
+        if (center >= left.dest + left.size / 2 - 4) break;
+        p.index--; reorderLayout(p);
+      }
+    } else {
+      if (p.reduce) p.ghostPos = p.source.dest;
+      else reorderSpring(p, 'ghostPos', 'ghostVelocity', p.source.dest, dt);
+    }
+    var quiet = true;
+    p.items.forEach(function (item) {
+      if (item === p.source) return;
+      var distance = Math.abs(item.dest + item.size / 2 - p.ghostPos - p.source.size / 2);
+      var pressure = p.phase === 'drag' && p.moved ? Math.pow(Math.max(0, 1 - distance / ((item.size + p.source.size) / 2 + 36)), 3) : 0;
+      var scaleTarget = p.reduce ? 1 : 1 - 0.035 * pressure;
+      if (p.reduce) { item.offset = item.target; item.scale = 1; }
+      else { reorderSpring(item, 'offset', 'velocity', item.target, dt); reorderSpring(item, 'scale', 'scaleVelocity', scaleTarget, dt); }
+      var transform = p.horizontal
+        ? 'translate3d(' + item.offset.toFixed(2) + 'px,0,0) scale(' + item.scale.toFixed(4) + ',1)'
+        : 'translate3d(0,' + item.offset.toFixed(2) + 'px,0) scale(1,' + item.scale.toFixed(4) + ')';
+      if (transform !== item.transform) { item.el.style.transform = transform; item.transform = transform; }
+      if (Math.abs(item.offset - item.target) > 0.15 || Math.abs(item.velocity) > 1 || Math.abs(item.scale - 1) > 0.001) quiet = false;
+    });
+    var lift = p.reduce ? 1 : (p.phase === 'drag' ? 1.015 : 1 + 0.015 * Math.max(0, 1 - (now - p.settleAt) / 180));
+    p.ghost.style.transform = p.horizontal
+      ? 'translate3d(' + (p.ghostPos - scroll).toFixed(2) + 'px,' + p.cross + 'px,0) scale(' + lift + ')'
+      : 'translate3d(' + p.cross + 'px,' + (p.ghostPos - scroll).toFixed(2) + 'px,0) scale(' + lift + ')';
+    if (p.phase === 'settle' && ((quiet && Math.abs(p.ghostPos - p.source.dest) < 0.2 && now - p.settleAt >= 180) || now - p.settleAt > 600 || p.reduce)) {
+      finishReorder(); return;
+    }
+    p.frame = requestAnimationFrame(reorderFrame);
+  }
+  function finishReorder(repaint) {
+    var p = reorderGesture;
+    if (!p) return;
+    reorderGesture = null;
+    clearTimeout(p.timer); cancelAnimationFrame(p.frame || 0);
+    if (p.pointerId !== null) { try { p.container.releasePointerCapture(p.pointerId); } catch (e) {} }
+    p.container.classList.remove('is-reorder-press', 'is-reordering');
+    if (p.items) p.items.forEach(function (item) { item.el.style.removeProperty('transform'); item.el.classList.remove('is-reorder-source'); });
+    if (p.layer) p.layer.remove();
+    if (p.armed && repaint !== false) renderQueue();
+    if (listsDirty && repaint !== false) refreshLibrary();
+  }
+  function cancelReorder(repaint) {
+    var p = reorderGesture;
+    if (p && p.armed) reorderClick = { container: p.container, until: Date.now() + 800 };
+    finishReorder(repaint);
+  }
+  function armReorder(p) {
+    if (reorderGesture !== p || !p.el.isConnected) return;
+    p.container.classList.add('is-reordering');
+    var cr = p.container.getBoundingClientRect(), qr = queue.getBoundingClientRect();
+    var scroll = p.horizontal ? p.container.scrollLeft : p.container.scrollTop;
+    p.items = Array.prototype.map.call(p.container.querySelectorAll(p.selector), function (el) {
+      var r = el.getBoundingClientRect();
+      return { el: el, key: el.getAttribute(p.attribute), start: (p.horizontal ? r.left - cr.left : r.top - cr.top) + scroll,
+        size: p.horizontal ? r.width : r.height, offset: 0, velocity: 0, scale: 1, scaleVelocity: 0 };
+    });
+    p.originalIndex = p.items.findIndex(function (item) { return item.el === p.el; });
+    if (p.originalIndex < 0) { cancelReorder(); return; }
+    p.source = p.items[p.originalIndex]; p.index = p.originalIndex;
+    p.first = p.items[0].start;
+    p.gap = p.items.length > 1 ? Math.max(0, p.items[1].start - p.items[0].start - p.items[0].size) : 0;
+    p.last = p.items[p.items.length - 1].start + p.items[p.items.length - 1].size;
+    p.scrollStart = scroll; p.ghostPos = p.source.start; p.ghostVelocity = 0;
+    p.reduce = reducedMotion() || SHOT;
+    var r = p.el.getBoundingClientRect();
+    p.cross = p.horizontal ? r.top - cr.top : r.left - cr.left;
+    p.layer = document.createElement('div'); p.layer.className = 'reorder-layer'; p.layer.setAttribute('aria-hidden', 'true');
+    p.layer.style.cssText = 'left:' + (cr.left - qr.left) + 'px;top:' + (cr.top - qr.top) + 'px;width:' + cr.width + 'px;height:' + cr.height + 'px';
+    p.ghost = p.el.cloneNode(true); p.ghost.removeAttribute('id');
+    p.ghost.querySelectorAll('[id]').forEach(function (el) { el.removeAttribute('id'); });
+    p.ghost.setAttribute('inert', ''); p.ghost.classList.add('reorder-ghost');
+    p.ghost.style.width = r.width + 'px'; p.ghost.style.height = r.height + 'px';
+    p.layer.appendChild(p.ghost); queue.appendChild(p.layer);
+    p.el.classList.add('is-reorder-source');
+    p.armed = true; p.phase = 'drag';
+    closePops(); reorderLayout(p);
+    if (p.pointerId !== null) { try { p.container.setPointerCapture(p.pointerId); } catch (e) {} }
+    p.frame = requestAnimationFrame(reorderFrame);
+  }
+  function beginReorder(container, kind, e, pointerId, touchId) {
+    if (reorderGesture || reorderPending || renaming || (kind === 'tabs' ? !listsBase : !playlistBase)) return;
+    var hit = e.target.closest(kind === 'tabs' ? '.list-tab' : '.q-hit');
+    if (!hit || !container.contains(hit)) return;
+    var el = kind === 'tabs' ? hit : hit.closest('.q-row');
+    if (kind === 'tracks' && (state.activeList === 'recent' || queueSearchText(queueSearchQuery))) return;
+    reorderClick = null;
+    var p = reorderGesture = { container: container, kind: kind, list: state.activeList, el: el,
+      selector: kind === 'tabs' ? '.list-tab' : '.q-row', attribute: kind === 'tabs' ? 'data-list' : 'data-uid',
+      horizontal: kind === 'tabs', pointerId: pointerId, touchId: touchId, downX: e.clientX, downY: e.clientY,
+      down: kind === 'tabs' ? e.clientX : e.clientY, pointer: kind === 'tabs' ? e.clientX : e.clientY, moved: false, armed: false };
+    container.classList.add('is-reorder-press');
+    p.timer = setTimeout(function () { armReorder(p); }, REORDER_HOLD_MS);
+  }
+  function moveReorder(e) {
+    var p = reorderGesture;
+    if (!p || p.phase === 'settle') return;
+    var travel = Math.max(Math.abs(e.clientX - p.downX), Math.abs(e.clientY - p.downY));
+    if (!p.armed) { if (travel > REORDER_SLOP) cancelReorder(); return; }
+    p.pointer = p.horizontal ? e.clientX : e.clientY;
+    if (travel > REORDER_SLOP) p.moved = true;
+  }
+  function dropReorder() {
+    var p = reorderGesture;
+    if (!p || p.phase === 'settle') return;
+    if (!p.armed) { finishReorder(); return; }
+    reorderClick = { container: p.container, until: Date.now() + 800 };
+    if (!p.moved) {
+      finishReorder();
+      return;
+    }
+    // 最后一记 move 和 up 可能落在同一帧，提交前更新命中位置。
+    cancelAnimationFrame(p.frame || 0); reorderFrame(performance.now());
+    if (p.index !== p.originalIndex) {
+      var anchor = p.order[p.index + 1];
+      submitReorder(p.kind, p.source.key, anchor ? anchor.key : null, p.list);
+    }
+    p.phase = 'settle'; p.settleAt = performance.now();
+  }
+  function bindReorder(container, kind) {
+    container.addEventListener('pointerdown', function (e) {
+      if (e.pointerType === 'touch' || e.button !== 0 || e.isPrimary === false) return;
+      reorderClick = null; // 下一次真实按下代表新操作，不吞掉红心/更多按钮。
+      beginReorder(container, kind, e, e.pointerId, null);
+    });
+    container.addEventListener('touchstart', function (e) {
+      if (e.touches.length !== 1) { cancelReorder(); return; }
+      reorderClick = null;
+      var t = e.touches[0];
+      beginReorder(container, kind, { target: e.target, clientX: t.clientX, clientY: t.clientY }, null, t.identifier);
+    }, { passive: true });
+    container.addEventListener('scroll', function () { if (reorderGesture && reorderGesture.container === container && !reorderGesture.armed) cancelReorder(); }, { passive: true });
+    container.addEventListener('pointerleave', function () { if (reorderGesture && reorderGesture.container === container && !reorderGesture.armed && reorderGesture.touchId === null) cancelReorder(); });
+    ['click', 'dblclick'].forEach(function (event) {
+      container.addEventListener(event, function (e) {
+        if ((reorderGesture && reorderGesture.armed) || (e.detail !== 0 && reorderClick && reorderClick.container === container && Date.now() < reorderClick.until)) {
+          e.preventDefault(); e.stopImmediatePropagation();
+        }
+      }, true);
+    });
+    container.addEventListener('contextmenu', function (e) {
+      if (reorderGesture) { e.preventDefault(); e.stopImmediatePropagation(); }
+    }, true);
+    container.addEventListener('keydown', function (e) {
+      if (!e.altKey || !e.shiftKey || reorderGesture || reorderPending) return;
+      var backwards = e.key === (kind === 'tabs' ? 'ArrowLeft' : 'ArrowUp');
+      if (!backwards && e.key !== (kind === 'tabs' ? 'ArrowRight' : 'ArrowDown')) return;
+      if (kind === 'tracks' && (state.activeList === 'recent' || queueSearchText(queueSearchQuery))) return;
+      var item = e.target.closest(kind === 'tabs' ? '.list-tab' : '.q-row');
+      if (!item) return;
+      var attr = kind === 'tabs' ? 'data-list' : 'data-uid', key = item.getAttribute(attr);
+      var els = Array.prototype.slice.call(container.querySelectorAll(kind === 'tabs' ? '.list-tab' : '.q-row'));
+      var at = els.indexOf(item), to = at + (backwards ? -1 : 1);
+      if (to < 0 || to >= els.length) return;
+      e.preventDefault();
+      var before = backwards ? els[to] : els[to + 1];
+      if (submitReorder(kind, key, before ? before.getAttribute(attr) : null, state.activeList)) {
+        renderQueue();
+        var focus = Array.prototype.find.call(container.querySelectorAll(kind === 'tabs' ? '.list-tab' : '.q-row'), function (el) { return el.getAttribute(attr) === key; });
+        if (focus) (kind === 'tabs' ? focus : focus.querySelector('.q-hit')).focus();
+      }
+    });
+  }
+  bindReorder(queueList, 'tracks');
+  if (listTabs) bindReorder(listTabs, 'tabs');
+  document.addEventListener('pointermove', function (e) {
+    if (!reorderGesture || reorderGesture.pointerId !== e.pointerId) return;
+    if (reorderGesture.armed) e.preventDefault();
+    moveReorder(e);
+  }, { passive: false });
+  document.addEventListener('pointerup', function (e) { if (reorderGesture && reorderGesture.pointerId === e.pointerId) dropReorder(); });
+  document.addEventListener('pointercancel', function (e) { if (reorderGesture && reorderGesture.pointerId === e.pointerId) cancelReorder(); });
+  document.addEventListener('lostpointercapture', function (e) { if (reorderGesture && reorderGesture.pointerId === e.pointerId && reorderGesture.phase === 'drag') cancelReorder(); });
+  document.addEventListener('touchmove', function (e) {
+    var p = reorderGesture;
+    if (!p || p.touchId === null) return;
+    if (e.touches.length !== 1) { cancelReorder(); return; }
+    if (p.armed && e.cancelable) e.preventDefault();
+    var t = e.touches[0]; moveReorder({ clientX: t.clientX, clientY: t.clientY });
+  }, { passive: false });
+  document.addEventListener('touchend', function (e) {
+    var p = reorderGesture;
+    if (!p || p.touchId === null) return;
+    if (Array.prototype.some.call(e.changedTouches, function (t) { return t.identifier === p.touchId; })) {
+      if (p.armed && e.cancelable) e.preventDefault();
+      dropReorder();
+    }
+  }, { passive: false });
+  document.addEventListener('touchcancel', function () { if (reorderGesture && reorderGesture.touchId !== null) cancelReorder(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && reorderGesture && reorderGesture.phase !== 'settle') { e.preventDefault(); e.stopImmediatePropagation(); cancelReorder(); } }, true);
+  window.addEventListener('blur', function () { if (reorderGesture && reorderGesture.phase !== 'settle') cancelReorder(); });
+  window.addEventListener('pagehide', function () { cancelReorder(false); });
+  document.addEventListener('visibilitychange', function () { if (document.hidden) cancelReorder(); });
+  if (window.ResizeObserver) new ResizeObserver(function () {
+    if (reorderGesture && reorderGesture.armed && reorderGesture.phase !== 'settle') cancelReorder();
+  }).observe(queue);
+
   queueList.addEventListener('click', function (e) {
     // 空列表引导按钮（本地页）
     if (e.target.closest('#localPickBtn')) { pickLocalFolder(); return; }
@@ -5243,7 +5574,7 @@
   });
 
   /* 顶部歌单切换条 */
-  var suppressTabId = '';   // 长按弹删除浮层后，紧随释放的 click 不当作切列表
+  var suppressTabId = '';   // 管理菜单打开后，锚点上的 click 不误切列表
   if (listTabs) {
     // 溢出提示：滚动位置一变就重算两侧渐隐；宿主改宽（ResizeObserver）也要跟着重算
     listTabs.addEventListener('scroll', updateTabFade, { passive: true });
@@ -5283,18 +5614,7 @@
       e.preventDefault();
       openListPop(tab);
     });
-    // 长按导入列表 → 同上（移动端手感）
-    listTabs.addEventListener('pointerdown', function (e) {
-      var tab = e.target.closest('.list-tab');
-      if (!tab) return;
-      var id = tab.getAttribute('data-list');
-      if (!id || id === 'local') return;
-      cancelListPress();
-      listPressTimer = setTimeout(function () { listPressTimer = 0; openListPop(tab); }, 520);
-    });
-    ['pointerup', 'pointercancel', 'pointerleave', 'pointermove'].forEach(function (ev) {
-      listTabs.addEventListener(ev, cancelListPress);
-    });
+    // 长按只排序；歌单管理留给右键。
   }
 
   /* ---------- 歌单重命名（内联编辑，不用模态） ---------- */
@@ -5328,12 +5648,8 @@
   function cancelRename() { renaming = false; renderQueue(); }
   if ($('renameBtn')) $('renameBtn').addEventListener('click', function (e) { e.stopPropagation(); startRename(); });
 
-  /* ---------- 歌单删除（长按 / 右键导入列表，拍板 4）---------- */
-  var listPressTimer = 0;
+  /* ---------- 歌单删除（右键导入列表）---------- */
   var listDeleteTarget = null;
-  function cancelListPress() {
-    if (listPressTimer) { clearTimeout(listPressTimer); listPressTimer = 0; }
-  }
   function openListPop(tab) {
     if (!tab) return;
     var id = tab.getAttribute('data-list');
@@ -6185,6 +6501,15 @@
   var searchPage = $('searchPage');
   var searchList = $('searchList');
   var searchNoteEl = $('searchNote');
+  var REPOSITORY_URL = 'https://github.com/wqh0201-stack/hanako-simple-player';
+  $('repoLinkBtn').addEventListener('click', function () {
+    try {
+      if (!window.hana || !window.hana.external || typeof window.hana.external.open !== 'function') throw new Error('宿主跳转尚未就绪');
+      Promise.resolve(window.hana.external.open({ url: REPOSITORY_URL })).catch(function (err) {
+        console.warn('[player] 仓库跳转失败', err); toast('暂时无法打开仓库，请稍后重试');
+      });
+    } catch (err) { toast('暂时无法打开仓库，请稍后重试'); }
+  });
   var searchInput = $('searchInput');
   var searchServersEl = $('searchServers');
   var searchScopeEl = $('searchScope');

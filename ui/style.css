@@ -1083,6 +1083,28 @@ button:disabled { cursor: default; }
 .q-row:hover { background: var(--hv-row); }
 .q-row.is-current { background: var(--hk-accent-soft); }
 
+/* 拖动只更新 transform。幽灵在 queue 内部，随滚动重定位，不使用 fixed。 */
+.is-reorder-press > .q-row:active,
+.is-reorder-press > .list-tab:active { transform: none; }
+.is-reordering > .q-row,
+.is-reordering > .list-tab { transition: background-color .16s ease, color .16s ease; }
+.is-reordering { user-select: none; -webkit-user-select: none; cursor: grabbing; }
+.is-reorder-source { opacity: .18; }
+.reorder-layer { position: absolute; z-index: 45; pointer-events: none; overflow: hidden; }
+.reorder-ghost {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  box-sizing: border-box;
+  background: var(--hk-surface);
+  box-shadow: 0 5px 16px color-mix(in srgb, var(--hk-text) 18%, transparent), inset 0 0 0 1px var(--hk-hairline);
+  transition: none;
+  will-change: transform;
+}
+.reorder-ghost.list-tab.is-active { background: var(--hk-accent); }
+.reorder-ghost.q-row.is-current { background: color-mix(in srgb, var(--hk-accent) 12%, var(--hk-surface)); }
+
 .q-hit {
   flex: 1 1 auto;
   min-width: 0;
@@ -2464,7 +2486,13 @@ body.is-shot *::after {
  * 从歌手名进来时范围已经定好，平台很少改。
  * 「歌曲结果 / 歌手结果」那行省掉：范围按钮的选中态 + 底部「共 N 条 · 来自 X」已说全。
  * 宽窗维持原样（平台与范围跟在输入框后面，同一行放得下）。 */
-.player:not([data-layout="wide"]) .search-head { padding: 10px 12px 8px; gap: 8px; }
+.player:not([data-layout="wide"]) .search-head { padding: 6px 12px 4px; gap: 4px; }
+.player:not([data-layout="wide"]) .search-bar { padding-top: 3px; padding-bottom: 3px; }
+.player:not([data-layout="wide"]) .search-go { padding: 3px 10px; line-height: 1.3; }
+.player:not([data-layout="wide"]) .search-input { line-height: 1.3; }
+.player:not([data-layout="wide"]) .search-server { padding-top: 3px; padding-bottom: 3px; line-height: 1.3; }
+.player:not([data-layout="wide"]) .search-scope-btn { padding: 3px 10px; line-height: 1.3; }
+.player:not([data-layout="wide"]) .search-head .back-btn { padding-top: 4px; padding-bottom: 4px; line-height: 1.3; }
 /* 搜索框的 flex-basis 压到 0：它的“内容尺寸”会被 <input> 的固有宽度撑得很大，
    在极窄卡里会把返回键顶到自己一行（头部变三行）。basis 0 + 增长 = 它只占满余量、不抢行。 */
 .player:not([data-layout="wide"]) .search-bar { flex: 1 1 0; min-width: 140px; }
@@ -2731,3 +2759,29 @@ body.is-shot *::after {
   color: var(--hk-muted);
 }
 .search-note:empty { display: none; }
+.search-footer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding: 4px 14px 6px;
+}
+.repo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  max-width: 100%;
+  padding: 4px 2px;
+  border-radius: var(--radius-s);
+  color: var(--hk-muted);
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+}
+.repo-link .icon { flex: 0 0 auto; width: 17px; height: 17px; }
+.repo-link:hover,
+.repo-link:focus-visible { color: var(--hk-accent); }
+.search-footer .search-note { flex: 1 1 160px; min-height: 0; padding: 0; }
+.player:not([data-layout="wide"]) .search-footer { padding-bottom: 4px; }
