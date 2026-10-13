@@ -52,7 +52,7 @@ for (const [name,width,height,theme,detached] of shots) {
   await page.evaluate(()=>{localStorage.removeItem('hana_audio_play_lock');const x=document.querySelector('.pl-item[data-i="0"]');if(x)x.click();});
   await page.evaluate(name=>{if(name==='short-card'){const q=document.getElementById('queuePageToggle');if(q)q.click();}else if(name==='large-type-no-lyrics'){document.body.style.fontSize='22px';const b=document.querySelector('.mode-caps .mc[data-m="0"]');if(b)b.click();}else if(name.startsWith('wide-window')){const q=document.getElementById('drawerToggle');if(q)q.click();}else{const b=document.querySelector('.mode-caps .mc[data-m="1"]');if(b)b.click();}},name);
   await new Promise(r=>setTimeout(r,1400));
-  await page.screenshot({path:path.join(repo,'docs/design-proposals/implementation-screenshots',`${name}.png`)});
+  await page.screenshot({path:path.join(repo,'docs/archive/design-proposals/implementation-screenshots',`${name}.png`)});
   report.shots.push({name,width,height,theme,mode:detached?'detached fixture route':'card fixture route',bodyClass:await page.$eval('body',e=>e.className),root:await page.$eval('.player-container',e=>({w:e.clientWidth,h:e.clientHeight,classes:e.className})),headerVisible:await page.$eval('.header',e=>e.getBoundingClientRect().height>0)});
 }
 await page.setViewport({width:465,height:930});
@@ -110,6 +110,6 @@ report.lyricRace=await racePage.evaluate(async()=>{
 });
 await racePage.close();
 report.runtimeErrors=errors;
-fs.writeFileSync(path.join(repo,'docs/design-proposals/implementation-screenshots/verification.json'),JSON.stringify(report,null,2));
+fs.writeFileSync(path.join(repo,'docs/archive/design-proposals/implementation-screenshots/verification.json'),JSON.stringify(report,null,2));
 await page.close(); await browser.close(); server.closeAllConnections(); server.close();
 console.log(JSON.stringify(report,null,2)); process.exit(0);

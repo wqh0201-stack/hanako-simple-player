@@ -4,7 +4,7 @@
 本文件记录待办与实施建议；以下编号是新的执行顺序，不是原评审问题编号。
 
 > **状态（2026-10-13）**：本节第 3 项「首次欢迎歌」已在 1.0.5 落地
-> （见 `docs/player-ui/WELCOME-SONG.md`）。本文件的聚合入口改为 [`docs/TODO.md`](../../TODO.md)，
+> （见 `docs/player-ui/handoffs/WELCOME-SONG.md`）。本文件的聚合入口改为 [`docs/TODO.md`](../TODO.md)，
 > 未完成项的当前状态以那里为准。
 
 ## 1. 文字对比度（原评审问题 ②）

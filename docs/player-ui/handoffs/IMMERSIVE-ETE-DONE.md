@@ -42,21 +42,21 @@
 
 截图与验收记录已归档到 `assets/ete/`。这些是浏览器夹具，未包含 Hana 原生浮动标题栏。
 
-- [方图 · 浅主题玻璃](/Volumes/SSD/hanadesk/hanako-audio-player-simple/docs/player-ui/assets/ete/ete-square-glass-1040x780-light.png)
+- [方图 · 浅主题玻璃](../assets/ete/ete-square-glass-1040x780-light.png)
 
-- [底栏隐藏 · 全高背景](/Volumes/SSD/hanadesk/hanako-audio-player-simple/docs/player-ui/assets/ete/ete-hidden-1040x780-light.png)
+- [底栏隐藏 · 全高背景](../assets/ete/ete-hidden-1040x780-light.png)
 
-- [横图 · 深主题玻璃](/Volumes/SSD/hanadesk/hanako-audio-player-simple/docs/player-ui/assets/ete/ete-landscape-glass-1040x780-dark.png)
+- [横图 · 深主题玻璃](../assets/ete/ete-landscape-glass-1040x780-dark.png)
 
-- [竖图 · 稳定阅读列](/Volumes/SSD/hanadesk/hanako-audio-player-simple/docs/player-ui/assets/ete/ete-portrait-glass-1040x780-dark.png)
+- [竖图 · 稳定阅读列](../assets/ete/ete-portrait-glass-1040x780-dark.png)
 
-- [搜索 · 主题色与顶部安全区](/Volumes/SSD/hanadesk/hanako-audio-player-simple/docs/player-ui/assets/ete/ete-search-solid-1040x780-light.png)
+- [搜索 · 主题色与顶部安全区](../assets/ete/ete-search-solid-1040x780-light.png)
 
-- [窄卡 · 播放](/Volumes/SSD/hanadesk/hanako-audio-player-simple/docs/player-ui/assets/ete/refine-312x494-light-lyrics-on.png)
+- [窄卡 · 播放](../assets/ete/refine-312x494-light-lyrics-on.png)
 
-- [窄卡 · 搜索](/Volumes/SSD/hanadesk/hanako-audio-player-simple/docs/player-ui/assets/ete/search-header-narrow-312x494-light.png)
+- [窄卡 · 搜索](../assets/ete/search-header-narrow-312x494-light.png)
 
-- [验收记录](/Volumes/SSD/hanadesk/hanako-audio-player-simple/docs/player-ui/assets/ete/verification.json)
+- [验收记录](../assets/ete/verification.json)
 
 ## 尚需 Hana 真机验收的边界
 

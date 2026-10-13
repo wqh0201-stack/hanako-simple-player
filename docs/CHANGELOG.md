@@ -1,10 +1,10 @@
 # 变更日志
 
 面向读者的版本级记录。每轮的详细技术交接（改了什么文件、断言编号、踩坑根因）
-在各轮 `docs/player-ui/*-DONE.md` 里，本文只留「这一版对用户意味着什么」。
+在各轮 `docs/player-ui/handoffs/*-DONE.md` 里，本文只留「这一版对用户意味着什么」。
 
 约定：版本号见 `manifest.json`；构建号见 `ui/_build.json`。
-发布流程与市场登记见 `docs/player-ui/MARKET-ENROLL-1.0.0.md`。
+发布流程与市场登记见 `docs/player-ui/handoffs/MARKET-ENROLL-1.0.0.md`。
 
 ---
 
@@ -19,7 +19,7 @@
 - 歌手预填可手改，UP 主不作歌手。
 - 验收：cover-catalog 8/8（离线）、backend 32/32、封面专项浏览器断言 18/18、
   全量 verify-ui 367/367。**真机验收通过。**
-- 交接 `docs/player-ui/BILI-COVER-MATCH-DONE.md`。
+- 交接 `docs/player-ui/handoffs/BILI-COVER-MATCH-DONE.md`。
 
 ## 1.0.6 · 2026-10-12
 
@@ -37,7 +37,7 @@
 - 只在「播放列表确实读到 + 确实为空 + 没播过」时播种一次；删歌单或清空后不再补回；
   不进「我的喜欢」。默认待播放，点播放键即响。
 - 首开卡（标题「欢迎使用小花音乐播放器」）顺带教会「＋ 在哪」，点「知道了」永久消失。
-- 验收 310/310。交接 `docs/player-ui/WELCOME-SONG.md`。
+- 验收 310/310。交接 `docs/player-ui/handoffs/WELCOME-SONG.md`。
 
 ## 1.0.4 · 2026-10-12
 
@@ -49,7 +49,7 @@
   加中高频灵敏度滑杆、踩镲高频路径、音频短波 4 层环、三层配色自适应背景。
 - 歌词改为**响应式字号与行数**，并加**连续波浪**动效（换句处位置与速度连续，无跳动）。
 - 最低 Hana 版本提升到 `0.1017.0`。
-- 交接 `docs/player-ui/RIPPLE-MIDHIGH-DONE.md`、`docs/player-ui/LYRIC-FLOW-DONE.md`。
+- 交接 `docs/player-ui/handoffs/RIPPLE-MIDHIGH-DONE.md`、`docs/player-ui/handoffs/LYRIC-FLOW-DONE.md`。
 
 ## 1.0.1 · 2026-10-11
 
@@ -60,7 +60,7 @@
 - 队列行新增「移动到…／复制歌名」；「最近播放」改倒序。
 - 修：B站封面走同源代理（跨源图会被静默丢弃）；复制歌名改手势内同步 `execCommand` 优先。
 - 打包守卫：删除上游遗留资源、加孤儿静态资源检查。
-- 交接 `docs/player-ui/RIPPLE-AUDIO-DONE.md`、`docs/player-ui/RIPPLE-TOOLBOX-DONE.md`。
+- 交接 `docs/player-ui/handoffs/RIPPLE-AUDIO-DONE.md`、`docs/player-ui/handoffs/RIPPLE-TOOLBOX-DONE.md`。
 
 ## 1.0.0 · 2026-10-11
 
@@ -72,7 +72,7 @@
 - ETE 沉浸播放页与稳定歌词阅读轴。
 - 歌词长按拖动对齐节奏、按曲保存偏移。
 - 市场登记 PR #65（`liliMozi/hana-marketplace`），发布物 tag `v1.0.0-simple`。
-- 详见 `docs/player-ui/MARKET-ENROLL-1.0.0.md`。
+- 详见 `docs/player-ui/handoffs/MARKET-ENROLL-1.0.0.md`。
 
 ## 0.9.0 · 2026-10-11
 

@@ -55,4 +55,4 @@
 - 容器尺寸可变的整体适配：大量 `vh`/`vmax`、按"整页"设计的固定高度。
 - 响应式只写了一半：`body.bp-narrow` / `bp-wide` 有 JS 在写，**CSS 全文 0 次使用**。
 
-完整根因、目标形态、两步走流程见 **`docs/REFACTOR-BRIEF.md`**。
+完整根因、目标形态、两步走流程见 **`docs/player-ui/REFACTOR-BRIEF.md`**。

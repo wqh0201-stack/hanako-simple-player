@@ -17,7 +17,7 @@
 - Puppeteer 直接加载实际 `ui/index.html` / `ui/standalone.html`，本地模拟后端 40 首队列和 100 行歌词，无运行时错误。动态测试分两段：第一段在歌词高亮变化期间滚动 40 首队列至队尾，观察到 26 次歌词 DOM 状态变化且队列位置不变；第二段在 531×451 矮卡里进行 20 轮队列开关和列表/搜索页切换，音频未暂停且时间继续前进；另用慢速旧歌词响应切到新曲，确认新曲歌词保留、旧曲歌词不覆盖。
 - 视觉页面截图均来自生产 HTML，主题颜色作为测试 fixture 注入；它们是模拟结果，不代表宿主主题桥或 Hana Builder 验收。
 
-截图与程序结果保存在 [`implementation-screenshots/`](implementation-screenshots/)；可复跑脚本为 [`tools/verify-player.mjs`](../../tools/verify-player.mjs)；当前机器可设 `PUPPETEER_CORE` 和 `CHROME_BIN` 指向 Puppeteer Core 与 Chrome。
+截图与程序结果保存在 [`implementation-screenshots/`](implementation-screenshots/)；可复跑脚本为 [`tools/verify-player.mjs`](../../../tools/verify-player.mjs)；当前机器可设 `PUPPETEER_CORE` 和 `CHROME_BIN` 指向 Puppeteer Core 与 Chrome。
 
 ## 截图
 

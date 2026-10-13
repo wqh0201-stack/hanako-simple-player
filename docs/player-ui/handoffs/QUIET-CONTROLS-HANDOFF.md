@@ -10,12 +10,12 @@
 
 优先级：**用户最新指令 → 本文的音量保留条款 → 本文定稿 → 最新「静听 · 连续布局」草图 → 旧控制栏简报**。
 
-- [可打开的完整预览](refs/quiet-controls/approved-preview.html)：观察交互与缩放动画。
-- [原始草图源码](refs/quiet-controls/approved-fragment.html)：查具体数值、结构与动画。
-- [窗口截图](refs/quiet-controls/window.png)、[长卡截图](refs/quiet-controls/long.png)、[窄卡截图](refs/quiet-controls/narrow.png)。
-- [图标 SVG 文件](refs/quiet-controls/icons/)：已从实际渲染的草图中导出，无需凭截图描摹。
+- [可打开的完整预览](../refs/quiet-controls/approved-preview.html)：观察交互与缩放动画。
+- [原始草图源码](../refs/quiet-controls/approved-fragment.html)：查具体数值、结构与动画。
+- [窗口截图](../refs/quiet-controls/window.png)、[长卡截图](../refs/quiet-controls/long.png)、[窄卡截图](../refs/quiet-controls/narrow.png)。
+- [图标 SVG 文件](../refs/quiet-controls/icons/)：已从实际渲染的草图中导出，无需凭截图描摹。
 - [最新音量交接](REFINE-DONE-VOLUME.md)：必须保留，尤其末尾 §7。
-- [现状说明](CONTROL-BAR-BRIEF.md)：用于定位旧代码；其中“窄卡七等分”“宽窗左翼等距”等旧建议已被本定稿替代。
+- [现状说明](../archive/CONTROL-BAR-BRIEF.md)：用于定位旧代码；其中“窄卡七等分”“宽窗左翼等距”等旧建议已被本定稿替代。
 
 原型只用演示数据，不连接真实音频或 Hana。完整预览的宿主辅助组件使用 CDN；生产只取本地 SVG 与必要的布局/动效，不引入这些 CDN 脚本。
 
@@ -49,15 +49,15 @@
 
 ### 窗口
 
-![静听窗口](refs/quiet-controls/window.png)
+![静听窗口](../refs/quiet-controls/window.png)
 
 ### 长卡
 
-![静听长卡](refs/quiet-controls/long.png)
+![静听长卡](../refs/quiet-controls/long.png)
 
 ### 窄卡
 
-![静听窄卡](refs/quiet-controls/narrow.png)
+![静听窄卡](../refs/quiet-controls/narrow.png)
 
 截图中的封面、歌词、曲目、队列长度都是演示内容。舞台标题的位置、封面处理、曲库业务不属于本次强制重做范围；保留当前生产能力。重点复现控制栏及尺寸切换时的空间连续性。
 
@@ -153,23 +153,23 @@ controlsNarrow = width < 400;
 
 ## 6. 图标：使用提供的形状，不重新凭感觉画
 
-用户认可的图标来自 **Lucide**，不是本次手工原创。预览运行时为 `lucide@1.17.0`。已导出实际形状，原包许可全文放在 [LUCIDE-LICENSE.txt](refs/quiet-controls/icons/LUCIDE-LICENSE.txt)，含其声明的 Feather 衍生部分说明。
+用户认可的图标来自 **Lucide**，不是本次手工原创。预览运行时为 `lucide@1.17.0`。已导出实际形状，原包许可全文放在 [LUCIDE-LICENSE.txt](../refs/quiet-controls/icons/LUCIDE-LICENSE.txt)，含其声明的 Feather 衍生部分说明。
 
 生产复用现有内联 `<symbol>` / `<use>` 机制。把对应 SVG 的子元素移入原 symbol，保留 `viewBox="0 0 24 24"` 和当前 symbol id，统一用 `currentColor`；**不新增在线图标请求、不引入整套运行时、不因此增加 manifest 网络权限**。把图标许可随实际使用的生产包保留。项目整体继续遵循原有 AGPL-3.0。
 
 | 生产 symbol | 已提供文件 | 用法 |
 |---|---|---|
-| `i-search` | [search.svg](refs/quiet-controls/icons/search.svg) | 线描 |
-| `i-heart` | [heart.svg](refs/quiet-controls/icons/heart.svg) | 未喜欢空心，喜欢后 `fill:currentColor` |
-| `i-repeat` | [repeat.svg](refs/quiet-controls/icons/repeat.svg) | 列表循环 |
-| `i-repeat-one` | [repeat-1.svg](refs/quiet-controls/icons/repeat-1.svg) | 单曲循环 |
-| `i-shuffle` | [shuffle.svg](refs/quiet-controls/icons/shuffle.svg) | 随机 |
-| `i-prev` | [skip-back.svg](refs/quiet-controls/icons/skip-back.svg) | 实心三角与端线 |
-| `i-play` | [play.svg](refs/quiet-controls/icons/play.svg) | 实心，视觉上右移约 2px |
-| `i-pause` | [pause.svg](refs/quiet-controls/icons/pause.svg) | 实心双条 |
-| `i-next` | [skip-forward.svg](refs/quiet-controls/icons/skip-forward.svg) | 实心三角与端线 |
-| `i-list` | [list-music.svg](refs/quiet-controls/icons/list-music.svg) | 音乐队列语义 |
-| `i-close` | [x.svg](refs/quiet-controls/icons/x.svg) | 线描关闭 |
+| `i-search` | [search.svg](../refs/quiet-controls/icons/search.svg) | 线描 |
+| `i-heart` | [heart.svg](../refs/quiet-controls/icons/heart.svg) | 未喜欢空心，喜欢后 `fill:currentColor` |
+| `i-repeat` | [repeat.svg](../refs/quiet-controls/icons/repeat.svg) | 列表循环 |
+| `i-repeat-one` | [repeat-1.svg](../refs/quiet-controls/icons/repeat-1.svg) | 单曲循环 |
+| `i-shuffle` | [shuffle.svg](../refs/quiet-controls/icons/shuffle.svg) | 随机 |
+| `i-prev` | [skip-back.svg](../refs/quiet-controls/icons/skip-back.svg) | 实心三角与端线 |
+| `i-play` | [play.svg](../refs/quiet-controls/icons/play.svg) | 实心，视觉上右移约 2px |
+| `i-pause` | [pause.svg](../refs/quiet-controls/icons/pause.svg) | 实心双条 |
+| `i-next` | [skip-forward.svg](../refs/quiet-controls/icons/skip-forward.svg) | 实心三角与端线 |
+| `i-list` | [list-music.svg](../refs/quiet-controls/icons/list-music.svg) | 音乐队列语义 |
+| `i-close` | [x.svg](../refs/quiet-controls/icons/x.svg) | 线描关闭 |
 
 所有线描均使用圆线帽、圆连接。SVG 文件的根属性是中性导出值；最终显示尺寸、描边粗细与填充按 §4 应用。
 
