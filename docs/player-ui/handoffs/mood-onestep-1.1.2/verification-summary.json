@@ -1,0 +1,125 @@
+{
+  "version": "1.1.2",
+  "build": "1003131681",
+  "baseline": {
+    "backend": 119,
+    "ui": 376,
+    "audioOwner": 34,
+    "failed": []
+  },
+  "backend": {
+    "passed": 132,
+    "total": 132,
+    "failed": [],
+    "newAssertions": [
+      {
+        "number": 120,
+        "name": "mood-onestep-lists-all-active-and-sends-stable-id-only",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "number": 121,
+        "name": "mood-onestep-accepted-does-not-return-floating-prompt",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "number": 122,
+        "name": "mood-onestep-args-verbatim-and-prescribed-message",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "number": 123,
+        "name": "mood-onestep-realpath-matches-symlink-to-session",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "number": 124,
+        "name": "mood-onestep-exact-path-fallback-if-realpath-unavailable",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "number": 125,
+        "name": "mood-onestep-no-path-falls-back-without-session-query",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "number": 126,
+        "name": "mood-onestep-unmatched-path-does-not-send-to-another-session",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "number": 127,
+        "name": "mood-onestep-missing-stable-id-does-not-send-path",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "number": 128,
+        "name": "mood-onestep-read-denial-falls-back-and-redacts-error",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "number": 129,
+        "name": "mood-onestep-send-denial-falls-back-and-redacts-error",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "number": 130,
+        "name": "mood-onestep-unaccepted-send-is-not-success",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "number": 131,
+        "name": "mood-onestep-no-models-falls-back-with-safe-reason",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "number": 132,
+        "name": "mood-onestep-logger-failure-does-not-break-fallback",
+        "ok": true,
+        "detail": ""
+      }
+    ]
+  },
+  "host": {
+    "passed": 17,
+    "total": 17,
+    "failed": []
+  },
+  "ui": {
+    "passed": 376,
+    "total": 376,
+    "failed": [],
+    "runtimeErrors": []
+  },
+  "audioOwner": {
+    "passed": 34,
+    "total": 34,
+    "failed": [],
+    "outDir": "/tmp/hap-audio-owner"
+  },
+  "audit": {
+    "oldVersion": "1.1.1",
+    "version": "1.1.2",
+    "addedCapabilities": [
+      "app/session.start-turn",
+      "app/sessions.manage"
+    ],
+    "allPriorCapabilitiesPreserved": true,
+    "otherManifestFieldsUnchanged": true,
+    "allPriorBackendAssertionsPreserved": true,
+    "testedModuleMatches": true,
+    "staticCheckedModuleMatches": true
+  }
+}

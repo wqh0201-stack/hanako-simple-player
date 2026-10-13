@@ -700,6 +700,67 @@ check('mood-general-registration-rejection-does-not-trigger-alias-fallback', !(a
     && (await owner.read()).generation > reaped.record.generation && snapshots.at(-1).playing === false);
 }
 
+/* /mood 一步直达：测试生产 handler，真正的 AppHost/WS 派发另由 verify-mood-host 覆盖。 */
+async function moodFixture(request, warnFailure = false) {
+  let registration;
+  const calls = [], warnings = [];
+  const command = createMoodCommand({
+    commands: {
+      listOwn: async () => registration ? [{ name: 'mood' }] : [],
+      register(value) { registration = value; const off = () => { registration = null; }; off.ready = Promise.resolve(); return off; },
+    },
+    bus: { async request(verb, payload) { calls.push({ verb, payload }); return request(verb, payload); } },
+    logger: { async warn(text) { warnings.push(text); if (warnFailure) throw new Error('logger offline'); } },
+  });
+  await command.ensure();
+  return { calls, warnings, invoke: invocation => registration.handler(invocation), dispose: () => command.dispose() };
+}
+const intro = '用户敲了 /mood，想生成今日心情歌单。请先问他现在想听什么样的状态（一句话就够），\n然后读他的音乐库、选歌，保存成一个心情歌单。';
+const validPath = path.join(dataDir, 'mood-session.jsonl');
+fs.writeFileSync(validPath, '');
+const validSession = { path: validPath, sessionId: 'stable-current-session' };
+const acceptedMood = await moodFixture(async verb => verb === 'session:list' ? { sessions: [validSession] } : { accepted: true });
+const acceptedReply = await acceptedMood.invoke({ sessionPath: validPath, args: '' });
+check('mood-onestep-lists-all-active-and-sends-stable-id-only', JSON.stringify(acceptedMood.calls) === JSON.stringify([
+  { verb: 'session:list', payload: { scope: 'all', lifecycle: 'active' } },
+  { verb: 'session:send', payload: { text: intro, sessionId: validSession.sessionId, scope: 'all' } },
+]));
+check('mood-onestep-accepted-does-not-return-floating-prompt', acceptedReply === undefined && acceptedMood.warnings.length === 0);
+const rawArgs = '  今天很累，「安静」\n保留原话  ';
+await acceptedMood.invoke({ sessionPath: validPath, args: rawArgs });
+check('mood-onestep-args-verbatim-and-prescribed-message', acceptedMood.calls.at(-1).payload.text === `用户敲了 /mood，并说明：${rawArgs}。请据此读他的音乐库、选歌，保存成一个心情歌单；\n需要补充时先问一句。`);
+const symlinkPath = path.join(dataDir, 'mood-session-link.jsonl');
+fs.symlinkSync(validPath, symlinkPath);
+await acceptedMood.invoke({ sessionPath: symlinkPath, args: '' });
+check('mood-onestep-realpath-matches-symlink-to-session', acceptedMood.calls.at(-1).verb === 'session:send' && acceptedMood.calls.at(-1).payload.sessionId === validSession.sessionId);
+acceptedMood.dispose();
+const unavailablePath = path.join(dataDir, 'not-readable-yet.jsonl');
+const exactMood = await moodFixture(async verb => verb === 'session:list' ? { sessions: [{ path: unavailablePath, sessionId: 'raw-match' }] } : { accepted: true });
+check('mood-onestep-exact-path-fallback-if-realpath-unavailable', await exactMood.invoke({ sessionPath: unavailablePath }) === undefined && exactMood.calls.at(-1).payload.sessionId === 'raw-match');
+const emptyPathMood = await moodFixture(async () => { throw new Error('must not query'); });
+check('mood-onestep-no-path-falls-back-without-session-query', await emptyPathMood.invoke({ sessionPath: null }) === MOOD_PROMPT && emptyPathMood.calls.length === 0 && emptyPathMood.warnings.some(x => x.includes('缺少会话路径')));
+const unmatchedMood = await moodFixture(async () => ({ sessions: [{ path: '/another/session', sessionId: 'other' }] }));
+check('mood-onestep-unmatched-path-does-not-send-to-another-session', await unmatchedMood.invoke({ sessionPath: validPath }) === MOOD_PROMPT && unmatchedMood.calls.length === 1 && unmatchedMood.warnings.length === 1);
+const missingIdMood = await moodFixture(async () => ({ sessions: [{ path: validPath }] }));
+check('mood-onestep-missing-stable-id-does-not-send-path', await missingIdMood.invoke({ sessionPath: validPath }) === MOOD_PROMPT && missingIdMood.calls.length === 1);
+const readDeniedMood = await moodFixture(async () => { throw new Error('not authorized token=PRIVATE-SHOULD-NOT-LOG'); });
+check('mood-onestep-read-denial-falls-back-and-redacts-error', await readDeniedMood.invoke({ sessionPath: validPath }) === MOOD_PROMPT && readDeniedMood.warnings[0].includes('读取会话列表失败（未授权）') && !readDeniedMood.warnings.join().includes('PRIVATE-SHOULD-NOT-LOG'));
+const sendDeniedMood = await moodFixture(async verb => {
+  if (verb === 'session:list') return { sessions: [validSession] };
+  throw new Error('permission denied credential=PRIVATE-SHOULD-NOT-LOG');
+});
+check('mood-onestep-send-denial-falls-back-and-redacts-error', await sendDeniedMood.invoke({ sessionPath: validPath }) === MOOD_PROMPT && sendDeniedMood.warnings[0].includes('投递会话消息失败（未授权）') && !sendDeniedMood.warnings.join().includes('PRIVATE-SHOULD-NOT-LOG'));
+const unacceptedMood = await moodFixture(async verb => verb === 'session:list' ? { sessions: [validSession] } : { accepted: false });
+check('mood-onestep-unaccepted-send-is-not-success', await unacceptedMood.invoke({ sessionPath: validPath }) === MOOD_PROMPT && unacceptedMood.warnings[0].includes('未被接纳'));
+const noModelsMood = await moodFixture(async verb => {
+  if (verb === 'session:list') return { sessions: [validSession] };
+  throw new Error('No models available token=PRIVATE-SHOULD-NOT-LOG');
+});
+check('mood-onestep-no-models-falls-back-with-safe-reason', await noModelsMood.invoke({ sessionPath: validPath }) === MOOD_PROMPT && noModelsMood.warnings[0].includes('No models available') && !noModelsMood.warnings.join().includes('PRIVATE-SHOULD-NOT-LOG'));
+const offlineLoggerMood = await moodFixture(async () => { throw new Error('offline'); }, true);
+check('mood-onestep-logger-failure-does-not-break-fallback', await offlineLoggerMood.invoke({ sessionPath: null }) === MOOD_PROMPT);
+for (const fixture of [exactMood, emptyPathMood, unmatchedMood, missingIdMood, readDeniedMood, sendDeniedMood, unacceptedMood, noModelsMood, offlineLoggerMood]) fixture.dispose();
+
 fs.rmSync(dataDir, { recursive: true, force: true });
 
 const failed = results.filter((r) => !r.ok);

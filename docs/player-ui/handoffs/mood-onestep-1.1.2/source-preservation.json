@@ -1,0 +1,49 @@
+{
+  "baselineBuild": "1003131680",
+  "build": "1003131681",
+  "preserved": [
+    {
+      "file": "lib/audio-owner.js",
+      "unchanged": true
+    },
+    {
+      "file": "lib/register-routes.js",
+      "unchanged": true
+    },
+    {
+      "file": "ui/app.js",
+      "unchanged": true
+    },
+    {
+      "file": "ui/style.css",
+      "unchanged": true
+    },
+    {
+      "file": "ui/sdk.js",
+      "unchanged": true
+    },
+    {
+      "file": "tools/verify-audio-owner.mjs",
+      "unchanged": true
+    },
+    {
+      "file": "tools/verify-ui.mjs",
+      "unchanged": true
+    },
+    {
+      "file": "lib/register-tools.js",
+      "unchanged": true
+    },
+    {
+      "file": "tools/create-list.js",
+      "unchanged": true
+    },
+    {
+      "file": "tools/search-music.js",
+      "unchanged": true
+    }
+  ],
+  "uiOnlyBuild": true,
+  "twinsOnlyDataShell": true,
+  "threeBuildMarkersMatch": true
+}

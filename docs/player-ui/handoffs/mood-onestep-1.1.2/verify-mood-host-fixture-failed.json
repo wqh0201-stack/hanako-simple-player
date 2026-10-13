@@ -1,0 +1,76 @@
+{
+  "passed": 0,
+  "total": 4,
+  "failed": [
+    {
+      "name": "granted-host-execution",
+      "ok": false,
+      "detail": "registration timed out; inspect /tmp/hap-mood-host-psfZXI/granted/boot.log"
+    },
+    {
+      "name": "read-denied-host-execution",
+      "ok": false,
+      "detail": "registration timed out; inspect /tmp/hap-mood-host-psfZXI/read-denied/boot.log"
+    },
+    {
+      "name": "manage-denied-host-execution",
+      "ok": false,
+      "detail": "registration timed out; inspect /tmp/hap-mood-host-psfZXI/manage-denied/boot.log"
+    },
+    {
+      "name": "turn-denied-host-execution",
+      "ok": false,
+      "detail": "registration timed out; inspect /tmp/hap-mood-host-psfZXI/turn-denied/boot.log"
+    }
+  ],
+  "results": [
+    {
+      "name": "granted-host-execution",
+      "ok": false,
+      "detail": "registration timed out; inspect /tmp/hap-mood-host-psfZXI/granted/boot.log"
+    },
+    {
+      "name": "read-denied-host-execution",
+      "ok": false,
+      "detail": "registration timed out; inspect /tmp/hap-mood-host-psfZXI/read-denied/boot.log"
+    },
+    {
+      "name": "manage-denied-host-execution",
+      "ok": false,
+      "detail": "registration timed out; inspect /tmp/hap-mood-host-psfZXI/manage-denied/boot.log"
+    },
+    {
+      "name": "turn-denied-host-execution",
+      "ok": false,
+      "detail": "registration timed out; inspect /tmp/hap-mood-host-psfZXI/turn-denied/boot.log"
+    }
+  ],
+  "evidence": {
+    "fixture": "/tmp/hap-mood-host-psfZXI",
+    "modelReplyVerified": false,
+    "moodModuleSha256": "bd37731636bc9a6c36f57c9e6b6ba3608f31d8fdaca4285e77356daba849e952",
+    "scenarios": [
+      {
+        "label": "granted",
+        "denied": null,
+        "dispatches": []
+      },
+      {
+        "label": "read-denied",
+        "denied": "app/sessions.read",
+        "dispatches": []
+      },
+      {
+        "label": "manage-denied",
+        "denied": "app/sessions.manage",
+        "dispatches": []
+      },
+      {
+        "label": "turn-denied",
+        "denied": "app/session.start-turn",
+        "dispatches": []
+      }
+    ],
+    "hostArtifact": "1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133"
+  }
+}
