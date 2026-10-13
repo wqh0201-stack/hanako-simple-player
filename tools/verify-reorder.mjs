@@ -163,7 +163,10 @@ try {
       if (value?.storage?.global) {
         value.ready = () => Promise.resolve(); value.storage.global.get = window.__sortStorageGet; value.storage.global.set = window.__sortStorageSet;
         value.storage.global.onChanged = fn => { window.__sortListeners.add(fn); return () => window.__sortListeners.delete(fn); };
-        value.external.open = window.__sortExternal;
+        /* 收藏页底部「打开仓库」走的是 resources.open（card slot 允许的能力）。
+         * 不再 mock external.open —— 那个能力在 card slot 会被宿主 SLOT_DENIED，
+         * 之前正是这个宽宏的 mock 掩盖了它。 */
+        value.resources.open = window.__sortExternal;
       }
     } });
   });
@@ -271,7 +274,11 @@ try {
   await page.evaluate(() => { document.getElementById('searchDiscover').scrollTop = 1000; window.__playerDebug.renderResults([{ id: 'demo', title: '搜索结果', author: '歌手', url: '/demo', dur: 120 }]); });
   check('UI-16-footer-stable-in-discover-and-results', (await footer()).ok && Math.abs((await footer()).y - footBefore.y) < 2);
   await page.click('#repoLinkBtn');
-  check('UI-17-github-uses-host-external-open', externalCalls.length === 1 && externalCalls[0].url === 'https://github.com/wqh0201-stack/hanako-simple-player');
+  /* 锁住真实走的能力与 payload 形状：capability 必须是 card slot 允许的 resource.open，
+   * 且形如 { resource: { kind:'url', url } }。用 external.open 会被宿主 SLOT_DENIED。 */
+  check('UI-17-github-uses-host-resource-open', externalCalls.length === 1 &&
+    externalCalls[0] && externalCalls[0].resource && externalCalls[0].resource.kind === 'url' &&
+    externalCalls[0].resource.url === 'https://github.com/wqh0201-stack/hanako-simple-player');
   await page.screenshot({ path: path.join(out, 'search-light-1040.png') });
   for (const [width, height] of [[312,494], [561,500], [465,930], [1040,780]]) {
     await page.setViewport({ width, height }); await sleep(250);
