@@ -6502,11 +6502,27 @@
   var searchList = $('searchList');
   var searchNoteEl = $('searchNote');
   var REPOSITORY_URL = 'https://github.com/wqh0201-stack/hanako-simple-player';
+  /* 打开仓库页。
+   * 为何不用 hana.external.open：宿主能力表里 `external.open` 的 allowedSlots
+   * 只含 page / widget / settings / function-panel —— **不含 card**；而本播放器
+   * 的主承载是卡片 slot，调用会被宿主按策略拒（SLOT_DENIED，提示「not allowed
+   * in card slots」）。`resource.open` 的 allowedSlots 含 card，且其 `kind:"url"`
+   * 分支最终同样落到平台 openExternal，效果一致。 */
   $('repoLinkBtn').addEventListener('click', function () {
     try {
-      if (!window.hana || !window.hana.external || typeof window.hana.external.open !== 'function') throw new Error('宿主跳转尚未就绪');
-      Promise.resolve(window.hana.external.open({ url: REPOSITORY_URL })).catch(function (err) {
-        console.warn('[player] 仓库跳转失败', err); toast('暂时无法打开仓库，请稍后重试');
+      var res = window.hana && window.hana.resources;
+      if (!res || typeof res.open !== 'function') throw new Error('宿主跳转尚未就绪');
+      Promise.resolve(res.open({ resource: { kind: 'url', url: REPOSITORY_URL } })).catch(function (err) {
+        console.warn('[player] 仓库跳转失败', err);
+        /* 兼底：若某宿主版本拒了 resource.open，再试 external.open（宽窗等允许的 slot）。 */
+        try {
+          var ext = window.hana && window.hana.external;
+          if (ext && typeof ext.open === 'function') {
+            Promise.resolve(ext.open({ url: REPOSITORY_URL })).catch(function () { toast('暂时无法打开仓库，请稍后重试'); });
+            return;
+          }
+        } catch (e) { /* fallthrough */ }
+        toast('暂时无法打开仓库，请稍后重试');
       });
     } catch (err) { toast('暂时无法打开仓库，请稍后重试'); }
   });
