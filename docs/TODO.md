@@ -37,6 +37,11 @@
 
 ## 文档待办
 
+- **README 引言与市场详情页介绍尚未追平**（2026-10-13）：仓库 README 引言已对齐 1.1.3 特色，但
+  - 包内 `README.md`（打包时带入 → 影响 zip 摘要）
+  - `approvals.json` 里本扩展的 `readme` 快照（= 市场详情页的「已审核介绍」）
+
+  仍是旧引子。下次为任何功能发版重打包时**顺带抹平**：重打包后同步更新 `readme` 快照与 PR 的 `sha256`。
 - `docs/BASELINE.md` 停在 build 1003131534。**保留在原位**：`docs/player-ui/REFACTOR-BRIEF.md`
   仍引它作为「开工前先读」。构建号已远旧，读时知道它只是重构起点基线即可。
 - `.backups/` 已清空移除（原 20+ 个本地回退 tgz，已 gitignore）；`.gitignore` 仍保留该规则以备再用。
