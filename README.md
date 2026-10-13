@@ -1,7 +1,14 @@
 # 小花音乐播放器（hanako-simple-player）
 
-> [openhanako-labs/openhanako-audio-player](https://github.com/openhanako-labs/openhanako-audio-player)（作者 **Yuexiye**）的**极简重构衍生版**：
-> 后端沿用上游，前端整个重写、按 Hana 的三种承载形态重新设计，砍掉 PV 舞台 / 黑胶唱盘 / 配色面板。
+**四源开箱即用的本地与在线音乐播放器，为 Hana 而生。**
+网易云 / B站 / QQ / 酷狗直接能搜能听，B站还能抽视频音轨直接播；歌词自动匹配、当前行推上会话横幅；
+指针划过封面会起涟漪，音乐一响鼓点真的推起波纹；三种承载形态（窄长卡 / 矮卡 / 独立窗）各自重排，
+主题只跟随宿主 `hana.theme`（含夜间）。
+
+**递给 Hana 的那部分**：敲 `/mood` 让它按心情选歌建单，也能让它把 B站歌单整理成带网易云歌词与封面的歌单。
+
+> 基于 [openhanako-labs/openhanako-audio-player](https://github.com/openhanako-labs/openhanako-audio-player)（作者 **Yuexiye**）的**极简重构衍生版**：
+> 后端沿用上游，前端整个重写、按 Hana 的三种承载形态重新设计。
 > 上游以 **AGPL-3.0** 发布（另提供[商业授权](https://github.com/openhanako-labs/openhanako-audio-player/blob/master/COMMERCIAL-LICENSE.md)），
 > 本衍生同样以 **AGPL-3.0** 发布，见 [`LICENSE`](LICENSE)。
 
