@@ -123,6 +123,15 @@ const server = http.createServer(async (req, res) => {
       const response = await routes.get(req.method + ' ' + p)({ req: { json: async () => input, query: key => u.searchParams.get(key), header: key => req.headers[key.toLowerCase()] }, json: (body, status = 200) => ({ body, status }) });
       return json(res, response.body, response.status);
     }
+    /* ui/ 静态资源走 surface 路由（官方 App SDK 装配时断言 location.pathname
+     * 落在 /api/apps/:appId/ui/ 下，根路径会直接抛错）。 */
+    if (u.pathname.startsWith('/api/apps/hanako-simple-player/ui/')) {
+      const rel = decodeURIComponent(u.pathname.slice('/api/apps/hanako-simple-player/ui/'.length)) || 'index.html';
+      const sf = path.join(root, 'ui', rel);
+      if (!sf.startsWith(path.join(root, 'ui')) || !fs.existsSync(sf)) return json(res, {}, 404);
+      res.setHeader('Content-Type', sf.endsWith('.js') ? 'text/javascript' : sf.endsWith('.css') ? 'text/css' : sf.endsWith('.png') ? 'image/png' : sf.endsWith('.json') ? 'application/json' : 'text/html');
+      return fs.createReadStream(sf).pipe(res);
+    }
     const file = u.pathname === '/fixture-cover.png' ? path.join(root, 'docs/player-ui/assets/demo-cover-square.png') : path.join(root, 'ui', u.pathname === '/' ? 'index.html' : u.pathname.slice(1));
     if (!file.startsWith(root) || !fs.existsSync(file)) return json(res, {}, 404);
     res.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.png') ? 'image/png' : 'text/html');
@@ -134,6 +143,9 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 try {
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
   const origin = 'http://127.0.0.1:' + server.address().port;
+  /* 页面基址走宿主真实 surface 路由：官方 App SDK 装配时断言 location.pathname
+   * 落在 /api/apps/:appId/ui/ 下，根路径会直接抛错。 */
+  const uiBase = origin + '/api/apps/hanako-simple-player/ui';
   browser = await puppeteer.launch({ executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new', args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'] });
   const page = await browser.newPage(); pages.add(page);
   page.on('pageerror', err => errors.push(String(err)));
@@ -156,7 +168,7 @@ try {
     } });
   });
   const go = async () => {
-    await page.goto(origin + '/index.html?appSurfaceSession=sort-fixture', { waitUntil: 'domcontentloaded' });
+    await page.goto(uiBase + '/index.html?appSurfaceSession=sort-fixture', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => window.__playerDebug?.activeList() === 'imp:1' && document.querySelectorAll('#queueList .q-row').length === 60, { timeout: 8000 });
     await sleep(250);
   };
