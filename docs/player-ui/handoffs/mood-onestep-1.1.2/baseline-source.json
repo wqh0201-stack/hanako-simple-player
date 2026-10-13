@@ -1,0 +1,22 @@
+{
+  "build": "1003131680",
+  "hashes": {
+    "lib/audio-owner.js": "45cc9aa4db4e9e7c22b7a2083172f2441d7d1fc1a7c014a625dae2f4745d1082",
+    "lib/register-routes.js": "ed12c1f7a8d046330ac73f4d5b589f0546821350b179683c165d9f9795c2b801",
+    "ui/app.js": "2a4c55bfb57bb34096ba82105c6f06a0c8a504b1fa5ea706f33e1a87d29f5216",
+    "ui/style.css": "f105036e467d177d0952e892c9027b75e2a8b26854df0fa9ebfd989b3ce5acf7",
+    "ui/sdk.js": "79dadec32a64f0a1812b33d576432b2f074c8fa2c615e6a0a8d9ee01e94b8e1a",
+    "ui/index.html": "137452934f967cbf3bfce24ae1b4d8323bf63f9971e84fc4d63cd1fa9e0afafa",
+    "ui/standalone.html": "96dc282304ce937ae5742e61c64c956f5ae30f6e702ebf524d930809d1e0d9ef",
+    "tools/verify-audio-owner.mjs": "b05fb3de44b30ad847461dea8f2f8e64ead9b6ffe07a9ddc10f0b983a64e634c",
+    "tools/verify-ui.mjs": "a998c8d6712d9872c5460ff44083447f7e51be7eed633a7a1177cd7a0ae349de",
+    "lib/register-tools.js": "15af710ad351010b92be68f5ff92686c98caf520b5cd05fcd77d29bb79bab4b6",
+    "tools/create-list.js": "94150f50a02bd8b758aa2ec396e5a25d1f638c473cb6c2f84ed1d291049d63e8",
+    "tools/search-music.js": "73b96386c1c4481a728ea2c0092c360bb9c16b2e794c70fba86b1a020bf4ac99",
+    "tools/verify-backend.mjs": "24ceb2c0308171873c28cfaf56a06d9aa9af1d65d9304d23d3fd54690c31bbed",
+    "manifest.json": "aa91be215b3700634abbe32ab5313569eddd01ff8a856eb13573e6c0ef867bac",
+    "package.json": "64a3aba64081619493dae804bceaed6db37a98ffa2839e22e926d3dcbeea32ae",
+    "docs/CHANGELOG.md": "206097d4de937586f91010340d4a1b4a0059987fb9e0064ae30adb5b8854f527",
+    "ui/_build.json": "532fa99e1f94ee78904e879bb69aa3960bad91a613a1819dfd34de8456008cdf"
+  }
+}

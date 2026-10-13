@@ -1,0 +1,313 @@
+{
+  "passed": 11,
+  "total": 17,
+  "failed": [
+    {
+      "name": "granted-resolves-current-stable-session-id",
+      "ok": false,
+      "detail": ""
+    },
+    {
+      "name": "granted-default-prescribed-text",
+      "ok": false,
+      "detail": ""
+    },
+    {
+      "name": "granted-send-reaches-model-layer",
+      "ok": false,
+      "detail": "send not reached"
+    },
+    {
+      "name": "granted-args-prescribed-text-and-model-layer",
+      "ok": false,
+      "detail": "send missing"
+    },
+    {
+      "name": "manage-denied-actual-host-permission-rejection",
+      "ok": false,
+      "detail": "[{\"verb\":\"session:list\"}]"
+    },
+    {
+      "name": "turn-denied-actual-host-permission-rejection",
+      "ok": false,
+      "detail": "[{\"verb\":\"session:list\"}]"
+    }
+  ],
+  "results": [
+    {
+      "name": "granted-mood-client-fallback-text-exact",
+      "ok": true,
+      "detail": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。"
+    },
+    {
+      "name": "granted-resolves-current-stable-session-id",
+      "ok": false,
+      "detail": ""
+    },
+    {
+      "name": "granted-default-prescribed-text",
+      "ok": false,
+      "detail": ""
+    },
+    {
+      "name": "granted-send-reaches-model-layer",
+      "ok": false,
+      "detail": "send not reached"
+    },
+    {
+      "name": "granted-mood-args-client-fallback-text-exact",
+      "ok": true,
+      "detail": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。"
+    },
+    {
+      "name": "granted-args-prescribed-text-and-model-layer",
+      "ok": false,
+      "detail": "send missing"
+    },
+    {
+      "name": "granted-tmp-private-tmp-same-stable-session-id",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "granted-mood_no_path-client-fallback-text-exact",
+      "ok": true,
+      "detail": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。"
+    },
+    {
+      "name": "no-path-no-session-query-and-warning",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "granted-mood_unmatched-client-fallback-text-exact",
+      "ok": true,
+      "detail": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。"
+    },
+    {
+      "name": "unmatched-path-no-send-and-warning",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "read-denied-mood-client-fallback-text-exact",
+      "ok": true,
+      "detail": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。"
+    },
+    {
+      "name": "read-denied-actual-host-permission-rejection",
+      "ok": true,
+      "detail": "[{\"verb\":\"session:list\",\"error\":\"app \\\"mood-dispatch-regression\\\" is not authorized to read sessions outside this app — the user has not granted the \\\"app/sessions.read\\\" permission (Settings → Apps → App capabilities)\"}]"
+    },
+    {
+      "name": "manage-denied-mood-client-fallback-text-exact",
+      "ok": true,
+      "detail": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。"
+    },
+    {
+      "name": "manage-denied-actual-host-permission-rejection",
+      "ok": false,
+      "detail": "[{\"verb\":\"session:list\"}]"
+    },
+    {
+      "name": "turn-denied-mood-client-fallback-text-exact",
+      "ok": true,
+      "detail": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。"
+    },
+    {
+      "name": "turn-denied-actual-host-permission-rejection",
+      "ok": false,
+      "detail": "[{\"verb\":\"session:list\"}]"
+    }
+  ],
+  "evidence": {
+    "fixture": "/tmp/hap-mood-host-7zf2E8",
+    "modelReplyVerified": false,
+    "moodModuleSha256": "bd37731636bc9a6c36f57c9e6b6ba3608f31d8fdaca4285e77356daba849e952",
+    "scenarios": [
+      {
+        "label": "granted",
+        "denied": null,
+        "dispatches": [
+          {
+            "input": "/mood",
+            "locator": "/tmp/hap-mood-host-7zf2E8/granted/home/agents/hanako/sessions/mood-dispatch.jsonl",
+            "received": {
+              "type": "slash_result",
+              "text": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。",
+              "level": "success"
+            },
+            "calls": [
+              {
+                "verb": "session:list",
+                "payload": {
+                  "scope": "all",
+                  "lifecycle": "active"
+                },
+                "result": {
+                  "sessions": []
+                }
+              }
+            ]
+          },
+          {
+            "input": "/mood 今天很累，来点安静的",
+            "locator": "/private/tmp/hap-mood-host-7zf2E8/granted/home/agents/hanako/sessions/mood-dispatch.jsonl",
+            "received": {
+              "type": "slash_result",
+              "text": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。",
+              "level": "success"
+            },
+            "calls": [
+              {
+                "verb": "session:list",
+                "payload": {
+                  "scope": "all",
+                  "lifecycle": "active"
+                },
+                "result": {
+                  "sessions": []
+                }
+              }
+            ]
+          },
+          {
+            "input": "/mood_no_path",
+            "locator": "/tmp/hap-mood-host-7zf2E8/granted/home/agents/hanako/sessions/mood-dispatch.jsonl",
+            "received": {
+              "type": "slash_result",
+              "text": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。",
+              "level": "success"
+            },
+            "calls": []
+          },
+          {
+            "input": "/mood_unmatched",
+            "locator": "/tmp/hap-mood-host-7zf2E8/granted/home/agents/hanako/sessions/mood-dispatch.jsonl",
+            "received": {
+              "type": "slash_result",
+              "text": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。",
+              "level": "success"
+            },
+            "calls": [
+              {
+                "verb": "session:list",
+                "payload": {
+                  "scope": "all",
+                  "lifecycle": "active"
+                },
+                "result": {
+                  "sessions": []
+                }
+              }
+            ]
+          }
+        ],
+        "command": {
+          "name": "mood",
+          "aliases": [],
+          "source": "app"
+        },
+        "sessionBytes": 0
+      },
+      {
+        "label": "read-denied",
+        "denied": "app/sessions.read",
+        "dispatches": [
+          {
+            "input": "/mood",
+            "locator": "/tmp/hap-mood-host-7zf2E8/read-denied/home/agents/hanako/sessions/mood-dispatch.jsonl",
+            "received": {
+              "type": "slash_result",
+              "text": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。",
+              "level": "success"
+            },
+            "calls": [
+              {
+                "verb": "session:list",
+                "payload": {
+                  "scope": "all",
+                  "lifecycle": "active"
+                },
+                "error": "app \"mood-dispatch-regression\" is not authorized to read sessions outside this app — the user has not granted the \"app/sessions.read\" permission (Settings → Apps → App capabilities)"
+              }
+            ]
+          }
+        ],
+        "command": {
+          "name": "mood",
+          "aliases": [],
+          "source": "app"
+        },
+        "sessionBytes": 0
+      },
+      {
+        "label": "manage-denied",
+        "denied": "app/sessions.manage",
+        "dispatches": [
+          {
+            "input": "/mood",
+            "locator": "/tmp/hap-mood-host-7zf2E8/manage-denied/home/agents/hanako/sessions/mood-dispatch.jsonl",
+            "received": {
+              "type": "slash_result",
+              "text": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。",
+              "level": "success"
+            },
+            "calls": [
+              {
+                "verb": "session:list",
+                "payload": {
+                  "scope": "all",
+                  "lifecycle": "active"
+                },
+                "result": {
+                  "sessions": []
+                }
+              }
+            ]
+          }
+        ],
+        "command": {
+          "name": "mood",
+          "aliases": [],
+          "source": "app"
+        },
+        "sessionBytes": 0
+      },
+      {
+        "label": "turn-denied",
+        "denied": "app/session.start-turn",
+        "dispatches": [
+          {
+            "input": "/mood",
+            "locator": "/tmp/hap-mood-host-7zf2E8/turn-denied/home/agents/hanako/sessions/mood-dispatch.jsonl",
+            "received": {
+              "type": "slash_result",
+              "text": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。",
+              "level": "success"
+            },
+            "calls": [
+              {
+                "verb": "session:list",
+                "payload": {
+                  "scope": "all",
+                  "lifecycle": "active"
+                },
+                "result": {
+                  "sessions": []
+                }
+              }
+            ]
+          }
+        ],
+        "command": {
+          "name": "mood",
+          "aliases": [],
+          "source": "app"
+        },
+        "sessionBytes": 0
+      }
+    ],
+    "hostArtifact": "1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133"
+  }
+}

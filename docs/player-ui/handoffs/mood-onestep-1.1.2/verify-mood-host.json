@@ -1,0 +1,379 @@
+{
+  "passed": 17,
+  "total": 17,
+  "failed": [],
+  "results": [
+    {
+      "name": "granted-mood-client-fallback-text-exact",
+      "ok": true,
+      "detail": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。"
+    },
+    {
+      "name": "granted-resolves-current-stable-session-id",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "granted-default-prescribed-text",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "granted-send-reaches-model-layer",
+      "ok": true,
+      "detail": "Session restore model fallback rejected: No models available. Use /login to log into a provider via OAuth or API key. See:\n  /Users/can/.hanako/artifacts/server/1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133/node_modules/@earendil-works/pi-coding-agent/docs/providers.md\n  /Users/can/.hanako/artifacts/server/1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133/node_modules/@earendil-works/pi-coding-agent/docs/models.md"
+    },
+    {
+      "name": "granted-mood-args-client-fallback-text-exact",
+      "ok": true,
+      "detail": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。"
+    },
+    {
+      "name": "granted-args-prescribed-text-and-model-layer",
+      "ok": true,
+      "detail": "Session restore model fallback rejected: No models available. Use /login to log into a provider via OAuth or API key. See:\n  /Users/can/.hanako/artifacts/server/1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133/node_modules/@earendil-works/pi-coding-agent/docs/providers.md\n  /Users/can/.hanako/artifacts/server/1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133/node_modules/@earendil-works/pi-coding-agent/docs/models.md"
+    },
+    {
+      "name": "granted-tmp-private-tmp-same-stable-session-id",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "granted-mood_no_path-client-fallback-text-exact",
+      "ok": true,
+      "detail": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。"
+    },
+    {
+      "name": "no-path-no-session-query-and-warning",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "granted-mood_unmatched-client-fallback-text-exact",
+      "ok": true,
+      "detail": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。"
+    },
+    {
+      "name": "unmatched-path-no-send-and-warning",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "read-denied-mood-client-fallback-text-exact",
+      "ok": true,
+      "detail": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。"
+    },
+    {
+      "name": "read-denied-actual-host-permission-rejection",
+      "ok": true,
+      "detail": "[{\"verb\":\"session:list\",\"error\":\"app \\\"mood-dispatch-regression\\\" is not authorized to read sessions outside this app — the user has not granted the \\\"app/sessions.read\\\" permission (Settings → Apps → App capabilities)\"}]"
+    },
+    {
+      "name": "manage-denied-mood-client-fallback-text-exact",
+      "ok": true,
+      "detail": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。"
+    },
+    {
+      "name": "manage-denied-actual-host-permission-rejection",
+      "ok": true,
+      "detail": "[{\"verb\":\"session:list\"},{\"verb\":\"session:send\",\"error\":\"app \\\"mood-dispatch-regression\\\" is not authorized to session:send outside this app — the user has not granted the \\\"app/sessions.manage\\\" permission (Settings → Apps → App capabilities)\"}]"
+    },
+    {
+      "name": "turn-denied-mood-client-fallback-text-exact",
+      "ok": true,
+      "detail": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。"
+    },
+    {
+      "name": "turn-denied-actual-host-permission-rejection",
+      "ok": true,
+      "detail": "[{\"verb\":\"session:list\"},{\"verb\":\"session:send\",\"error\":\"app \\\"mood-dispatch-regression\\\" is not authorized to start a conversation turn in this session — the user has not granted the \\\"app/session.start-turn\\\" permission (Settings → Apps → App capabilities)\"}]"
+    }
+  ],
+  "evidence": {
+    "fixture": "/tmp/hap-mood-host-okjppQ",
+    "modelReplyVerified": false,
+    "moodModuleSha256": "bd37731636bc9a6c36f57c9e6b6ba3608f31d8fdaca4285e77356daba849e952",
+    "scenarios": [
+      {
+        "label": "granted",
+        "denied": null,
+        "dispatches": [
+          {
+            "input": "初始化隔离回归会话",
+            "locator": "/tmp/hap-mood-host-okjppQ/granted/home/agents/hanako/sessions/mood-dispatch.jsonl",
+            "received": {
+              "type": "error",
+              "text": "Session restore model fallback rejected: No models available. Use /login to log into a provider via OAuth or API key. See:\n  /Users/can/.hanako/artifacts/server/1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133/node_modules/@earendil-works/pi-coding-agent/docs/providers.md\n  /Users/can/.hanako/artifacts/server/1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133/node_modules/@earendil-works/pi-coding-agent/docs/models.md"
+            },
+            "calls": []
+          },
+          {
+            "input": "/mood",
+            "locator": "/tmp/hap-mood-host-okjppQ/granted/home/agents/hanako/sessions/mood-dispatch.jsonl",
+            "received": {
+              "type": "slash_result",
+              "text": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。",
+              "level": "success"
+            },
+            "calls": [
+              {
+                "verb": "session:list",
+                "payload": {
+                  "scope": "all",
+                  "lifecycle": "active"
+                },
+                "result": {
+                  "sessions": [
+                    {
+                      "path": "/tmp/hap-mood-host-okjppQ/granted/home/agents/hanako/sessions/mood-dispatch.jsonl",
+                      "sessionId": "sess_0mv6npmgs_e87dd4462a471341b7b6"
+                    }
+                  ]
+                }
+              },
+              {
+                "verb": "session:send",
+                "payload": {
+                  "text": "用户敲了 /mood，想生成今日心情歌单。请先问他现在想听什么样的状态（一句话就够），\n然后读他的音乐库、选歌，保存成一个心情歌单。",
+                  "sessionId": "sess_0mv6npmgs_e87dd4462a471341b7b6",
+                  "scope": "all"
+                },
+                "error": "Session restore model fallback rejected: No models available. Use /login to log into a provider via OAuth or API key. See:\n  /Users/can/.hanako/artifacts/server/1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133/node_modules/@earendil-works/pi-coding-agent/docs/providers.md\n  /Users/can/.hanako/artifacts/server/1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133/node_modules/@earendil-works/pi-coding-agent/docs/models.md"
+              }
+            ]
+          },
+          {
+            "input": "/mood 今天很累，来点安静的",
+            "locator": "/private/tmp/hap-mood-host-okjppQ/granted/home/agents/hanako/sessions/mood-dispatch.jsonl",
+            "received": {
+              "type": "slash_result",
+              "text": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。",
+              "level": "success"
+            },
+            "calls": [
+              {
+                "verb": "session:list",
+                "payload": {
+                  "scope": "all",
+                  "lifecycle": "active"
+                },
+                "result": {
+                  "sessions": [
+                    {
+                      "path": "/tmp/hap-mood-host-okjppQ/granted/home/agents/hanako/sessions/mood-dispatch.jsonl",
+                      "sessionId": "sess_0mv6npmgs_e87dd4462a471341b7b6"
+                    }
+                  ]
+                }
+              },
+              {
+                "verb": "session:send",
+                "payload": {
+                  "text": "用户敲了 /mood，并说明：今天很累，来点安静的。请据此读他的音乐库、选歌，保存成一个心情歌单；\n需要补充时先问一句。",
+                  "sessionId": "sess_0mv6npmgs_e87dd4462a471341b7b6",
+                  "scope": "all"
+                },
+                "error": "Session restore model fallback rejected: No models available. Use /login to log into a provider via OAuth or API key. See:\n  /Users/can/.hanako/artifacts/server/1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133/node_modules/@earendil-works/pi-coding-agent/docs/providers.md\n  /Users/can/.hanako/artifacts/server/1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133/node_modules/@earendil-works/pi-coding-agent/docs/models.md"
+              }
+            ]
+          },
+          {
+            "input": "/mood_no_path",
+            "locator": "/tmp/hap-mood-host-okjppQ/granted/home/agents/hanako/sessions/mood-dispatch.jsonl",
+            "received": {
+              "type": "slash_result",
+              "text": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。",
+              "level": "success"
+            },
+            "calls": []
+          },
+          {
+            "input": "/mood_unmatched",
+            "locator": "/tmp/hap-mood-host-okjppQ/granted/home/agents/hanako/sessions/mood-dispatch.jsonl",
+            "received": {
+              "type": "slash_result",
+              "text": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。",
+              "level": "success"
+            },
+            "calls": [
+              {
+                "verb": "session:list",
+                "payload": {
+                  "scope": "all",
+                  "lifecycle": "active"
+                },
+                "result": {
+                  "sessions": [
+                    {
+                      "path": "/tmp/hap-mood-host-okjppQ/granted/home/agents/hanako/sessions/mood-dispatch.jsonl",
+                      "sessionId": "sess_0mv6npmgs_e87dd4462a471341b7b6"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "command": {
+          "name": "mood",
+          "aliases": [],
+          "source": "app"
+        },
+        "sessionBytes": 521
+      },
+      {
+        "label": "read-denied",
+        "denied": "app/sessions.read",
+        "dispatches": [
+          {
+            "input": "初始化隔离回归会话",
+            "locator": "/tmp/hap-mood-host-okjppQ/read-denied/home/agents/hanako/sessions/mood-dispatch.jsonl",
+            "received": {
+              "type": "error",
+              "text": "Session restore model fallback rejected: No models available. Use /login to log into a provider via OAuth or API key. See:\n  /Users/can/.hanako/artifacts/server/1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133/node_modules/@earendil-works/pi-coding-agent/docs/providers.md\n  /Users/can/.hanako/artifacts/server/1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133/node_modules/@earendil-works/pi-coding-agent/docs/models.md"
+            },
+            "calls": []
+          },
+          {
+            "input": "/mood",
+            "locator": "/tmp/hap-mood-host-okjppQ/read-denied/home/agents/hanako/sessions/mood-dispatch.jsonl",
+            "received": {
+              "type": "slash_result",
+              "text": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。",
+              "level": "success"
+            },
+            "calls": [
+              {
+                "verb": "session:list",
+                "payload": {
+                  "scope": "all",
+                  "lifecycle": "active"
+                },
+                "error": "app \"mood-dispatch-regression\" is not authorized to read sessions outside this app — the user has not granted the \"app/sessions.read\" permission (Settings → Apps → App capabilities)"
+              }
+            ]
+          }
+        ],
+        "command": {
+          "name": "mood",
+          "aliases": [],
+          "source": "app"
+        },
+        "sessionBytes": 521
+      },
+      {
+        "label": "manage-denied",
+        "denied": "app/sessions.manage",
+        "dispatches": [
+          {
+            "input": "初始化隔离回归会话",
+            "locator": "/tmp/hap-mood-host-okjppQ/manage-denied/home/agents/hanako/sessions/mood-dispatch.jsonl",
+            "received": {
+              "type": "error",
+              "text": "Session restore model fallback rejected: No models available. Use /login to log into a provider via OAuth or API key. See:\n  /Users/can/.hanako/artifacts/server/1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133/node_modules/@earendil-works/pi-coding-agent/docs/providers.md\n  /Users/can/.hanako/artifacts/server/1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133/node_modules/@earendil-works/pi-coding-agent/docs/models.md"
+            },
+            "calls": []
+          },
+          {
+            "input": "/mood",
+            "locator": "/tmp/hap-mood-host-okjppQ/manage-denied/home/agents/hanako/sessions/mood-dispatch.jsonl",
+            "received": {
+              "type": "slash_result",
+              "text": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。",
+              "level": "success"
+            },
+            "calls": [
+              {
+                "verb": "session:list",
+                "payload": {
+                  "scope": "all",
+                  "lifecycle": "active"
+                },
+                "result": {
+                  "sessions": [
+                    {
+                      "path": "/tmp/hap-mood-host-okjppQ/manage-denied/home/agents/hanako/sessions/mood-dispatch.jsonl",
+                      "sessionId": "sess_0mv6nppwo_63224122cfdb7a23f777"
+                    }
+                  ]
+                }
+              },
+              {
+                "verb": "session:send",
+                "payload": {
+                  "text": "用户敲了 /mood，想生成今日心情歌单。请先问他现在想听什么样的状态（一句话就够），\n然后读他的音乐库、选歌，保存成一个心情歌单。",
+                  "sessionId": "sess_0mv6nppwo_63224122cfdb7a23f777",
+                  "scope": "all"
+                },
+                "error": "app \"mood-dispatch-regression\" is not authorized to session:send outside this app — the user has not granted the \"app/sessions.manage\" permission (Settings → Apps → App capabilities)"
+              }
+            ]
+          }
+        ],
+        "command": {
+          "name": "mood",
+          "aliases": [],
+          "source": "app"
+        },
+        "sessionBytes": 521
+      },
+      {
+        "label": "turn-denied",
+        "denied": "app/session.start-turn",
+        "dispatches": [
+          {
+            "input": "初始化隔离回归会话",
+            "locator": "/tmp/hap-mood-host-okjppQ/turn-denied/home/agents/hanako/sessions/mood-dispatch.jsonl",
+            "received": {
+              "type": "error",
+              "text": "Session restore model fallback rejected: No models available. Use /login to log into a provider via OAuth or API key. See:\n  /Users/can/.hanako/artifacts/server/1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133/node_modules/@earendil-works/pi-coding-agent/docs/providers.md\n  /Users/can/.hanako/artifacts/server/1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133/node_modules/@earendil-works/pi-coding-agent/docs/models.md"
+            },
+            "calls": []
+          },
+          {
+            "input": "/mood",
+            "locator": "/tmp/hap-mood-host-okjppQ/turn-denied/home/agents/hanako/sessions/mood-dispatch.jsonl",
+            "received": {
+              "type": "slash_result",
+              "text": "想听什么状态？单独发一条普通消息告诉我（别写在 /mood 后面），例如「今天很累，帮我建个安静的心情歌单」，我就去选歌建单。",
+              "level": "success"
+            },
+            "calls": [
+              {
+                "verb": "session:list",
+                "payload": {
+                  "scope": "all",
+                  "lifecycle": "active"
+                },
+                "result": {
+                  "sessions": [
+                    {
+                      "path": "/tmp/hap-mood-host-okjppQ/turn-denied/home/agents/hanako/sessions/mood-dispatch.jsonl",
+                      "sessionId": "sess_0mv6nprjb_8fb07645d2edf9a31b1c"
+                    }
+                  ]
+                }
+              },
+              {
+                "verb": "session:send",
+                "payload": {
+                  "text": "用户敲了 /mood，想生成今日心情歌单。请先问他现在想听什么样的状态（一句话就够），\n然后读他的音乐库、选歌，保存成一个心情歌单。",
+                  "sessionId": "sess_0mv6nprjb_8fb07645d2edf9a31b1c",
+                  "scope": "all"
+                },
+                "error": "app \"mood-dispatch-regression\" is not authorized to start a conversation turn in this session — the user has not granted the \"app/session.start-turn\" permission (Settings → Apps → App capabilities)"
+              }
+            ]
+          }
+        ],
+        "command": {
+          "name": "mood",
+          "aliases": [],
+          "source": "app"
+        },
+        "sessionBytes": 521
+      }
+    ],
+    "hostArtifact": "1.1.0-beta-darwin-arm64-ddbcc90ee2fc26ef-ge9e41495f3d78133"
+  }
+}
