@@ -75,7 +75,7 @@ node tools/bump-build.mjs
 
 ## 视觉对齐（2026-10-09 画师）
 
-生产 UI 又对了一次初始设计稿（`docs/design-proposals/hana-player-queue-v4.png` 长卡/独立窗、
+生产 UI 又对了一次初始设计稿（`docs/archive/design-proposals/hana-player-queue-v4.png` 长卡/独立窗、
 `hana-player-compact-v2.png` 矮卡），差距清单与改法见 `docs/player-ui/ALIGN-BRIEF.md`。
 要点：顶栏去盒、歌名直压封面；无封面走「纸面留白」双态（`.nocover`）；
 控制条摊平为设计稿节奏 + 实心字形；歌词字号阶梅 22/15/13；队列行 44px 缩略 + 分隔线；

@@ -101,6 +101,7 @@
 | 每轮详细技术交接（改了什么文件 / 断言编号） | `docs/player-ui/*-DONE.md` |
 | 前端契约与重构背景 | `docs/player-ui/CONTRACT.md`、`docs/REFACTOR-BRIEF.md` |
 | 开工前的旧简报（历史，已被 CONTRACT 取代） | `docs/player-ui/archive/` |
+| 重构前的设计稿 / 图片提示词（历史） | `docs/archive/design-proposals/` |
 
 > 早期待办书里的「PV / 唱盘 / 主题面板」等要求已被 `CONTRACT.md` 取代，以极简版为准。
 

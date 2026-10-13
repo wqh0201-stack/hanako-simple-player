@@ -168,7 +168,7 @@ cd ~/.hanako/apps/hanako-audio-player/ui && python3 -m http.server 8777
 │   ├── sdk.js                    # 宿主 SDK
 │   └── face-portrait.png
 ├── pv/                           # 文字 PV 引擎源（src + css），build.mjs 生成 PV 块
-├── themes/                       # default / spectrum / waveform 三个可视化主题
+├── themes/                       # 【已删】原 default / spectrum / waveform 主题，重构后零引用
 ├── tools/                        # bump-build.mjs 等
 └── app-data（在 ~/.hanako/app-data/hanako-audio-player/）  # playlist.json / cookies.env / lyrics/，安装不碰
 ```

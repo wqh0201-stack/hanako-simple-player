@@ -35,7 +35,9 @@
 
 ## 文档待办
 
-- `docs/BASELINE.md` 停在 build 1003131534，可按需移到 `docs/player-ui/archive/`。
+- `docs/BASELINE.md` 停在 build 1003131534。**保留在原位**：`docs/REFACTOR-BRIEF.md`
+  仍引它作为「开工前先读」。构建号已远旧，读时知道它只是重构起点基线即可。
 - `.backups/` 有 20+ 个本地回退 tgz（已 gitignore，只占空间，可清）。
-- 死目录 `themes/`（全仓零引用）与已删的 `pv/` 在早期文档/README 里仍有残留描述，
-  以本仓现状为准。
+- 早期产物已归档：开工前简报 → `docs/player-ui/archive/`；
+  重构前设计稿/提示词 → `docs/archive/design-proposals/`。
+- 死目录 `themes/` 已删（原 default/spectrum/waveform 主题，重构后零引用）。
