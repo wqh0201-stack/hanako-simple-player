@@ -87,6 +87,9 @@
 
 > 一句话：**改完 → 同步 `ui/` 整包 → `reload` app**。三步缺一不可。
 
+> 这是**本地回路**。**对外发版**（封包 → GitHub Release → 市场 PR）是另一条链，
+> 见 §5 文档地图，动手前先读那份清单再动。
+
 ## 5. 文档地图
 
 **当前状态**：版本 1.0.7，构建号见 `ui/_build.json`。已部署、真机验收通过。
@@ -98,6 +101,7 @@
 | 版本变更、每版给用户带来什么 | [`docs/CHANGELOG.md`](docs/CHANGELOG.md) |
 | 踩过的坑、根因、「别改回 XX」 | [`docs/PITFALLS.md`](docs/PITFALLS.md) |
 | 待办、待真机验收、评审遗留 | [`docs/TODO.md`](docs/TODO.md) |
+| **对外发版**（封包 → GitHub Release → 市场 PR） | 知识库 `/Volumes/SSD/知识库/20-资料/Hana App 发版到市场（本地封包-GitHub Release-market PR）.md`；本仓登记记录 [`docs/player-ui/handoffs/MARKET-ENROLL-1.0.0.md`](docs/player-ui/handoffs/MARKET-ENROLL-1.0.0.md) |
 | 每轮详细技术交接（改了什么文件 / 断言编号） | [`docs/player-ui/handoffs/`](docs/player-ui/handoffs/)（46 份，索引见 [`docs/player-ui/README.md`](docs/player-ui/README.md)） |
 | 前端契约与重构背景 | `docs/player-ui/CONTRACT.md`、`docs/player-ui/REFACTOR-BRIEF.md` |
 | 开工前的旧简报 / 淘汰的 UI 原型（历史） | `docs/player-ui/archive/`（原型在 `archive/prototype/`） |
