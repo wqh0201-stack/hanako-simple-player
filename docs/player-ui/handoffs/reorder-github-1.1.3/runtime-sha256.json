@@ -1,0 +1,34 @@
+{
+  "version": "1.1.3",
+  "build": "1003131685",
+  "files": {
+    "manifest.json": "af9576d1c7413ecc3bd77bf326e13a74dc2abdf60ed9ac968f4558a64c5f5949",
+    "package.json": "ec2288ca06d49d162241f4424984d38fd186cd6d61178dfd21a038e8618858e0",
+    "lib/reorder.js": "c1f0f64eda94416b20313eb9827c55f908973942a09ce63d12c6cc2e45d33d4a",
+    "lib/library.js": "974cecc7440cf2ea3968d8e7b5adee762148208cafc81966a0a3f9cb7e1334c9",
+    "lib/lists.js": "3da71f5857397588caf488728113f1d912f970a064e8f90d5b928e51bff38bef",
+    "lib/register-routes.js": "3619da3495f13d43111db09febb985c966db635adb85f87a9f1b018fc98f4189",
+    "ui/app.js": "f1a72c61d172ccc0cfa01e701a4cf6e56c9c87a930cab2cd2d46e4290f1c6289",
+    "ui/style.css": "a8cc9bfa1ee878e0164f0fab3261c571d54f10bfc2330ff4c4118e1e6e2c25b2",
+    "ui/index.html": "73323dbbfd02cdb4457fa449fcef23c7ecd5dacb809ffe8bd50fdbb77b098514",
+    "ui/standalone.html": "43511a47afe46b1c74a0428aed6808f777637381e753ecb1bb2caac9607703fb",
+    "ui/_build.json": "433cce9b5d47959249c4a0237af14505dc0626a85cbaaafe9c23fc471529fa0d"
+  },
+  "archive": {
+    "path": "/tmp/hap-reorder-package/app-hanako-simple-player-1.1.3.zip",
+    "sha256": "8f8f16c3fd816da0139ecf83deaa84c33a9c5b16412c19bd973c08c539323625"
+  },
+  "archiveMatchesSource": {
+    "manifest.json": true,
+    "package.json": true,
+    "lib/reorder.js": true,
+    "lib/library.js": true,
+    "lib/lists.js": true,
+    "lib/register-routes.js": true,
+    "ui/app.js": true,
+    "ui/style.css": true,
+    "ui/index.html": true,
+    "ui/standalone.html": true,
+    "ui/_build.json": true
+  }
+}

@@ -1,0 +1,393 @@
+{
+  "passed": 42,
+  "total": 42,
+  "failed": [],
+  "results": [
+    {
+      "name": "BE-01-song-order-saves",
+      "ok": true
+    },
+    {
+      "name": "BE-02-other-list-slots-and-metadata-unchanged",
+      "ok": true
+    },
+    {
+      "name": "BE-03-unknown-fields-and-change-broadcast-survive",
+      "ok": true
+    },
+    {
+      "name": "BE-04-reject-missing-item",
+      "ok": true
+    },
+    {
+      "name": "BE-04-reject-missing-anchor",
+      "ok": true
+    },
+    {
+      "name": "BE-04-reject-other-list-anchor",
+      "ok": true
+    },
+    {
+      "name": "BE-04-reject-same-item",
+      "ok": true
+    },
+    {
+      "name": "BE-04-reject-recent-history",
+      "ok": true
+    },
+    {
+      "name": "BE-04-reject-bad-input",
+      "ok": true
+    },
+    {
+      "name": "BE-05-legacy-full-url-identity",
+      "ok": true
+    },
+    {
+      "name": "BE-06-tab-order-preserves-new-list-and-name",
+      "ok": true
+    },
+    {
+      "name": "BE-07-deleted-tab-not-resurrected",
+      "ok": true
+    },
+    {
+      "name": "BE-08-stale-metadata-save-keeps-external-sort",
+      "ok": true
+    },
+    {
+      "name": "BE-09-explicit-scope-sort-keeps-new-track",
+      "ok": true
+    },
+    {
+      "name": "BE-10-consecutive-tab-moves-use-latest",
+      "ok": true
+    },
+    {
+      "name": "UI-01-long-hold-lifts-with-stable-nodes",
+      "ok": true
+    },
+    {
+      "name": "UI-02-neighbor-pressure-is-visible",
+      "ok": true
+    },
+    {
+      "name": "UI-03-move-preview-does-not-write",
+      "ok": true
+    },
+    {
+      "name": "UI-04-drop-saves-once-and-avoids-play-click",
+      "ok": true,
+      "detail": {
+        "calls": [
+          {
+            "p": "/api/playlist/reorder",
+            "input": {
+              "list": "imp:1",
+              "id": "song-0",
+              "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=0",
+              "beforeId": "song-3",
+              "beforeUrl": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=3"
+            }
+          },
+          {
+            "p": "/api/playlist/reorder",
+            "input": {
+              "list": "imp:1",
+              "id": "song-0",
+              "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=0",
+              "beforeId": "song-1",
+              "beforeUrl": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=1"
+            }
+          },
+          {
+            "p": "/api/playlist/reorder",
+            "input": {
+              "list": "imp:1",
+              "id": "song-0",
+              "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=0",
+              "beforeId": "song-3",
+              "beforeUrl": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=3"
+            }
+          },
+          {
+            "p": "/api/lists/reorder",
+            "input": {
+              "id": "local",
+              "beforeId": "fav"
+            }
+          },
+          {
+            "p": "/api/playlist/reorder",
+            "input": {
+              "list": "imp:1",
+              "id": "song-0",
+              "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=0",
+              "beforeId": "song-3",
+              "beforeUrl": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=3"
+            }
+          },
+          {
+            "p": "/api/playlist/reorder",
+            "input": {
+              "list": "imp:1",
+              "id": "song-1",
+              "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=1",
+              "beforeId": "song-0",
+              "beforeUrl": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=0"
+            }
+          },
+          {
+            "p": "/api/playlist/reorder",
+            "input": {
+              "list": "imp:1",
+              "id": "song-2",
+              "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=2",
+              "beforeId": "song-0",
+              "beforeUrl": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=0"
+            }
+          }
+        ],
+        "order": [
+          "song-1",
+          "song-2",
+          "song-0",
+          "song-3",
+          "song-4"
+        ]
+      }
+    },
+    {
+      "name": "UI-05-reload-restores-order",
+      "ok": true
+    },
+    {
+      "name": "UI-06-current-recording-and-clock-continue",
+      "ok": true,
+      "detail": {
+        "audioBefore": {
+          "time": 5.014165,
+          "uid": "imp:1|song-0",
+          "src": "http://127.0.0.1:52722/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=0&appSurfaceSession=sort-fixture"
+        },
+        "audioAfter": {
+          "time": 6.117718,
+          "uid": "imp:1|song-0",
+          "src": "http://127.0.0.1:52722/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=0&appSurfaceSession=sort-fixture",
+          "paused": false
+        },
+        "order": [
+          "song-0",
+          "song-1",
+          "song-2",
+          "song-3",
+          "song-4"
+        ]
+      }
+    },
+    {
+      "name": "UI-07-save-failure-restores-order",
+      "ok": true
+    },
+    {
+      "name": "UI-08-escape-cancels-without-write",
+      "ok": true
+    },
+    {
+      "name": "UI-09-variable-width-tabs-reorder-without-selection",
+      "ok": true,
+      "detail": [
+        {
+          "id": "local",
+          "name": "本地"
+        },
+        {
+          "id": "fav",
+          "name": "我的喜欢"
+        },
+        {
+          "id": "recent",
+          "name": "最近播放"
+        },
+        {
+          "id": "imp:1",
+          "name": "日系流行 · 晴れ"
+        },
+        {
+          "id": "imp:2",
+          "name": "Aimer 长歌单名称"
+        }
+      ]
+    },
+    {
+      "name": "UI-10-stationary-tab-hold-only-sorts",
+      "ok": true
+    },
+    {
+      "name": "UI-10b-right-click-keeps-management-menu",
+      "ok": true
+    },
+    {
+      "name": "UI-11-song-edge-auto-scroll",
+      "ok": true
+    },
+    {
+      "name": "UI-12-tab-edge-auto-scroll",
+      "ok": true
+    },
+    {
+      "name": "UI-13-real-touch-hold-drags-and-saves",
+      "ok": true,
+      "detail": {
+        "calls": [
+          {
+            "p": "/api/playlist/reorder",
+            "input": {
+              "list": "imp:1",
+              "id": "song-0",
+              "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=0",
+              "beforeId": "song-3",
+              "beforeUrl": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=3"
+            }
+          }
+        ],
+        "order": [
+          "song-1",
+          "song-2",
+          "song-0",
+          "song-3",
+          "song-4"
+        ]
+      }
+    },
+    {
+      "name": "UI-14-normal-touch-swipe-still-scrolls",
+      "ok": true
+    },
+    {
+      "name": "UI-15-github-footer-above-controls",
+      "ok": true
+    },
+    {
+      "name": "UI-16-footer-stable-in-discover-and-results",
+      "ok": true
+    },
+    {
+      "name": "UI-17-github-uses-host-external-open",
+      "ok": true
+    },
+    {
+      "name": "UI-18-footer-fits-312",
+      "ok": true
+    },
+    {
+      "name": "UI-18-footer-fits-561",
+      "ok": true
+    },
+    {
+      "name": "UI-18b-compact-results-retain-space",
+      "ok": true,
+      "detail": 230
+    },
+    {
+      "name": "UI-18-footer-fits-465",
+      "ok": true
+    },
+    {
+      "name": "UI-18-footer-fits-1040",
+      "ok": true
+    },
+    {
+      "name": "UI-19-reduced-motion-removes-neighbor-squash",
+      "ok": true
+    },
+    {
+      "name": "UI-21-keyboard-move-saves-and-retains-focus",
+      "ok": true
+    },
+    {
+      "name": "UI-22-dark-footer-fits",
+      "ok": true
+    },
+    {
+      "name": "UI-20-no-runtime-errors",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "sortCalls": [
+    {
+      "p": "/api/playlist/reorder",
+      "input": {
+        "list": "imp:1",
+        "id": "song-0",
+        "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=0",
+        "beforeId": "song-3",
+        "beforeUrl": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=3"
+      }
+    },
+    {
+      "p": "/api/playlist/reorder",
+      "input": {
+        "list": "imp:1",
+        "id": "song-0",
+        "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=0",
+        "beforeId": "song-1",
+        "beforeUrl": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=1"
+      }
+    },
+    {
+      "p": "/api/playlist/reorder",
+      "input": {
+        "list": "imp:1",
+        "id": "song-0",
+        "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=0",
+        "beforeId": "song-3",
+        "beforeUrl": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=3"
+      }
+    },
+    {
+      "p": "/api/lists/reorder",
+      "input": {
+        "id": "local",
+        "beforeId": "fav"
+      }
+    },
+    {
+      "p": "/api/playlist/reorder",
+      "input": {
+        "list": "imp:1",
+        "id": "song-0",
+        "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=0",
+        "beforeId": "song-3",
+        "beforeUrl": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=3"
+      }
+    },
+    {
+      "p": "/api/playlist/reorder",
+      "input": {
+        "list": "imp:1",
+        "id": "song-1",
+        "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=1",
+        "beforeId": "song-0",
+        "beforeUrl": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=0"
+      }
+    },
+    {
+      "p": "/api/playlist/reorder",
+      "input": {
+        "list": "imp:1",
+        "id": "song-2",
+        "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=2",
+        "beforeId": "song-0",
+        "beforeUrl": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav?track=0"
+      }
+    }
+  ],
+  "errors": [],
+  "externalCalls": [
+    {
+      "url": "https://github.com/wqh0201-stack/hanako-simple-player"
+    }
+  ]
+}
