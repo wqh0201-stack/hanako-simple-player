@@ -587,6 +587,11 @@ const server = http.createServer((req, res) => {
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const BASE = `http://127.0.0.1:${server.address().port}`;
 
+/* 页面基址必须走宿主真实 surface 路由（/api/apps/<id>/ui/）：
+ * 官方 App SDK 在装配时会断言 location.pathname 落在该前缀下（assertAppUiSurface），
+ * 用根路径 /index.html 打开会直接抛错。后端 API 仍是绝对路径，不受影响。 */
+const UI_BASE = `${BASE}/api/apps/hanako-simple-player/ui`;
+
 const browser = await puppeteer.launch({
   executablePath: CHROME, headless: 'new',
   // 不传 --hide-scrollbars：之前它会藏住滚动条缺陷，等于把这类问题藏起来
@@ -675,10 +680,18 @@ const dupUids = (page) => page.evaluate(() => {
   });
   return dup;
 });
-const clickTab = (page, id) => page.evaluate((listId) => {
-  const b = document.querySelector('#listTabs .list-tab[data-list="' + listId + '"]');
-  if (b) b.click();
-}, id);
+/* 切歌单标签：等标签渲染 → 点击 → 等它真的 active。
+ * 旧版是「查到就点、查不到就静默跳过」——官方 App SDK 体量大、boot 落点靠后，
+ * goto 后立刻调用时标签还没渲染，点击静默落空，后续“等行出现”被上一个列表的行满足，
+ * 于是选不中目标曲目（实测 refine-312x494-light-lyrics-off 假失败）。 */
+const clickTab = async (page, id) => {
+  await page.waitForFunction((listId) => !!document.querySelector('#listTabs .list-tab[data-list="' + listId + '"]'), { timeout: 8000 }, id);
+  await page.evaluate((listId) => document.querySelector('#listTabs .list-tab[data-list="' + listId + '"]').click(), id);
+  await page.waitForFunction((listId) => {
+    const a = document.querySelector('#listTabs .list-tab.is-active');
+    return !!a && a.getAttribute('data-list') === listId;
+  }, { timeout: 8000 }, id);
+};
 const geom = (page) => page.evaluate(() => {
   const r = (id) => { const e = document.getElementById(id); const b = e.getBoundingClientRect(); return [Math.round(b.left), Math.round(b.top), Math.round(b.width), Math.round(b.height)]; };
   return { sceneTop: r('sceneTop'), controls: r('controls'), tabs: r('listTabs'), listTop: Math.round(document.getElementById('queueList').getBoundingClientRect().top) };
@@ -689,7 +702,7 @@ async function verifySurfaceMotion() {
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
   const page = await newPage();
   await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await sleep(700);
   await clickTab(page, 'imp:1');
   await page.evaluate(() => document.querySelector('#queueList .q-hit').click());
@@ -821,7 +834,7 @@ async function verifyLyricFlow() {
   await fetch(`${BASE}${API}/__fixture/reset?mode=lyric-flow&appSurfaceSession=fake-ticket`);
   const page = await newPage();
   await page.setViewport({ width: 820, height: 700, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await sleep(700);
   await clickTab(page, 'imp:1');
   await page.evaluate(() => document.querySelector('#queueList .q-hit').click());
@@ -964,7 +977,7 @@ async function verifyCoverFill() {
   coverRequests = []; coverFail = coverImageBad = false; coverDelay = 0;
   const page = await newPage();
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__playerDebug && document.querySelector('#listTabs .list-tab[data-list="imp:1"]'));
   await clickTab(page, 'imp:1');
   const clean = await page.evaluate(() => ['周杰伦 - 枫', '周杰伦 - 默', '周杰伦 - 扯', '蔡依林、周杰伦 - 布拉格广场', '纯音乐 2011 09 07 今日から思い出 (从今天起成为回忆)', '周杰伦 - 稻香 (Live)'].map(window.__playerDebug.cleanCoverQuery));
@@ -1055,7 +1068,7 @@ async function verifyMoodLists() {
     } });
   }, [...fixed, { id: 'imp:1', name: '旧门甲' }, { id: 'imp:2', name: '旧门乙' }]);
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__playerDebug && window.__playerDebug.listsInfo().some(l => l.name === '后端甲'));
   assert('mood-lists-backend-priority-and-order', (await page.evaluate(() => window.__playerDebug.listsInfo())).map(l => l.name).join(',') === '我的喜欢,最近播放,本地,后端乙,后端甲');
   await clickTab(page, 'imp:1');
@@ -1134,7 +1147,7 @@ for (const [name, w, h, file] of CASES) {
   for (const theme of ['light', 'dark']) {
     const page = await newPage();
     await page.setViewport({ width: w, height: h, deviceScaleFactor: 1 });
-    await page.goto(`${BASE}/${file}?assert=1&shot=1&appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${UI_BASE}/${file}?assert=1&shot=1&appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
     await page.evaluate((t) => window.__fixtureTheme(t), theme);
     await sleep(700);
     const result = await page.evaluate(() => window.__playerSelfCheck());
@@ -1148,7 +1161,7 @@ for (const [name, w, h, file] of CASES) {
 {
   const page = await newPage();
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await page.evaluate((t) => window.__fixtureTheme(t), 'light');
   await sleep(800);
 
@@ -1409,7 +1422,7 @@ const motion = {};
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
   const page = await newPage();
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await sleep(800);
   await clickTab(page, 'imp:1');
   await sleep(300);
@@ -1543,7 +1556,7 @@ const motion = {};
   {
     const p2 = await newPage();
     await p2.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
-    await p2.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+    await p2.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
     await sleep(700);
     motion.queueExit = await p2.evaluate(async () => {
       const player = document.getElementById('player');
@@ -1570,7 +1583,7 @@ const motion = {};
   {
     const p3 = await newPage();
     await p3.setViewport({ width: 531, height: 451, deviceScaleFactor: 1 });
-    await p3.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+    await p3.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
     await sleep(700);
     motion.compactEnter = await p3.evaluate(async () => {
       const player = document.getElementById('player');
@@ -1600,7 +1613,7 @@ const motion = {};
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
   const page = await newPage();
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await page.evaluate((t) => window.__fixtureTheme(t), 'light');
   await sleep(800);
 
@@ -2145,7 +2158,7 @@ const rippleAudio = {};
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
   const page = await newPage({ teardown: true });
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await page.evaluate((t) => window.__fixtureTheme(t), 'light');
   await sleep(700);
 
@@ -2508,7 +2521,7 @@ const rippleTool = {};
     });
   });
   await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/standalone.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/standalone.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await page.evaluate((t) => window.__fixtureTheme(t), 'light');
   await sleep(900);
 
@@ -2724,7 +2737,7 @@ const rippleTool = {};
     });
   });
   await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/standalone.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/standalone.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await page.evaluate((t) => window.__fixtureTheme(t), 'light');
   await sleep(1000);   // 等 sdkReady.then 的存储读取落地
   const restore = await page.evaluate(() => ({
@@ -2744,7 +2757,7 @@ const rippleTool = {};
   await fetch(`${BASE}${API}/__fixture/reset?mode=align&appSurfaceSession=fake-ticket`);
   const page = await newPage();
   await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
-  const entry = `${BASE}/standalone.html?appSurfaceSession=fake-ticket`;
+  const entry = `${UI_BASE}/standalone.html?appSurfaceSession=fake-ticket`;
   await page.goto(entry, { waitUntil: 'domcontentloaded' });
   await page.evaluate(() => window.__fixtureTheme('light'));
   const ready = () => page.waitForFunction(() => window.__playerDebug && window.__playerDebug.lyricAlignState().base === 250 && document.getElementById('audio').duration > 0);
@@ -2821,7 +2834,7 @@ const rippleTool = {};
   await page.waitForFunction(() => !window.__playerDebug.lyricAlignState().active && window.__playerDebug.lyricAlignState().saved === 50);
   const stored = (persistedPlaylist || []).filter((t) => t.id === 'netease:900000');
   assert('lyric-align-persists-to-playlist-and-all-copies', stored.length >= 2 && stored.every((t) => t.lyricOffset === 50), JSON.stringify(stored.map((t) => ({ list: t.list, offset: t.lyricOffset }))));
-  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await ready();
   const restored = await info();
   assert('lyric-align-restores-across-documents-with-base-once', restored.saved === 50 && Math.abs(restored.time - restored.media - 0.3) < 0.001, JSON.stringify(restored));
@@ -2854,7 +2867,7 @@ const rippleTool = {};
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
   const page = await newPage();
   await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/standalone.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/standalone.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await page.evaluate((t) => window.__fixtureTheme(t), 'light');
   await sleep(700);
 
@@ -3805,7 +3818,7 @@ const rippleTool = {};
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
   const page = await newPage();
   await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/standalone.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/standalone.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await page.evaluate((t) => window.__fixtureTheme(t), 'light');
   await sleep(800);
 
@@ -3985,7 +3998,7 @@ const rippleTool = {};
     await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
     const page = await newPage();
     await page.setViewport({ width: w, height: h, deviceScaleFactor: 1 });
-    await page.goto(`${BASE}/${file}?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${UI_BASE}/${file}?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
     await page.evaluate((t) => window.__fixtureTheme(t), 'light');
     await sleep(800);
     await page.evaluate(() => window.__playerDebug.openSearch());
@@ -4068,7 +4081,7 @@ const rippleTool = {};
     await fetch(`${BASE}${API}/__fixture/reset?mode=empty&appSurfaceSession=fake-ticket`);
     const page = await newPage();
     await page.setViewport({ width: w, height: h, deviceScaleFactor: 1 });
-    await page.goto(`${BASE}/${file}?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${UI_BASE}/${file}?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
     await page.evaluate((t) => window.__fixtureTheme(t), 'light');
     await sleep(850);
     s[name] = await page.evaluate(() => ({
@@ -4121,7 +4134,7 @@ for (const [name, w, h, file] of REFINE_CASES) {
     for (const lyricsOn of [true, false]) {
       const page = await newPage();
       await page.setViewport({ width: w, height: h, deviceScaleFactor: 1 });
-      await page.goto(`${BASE}/${file}?assert=1&shot=1&appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+      await page.goto(`${UI_BASE}/${file}?assert=1&shot=1&appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
       await page.evaluate((t) => window.__fixtureTheme(t), theme);
       // 切到歌单 1，按本档需要选「有词」或「无词」曲目
       await clickTab(page, 'imp:1');
@@ -4294,7 +4307,7 @@ let ambient = {};
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
   const page = await newPage();
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/index.html?assert=1&shot=1&appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?assert=1&shot=1&appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await page.evaluate((t) => window.__fixtureTheme(t), 'light');
   await clickTab(page, 'imp:1');
   await sleep(250);
@@ -4435,7 +4448,7 @@ for (const [name, w, h, file] of [['312x494', 312, 494, 'index.html'], ['465x930
   for (const theme of ['light', 'dark']) {
     const page = await newPage();
     await page.setViewport({ width: w, height: h, deviceScaleFactor: 1 });
-    await page.goto(`${BASE}/${file}?assert=1&shot=1&appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${UI_BASE}/${file}?assert=1&shot=1&appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
     await page.evaluate((t) => window.__fixtureTheme(t), theme);
     await clickTab(page, 'imp:1');
     await sleep(220);
@@ -4450,7 +4463,7 @@ for (const [name, w, h, file] of [['312x494', 312, 494, 'index.html'], ['465x930
 {
   const page = await newPage();
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/index.html?assert=1&shot=1&appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?assert=1&shot=1&appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await page.evaluate((t) => window.__fixtureTheme(t), 'light');
   await clickTab(page, 'imp:1');
   await sleep(220);
@@ -4476,7 +4489,7 @@ for (const [name, w, h, file] of [['312x494', 312, 494, 'index.html'], ['465x930
   const page = await newPage();
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
   const cssUrl = '/api/apps/theme.css?theme=hostfix';
-  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket&shot=1&hana-theme=hostfix&hana-css=${encodeURIComponent(cssUrl)}`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket&shot=1&hana-theme=hostfix&hana-css=${encodeURIComponent(cssUrl)}`, { waitUntil: 'domcontentloaded' });
   await sleep(500);
   const vals = await page.evaluate(() => ({
     accent: getComputedStyle(document.getElementById('playBtn')).backgroundColor,
@@ -4503,7 +4516,7 @@ for (const [name, w, h, file] of [['312x494', 312, 494, 'index.html'], ['465x930
     'hana-palette-dark-css': '/api/apps/theme.css?theme=palette-dark-fix'
   });
   await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'light' }]);
-  await page.goto(`${BASE}/index.html?${q}`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?${q}`, { waitUntil: 'domcontentloaded' });
   await sleep(500);
   const vals = await page.evaluate(() => ({
     accent: getComputedStyle(document.getElementById('playBtn')).backgroundColor,
@@ -4536,7 +4549,7 @@ for (const [name, w, h, file] of [['312x494', 312, 494, 'index.html'], ['465x930
   });
   // 故意把系统设成浅色：旧实现会因此错选浅色那套（bug 根因）
   await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'light' }]);
-  await page.goto(`${BASE}/index.html?${q}`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?${q}`, { waitUntil: 'domcontentloaded' });
   await sleep(500);
   const sysLightVals = await page.evaluate(() => ({
     accent: getComputedStyle(document.getElementById('playBtn')).backgroundColor,
@@ -4572,7 +4585,7 @@ for (const [name, w, h, file] of [['312x494', 312, 494, 'index.html'], ['465x930
     'hana-palette-dark-css': '/api/apps/theme.css?theme=palette-dark-fix'
   });
   await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'dark' }]);
-  await page.goto(`${BASE}/index.html?${q}`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?${q}`, { waitUntil: 'domcontentloaded' });
   await sleep(500);
   const vals = await page.evaluate(() => ({
     accent: getComputedStyle(document.getElementById('playBtn')).backgroundColor,
@@ -4591,7 +4604,7 @@ for (const [name, w, h, file] of [['312x494', 312, 494, 'index.html'], ['465x930
   // (c) 无宿主注入：@media prefers-color-scheme 兑底接管（深板岩 / 暖纸）
   const page = await newPage();
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket&shot=1`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket&shot=1`, { waitUntil: 'domcontentloaded' });
   await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'dark' }]);
   await sleep(500);
   const darkVals = await page.evaluate(() => ({
@@ -4618,7 +4631,7 @@ for (const [name, w, h, file] of [['312x494', 312, 494, 'index.html'], ['465x930
   const page = await newPage();
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
   const cssUrl = '/api/apps/theme.css?theme=hostfix';
-  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket&shot=1&hana-theme=hostfix&hana-css=${encodeURIComponent(cssUrl)}`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket&shot=1&hana-theme=hostfix&hana-css=${encodeURIComponent(cssUrl)}`, { waitUntil: 'domcontentloaded' });
   await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'dark' }]);
   await sleep(500);
   const vals = await page.evaluate(() => ({ body: getComputedStyle(document.body).backgroundColor }));
@@ -4633,7 +4646,7 @@ for (const [name, w, h, file] of [['312x494', 312, 494, 'index.html'], ['465x930
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
   await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'dark' }]);
   // 不调 __fixtureTheme —— 模拟宿主完全没注入主题变量的情况
-  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await sleep(600);
   const dark = await page.evaluate(() => {
     const cs = getComputedStyle(document.documentElement);
@@ -4656,7 +4669,7 @@ let migration = {};
   await fetch(`${BASE}${API}/__fixture/reset?mode=migrate&appSurfaceSession=fake-ticket`);
   const page = await newPage();
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await page.evaluate((t) => window.__fixtureTheme(t), 'light');
   await sleep(800);
 
@@ -4737,7 +4750,7 @@ let migration = {};
   await fetch(`${BASE}${API}/__fixture/reset?mode=oldprefix&appSurfaceSession=fake-ticket`);
   const page = await newPage();
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await page.evaluate((t) => window.__fixtureTheme(t), 'light');
   // 等 boot 的 dataReady.then 跑完（读列表 → 归一置位 → 回写）
   await sleep(1200);
@@ -4762,7 +4775,7 @@ let lifecycle = {};
   // 本段专测「卸载落盘 → 新文档续播」，必须开启 teardown（默认被拦）
   const page = await newPage({ teardown: true });
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await page.evaluate((t) => window.__fixtureTheme(t), 'light');
   await sleep(800);
 
@@ -4838,7 +4851,7 @@ let lifecycle = {};
       return Promise.reject(Object.assign(new Error('blocked'), { name: 'NotAllowedError' }));
     };
   });
-  await blocked.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await blocked.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await blocked.evaluate((t) => window.__fixtureTheme(t), 'light');
   await sleep(900);
   const blockedState = await blocked.evaluate(() => ({
@@ -4876,7 +4889,7 @@ let lifecycle = {};
   }
   const orphanPage = await newPage();
   await orphanPage.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
-  await orphanPage.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await orphanPage.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await orphanPage.evaluate((t) => window.__fixtureTheme(t), 'light');
   await sleep(1000);
   const orphanState = await orphanPage.evaluate(() => ({
@@ -4896,7 +4909,7 @@ let lifecycle = {};
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
   const seekPage = await newPage();
   await seekPage.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
-  await seekPage.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await seekPage.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await seekPage.evaluate((t) => window.__fixtureTheme(t), 'light');
   await sleep(800);
   await clickTab(seekPage, 'imp:1');
@@ -4946,9 +4959,13 @@ let lifecycle = {};
     window.__eteTick = () => { const jobs = [...clock.pending.values()]; clock.pending.clear(); jobs.forEach((fn) => fn()); };
   });
   await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/index.html?assert=1&shot=1&appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?assert=1&shot=1&appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await page.evaluate((t) => window.__fixtureTheme(t), 'light');
+  /* 等列表就位再点：官方 App SDK 比旧插件 SDK 体量大，boot 落点靠后；
+   * 本段原先 goto 后立刻点 tab，属既有竞态（其余段落都有 waitForFunction）。 */
+  await page.waitForFunction(() => window.__playerDebug && document.querySelector('#listTabs .list-tab[data-list="imp:1"]') && window.__playerDebug.listTracks('imp:1').length > 0);
   await clickTab(page, 'imp:1');
+  await page.waitForFunction(() => document.querySelectorAll('#queueList .q-row').length > 0);
   const playRow = async (i) => {
     await page.evaluate((idx) => document.querySelectorAll('#queueList .q-row')[idx].querySelector('.q-hit').click(), i);
     await sleep(500);
@@ -5188,9 +5205,12 @@ let lifecycle = {};
     window.__eteTick = () => { const jobs = [...clock.pending.values()]; clock.pending.clear(); jobs.forEach((fn) => fn()); };
   });
   await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/standalone.html?assert=1&shot=1&appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/standalone.html?assert=1&shot=1&appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await page.evaluate((t) => window.__fixtureTheme(t), 'light');
+  /* 同卡片分支：等列表就位再点 tab（官方 App SDK 体量大，boot 落点靠后）。 */
+  await page.waitForFunction(() => window.__playerDebug && document.querySelector('#listTabs .list-tab[data-list="imp:1"]') && window.__playerDebug.listTracks('imp:1').length > 0);
   await clickTab(page, 'imp:1');
+  await page.waitForFunction(() => document.querySelectorAll('#queueList .q-row').length > 0);
   const wPlayRow = async (i) => {
     await page.evaluate((idx) => document.querySelectorAll('#queueList .q-row')[idx].querySelector('.q-hit').click(), i);
     await sleep(500);
@@ -5267,7 +5287,7 @@ let lifecycle = {};
     });
   });
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await page.evaluate((t) => window.__fixtureTheme(t), 'light');
   await sleep(800);
 
@@ -5513,7 +5533,7 @@ let lifecycle = {};
   persistedPlaylist.push(...[2, 1, 4].map((i) => ({ id: `scan-${i}.mp3`, name: `扫描曲目 ${i}`, url: WAV_URL, list: 'local', mode: '本地' })));
   const page = await newPage();
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
-  await page.goto(`${BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__playerDebug && document.querySelector('#listTabs .list-tab[data-list="imp:1"]'));
   await clickTab(page, 'imp:1');
   const original = await page.evaluate(() => window.__playerDebug.listTracks('imp:1'));

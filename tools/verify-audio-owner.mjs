@@ -77,7 +77,16 @@ const server = http.createServer(async (req, res) => {
     }
     if (u.pathname === '/fixture-host') {
       res.setHeader('Content-Type', 'text/html');
-      return res.end('<!doctype html><iframe id="owner-frame" sandbox="allow-scripts allow-forms allow-popups allow-same-origin" src="/index.html?appSurfaceSession=test-ticket-' + fixtureEpoch + '"></iframe>');
+      return res.end('<!doctype html><iframe id="owner-frame" sandbox="allow-scripts allow-forms allow-popups allow-same-origin" src="/api/apps/hanako-simple-player/ui/index.html?appSurfaceSession=test-ticket-' + fixtureEpoch + '"></iframe>');
+    }
+    /* ui/ 静态资源走 surface 路由（官方 App SDK 装配时断言 location.pathname
+     * 落在 /api/apps/:appId/ui/ 下，根路径会直接抛错）。 */
+    if (u.pathname.startsWith('/api/apps/hanako-simple-player/ui/')) {
+      const rel = decodeURIComponent(u.pathname.slice('/api/apps/hanako-simple-player/ui/'.length)) || 'index.html';
+      const sf = path.join(root, 'ui', rel);
+      if (!sf.startsWith(path.join(root, 'ui')) || !fs.existsSync(sf)) return json(res, {}, 404);
+      res.setHeader('Content-Type', sf.endsWith('.js') ? 'text/javascript' : sf.endsWith('.css') ? 'text/css' : sf.endsWith('.png') ? 'image/png' : sf.endsWith('.json') ? 'application/json' : 'text/html');
+      return fs.createReadStream(sf).pipe(res);
     }
     const file = path.join(root, 'ui', u.pathname === '/' ? 'index.html' : u.pathname.slice(1));
     if (!file.startsWith(path.join(root, 'ui')) || !fs.existsSync(file)) return json(res, {}, 404);
@@ -87,6 +96,8 @@ const server = http.createServer(async (req, res) => {
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const base = 'http://127.0.0.1:' + server.address().port;
+/* 页面基址走宿主真实 surface 路由（见服务端注释）。 */
+const uiBase = base + '/api/apps/hanako-simple-player/ui/';
 const browser = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new', protocolTimeout: 15000, args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'] });
 function check(name, ok, detail) { results.push({ name, ok: !!ok, detail }); }
 async function open({ fallback = false, lostHandoff = false, noLocks = false, securityError = false, opener = null, asIframe = false } = {}) {
@@ -128,7 +139,7 @@ async function open({ fallback = false, lostHandoff = false, noLocks = false, se
       }
     } });
   }, fallback, lostHandoff, noLocks, securityError);
-  await page.goto(base + (asIframe ? '/fixture-host' : '/index.html?appSurfaceSession=test-ticket-' + fixtureEpoch), { waitUntil: 'domcontentloaded' });
+  await page.goto(asIframe ? base + '/fixture-host' : uiBase + 'index.html?appSurfaceSession=test-ticket-' + fixtureEpoch, { waitUntil: 'domcontentloaded' });
   const target = asIframe ? page.frames().find(frame => frame.url().includes('/index.html')) : page;
   await target.waitForFunction(() => window.__playerDebug && window.__playerDebug.currentTrack());
   if (asIframe) target.hostPage = page;
@@ -258,7 +269,7 @@ try {
   reset(seed());
   const living = await open(); await playing(living); await persistedPlaying();
   const livingState = await status(living);
-  const transient = await browser.newPage(); await transient.goto(base);
+  const transient = await browser.newPage(); await transient.goto(uiBase);
   // 撤掉全局锁后立即结束回调，模拟 stealer 自己先消失；原文档仍活着。
   // 它的身份锁不可被偷，新的空闲全局锁不能被误读成“旧文档已死”。
   await transient.evaluate(() => navigator.locks.request('hana-simple-player-audio-doc', { steal: true }, () => {}));

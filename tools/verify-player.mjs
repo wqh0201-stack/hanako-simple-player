@@ -18,6 +18,14 @@ const server = http.createServer((req,res) => {
   if (u.pathname.includes('/widget/api/playlist')) { res.setHeader('content-type','application/json'); res.end(JSON.stringify({ok:true,tracks})); return; }
   if (u.pathname.includes('/widget/api')) { res.setHeader('content-type','application/json'); res.end(JSON.stringify({ok:true,tracks:[],results:[],playlist:[]})); return; }
   if (u.pathname.includes('/api/apps/hanako-simple-player/ui/_build.json')) {res.setHeader('content-type','application/json');res.end(JSON.stringify({build:'1003131538'}));return;}
+  /* ui/ 静态资源走 surface 路由（必须在下面那个 /api/apps/... 的 JSON 兜底之前）。 */
+  if (u.pathname.startsWith('/api/apps/hanako-simple-player/ui/')) {
+    const rel = decodeURIComponent(u.pathname.slice('/api/apps/hanako-simple-player/ui/'.length)) || 'index.html';
+    const sf = path.join(ui, rel);
+    if (!sf.startsWith(ui) || !fs.existsSync(sf) || fs.statSync(sf).isDirectory()) { res.statusCode=404; res.end('not found'); return; }
+    res.setHeader('content-type', sf.endsWith('.js') ? 'text/javascript' : sf.endsWith('.json') ? 'application/json' : sf.endsWith('.css') ? 'text/css' : 'text/html');
+    return fs.createReadStream(sf).pipe(res);
+  }
   if (u.pathname.startsWith('/api/apps/hanako-simple-player/')) {res.setHeader('content-type','application/json');res.end(JSON.stringify({ok:true}));return;}
   const f = path.join(ui, decodeURIComponent(u.pathname === '/' ? 'index.html' : u.pathname));
   if (!f.startsWith(ui) || !fs.existsSync(f)) { res.statusCode=404; res.end('not found'); return; }
@@ -26,6 +34,9 @@ const server = http.createServer((req,res) => {
 });
 await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
 const baseURL=`http://127.0.0.1:${server.address().port}`;
+/* 页面基址走宿主真实 surface 路由：官方 App SDK 装配时断言 location.pathname
+ * 落在 /api/apps/:appId/ui/ 下，根路径会直接抛错。后端 API 仍是绝对路径。 */
+const uiBaseURL=`${baseURL}/api/apps/hanako-simple-player/ui`;
 const browser = await puppeteer.launch({executablePath:chromePath,headless:true,args:['--no-sandbox','--disable-gpu','--autoplay-policy=no-user-gesture-required']});
 const page = await browser.newPage();
 const errors=[];
@@ -46,7 +57,7 @@ const shots = [
 const report={shots:[],dynamic:{},runtimeErrors:errors};
 for (const [name,width,height,theme,detached] of shots) {
   await page.setViewport({width,height,deviceScaleFactor:1});
-  await page.goto(`${baseURL}/${detached?'standalone.html':'index.html'}`,{waitUntil:'domcontentloaded'});
+  await page.goto(`${uiBaseURL}/${detached?'standalone.html':'index.html'}`,{waitUntil:'domcontentloaded'});
   await page.evaluate(t=>window.__fixtureTheme(t),theme);
   await new Promise(r=>setTimeout(r,300));
   await page.evaluate(()=>{localStorage.removeItem('hana_audio_play_lock');const x=document.querySelector('.pl-item[data-i="0"]');if(x)x.click();});
@@ -56,7 +67,7 @@ for (const [name,width,height,theme,detached] of shots) {
   report.shots.push({name,width,height,theme,mode:detached?'detached fixture route':'card fixture route',bodyClass:await page.$eval('body',e=>e.className),root:await page.$eval('.player-container',e=>({w:e.clientWidth,h:e.clientHeight,classes:e.className})),headerVisible:await page.$eval('.header',e=>e.getBoundingClientRect().height>0)});
 }
 await page.setViewport({width:465,height:930});
-await page.goto(`${baseURL}/index.html`,{waitUntil:'domcontentloaded'});
+await page.goto(`${uiBaseURL}/index.html`,{waitUntil:'domcontentloaded'});
 await new Promise(r=>setTimeout(r,400));
 report.dynamic=await page.evaluate(async(wavUrl)=>{
   const root=document.querySelector('.player-container');
@@ -77,7 +88,7 @@ report.dynamic=await page.evaluate(async(wavUrl)=>{
 },wavUrl);
 const shortPage=await browser.newPage();
 await shortPage.setViewport({width:531,height:451,deviceScaleFactor:1});
-await shortPage.goto(`${baseURL}/index.html`,{waitUntil:'domcontentloaded'});
+await shortPage.goto(`${uiBaseURL}/index.html`,{waitUntil:'domcontentloaded'});
 await new Promise(r=>setTimeout(r,400));
 report.shortCard=await shortPage.evaluate(async()=>{
   localStorage.removeItem('hana_audio_play_lock');
@@ -97,7 +108,7 @@ report.shortCard=await shortPage.evaluate(async()=>{
 await shortPage.close();
 const racePage=await browser.newPage();
 await racePage.setViewport({width:465,height:930,deviceScaleFactor:1});
-await racePage.goto(`${baseURL}/index.html`,{waitUntil:'domcontentloaded'});
+await racePage.goto(`${uiBaseURL}/index.html`,{waitUntil:'domcontentloaded'});
 await new Promise(r=>setTimeout(r,400));
 report.lyricRace=await racePage.evaluate(async()=>{
   localStorage.removeItem('hana_audio_play_lock');
