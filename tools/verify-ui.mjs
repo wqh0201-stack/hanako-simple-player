@@ -366,6 +366,7 @@ const server = http.createServer((req, res) => {
   if (p === API + '/widget/api/lrc/save') return json(res, 200, { ok: true, filename: 'x.lrc' });
   if (p === API + '/widget/api/music/lrc') {
     const id = u.searchParams.get('id') || '';
+    if (id === '2074315223' && process.env.RIPPLE_LYRICS) return text(res, 200, fs.readFileSync(process.env.RIPPLE_LYRICS, 'utf8'), 'text/plain; charset=utf-8');
     if (id === '900099') return text(res, 200, '', 'text/plain; charset=utf-8');  // 无词纯音乐
     if (id === '900098') return text(res, 200, '[00:00.00]这似乎是一首纯音乐呢，请尽情欣赏它吧！', 'text/plain; charset=utf-8');  // 占位词纯音乐
     if (fixtureMode === 'align') return text(res, 200, '[offset:250]\n' + Array.from({ length: 12 }, (_, i) => `[00:${String(1 + i * 2).padStart(2, '0')}.00]校准试听 第 ${i + 1} 句`).join('\n'), 'text/plain; charset=utf-8');
@@ -428,10 +429,12 @@ const server = http.createServer((req, res) => {
     return fs.createReadStream(COVER_LIGHT_FILE).pipe(res);
   }
   if (p === API + '/_fixture/audio.wav') return serveAudio(req, res);
-  if (p === API + '/_fixture/tone.wav') {
+  if (p === API + '/_fixture/hanaichimonme-cover.jpg') { res.setHeader('content-type', 'image/jpeg'); return fs.createReadStream(path.join(repo, 'docs/player-ui/assets/hanaichimonme-cover.jpg')).pipe(res); }
+  if (p === API + '/_fixture/tone.wav' || (p === API + '/_fixture/real-song.m4a' && process.env.RIPPLE_SONG)) {
     const kind = u.searchParams.get('p') || 'steady-bass';
-    const buf = SYNTH_WAV[kind] || SYNTH_WAV['steady-bass'];
-    res.setHeader('content-type', 'audio/wav');
+    const realSong = p.endsWith('/real-song.m4a');
+    const buf = realSong ? fs.readFileSync(process.env.RIPPLE_SONG) : (SYNTH_WAV[kind] || SYNTH_WAV['steady-bass']);
+    res.setHeader('content-type', realSong ? 'audio/mp4' : 'audio/wav');
     res.setHeader('accept-ranges', 'bytes');
     const range = req.headers.range;
     if (range) {
@@ -602,6 +605,7 @@ const report = { selfCheck: [], wiring: {}, four: {}, darkFallback: {}, runtimeE
 
 /* 断言登记：不通过就退非零，结果里逐条列出 */
 function assert(name, ok, detail) {
+  if (process.argv.includes('--ripple-only') || process.argv.includes('--song-only')) console.log((ok ? 'PASS ' : 'FAIL ') + name);
   report.assertions.push({ name, ok: !!ok, detail: String(detail === undefined ? '' : detail) });
 }
 /* 预期噪声（文档已记）：降级链的探测性 404（离线库没命中 → 走在线）、
@@ -1107,6 +1111,7 @@ async function verifyMoodLists() {
   await page.close();
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
 }
+if (!process.argv.includes('--ripple-only') && !process.argv.includes('--song-only')) {
 await verifyMoodLists();
 if (process.argv.includes('--lists-only')) {
   console.log(JSON.stringify({ assertions: `${report.assertions.filter(a => a.ok).length}/${report.assertions.length}`, failed: report.assertions.filter(a => !a.ok), runtimeErrors: report.runtimeErrors }, null, 2));
@@ -2149,10 +2154,13 @@ const motion = {};
   await page.close();
 }
 
+}
+
 /* ============ 涟漪音频分层：真实同源合成音频 → captureStream/FFT ============
- * 覆盖 RIPPLE-AUDIO-PLAN §7：持续 Bass 维持宽缓场、瞬态点短波、中频敲击走独立起音路径、
+ * 覆盖 RIPPLE-AUDIO-PLAN §7：持续 Bass 以游移脉冲激发光波、瞬态点短波、中频敲击走独立起音路径、
  * 静音不伪造、密集脉冲经合并受限、连续低频场能量有界、倍率只改观感、冻结/隐藏/降级无积压。
  * 直接驱动同一个 <audio>（同源 → captureStream 可读），走真实 play→resume→buildAudio→FFT。 */
+if (!process.argv.includes('--song-only')) {
 const rippleAudio = {};
 {
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
@@ -2179,7 +2187,7 @@ const rippleAudio = {};
     const t0 = performance.now();
     while (performance.now() - t0 < secs * 1000) {
       const a = D.rippleAudio(), st = D.rippleState();
-      S.push({ t: +((performance.now() - t0) / 1000).toFixed(2), env: a.envBass, onsets: a.onsets, waves: a.waves, audioWaves: a.audioWaves, kinds: a.kinds, hFast: a.hFast, mFast: a.mFast, field: a.bassField, ready: a.ready, analysing: a.analysing });
+      S.push({ signal: a.signal, activeAudioWaves: a.activeAudioWaves, t: +((performance.now() - t0) / 1000).toFixed(2), env: a.envBass, onsets: a.onsets, waves: a.waves, audioWaves: a.audioWaves, kinds: a.kinds, hFast: a.hFast, mFast: a.mFast, field: a.bassField, ready: a.ready, analysing: a.analysing });
       await new Promise((r) => setTimeout(r, 100));
     }
     audio.pause();
@@ -2200,8 +2208,8 @@ const rippleAudio = {};
       maxEnv: max((x) => x.env), lastEnv: S.length ? S[S.length - 1].env : 0,
       onsets: S.length ? S[S.length - 1].onsets : 0,
       kinds: S.length ? S[S.length - 1].kinds : null,
-      maxHFast: max((x) => x.hFast || 0), maxMFast: max((x) => x.mFast || 0),
-      maxWaves: max((x) => x.waves), maxAudioWaves: max((x) => x.audioWaves),
+      maxLowRatio: max((x) => x.signal ? x.signal.lowRatio : 0), maxLowFlux: max((x) => x.signal ? x.signal.bf : 0), maxHFast: max((x) => x.hFast || 0), maxMFast: max((x) => x.mFast || 0),
+      maxActiveAudioWaves: max((x) => x.activeAudioWaves || 0), maxWaves: max((x) => x.waves), maxAudioWaves: max((x) => x.audioWaves),
       fieldValid: S.length > 0 && S.every((x) => Number.isFinite(x.field) && x.field >= 0),
       maxField: max((x) => x.field),
       halfMaxFirst: h1.length ? Math.max(...h1) : 0,
@@ -2210,21 +2218,24 @@ const rippleAudio = {};
     };
   };
 
-  // ① 持续 80Hz 低音：宽缓场持续在线，预热后不持续生成短波（连续 Bass 不调 drop）
+  // ① 持续 80Hz 低音：离散光波在线，预热后不误认鼓点或镲片
   //    采 9s，覆盖预热与夹具循环；100ms 采样的 bassField 才是真实能量，
   //    rippleState().field 在 inject() 时会置 1 作活动标记，不能拿它判断能量。
   const steady = agg(await playSynth('steady-bass', 9));
   rippleAudio.steady = steady;
-  assert('ripple-steady-bass-keeps-wide-field-without-waves',
+  assert('ripple-steady-bass-pulses-light-without-false-beats',
     steady.ready === true && steady.maxEnv > 0.4 && steady.maxField > 1e-4 &&
-    steady.onsets === 0 && steady.maxAudioWaves === 0,
+    steady.onsets === 0 && steady.kinds.bass > 0,
     JSON.stringify(steady));
 
-  // ② 明显底鼓：重复短脉冲产生有限细波（1..3 组），且预算是限的
+  // ② 明显底鼓：重复短脉冲产生有限细波，且预算是限的
+  //    功能验证用「宽松档」（各门槛取量程下限）——默认档偏高（罐头偏好），
+  //    夹具能量不够触发；检测路径是否完好要在宽档上验。默认档的克制见后面单独断言。
+  await page.evaluate(() => window.__playerDebug.rippleSetTune({ bassThreshold: 0.004, beatThreshold: 0.005, hatThreshold: 0.0003 }));
   const kicks = agg(await playSynth('kicks', 5));
   rippleAudio.kicks = kicks;
   assert('ripple-kicks-produce-finite-short-waves',
-    kicks.onsets >= 4 && kicks.maxAudioWaves >= 1 && kicks.maxAudioWaves <= 3 && kicks.maxWaves <= 22,
+    kicks.onsets >= 4 && kicks.maxAudioWaves >= 1 && kicks.maxActiveAudioWaves <= 14 && kicks.maxWaves <= 46,
     JSON.stringify(kicks));
 
   // ③ 中频敲击（1.2kHz，低频门限之外）：靠中频起音路径识别，低频包络保持低
@@ -2236,9 +2247,17 @@ const rippleAudio = {};
 
   // ④ 同样总音量下，持续信号 vs 短脉冲 → 形态不同
   assert('ripple-steady-and-transient-shape-differ',
-    steady.maxAudioWaves === 0 && kicks.maxAudioWaves >= 1 &&
+    steady.onsets === 0 && steady.kinds.bass > 0 && kicks.kinds.low >= 4 &&
     steady.maxField > 1e-4 && steady.maxEnv > kicks.maxEnv - 1,
     JSON.stringify({ steady: { w: steady.maxAudioWaves, e: steady.maxEnv }, kicks: { w: kicks.maxAudioWaves, e: kicks.maxEnv } }));
+
+  // ④b 默认档（罐头偏好的高门槛）：同一组夹具默认不出波 —— 这是预期行为，不是失灵。
+  //     默认值靠「克制」，而功能完整性由上面宽松档的断言保障。
+  await page.evaluate(() => window.__playerDebug.rippleResetTune());
+  const kicksDefault = agg(await playSynth('kicks', 5));
+  assert('ripple-default-tune-is-restrained',
+    kicksDefault.onsets === 0, JSON.stringify({ onsets: kicksDefault.onsets }));
+  await page.evaluate(() => window.__playerDebug.rippleSetTune({ bassThreshold: 0.004, beatThreshold: 0.005, hatThreshold: 0.0003 }));
 
   // ⑤ 静音：不伪造周期鼓点，也没有水场
   const silence = agg(await playSynth('silence', 3));
@@ -2251,7 +2270,7 @@ const rippleAudio = {};
   const dense = agg(await playSynth('dense', 3));
   rippleAudio.dense = dense;
   assert('ripple-dense-pulses-merge-within-budget',
-    dense.maxAudioWaves <= 3 && dense.onsets <= 9 && dense.onsets >= 3,
+    dense.maxActiveAudioWaves <= 14 && dense.maxWaves <= 46 && dense.onsets <= 10 && dense.onsets >= 3,
     JSON.stringify(dense));
 
   // ⑥b 踩镲（5.2kHz 高频段）：高频起音路径能识别，出 high 类短波
@@ -2261,41 +2280,47 @@ const rippleAudio = {};
     hihats.ready === true && hihats.kinds && hihats.kinds.high >= 3 && hihats.kinds.low === 0 && hihats.maxAudioWaves >= 1,
     JSON.stringify(hihats));
 
-  // ⑥c 中高频灵敏度：弱中频在 1.0（旧严格度）不出波，调到 3.0 后出波
-  await page.evaluate(() => window.__playerDebug.rippleSetTune({ midHighSens: 1.0 }));
-  const weakStrict = agg(await playSynth('weak-mid', 4));
-  await page.evaluate(() => window.__playerDebug.rippleSetTune({ midHighSens: 3.0 }));
-  const weakLoose = agg(await playSynth('weak-mid', 4));
+  // ⑥c 鼓点门槛：同一夹具在高门槛不出波，降低门槛后出波。
+  //    用 normal mid-bursts 夹具（weak-mid 能量太低，新旧量程下界拉高后已不够触发）；
+  //    「严格档」取量程上限，「宽松档」取量程下限。
+  await page.evaluate(() => window.__playerDebug.rippleSetTune({ beatThreshold: 0.036 }));
+  const weakStrict = agg(await playSynth('mid-bursts', 4));
+  await page.evaluate(() => window.__playerDebug.rippleSetTune({ beatThreshold: 0.005, hatThreshold: 0.0003 }));
+  const weakLoose = agg(await playSynth('mid-bursts', 4));
   await page.evaluate(() => window.__playerDebug.rippleResetTune());
-  rippleAudio.midHighSens = { weakStrict: weakStrict.onsets, weakLoose: weakLoose.onsets };
-  assert('ripple-midhigh-sens-loosens-detection',
+  rippleAudio.beatThreshold = { weakStrict: weakStrict.onsets, weakLoose: weakLoose.onsets };
+  assert('ripple-beat-threshold-lower-produces-more-events',
     weakStrict.onsets === 0 && weakLoose.onsets >= 3,
     JSON.stringify({ strict: weakStrict.onsets, loose: weakLoose.onsets }));
 
-  // ⑥d 最大灵敏度下仍不误触：稳态低音 / 静音零短波
-  await page.evaluate(() => window.__playerDebug.rippleSetTune({ midHighSens: 3.0 }));
+  // ⑥d 最低门槛仍不误触：稳态低音只有光波，静音零波
+  await page.evaluate(() => window.__playerDebug.rippleSetTune({ beatThreshold: 0.005, hatThreshold: 0.0003 }));
   const steadyMax = agg(await playSynth('steady-bass', 5));
   const silenceMax = agg(await playSynth('silence', 3));
   await page.evaluate(() => window.__playerDebug.rippleResetTune());
   rippleAudio.maxSensQuiet = { steady: steadyMax.onsets, silence: silenceMax.onsets };
-  assert('ripple-max-midhigh-keeps-steady-and-silence-quiet',
-    steadyMax.onsets === 0 && steadyMax.maxAudioWaves === 0 &&
+  assert('ripple-lowest-thresholds-keep-steady-and-silence-quiet',
+    steadyMax.onsets === 0 && steadyMax.kinds.bass > 0 &&
     silenceMax.onsets === 0 && silenceMax.maxWaves === 0,
     JSON.stringify({ steady: steadyMax.onsets, silence: silenceMax.onsets }));
 
-  // ⑥e 音频短波画 4 层环（与指针波同口径；主环 + 三层递淡回声）
+  // ⑥e 音频环沿用演示圈数预算，bass 只画光
   const ringLayers = await page.evaluate(() => ({
+    bass: window.__playerDebug.rippleRingLayers('bass'),
     low: window.__playerDebug.rippleRingLayers('low'),
     mid: window.__playerDebug.rippleRingLayers('mid'),
     high: window.__playerDebug.rippleRingLayers('high')
   }));
   rippleAudio.ringLayers = ringLayers;
-  assert('ripple-audio-waves-draw-four-rings',
-    ringLayers.low === 4 && ringLayers.mid === 4 && ringLayers.high === 4,
+  assert('ripple-audio-ring-layers-match-approved-demo',
+    ringLayers.bass === 0 && ringLayers.low >= 3 && ringLayers.low <= 9 && ringLayers.mid >= 3 && ringLayers.mid <= 9 && ringLayers.high >= 3 && ringLayers.high <= 6,
     JSON.stringify(ringLayers));
 
   // ⑥f bass 光波必须真画得出来：喂持续低频后，canvas 上要有足够亮的像素。
   //     历史上亮度公式太低（封顶后的场 × 小乘子 → alpha 只有个位数/255），肉眼看不见。
+  //     宽松档 + 满浓淡下验证（默认档门槛高、浓淡 60%，光波更淡；
+  //     这条测的是「亮度公式够不够看」，应与默认档解耦）。
+  await page.evaluate(() => window.__playerDebug.rippleSetTune({ bassThreshold: 0.004, beatThreshold: 0.005, hatThreshold: 0.0003, bassOpacity: 1 }));
   const glow = await page.evaluate(async () => {
     const D = window.__playerDebug, audio = document.getElementById('audio');
     audio.pause(); audio.loop = true;
@@ -2350,13 +2375,10 @@ const rippleAudio = {};
       `alloc@${allocIdx} fill@${fillIdx}`);
   }
 
-  // ⑦ 连续低频长播：场能量有界，不随播放时间无限增长
-  //    守住每个样本的数值有效性 + 原有绝对上限，不用对半峰值比（受爬升/相位影响）。
-  //    同夹具对照：正常 5/5 通过（max 0.00305~0.00345）；去封顶 3/3 失败
-  //    （0.01810~0.02006）；阻尼 0.976 → 1.0 也 3/3 失败（0.00639~0.01036）。
-  //    「有场」由上面的 steady-bass 断言另验，零注入不能通过整套验收。
+  // 离散脉冲定稿提高了实际场幅度；465px 实测峰值约 .28，旧 .005 是持续微注入版本。
+  // .4 上限覆盖相位差，保留有限能量判据；同注入/网格的无阻尼反例峰值约 6.9。
   assert('ripple-continuous-bass-field-bounded',
-    steady.settledN >= 8 && steady.fieldValid && steady.maxField < 0.005,
+    steady.settledN >= 8 && steady.fieldValid && steady.maxField < 0.4,
     JSON.stringify({ max: steady.maxField, fieldValid: steady.fieldValid, halfMaxFirst: steady.halfMaxFirst,
       halfMaxLast: steady.halfMaxLast, settledN: steady.settledN }));
 
@@ -2366,7 +2388,7 @@ const rippleAudio = {};
     const before = { vol: audio.volume, gain: D.rippleAudio().gain };
     D.rippleSetGain(3.0);
     const after = { vol: audio.volume, gain: D.rippleAudio().gain };
-    D.rippleSetGain(1.6);
+    D.rippleSetGain(2.6);
     return { before, after, restored: D.rippleAudio().gain };
   });
   rippleAudio.gain = gainRuntime;
@@ -2376,8 +2398,8 @@ const rippleAudio = {};
   const readBody = (codeNC.split('function readSignal(')[1] || '').split('\n    }')[0];
   assert('ripple-visual-gain-changes-look-only',
     gainRuntime.before.vol === gainRuntime.after.vol &&
-    gainRuntime.after.gain === 3 && gainRuntime.restored === 1.6 &&
-    !/VISUAL_GAIN/.test(injectBody) && !/VISUAL_GAIN/.test(readBody),
+    gainRuntime.after.gain === 3 && gainRuntime.restored === 2.6 &&
+    !/visualGain|Opacity/.test(injectBody) && !/visualGain|Opacity/.test(readBody),
     JSON.stringify({ gainRuntime, injectHasGain: /VISUAL_GAIN/.test(injectBody), readHasGain: /VISUAL_GAIN/.test(readBody) }));
 
   // ⑨ 截图冻结 / reduced-motion：分析调度真停；恢复后无积压突发
@@ -2495,7 +2517,7 @@ const rippleAudio = {};
   await page.close();
 }
 
-/* ============ 涟漪参数「玩具箱」面板（仅宽窗）：开合 / 5 滑杆 / 实时 / 存储 ============ */
+/* ============ 涟漪参数「玩具箱」面板（仅宽窗）：开合 / 三组门槛与浓淡 / 实时 / 存储 ============ */
 const rippleTool = {};
 {
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
@@ -2525,6 +2547,8 @@ const rippleTool = {};
   await page.evaluate((t) => window.__fixtureTheme(t), 'light');
   await sleep(900);
 
+  const legacy = await page.evaluate(() => ({ tune: window.__playerDebug.rippleTune(), defaults: window.__playerDebug.rippleTuneDefaults(), writes: window.__storeCalls.sets.filter(s => s.key === 'player-ripple-tune') }));
+  assert('ripple-tool-legacy-settings-use-new-defaults-without-writing', JSON.stringify(legacy.tune) === JSON.stringify(legacy.defaults) && legacy.writes.length === 0, JSON.stringify(legacy));
   const btnInfo = () => page.evaluate(() => {
     const btn = document.getElementById('rippleToolBtn');
     const cs = btn ? getComputedStyle(btn) : null;
@@ -2593,63 +2617,54 @@ const rippleTool = {};
     openClose.reopened && openClose.afterOutside,
     JSON.stringify(openClose));
 
-  // ⑤ 5 滑杆 + 重置 + 说明齐全；点重置回默认
+  // ⑤ 6 滑杆 + 重置 + 说明齐全；点重置回默认
   const resetInfo = await page.evaluate(async () => {
     document.getElementById('rippleToolBtn').click();
     await new Promise((r) => setTimeout(r, 40));
     // 先改一个值再重置
-    const el = document.getElementById('rt_visualGain');
-    el.value = '2.8'; el.dispatchEvent(new Event('input', { bubbles: true }));
+    const el = document.getElementById('rt_bassOpacity');
+    el.value = '120'; el.dispatchEvent(new Event('input', { bubbles: true }));
     await new Promise((r) => setTimeout(r, 40));
-    const changed = window.__playerDebug.rippleTune().visualGain;
+    const changed = window.__playerDebug.rippleTune().bassOpacity;
     document.getElementById('rtResetBtn').click();
     await new Promise((r) => setTimeout(r, 40));
     const t = window.__playerDebug.rippleTune();
     const d = window.__playerDebug.rippleTuneDefaults();
-    return { changed, tune: t, defaults: d, out: document.getElementById('rtv_visualGain').textContent };
+    return { changed, tune: t, defaults: d, out: document.getElementById('rtv_bassOpacity').textContent };
   });
   rippleTool.reset = resetInfo;
   assert('ripple-tool-six-sliders-and-reset',
     wide.ranges === 6 && wide.hasReset === true && wide.note.length > 12 &&
-    resetInfo.changed === 2.8 &&
+    resetInfo.changed === 1.2 &&
     JSON.stringify(resetInfo.tune) === JSON.stringify(resetInfo.defaults),
     JSON.stringify({ ranges: wide.ranges, hasReset: wide.hasReset, noteLen: wide.note.length, changed: resetInfo.changed, tune: resetInfo.tune }));
 
-  // ⑥ 拖「整体强度」实时生效：gain 变、音量不变、起音计数不变
+  // ⑥ 拖「镲片浓淡」实时生效：alpha 变、音量不变、起音计数不变
   const gainLive = await page.evaluate(async () => {
     const D = window.__playerDebug, audio = document.getElementById('audio');
-    const before = { gain: D.rippleAudio().gain, vol: audio.volume, onsets: D.rippleAudio().onsets };
-    const el = document.getElementById('rt_visualGain');
-    el.value = '2.5'; el.dispatchEvent(new Event('input', { bubbles: true }));
+    const before = { gain: D.rippleTune().hatOpacity, vol: audio.volume, onsets: D.rippleAudio().onsets };
+    const el = document.getElementById('rt_hatOpacity');
+    el.value = '9'; el.dispatchEvent(new Event('input', { bubbles: true }));
     await new Promise((r) => setTimeout(r, 60));
-    const after = { gain: D.rippleAudio().gain, vol: audio.volume, onsets: D.rippleAudio().onsets };
+    const after = { gain: D.rippleTune().hatOpacity, vol: audio.volume, onsets: D.rippleAudio().onsets };
     return { before, after };
   });
   rippleTool.gainLive = gainLive;
   assert('ripple-tool-slider-live-and-volume-untouched',
-    gainLive.after.gain === 2.5 && gainLive.before.vol === gainLive.after.vol &&
+    gainLive.after.gain === 0.09 && gainLive.before.vol === gainLive.after.vol &&
     gainLive.before.onsets === gainLive.after.onsets,
     JSON.stringify(gainLive));
 
-  // ⑦ 调「同屏波数上限」「落波间隔」「中高频灵敏度」真影响 tune（不重建链、不动音量）
-  const tuneApply = await page.evaluate(async () => {
-    const D = window.__playerDebug, audio = document.getElementById('audio');
-    const volBefore = audio.volume;
-    const maxEl = document.getElementById('rt_maxAudioWaves');
-    maxEl.value = '5'; maxEl.dispatchEvent(new Event('input', { bubbles: true }));
-    const cdEl = document.getElementById('rt_onsetCooldown');
-    cdEl.value = '700'; cdEl.dispatchEvent(new Event('input', { bubbles: true }));
-    const mhEl = document.getElementById('rt_midHighSens');
-    mhEl.value = '2.5'; mhEl.dispatchEvent(new Event('input', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 60));
-    const t = D.rippleTune();
-    D.rippleResetTune();
-    return { max: t.maxAudioWaves, cd: t.onsetCooldown, mh: t.midHighSens, volSame: audio.volume === volBefore };
+  // 三组门槛通过真实 input 接线，浓淡和音量不随之改变。
+  const tuneApply = await page.evaluate(() => {
+    const D = window.__playerDebug, audio = document.getElementById('audio'), vol = audio.volume;
+    [['bassThreshold','0.02'],['beatThreshold','0.03'],['hatThreshold','0.002']].forEach(([k,v]) => {
+      const el = document.getElementById('rt_' + k); el.value = v; el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const t = D.rippleTune(); D.rippleResetTune(); return { t, volSame: audio.volume === vol };
   });
   rippleTool.tuneApply = tuneApply;
-  assert('ripple-tool-slider-affects-tuning',
-    tuneApply.max === 5 && tuneApply.cd === 700 && tuneApply.mh === 2.5 && tuneApply.volSame === true,
-    JSON.stringify(tuneApply));
+  assert('ripple-tool-slider-affects-tuning', tuneApply.t.bassThreshold === 0.02 && tuneApply.t.beatThreshold === 0.03 && tuneApply.t.hatThreshold === 0.002 && tuneApply.volSame, JSON.stringify(tuneApply));
 
   // ⑧ 沉浸时随控制条淡出（data-controls-hidden 在 .player 上）
   const immersive = await page.evaluate(async () => {
@@ -2686,27 +2701,27 @@ const rippleTool = {};
     shotInfo.before !== 'none' && shotInfo.shot === 'none' && shotInfo.after !== 'none',
     JSON.stringify(shotInfo));
 
-  // ⑩ 大白话命名：6 个 label 是中文，不出现内部名
-  const plain = wide.labels.join('|');
-  rippleTool.labels = wide.labels;
-  assert('ripple-tool-names-plain-language',
-    wide.labels.length === 6 && /整体强度/.test(plain) && /低频推动/.test(plain) && /敲击灵敏度/.test(plain) &&
-    /中高频灵敏度/.test(plain) && /同屏波数上限/.test(plain) && /落波间隔/.test(plain) &&
-    !/BASS_DRIVE|ONSET|VISUAL_GAIN|MAX_AUDIO/.test(plain),
-    JSON.stringify(wide.labels));
+  // 实际可访问名称和方向提示：所有滑杆都明确标出向左/右的含义。
+  const plain = await page.evaluate(() => ({
+    groups: [...document.querySelectorAll('.rt-group legend')].map(e => e.textContent),
+    inputs: [...document.querySelectorAll('#rippleToolPop input')].map(e => ({name:e.getAttribute('aria-label'),hint:document.getElementById(e.getAttribute('aria-describedby')).textContent})),
+    old: !!document.querySelector('#rt_visualGain,#rt_bassDrive,#rt_onsetSens,#rt_midHighSens,#rt_maxAudioWaves,#rt_onsetCooldown')
+  }));
+  assert('ripple-tool-names-and-slider-directions', !plain.old && plain.groups.length === 3 && plain.inputs.length === 6 && plain.inputs.every(e => /触发门槛|颜色浓淡/.test(e.name) && /低门槛 · 更多.*高门槛 · 更少|更浅、更淡.*更深、更浓/.test(e.hint)), JSON.stringify(plain));
+  await page.screenshot({path:path.join(outDir, 'ripple-toybox-production.png')});
 
   // ⑪ 存储：改值 → 去抖后写入 player-ripple-tune（读假宿主记录的 set 调用）
   const saved = await page.evaluate(async () => {
-    const el = document.getElementById('rt_bassDrive');
-    el.value = '15'; el.dispatchEvent(new Event('input', { bubbles: true }));
+    const el = document.getElementById('rt_bassThreshold');
+    el.value = '0.008'; el.dispatchEvent(new Event('input', { bubbles: true }));
     await new Promise((r) => setTimeout(r, 500));   // 等过去抖（300ms）
     const sets = (window.__storeCalls && window.__storeCalls.sets) || [];
     const hit = sets.filter((s) => s.key === 'player-ripple-tune').pop();
-    return { tune: window.__playerDebug.rippleTune().bassDrive, wroteKey: !!hit, wroteVal: hit && hit.value && hit.value.bassDrive };
+    return { tune: window.__playerDebug.rippleTune().bassThreshold, wroteKey: !!hit, wroteVal: hit && hit.value && hit.value.bassThreshold };
   });
   rippleTool.saved = saved;
   assert('ripple-tool-persists-to-storage',
-    saved.tune === 15 && saved.wroteKey === true && saved.wroteVal === 15,
+    saved.tune === 0.008 && saved.wroteKey === true && saved.wroteVal === 0.008,
     JSON.stringify(saved));
 
   await page.close();
@@ -2719,7 +2734,7 @@ const rippleTool = {};
   // 假宿主：拦 window.hana 赋值，给 storage.global 装桩；player-ripple-tune 返回预置值
   await page.evaluateOnNewDocument(() => {
     window.__storeCalls = { sets: [], gets: [] };
-    window.__preset = { visualGain: 2.2, bassDrive: 14, onsetSens: 1.5, midHighSens: 2.4, maxAudioWaves: 5, onsetCooldown: 640 };
+    window.__preset = { schemaVersion: 2, bassThreshold: 0.02, beatThreshold: 0.03, hatThreshold: 0.002, bassOpacity: 1.0, beatOpacity: 0.15, hatOpacity: 0.08 };
     let _h;
     Object.defineProperty(window, 'hana', {
       configurable: true,
@@ -2743,13 +2758,100 @@ const rippleTool = {};
   const restore = await page.evaluate(() => ({
     t: window.__playerDebug.rippleTune(),
     askedKey: window.__storeCalls.gets.indexOf('player-ripple-tune') >= 0,
-    out: document.getElementById('rtv_visualGain') ? document.getElementById('rtv_visualGain').textContent : null
+    out: document.getElementById('rtv_bassOpacity') ? document.getElementById('rtv_bassOpacity').textContent : null
   }));
   assert('ripple-tool-restores-from-storage',
-    restore.askedKey === true && restore.t.visualGain === 2.2 && restore.t.bassDrive === 14 &&
-    restore.t.onsetSens === 1.5 && restore.t.maxAudioWaves === 5 && restore.t.onsetCooldown === 640,
+    restore.askedKey === true && restore.t.schemaVersion === 2 && restore.t.bassThreshold === 0.02 && restore.t.beatThreshold === 0.03 && restore.t.hatThreshold === 0.002 && restore.t.bassOpacity === 1.0 && restore.t.beatOpacity === 0.15 && restore.t.hatOpacity === 0.08,
     JSON.stringify(restore));
+  const bounds = await page.evaluate(() => {
+    const D=window.__playerDebug, before=D.rippleTune();
+    const unknown=D.rippleSetTune({schemaVersion:3,bassThreshold:1});
+    const partial=D.rippleSetTune({schemaVersion:2,bassThreshold:-1,beatThreshold:Infinity,hatThreshold:9,bassOpacity:NaN,hatOpacity:9});
+    return {before,unknown,partial};
+  });
+  assert('ripple-tune-version-and-finite-bounds', JSON.stringify(bounds.before)===JSON.stringify(bounds.unknown) && bounds.partial.bassThreshold===.004 && bounds.partial.hatThreshold===.0036 && bounds.partial.hatOpacity===.1 && bounds.partial.beatThreshold===bounds.before.beatThreshold && bounds.partial.bassOpacity===bounds.before.bassOpacity,JSON.stringify(bounds));
   await page.close();
+}
+
+}
+
+/* 真实歌曲仅从用户指定的本地文件读取；文件不进入 ui/ 或发布包。 */
+if (process.env.RIPPLE_SONG) {
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+  persistedPlaylist = [{ id:'netease:2074315223', name:'花一匁', author:'ずっと真夜中でいいのに。', list:'imp:1', group:'在线音乐', mode:'在线', dur:251,
+    url: `${API}/_fixture/real-song.m4a`, pic:`${API}/_fixture/hanaichimonme-cover.jpg` }];
+  const page = await newPage();
+  await page.setViewport({width:1040,height:780,deviceScaleFactor:1});
+  await page.goto(`${UI_BASE}/standalone.html?appSurfaceSession=fake-ticket`, {waitUntil:'domcontentloaded'});
+  await sleep(700); await page.click('#queueBtn'); await sleep(380); await clickTab(page,'imp:1');
+  await page.click('#queueList .q-hit');
+  if (await page.$eval('#player', e=>e.getAttribute('data-drawer')==='1')) await page.click('#queueBtn');
+  await page.waitForFunction(() => !document.getElementById('audio').paused && window.__playerDebug.rippleAudio().ready);
+  await sleep(12000);
+  const baseline = await page.evaluate(() => ({ audio:window.__playerDebug.rippleAudio(), state:window.__playerDebug.rippleState(), tune:window.__playerDebug.rippleTune(), time:document.getElementById('audio').currentTime }));
+  /* 默认档（罐头偏好的高门槛）：真歌也克制——三组都不该大量出波。
+     这是路线甲的预期，不是失灵；接下来拉松到宽松档再验识别链路完好。 */
+  assert('ripple-real-song-restrained-by-default',
+    baseline.time >= 10 && baseline.audio.kinds.bass + baseline.audio.kinds.low + baseline.audio.kinds.mid + baseline.audio.kinds.high <= 3,
+    JSON.stringify({ kinds: baseline.audio.kinds, time: baseline.time }));
+  // 拉松到宽松档后，三组都要在真实歌曲上识别出来。
+  const loosened = await page.evaluate(async () => {
+    const D=window.__playerDebug, a=document.getElementById('audio');
+    D.rippleResetTune(); D.rippleSetTune({ bassThreshold:0.004, beatThreshold:0.005, hatThreshold:0.0003 });
+    D.rippleClear(); a.currentTime = 0; await new Promise(r=>a.addEventListener('seeked',r,{once:true}));
+    await D.requestPlay('fixture'); await new Promise(r=>setTimeout(r,12000));
+    return { audio:D.rippleAudio(), time:a.currentTime };
+  });
+  assert('ripple-real-song-all-three-groups-trigger',
+    loosened.time >= 10 && loosened.audio.kinds.bass > 0 && loosened.audio.kinds.low + loosened.audio.kinds.mid > 0 && loosened.audio.kinds.high >= 10,
+    JSON.stringify(loosened));
+  // 在同一 JS 帧重画：检测、队列和波场都冻结于同一采样，只有 alpha 应改变。
+  const opacity = await page.evaluate(() => {
+    const D=window.__playerDebug, cv=document.getElementById('rippleCanvas'), ctx=cv.getContext('2d'), audio=document.getElementById('audio');
+    const sumAlpha=()=>{const data=ctx.getImageData(0,0,cv.width,cv.height).data;let sum=0;for(let i=3;i<data.length;i+=4)sum+=data[i];return sum;};
+    const state=()=>JSON.stringify({field:D.rippleState().field, kinds:D.rippleAudio().kinds, waves:D.rippleState().waves, volume:audio.volume, time:audio.currentTime});
+    const results={};
+    ['bass','beat','hat'].forEach(k=>{
+      const before=state(), field=k+'Opacity';
+      const render=(value)=>{
+        D.rippleSetTune({[field]:value});
+        if(k==='bass') return sumAlpha();
+        const real=ctx.stroke, alphas=[];ctx.stroke=function(){alphas.push(ctx.globalAlpha);return real.apply(this,arguments);};
+        try{D.rippleRingLayers(k==='hat'?'high':'low');}finally{ctx.stroke=real;}
+        return alphas.reduce((x,y)=>x+y,0);
+      };
+      const maxOp={bass:1.2,beat:0.2,hat:0.1}[k];
+      const light=render(maxOp/6),deep=render(maxOp),after=state();
+      results[k]={light,deep,unchanged:before===after};D.rippleResetTune();
+    });return results;
+  });
+  assert('ripple-all-opacity-controls-change-alpha-only', Object.values(opacity).every(x=>x.deep>x.light && x.unchanged),JSON.stringify(opacity));
+  await page.click('#rippleToolBtn');
+  await page.screenshot({path:path.join(outDir,'ripple-real-song-production.png')});
+  const runs={};
+  for (const [group,key,lo,hi] of [['bass','bassThreshold',.004,.028],['beat','beatThreshold',.005,.036],['hat','hatThreshold',.0003,.0036]]) {
+    runs[group]={};
+    for(const [label,value] of [['more',lo],['fewer',hi]]) {
+      runs[group][label]=await page.evaluate(async (key,value,group)=>{
+        const D=window.__playerDebug,a=document.getElementById('audio');a.pause();D.rippleResetTune();D.rippleSetTune({[key]:value});
+        a.currentTime=1;await new Promise(r=>a.addEventListener('seeked',r,{once:true}));D.rippleClear();await D.requestPlay('fixture');
+        await new Promise(r=>setTimeout(r,8000));const k=D.rippleAudio().kinds;a.pause();return group==='beat'?k.low+k.mid:group==='hat'?k.high:k.bass;
+      },key,value,group);
+    }
+    assert('ripple-real-song-'+group+'-threshold-direction',runs[group].more>runs[group].fewer,JSON.stringify(runs[group]));
+  }
+  await sleep(650);
+  const paused=await page.evaluate(()=>({state:window.__playerDebug.rippleState(),audio:window.__playerDebug.rippleAudio()}));
+  assert('ripple-real-song-pause-clears-residue',paused.state.waves===0 && paused.state.field===0 && !paused.state.raf && !paused.audio.analysing,JSON.stringify(paused));
+  report.rippleSong={baseline,opacity,runs,paused};
+  await page.close();
+}
+
+if (process.argv.includes('--ripple-only') || process.argv.includes('--song-only')) {
+  fs.writeFileSync(path.join(outDir, 'verify-ripple.json'), JSON.stringify(report, null, 2));
+  console.log(JSON.stringify({ assertions: `${report.assertions.filter(a => a.ok).length}/${report.assertions.length}`, failed: report.assertions.filter(a => !a.ok), rippleAudio: report.rippleAudio, runtimeErrors: report.runtimeErrors, outDir }, null, 2));
+  await browser.close(); server.closeAllConnections(); server.close();
+  process.exit(report.assertions.some(a => !a.ok) || report.runtimeErrors.length ? 1 : 0);
 }
 
 /* ============ 歌词校准：真鼠标长按/拖动 + 真媒体时钟 + playlist 持久化 ============ */
@@ -3852,6 +3954,37 @@ const rippleTool = {};
     s.firstRun.hiddenInit === true && s.firstRun.shownWhenUnseen === false &&
     s.firstRun.hiddenAfterSeen === true && s.firstRun.hiddenWhenUnreadable === true,
     JSON.stringify(s.firstRun));
+
+  /* 涟漪工具箱首启提示：与 cookie 提示同一个「只弹一次」纪律，但多一层
+     必要条件——工具箱此刻真实可见（宽窗）。窄卡里不该弹（按钮不显示）。 */
+  s.rippleTip = await page.evaluate(() => {
+    const D = window.__playerDebug;
+    const r = {};
+    // 先把 cookie 首启提示收掉，避免两个弹层叠弹的回避逻辑干扰本文验
+    D.firstRunTry({ ok: true, value: 1 });
+    r.hiddenInit = D.rippleTipState().hidden;
+    r.shownWhenUnseen = D.rippleTipTry({ ok: true, value: null });    // 未读过 + 宽窗 → 弹
+    r.hiddenAfterSeen = D.rippleTipTry({ ok: true, value: 1 });       // 读过 → 不弹
+    r.hiddenWhenUnreadable = D.rippleTipTry({ ok: false, value: null }); // 读不到 → 不弹
+    return { r, layout: document.getElementById('player').getAttribute('data-layout'), title: D.rippleTipState().title };
+  });
+  assert('ripple-tip-notice-shows-once-when-tool-visible',
+    s.rippleTip.layout === 'wide' && s.rippleTip.title === '涟漪可以调' &&
+    s.rippleTip.r.hiddenInit === true && s.rippleTip.r.shownWhenUnseen === false &&
+    s.rippleTip.r.hiddenAfterSeen === true && s.rippleTip.r.hiddenWhenUnreadable === true,
+    JSON.stringify(s.rippleTip));
+
+  /* 窄卡（非 wide）里工具箱按钮不显示 → 提示也不得弹，否则提示了一个看不见的入口。 */
+  s.rippleTipNarrow = await page.evaluate(() => {
+    const D = window.__playerDebug, player = document.getElementById('player');
+    const prev = player.getAttribute('data-layout');
+    player.setAttribute('data-layout', 'long');            // 临时模拟窄卡
+    const shown = D.rippleTipTry({ ok: true, value: null });   // 未读过，但不在宽窗 → 不弹
+    player.setAttribute('data-layout', prev);
+    return { shownWhenNarrow: shown };
+  });
+  assert('ripple-tip-skipped-when-tool-hidden',
+    s.rippleTipNarrow.shownWhenNarrow === true, JSON.stringify(s.rippleTipNarrow));
 
   /* 欢迎歌：只在「列表确实读到、且为空、且没播过」时播一次，单独放一个歌单。
    * 夹具此时有曲目（imp:1/imp:2）→ 不应当被播种；先验这道闸。 */

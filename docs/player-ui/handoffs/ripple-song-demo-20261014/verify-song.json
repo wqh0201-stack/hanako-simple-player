@@ -1,0 +1,613 @@
+{
+  "checks": [
+    {
+      "name": "real-cover-and-local-song-loaded",
+      "ok": true,
+      "detail": {
+        "tune": {
+          "bass": {
+            "cooldown": 420,
+            "energy": 0.004,
+            "opacity": 1,
+            "gain": 1,
+            "sustain": 2.6,
+            "pk": 0.6,
+            "postKick": 280
+          },
+          "kick": {
+            "cooldown": 320,
+            "energy": 0.005,
+            "opacity": 1,
+            "gain": 1,
+            "ratio": 1.6
+          },
+          "mid": {
+            "cooldown": 320,
+            "energy": 0.0012,
+            "opacity": 1,
+            "gain": 1,
+            "ratio": 1.45,
+            "flux": 1.6
+          },
+          "hat": {
+            "cooldown": 150,
+            "energy": 0.0003,
+            "opacity": 1,
+            "gain": 1,
+            "flux": 1.2,
+            "ratio": 1.15
+          }
+        },
+        "palette": {
+          "bg": [
+            39,
+            169,
+            182
+          ],
+          "bass": [
+            99,
+            24,
+            92
+          ],
+          "kick": [
+            109,
+            24,
+            36
+          ],
+          "mid": [
+            97,
+            32,
+            20
+          ],
+          "hat": [
+            42,
+            29,
+            8
+          ]
+        },
+        "duration": 251.077143,
+        "cover": 800,
+        "src": "/demo/song.m4a"
+      }
+    },
+    {
+      "name": "six-sliders-with-direction-and-accessible-names",
+      "ok": true,
+      "detail": {
+        "count": 6,
+        "named": true,
+        "described": true,
+        "more": "低门槛 · 更多高门槛 · 更少",
+        "opacity": "更浅、更淡更深、更浓"
+      }
+    },
+    {
+      "name": "real-song-has-bass-beats-and-cymbals",
+      "ok": true,
+      "detail": {
+        "stats": {
+          "source": "local",
+          "active": true,
+          "analysing": true,
+          "rms": 0.04361318340755853,
+          "peakHz": 96.8994140625,
+          "waves": 14,
+          "fieldEnergy": 0.04486272647862944,
+          "raf": true,
+          "frames": 776,
+          "drawMs": 1.0999999046325684,
+          "peakDrawMs": 4.100000023841858,
+          "dpr": 1,
+          "grid": [
+            218,
+            126
+          ],
+          "maxBand": 0.6287899017333984,
+          "envBass": 0.9528386605402515
+        },
+        "triggers": {
+          "bass": 10,
+          "kick": 14,
+          "mid": 14,
+          "hat": 37
+        },
+        "kinds": {
+          "low": 4,
+          "mid": 3,
+          "high": 4,
+          "pointer": 0,
+          "bass": 3
+        }
+      }
+    },
+    {
+      "name": "Bass-opacity-changes-rendering-only",
+      "ok": true,
+      "detail": {
+        "lowAlpha": 306250,
+        "highAlpha": 3212750,
+        "frames": 797
+      }
+    },
+    {
+      "name": "Kick-opacity-changes-rendering-only",
+      "ok": true,
+      "detail": {
+        "lowAlpha": 161939,
+        "highAlpha": 1022406,
+        "frames": 797
+      }
+    },
+    {
+      "name": "Hat-opacity-changes-rendering-only",
+      "ok": true,
+      "detail": {
+        "lowAlpha": 57495,
+        "highAlpha": 430878,
+        "frames": 797
+      }
+    },
+    {
+      "name": "reset-restores-approved-defaults",
+      "ok": true
+    },
+    {
+      "name": "lower-threshold-produces-more-real-song-cymbals",
+      "ok": true,
+      "detail": {
+        "lowGate": {
+          "triggers": {
+            "bass": 17,
+            "kick": 16,
+            "mid": 2,
+            "hat": 29
+          },
+          "threshold": 0.00005,
+          "volume": 0.75
+        },
+        "highGate": {
+          "triggers": {
+            "bass": 17,
+            "kick": 16,
+            "mid": 2,
+            "hat": 0
+          },
+          "threshold": 0.0018,
+          "volume": 0.75
+        }
+      }
+    },
+    {
+      "name": "pause-clears-the-field-and-stops-animation",
+      "ok": true,
+      "detail": {
+        "stats": {
+          "source": "local",
+          "active": false,
+          "analysing": true,
+          "rms": 0,
+          "peakHz": 0,
+          "waves": 0,
+          "fieldEnergy": 0,
+          "raf": false,
+          "frames": 1931,
+          "drawMs": 0.10000002384185791,
+          "peakDrawMs": 4.100000023841858,
+          "dpr": 1,
+          "grid": [
+            218,
+            126
+          ],
+          "maxBand": 0,
+          "envBass": 0
+        },
+        "canvasClear": true
+      }
+    },
+    {
+      "name": "toybox-fits-1040",
+      "ok": true,
+      "detail": {
+        "scroll": 1040,
+        "width": 1040,
+        "smallText": 0
+      }
+    },
+    {
+      "name": "toybox-fits-465",
+      "ok": true,
+      "detail": {
+        "scroll": 465,
+        "width": 465,
+        "smallText": 0
+      }
+    },
+    {
+      "name": "toybox-fits-360",
+      "ok": true,
+      "detail": {
+        "scroll": 360,
+        "width": 360,
+        "smallText": 0
+      }
+    },
+    {
+      "name": "local-audio-range-and-path-boundaries",
+      "ok": true
+    },
+    {
+      "name": "no-browser-runtime-errors",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "errors": [],
+  "initial": {
+    "tune": {
+      "bass": {
+        "cooldown": 420,
+        "energy": 0.004,
+        "opacity": 1,
+        "gain": 1,
+        "sustain": 2.6,
+        "pk": 0.6,
+        "postKick": 280
+      },
+      "kick": {
+        "cooldown": 320,
+        "energy": 0.005,
+        "opacity": 1,
+        "gain": 1,
+        "ratio": 1.6
+      },
+      "mid": {
+        "cooldown": 320,
+        "energy": 0.0012,
+        "opacity": 1,
+        "gain": 1,
+        "ratio": 1.45,
+        "flux": 1.6
+      },
+      "hat": {
+        "cooldown": 150,
+        "energy": 0.0003,
+        "opacity": 1,
+        "gain": 1,
+        "flux": 1.2,
+        "ratio": 1.15
+      }
+    },
+    "palette": {
+      "bg": [
+        39,
+        169,
+        182
+      ],
+      "bass": [
+        99,
+        24,
+        92
+      ],
+      "kick": [
+        109,
+        24,
+        36
+      ],
+      "mid": [
+        97,
+        32,
+        20
+      ],
+      "hat": [
+        42,
+        29,
+        8
+      ]
+    },
+    "duration": 251.077143,
+    "cover": 800,
+    "src": "/demo/song.m4a"
+  },
+  "first": {
+    "stats": {
+      "source": "local",
+      "active": true,
+      "analysing": true,
+      "rms": 0.04361318340755853,
+      "peakHz": 96.8994140625,
+      "waves": 14,
+      "fieldEnergy": 0.04486272647862944,
+      "raf": true,
+      "frames": 776,
+      "drawMs": 1.0999999046325684,
+      "peakDrawMs": 4.100000023841858,
+      "dpr": 1,
+      "grid": [
+        218,
+        126
+      ],
+      "maxBand": 0.6287899017333984,
+      "envBass": 0.9528386605402515
+    },
+    "triggers": {
+      "bass": 10,
+      "kick": 14,
+      "mid": 14,
+      "hat": 37
+    },
+    "kinds": {
+      "low": 4,
+      "mid": 3,
+      "high": 4,
+      "pointer": 0,
+      "bass": 3
+    }
+  },
+  "opacity": {
+    "results": {
+      "Bass": {
+        "low": {
+          "alpha": 306250,
+          "stats": {
+            "source": "local",
+            "active": true,
+            "analysing": true,
+            "rms": 0.15933245208739533,
+            "peakHz": 139.9658203125,
+            "waves": 14,
+            "fieldEnergy": 0.052139363375806436,
+            "raf": true,
+            "frames": 797,
+            "drawMs": 0.6000000238418579,
+            "peakDrawMs": 4.100000023841858,
+            "dpr": 1,
+            "grid": [
+              218,
+              126
+            ],
+            "maxBand": 0.6890814900398254,
+            "envBass": 0.9233729880562613
+          },
+          "triggers": {
+            "bass": 11,
+            "kick": 14,
+            "mid": 14,
+            "hat": 39
+          },
+          "volume": 0.75
+        },
+        "high": {
+          "alpha": 3212750,
+          "stats": {
+            "source": "local",
+            "active": true,
+            "analysing": true,
+            "rms": 0.15933245208739533,
+            "peakHz": 139.9658203125,
+            "waves": 14,
+            "fieldEnergy": 0.052139363375806436,
+            "raf": true,
+            "frames": 797,
+            "drawMs": 0.6000000238418579,
+            "peakDrawMs": 4.100000023841858,
+            "dpr": 1,
+            "grid": [
+              218,
+              126
+            ],
+            "maxBand": 0.6890814900398254,
+            "envBass": 0.9233729880562613
+          },
+          "triggers": {
+            "bass": 11,
+            "kick": 14,
+            "mid": 14,
+            "hat": 39
+          },
+          "volume": 0.75
+        }
+      },
+      "Kick": {
+        "low": {
+          "alpha": 161939,
+          "stats": {
+            "source": "local",
+            "active": true,
+            "analysing": true,
+            "rms": 0.15933245208739533,
+            "peakHz": 139.9658203125,
+            "waves": 14,
+            "fieldEnergy": 0.052139363375806436,
+            "raf": true,
+            "frames": 797,
+            "drawMs": 0.6000000238418579,
+            "peakDrawMs": 4.100000023841858,
+            "dpr": 1,
+            "grid": [
+              218,
+              126
+            ],
+            "maxBand": 0.6890814900398254,
+            "envBass": 0.9233729880562613
+          },
+          "triggers": {
+            "bass": 11,
+            "kick": 14,
+            "mid": 14,
+            "hat": 39
+          },
+          "volume": 0.75
+        },
+        "high": {
+          "alpha": 1022406,
+          "stats": {
+            "source": "local",
+            "active": true,
+            "analysing": true,
+            "rms": 0.15933245208739533,
+            "peakHz": 139.9658203125,
+            "waves": 14,
+            "fieldEnergy": 0.052139363375806436,
+            "raf": true,
+            "frames": 797,
+            "drawMs": 0.6000000238418579,
+            "peakDrawMs": 4.100000023841858,
+            "dpr": 1,
+            "grid": [
+              218,
+              126
+            ],
+            "maxBand": 0.6890814900398254,
+            "envBass": 0.9233729880562613
+          },
+          "triggers": {
+            "bass": 11,
+            "kick": 14,
+            "mid": 14,
+            "hat": 39
+          },
+          "volume": 0.75
+        }
+      },
+      "Hat": {
+        "low": {
+          "alpha": 57495,
+          "stats": {
+            "source": "local",
+            "active": true,
+            "analysing": true,
+            "rms": 0.15933245208739533,
+            "peakHz": 139.9658203125,
+            "waves": 14,
+            "fieldEnergy": 0.052139363375806436,
+            "raf": true,
+            "frames": 797,
+            "drawMs": 0.6000000238418579,
+            "peakDrawMs": 4.100000023841858,
+            "dpr": 1,
+            "grid": [
+              218,
+              126
+            ],
+            "maxBand": 0.6890814900398254,
+            "envBass": 0.9233729880562613
+          },
+          "triggers": {
+            "bass": 11,
+            "kick": 14,
+            "mid": 14,
+            "hat": 39
+          },
+          "volume": 0.75
+        },
+        "high": {
+          "alpha": 430878,
+          "stats": {
+            "source": "local",
+            "active": true,
+            "analysing": true,
+            "rms": 0.15933245208739533,
+            "peakHz": 139.9658203125,
+            "waves": 14,
+            "fieldEnergy": 0.052139363375806436,
+            "raf": true,
+            "frames": 797,
+            "drawMs": 0.6000000238418579,
+            "peakDrawMs": 4.100000023841858,
+            "dpr": 1,
+            "grid": [
+              218,
+              126
+            ],
+            "maxBand": 0.6890814900398254,
+            "envBass": 0.9233729880562613
+          },
+          "triggers": {
+            "bass": 11,
+            "kick": 14,
+            "mid": 14,
+            "hat": 39
+          },
+          "volume": 0.75
+        }
+      }
+    },
+    "reset": {
+      "bass": {
+        "cooldown": 420,
+        "energy": 0.004,
+        "opacity": 1,
+        "gain": 1,
+        "sustain": 2.6,
+        "pk": 0.6,
+        "postKick": 280
+      },
+      "kick": {
+        "cooldown": 320,
+        "energy": 0.005,
+        "opacity": 1,
+        "gain": 1,
+        "ratio": 1.6
+      },
+      "mid": {
+        "cooldown": 320,
+        "energy": 0.0012,
+        "opacity": 1,
+        "gain": 1,
+        "ratio": 1.45,
+        "flux": 1.6
+      },
+      "hat": {
+        "cooldown": 150,
+        "energy": 0.0003,
+        "opacity": 1,
+        "gain": 1,
+        "flux": 1.2,
+        "ratio": 1.15
+      }
+    }
+  },
+  "lowGate": {
+    "triggers": {
+      "bass": 17,
+      "kick": 16,
+      "mid": 2,
+      "hat": 29
+    },
+    "threshold": 0.00005,
+    "volume": 0.75
+  },
+  "highGate": {
+    "triggers": {
+      "bass": 17,
+      "kick": 16,
+      "mid": 2,
+      "hat": 0
+    },
+    "threshold": 0.0018,
+    "volume": 0.75
+  },
+  "paused": {
+    "stats": {
+      "source": "local",
+      "active": false,
+      "analysing": true,
+      "rms": 0,
+      "peakHz": 0,
+      "waves": 0,
+      "fieldEnergy": 0,
+      "raf": false,
+      "frames": 1931,
+      "drawMs": 0.10000002384185791,
+      "peakDrawMs": 4.100000023841858,
+      "dpr": 1,
+      "grid": [
+        218,
+        126
+      ],
+      "maxBand": 0,
+      "envBass": 0
+    },
+    "canvasClear": true
+  }
+}

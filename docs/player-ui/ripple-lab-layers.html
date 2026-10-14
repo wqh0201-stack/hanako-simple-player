@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>涟漪实验室 · Hana</title>
+<title>花一匁 · 涟漪试听</title>
 <style>
 :root {
   color-scheme:dark;
@@ -32,21 +32,39 @@ button { transition:background .2s,transform .2s,color .2s; }
 button:not(:disabled):active { transform:translateY(1px); }
 svg.icon { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
 [hidden] { display:none!important; }
-.shell { width:min(1200px,100%); margin:auto; padding:30px 48px 28px; }
+.shell { width:min(1200px,100%); margin:auto; padding:20px 28px 24px; }
 .masthead { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:25px; }
-.brand { display:flex; gap:14px; align-items:center; }
+.brand { display:flex; gap:14px; align-items:center; min-width:0; }
+.brand>div { min-width:0; }
+.brand-mark { flex-shrink:0; }
 .brand-mark { width:33px; height:33px; stroke:var(--hk-accent); fill:none; stroke-width:1.15; }
 .brand-name { font-size:16px; letter-spacing:.12em; }
-.brand-note { font-size:11px; color:var(--hk-muted); letter-spacing:.19em; }
-.header-tools { display:flex; align-items:center; gap:16px; }
+.brand-note { font-size:11px; color:var(--hk-muted); letter-spacing:.04em; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.header-tools { display:flex; align-items:center; gap:16px; flex-shrink:0; }
 .edition { color:var(--hk-muted); font-size:11px; letter-spacing:.12em; }
 .icon-button { display:grid; place-items:center; width:36px; height:36px; border-radius:50%; }
 .icon-button:hover { background:var(--soft); }
-.hero { position:relative; overflow:hidden; isolation:isolate; height:472px; border-radius:14px 14px 0 0; background:var(--water); }
-.hero:before { content:""; position:absolute; inset:0; z-index:0; background:radial-gradient(ellipse at 74% 44%,color-mix(in srgb,var(--hk-accent) 13%,transparent),transparent 62%); pointer-events:none; }
-.water-canvas { position:absolute; inset:0; width:100%; height:100%; z-index:1; pointer-events:none; }
-.hero-scrim { position:absolute; inset:0; pointer-events:none; z-index:2; background:linear-gradient(90deg,color-mix(in srgb,var(--water) 90%,transparent),transparent 46%); }
-.hero-copy { position:absolute; top:35px; left:38px; z-index:3; pointer-events:none; }
+.hero { --cover-color:var(--hk-surface); --cover-ink:var(--hk-text); --cover-muted:var(--hk-muted); position:relative; overflow:hidden; isolation:isolate; height:clamp(430px,67vh,660px); border-radius:14px 14px 0 0; background:var(--cover-color); color:var(--cover-ink); }
+.hero:before { content:none; }
+.hero-cover { position:absolute; inset:0 auto 0 0; width:var(--art-size,660px); max-width:86%; background:url('./assets/hanaichimonme-cover.jpg') left center / cover no-repeat; mask-image:linear-gradient(90deg,#000 65%,transparent 100%); -webkit-mask-image:linear-gradient(90deg,#000 65%,transparent 100%); pointer-events:none; }
+.water-canvas { position:absolute; inset:0; width:100%; height:100%; z-index:2; pointer-events:none; }
+.hero-scrim { position:absolute; inset:0; pointer-events:none; z-index:1; background:linear-gradient(90deg,transparent 36%,color-mix(in srgb,var(--cover-color) 20%,transparent) 70%); }
+.hero-copy { position:absolute; top:34px; left:54%; right:30px; z-index:3; pointer-events:none; }
+.hero-copy h1 { margin:0 0 6px; font:500 24px/1.4 var(--font); letter-spacing:.02em; }
+.hero-copy p:last-child { color:var(--cover-muted); }
+.lyric-preview { position:absolute; left:54%; right:30px; top:32%; height:51%; z-index:3; overflow:hidden; mask-image:linear-gradient(180deg,transparent,#000 15%,#000 82%,transparent); -webkit-mask-image:linear-gradient(180deg,transparent,#000 15%,#000 82%,transparent); pointer-events:none; }
+.lyric-preview p { margin:0 0 18px; font-size:16px; line-height:1.7; color:var(--cover-muted); }
+.lyric-preview p.current { color:var(--cover-ink); font-weight:500; }
+.layer-actions { display:flex; flex-wrap:wrap; gap:7px; }
+.hero .pill { background:color-mix(in srgb,var(--cover-color) 85%,transparent); color:var(--cover-ink); }
+.hero .pill[aria-pressed="false"] { opacity:.48; }
+.hero .pill[aria-pressed="true"] { background:color-mix(in srgb,var(--cover-color) 70%,var(--hk-surface)); }
+.tune-details,.analysis-details { padding:12px 0; border-bottom:1px solid var(--line); width:100%; max-width:none; }
+.tune-details>summary,.analysis-details>summary { font-size:12px; color:var(--hk-muted); text-align:left; }
+.tune-details .settings { margin-top:12px; border-radius:5px; }
+.analysis-details .analysis { padding-top:16px; }
+.album { overflow:hidden; }
+.album img { width:100%; height:100%; object-fit:cover; }
 .kicker { margin:0; font-size:11px; letter-spacing:.17em; color:var(--hk-muted); }
 h1 { margin:26px 0 19px; font-family:"Songti SC","Noto Serif CJK SC",serif; font-weight:400; font-size:53px; line-height:1.3; letter-spacing:.08em; }
 .hero-copy p:last-child { color:var(--hk-muted); margin:0; font-size:12px; line-height:2; }
@@ -65,7 +83,7 @@ h1 { margin:26px 0 19px; font-family:"Songti SC","Noto Serif CJK SC",serif; font
 .tune-row { display:flex; flex-direction:column; gap:2px; margin:0; padding:5px 9px; border:1px solid var(--hk-line,color-mix(in srgb,var(--hk-ink,currentColor) 14%,transparent)); border-radius:7px; }
 .tune-row legend { padding:0; font-size:11px; color:var(--hk-muted); letter-spacing:.02em; }
 .tune-row legend em { font-style:normal; opacity:.65; margin-left:3px; }
-.tune-row label { display:flex; align-items:center; gap:5px; font-size:10.5px; color:var(--hk-muted); }
+.tune-row label { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--hk-muted); }
 .tune-row input[type="range"] { width:82px; }
 .tune-row output { font-variant-numeric:tabular-nums; min-width:38px; text-align:right; }
 .intensity { display:flex; align-items:center; gap:11px; font-size:11px; color:var(--hk-muted); }
@@ -117,7 +135,8 @@ details p { margin-top:10px; line-height:1.9; }
 body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state:paused!important; transition:none!important; }
 @media(max-width:760px) {
   .shell { padding:20px 22px; } .edition { display:none; }
-  .hero { height:440px; } .hero-copy { top:28px; left:25px; } h1 { font-size:44px; }
+  .hero { height:520px; } .hero-copy { top:25px; left:48%; right:20px; } .hero-copy h1 { font-size:22px; }
+  .lyric-preview { left:48%; right:20px; top:27%; } .lyric-preview p { font-size:13px; }
   .hero-index { right:24px; top:31px; } .hero-index p { max-width:85px; }
   .hero-bottom { left:25px; right:24px; bottom:22px; } .gesture-note { max-width:110px; }
   .settings { flex-wrap:wrap; gap:12px; padding:13px 16px; } .settings>.mini { display:none; }
@@ -127,7 +146,8 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
   footer { flex-direction:column; gap:14px; } summary { text-align:left; }
 }
 @media(max-width:390px) {
-  .shell { padding:16px; } .hero { height:410px; } .hero-copy p:last-child { max-width:185px; }
+  .shell { padding:16px; } .hero { height:460px; } .hero-copy p:last-child { max-width:185px; }
+  .hero-copy { left:43%; } .lyric-preview { left:43%; height:45%; } .hero-bottom { flex-direction:column; align-items:flex-start; }
   .hero-index { display:none; } h1 { font-size:38px; }
   .hero-bottom { gap:10px; } .gesture-note { display:none; } .water-actions { margin-left:auto; }
   .settings { gap:10px; } .tune-row input[type="range"] { width:64px; } .intensity input { width:77px; }
@@ -136,6 +156,18 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
 @media(prefers-reduced-motion:reduce) {
   *,*:before,*:after { animation:none!important; transition:none!important; }
 }
+
+/* Toybox: each group pairs the actual trigger floor with rendering-only opacity. */
+.tune-panel { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; width:100%; }
+.settings { display:block; padding:18px; }
+.tune-row { min-width:0; padding:13px; gap:8px; border-radius:5px; border-color:var(--line); }
+.tune-row legend { color:var(--hk-text); font-size:13px; padding:0 4px; }
+.tune-row label { justify-content:space-between; margin-top:3px; font-size:12px; }
+.tune-row input[type="range"] { width:100%; min-height:20px; }
+.range-ends { display:flex; justify-content:space-between; gap:10px; font-size:11px; color:var(--hk-muted); }
+.tune-footer { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:12px; }
+.tune-footer p { margin:0; color:var(--hk-muted); font-size:12px; }
+@media(max-width:760px) { .tune-panel { grid-template-columns:1fr; } .tune-footer { flex-wrap:wrap; } }
 </style>
 </head>
 <body>
@@ -151,53 +183,64 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
 </defs></svg>
 <main class="shell" id="app">
 <header class="masthead">
-  <div class="brand"><svg class="brand-mark" viewBox="0 0 36 36" aria-hidden="true"><ellipse cx="18" cy="23" rx="15" ry="7"/><ellipse cx="18" cy="23" rx="9" ry="4"/><path d="M18 5c-2 4-4 6-4 8a4 4 0 0 0 8 0c0-2-2-4-4-8Z"/></svg><div><div class="brand-name">涟漪实验室</div><div class="brand-note">HANA · RIPPLE STUDY</div></div></div>
+  <div class="brand"><svg class="brand-mark" viewBox="0 0 36 36" aria-hidden="true"><ellipse cx="18" cy="23" rx="15" ry="7"/><ellipse cx="18" cy="23" rx="9" ry="4"/><path d="M18 5c-2 4-4 6-4 8a4 4 0 0 0 8 0c0-2-2-4-4-8Z"/></svg><div><div class="brand-name">涟漪试听</div><div class="brand-note">花一匁 · ずっと真夜中でいいのに。</div></div></div>
   <div class="header-tools"><span class="edition">INTERACTION & SOUND / 01</span><button class="icon-button" id="themeBtn" aria-label="切换演示深浅主题" title="切换演示深浅主题"><svg class="icon"><use href="#i-theme"/></svg></button></div>
 </header>
 <section class="hero" id="scene" aria-label="交互水面，移动指针或点击产生涟漪">
+  <div class="hero-cover" aria-hidden="true"></div>
   <canvas class="water-canvas" id="waterCanvas" aria-hidden="true"></canvas>
   <div class="hero-scrim"></div>
-  <div class="hero-copy"><p class="kicker">01 / A SURFACE THAT LISTENS</p><h1>静水，<br>有回声。</h1><p>划过，是一束流光。<br>落下，是层层回响。</p></div>
-  <div class="hero-index"><div class="num">水 / 声</div><p>指尖唤醒水面<br>声音留下形状</p></div>
-  <div class="hero-bottom"><span class="gesture-note"><i class="gesture-dot"></i><span id="gestureHint">轻移起波 · 按下共振</span></span><div class="water-actions"><button class="pill" id="dropBtn"><svg class="icon"><use href="#i-drop"/></svg>落下一滴</button><button class="pill" id="freezeBtn" aria-pressed="false"><svg class="icon"><use href="#i-pause"/></svg><span>冻结画面</span></button></div></div>
+  <div class="hero-copy"><h1>花一匁</h1><p>ずっと真夜中でいいのに。</p></div>
+  <div class="lyric-preview" id="lyricPreview" aria-hidden="true"></div>
+  <div class="hero-bottom"><div class="layer-actions" aria-label="显示的涟漪"><button type="button" class="pill" data-layer="bass" aria-pressed="true">低音光波</button><button type="button" class="pill" data-layer="beat" aria-pressed="true">鼓点细环</button><button type="button" class="pill" data-layer="hat" aria-pressed="true">镲片小环</button></div><div class="water-actions"><span id="gestureHint" hidden></span><button class="pill" id="dropBtn"><svg class="icon"><use href="#i-drop"/></svg>落下一滴</button><button class="pill" id="freezeBtn" aria-pressed="false"><svg class="icon"><use href="#i-pause"/></svg><span>冻结画面</span></button></div></div>
   <div class="motion-notice" id="motionNotice" hidden>已遵循系统的减少动态效果设置；音频仍可正常播放。</div>
   <div class="drag-overlay" id="dragOverlay" hidden>放下这首歌，让水面听见。</div>
 </section>
-<div class="settings">
-  <div class="tune-panel" aria-label="三层参数调校">
-    <fieldset class="tune-row"><legend>bass <em>带光击发</em></legend>
-      <label>冷却 <input id="tBassCd" type="range" min="120" max="900" step="20" value="420"><output id="tBassCdV">420ms</output></label>
-      <label>阈值 <input id="tBassTh" type="range" min="0.02" max="0.9" step="0.01" value="0.30"><output id="tBassThV">0.30</output></label>
+<details class="tune-details"><summary>涟漪调节 · 玩具箱</summary>
+  <div class="settings"><div class="tune-panel" aria-label="触发门槛和颜色浓淡">
+    <fieldset class="tune-row"><legend>低音光波</legend>
+      <label for="tBassTh">触发门槛 <output id="tBassThV" for="tBassTh">0.0040</output></label>
+      <input id="tBassTh" type="range" min=".0005" max=".014" step=".0001" value=".0040" aria-label="低音光波触发门槛" aria-describedby="tBassThHint">
+      <div class="range-ends" id="tBassThHint"><span>低门槛 · 更多</span><span>高门槛 · 更少</span></div>
+      <label for="tBassOpacity">颜色浓淡 <output id="tBassOpacityV" for="tBassOpacity">100%</output></label>
+      <input id="tBassOpacity" type="range" min="20" max="180" step="5" value="100" aria-label="低音光波颜色浓淡" aria-describedby="tBassOpacityHint">
+      <div class="range-ends" id="tBassOpacityHint"><span>更浅、更淡</span><span>更深、更浓</span></div>
     </fieldset>
-    <fieldset class="tune-row"><legend>鼓点 <em>等高线</em></legend>
-      <label>冷却 <input id="tKickCd" type="range" min="80" max="800" step="20" value="320"><output id="tKickCdV">320ms</output></label>
-      <label>阈值 <input id="tKickTh" type="range" min="0.02" max="0.9" step="0.01" value="0.34"><output id="tKickThV">0.34</output></label>
+    <fieldset class="tune-row"><legend>鼓点细环</legend>
+      <label for="tKickTh">触发门槛 <output id="tKickThV" for="tKickTh">0.0050</output></label>
+      <input id="tKickTh" type="range" min=".0005" max=".018" step=".0001" value=".0050" aria-label="鼓点细环触发门槛" aria-describedby="tKickThHint">
+      <div class="range-ends" id="tKickThHint"><span>低门槛 · 更多</span><span>高门槛 · 更少</span></div>
+      <label for="tKickOpacity">颜色浓淡 <output id="tKickOpacityV" for="tKickOpacity">100%</output></label>
+      <input id="tKickOpacity" type="range" min="20" max="180" step="5" value="100" aria-label="鼓点细环颜色浓淡" aria-describedby="tKickOpacityHint">
+      <div class="range-ends" id="tKickOpacityHint"><span>更浅、更淡</span><span>更深、更浓</span></div>
     </fieldset>
-    <fieldset class="tune-row"><legend>镲片 <em>金色小等高线</em></legend>
-      <label>冷却 <input id="tHatCd" type="range" min="40" max="600" step="10" value="150"><output id="tHatCdV">150ms</output></label>
-      <label>阈值 <input id="tHatTh" type="range" min="0.01" max="0.6" step="0.01" value="0.12"><output id="tHatThV">0.12</output></label>
+    <fieldset class="tune-row"><legend>镲片小环</legend>
+      <label for="tHatTh">触发门槛 <output id="tHatThV" for="tHatTh">0.00030</output></label>
+      <input id="tHatTh" type="range" min=".00005" max=".0018" step=".00001" value=".00030" aria-label="镲片小环触发门槛" aria-describedby="tHatThHint">
+      <div class="range-ends" id="tHatThHint"><span>低门槛 · 更多</span><span>高门槛 · 更少</span></div>
+      <label for="tHatOpacity">颜色浓淡 <output id="tHatOpacityV" for="tHatOpacity">100%</output></label>
+      <input id="tHatOpacity" type="range" min="20" max="180" step="5" value="100" aria-label="镲片小环颜色浓淡" aria-describedby="tHatOpacityHint">
+      <div class="range-ends" id="tHatOpacityHint"><span>更浅、更淡</span><span>更深、更浓</span></div>
     </fieldset>
-  </div>
-  <label class="intensity">波澜 <input id="intensity" type="range" min="0.6" max="2.4" step="0.1" value="1.6" aria-label="涟漪强度"><output id="intensityValue">1.6</output></label>
-  <span class="mini"><i class="live-dot" id="sourceDot"></i><span id="sourceLabel">手势演示 · 未接入音频</span></span>
-</div>
+  </div><div class="tune-footer"><p>门槛越低越容易出波；浓淡只改变颜色的显眼程度。</p><button type="button" class="secondary" id="resetTuneBtn">重置为当前效果</button></div></div>
+</details>
 <section aria-label="音频来源和播放控制">
-  <div class="player"><div class="album" aria-hidden="true"><svg class="icon"><use href="#i-music"/></svg></div><div class="track"><h2 id="trackTitle">让一首歌，经过这片水面。</h2><p id="trackMeta">选择或拖入本地音频，仅在此设备播放。</p></div><button class="primary" id="fileBtn"><svg class="icon"><use href="#i-folder"/></svg>选择本地音频</button><button class="secondary" id="shareBtn"><svg class="icon"><use href="#i-share"/></svg><span>共享正在播放的音频</span></button></div>
+  <div class="player"><div class="album" aria-hidden="true"><img id="coverImage" src="./assets/hanaichimonme-cover.jpg" alt=""></div><div class="track"><h2 id="trackTitle">花一匁</h2><p id="trackMeta">ずっと真夜中でいいのに。 · 已接入本地音频</p></div><button class="secondary" id="fileBtn"><svg class="icon"><use href="#i-folder"/></svg>换一首音频</button><button class="secondary" id="demoBtn" hidden>回到花一匁</button><button class="secondary" id="shareBtn"><svg class="icon"><use href="#i-share"/></svg><span>共享正在播放的音频</span></button></div>
   <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac,.opus" hidden>
   <audio id="audio" preload="metadata"></audio>
   <div class="transport"><button class="play-button" id="playBtn" disabled aria-label="播放"><svg class="icon"><use href="#i-play"/></svg></button><input class="seek" id="seek" type="range" min="0" max="1" step="0.01" value="0" disabled aria-label="播放进度"><span class="time" id="timeText">0:00 / 0:00</span><label class="volume-wrap"><svg class="icon" aria-hidden="true"><use href="#i-volume"/></svg><input type="range" id="volume" min="0" max="1" step="0.01" value="0.75" aria-label="音量"></label></div>
-  <p class="notice" id="notice" role="status" aria-live="polite">水面可以随手起波；下方频谱只来自真实音频。</p>
+  <p class="notice" id="notice" role="status" aria-live="polite">点击播放，听低音的光波、鼓点的细环和镲片的小环。</p>
 </section>
-<section class="analysis" aria-label="真实音频分析">
+<details class="analysis-details"><summary>查看声音分析</summary><section class="analysis" aria-label="真实音频分析">
   <div class="analysis-head"><div class="analysis-title"><span class="kicker">02 / LIVE SIGNAL</span><h3>声音的形状</h3></div><div class="readout"><span>电平<b id="rmsText">— dBFS</b></span><span class="peak">主频<b id="freqText">— Hz</b></span></div></div>
   <div class="graph-wrap" id="graphWrap"><canvas class="fft-canvas" id="fftCanvas" aria-label="实时对数频谱，上方细线为实际音频波形" role="img"></canvas><div class="empty-graph" id="emptyGraph"><span id="emptyTitle">还没有音频输入</span><small id="emptySubtitle">不使用预设柱高，也不模拟节拍。</small></div></div>
   <div class="frequency-labels" aria-hidden="true"><span>40 Hz</span><span>160</span><span>640</span><span>2.5k</span><span id="highFreqLabel">20k Hz</span></div>
-</section>
-<footer><p>CANVAS 2D / 指针波场 + 真实音频响应<br>无外部资源 · 文件不会上传</p><details><summary>能读取电脑里正在播放的声音吗？</summary><p>本页播放的本地文件可以直接分析。其他网页或应用的声音，需要点击“共享正在播放的音频”，在浏览器弹窗中选择来源并开启音频共享；是否支持系统音频取决于 Chromium、操作系统和 Electron 宿主。授权没有返回音轨时，这里会明确提示，不用假的频谱替代。共享画面不会在本页展示或上传；结束后请点“停止共享”。</p></details></footer>
+</section></details>
+<footer><p>演示调整：低音光波自然消散，镲片独立落波。<br>歌曲在本机播放，不上传。</p><details><summary>能读取电脑里正在播放的声音吗？</summary><p>本页播放的本地文件可以直接分析。其他网页或应用的声音，需要点击“共享正在播放的音频”，在浏览器弹窗中选择来源并开启音频共享；是否支持系统音频取决于 Chromium、操作系统和 Electron 宿主。授权没有返回音轨时，这里会明确提示，不用假的频谱替代。共享画面不会在本页展示或上传；结束后请点“停止共享”。</p></details></footer>
 <div class="color-probe" id="accentProbe" aria-hidden="true"></div>
 </main>
 <script>
-/* Standalone demo, AGPL-3.0. No network, no dependency, no WebGL.
+/* Standalone demo, AGPL-3.0. Local demo media, no dependency or WebGL.
    Water is decorative. Spectrum and waveform use AnalyserNode data ONLY.
    Local audio stays on its original playback path: captureStream -> analyser,
    whose output is left unconnected; there is no duplicate audible output. */
@@ -212,14 +255,15 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
   var low=document.createElement('canvas'), lc=low.getContext('2d'), pixels;
   var waves=[],trail=[],lastPoint=null,travel=0,lastEmit=0,lastInput=0;
   var raf=0,idleTimer=0,lastFrame=0,accumulator=0,clock=0,frameCount=0,inFrame=false;
-  var strength=1.6,frozen=false,disposed=false,pausedDrain=0;
+  var strength=2.6,frozen=false,disposed=false,pausedDrain=0;
+  var shownLayers={bass:true,beat:true,hat:true},coverBg=null,lyricLines=[],lyricIndex=-1,isDemoSong=false;
   var color='',ink='',muted='',rgb=[0,0,0],themeDirty=true;
   /* 三层专用色：bass 往冷偏、镲片往金偏，都由 accent 混合而来，呼应背景。 */
-  var rgbBass=[0,0,0],rgbHat=[0,0,0];
-  var context=null,analyser=null,source=null,stream=null,streamBinding=null,mediaURL=null;
+  var rgbBass=[0,0,0],rgbHat=[0,0,0],rgbKick=[0,0,0],rgbMid=[0,0,0];
+  var context=null,analyser=null,analysisSink=null,source=null,stream=null,streamBinding=null,mediaURL=null;
   var sourceKind='none',signalActive=false,capturePending=false,generation=0,analysisError='';
   var bins=null,timeData=null,bands=new Float32Array(80),peaks=new Float32Array(80);
-  var rms=0,peakHz=0,bass=0,bassAverage=0,lastBeat=0,readAt=0,uiAt=0;
+  var rms=0,peakHz=0,bass=0,bassAverage=0,lastBeat=0,readAt=0,uiAt=0,signalWarmUntil=0,warmupSamples={low:[],mid:[],high:[]};
   var loopStats={lastMs:0,peakMs:0};
   var MAX_WAVES=40, MAX_TRAIL=40;
   /* ---- 三路起音检测状态（低频包络 + 低/中/高三路起音） ---- */
@@ -229,39 +273,14 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
   var envs={low:{fast:0,slow:0,hold:0},mid:{fast:0,slow:0,hold:0},high:{fast:0,slow:0,hold:0}};
   var fluxBg={low:0,mid:0,high:0};
   var envBass=0;                           // 低频包络 → bass 大涟漪
-  /* ---- 三层参数：每一层独立可调 ----------------------------------
-     冷却 cooldown：这一类声音两次触发之间最少隔多少毫秒。
-                  调小 → 更密更躁；调大 → 更疏更稳。
-     阈值 thresh：多响才算一次击发。
-                  调小 → 更灵敏更容易出；调高 → 更迟钝只抓明显的
-     强度 gain：响了之后有多大力（影响形态大小）。 */
-  /* ---- 三层参数：每一层独立可调 ----------------------------------
-     cooldown：这一类声音两次触发之间最少隔多少毫秒。
-                  调小 → 更密更躁；调大 → 更疏更稳。
-     thresh：多响才算一次击发。
-                  调低 → 更灵敏更容易出；调高 → 更迟钝只抓明显的
-     gain：响了之后有多大力（影响形态大小）。
-     sustain（仅 bass）：持续度上限。快/慢包络比超过它就算瞬态（那是鼓）。
-                  调低 → 更挑，只要持续的；调高 → 宽松些也认。 */
-  var TUNE={
-    /* thresh 是面板上的「阈值」滑杆，控制**灵敏度**：
-       threshBase 是该滑杆的默认位置（也是校准值），sens = threshBase / thresh。
-       滑块在默认位时 sens=1，行为与校准值一致；
-       往左调小 thresh → sens 升高 → 能量地板按比例降低 → 更容易出波。
-
-       energy 是**绝对能量地板**（各频段功率均方根），挡的是「噪声地板上跳了一下」
-       —— 那种瞬间 ratio 很高但根本没有声能量，不应出波。
-       ratio / flux / pk 是各自的形态判据（见下方判据段）。 */
-    bass :{cooldown:420, thresh:.30, threshBase:.30, gain:1.0, sustain:2.6, energy:.004, pk:.60, postKick:280},
-    /* kick 靠瞬态性（ratio：快能量 / 慢基线）与绝对能量地板，不靠 pk
-       —— 混音里 bass 的窄峰会把 pk 钉在 1.0，pk 门会把「bass 与鼓同时响」挡掉。 */
-    kick :{cooldown:320, thresh:.34, threshBase:.34, gain:1.0, ratio:1.9, energy:.005},
-    /* 军鼓/钢琴等中频瞬态：能量地板 + 快/慢比 + 谱通量比。 */
-    mid  :{cooldown:320, thresh:.34, threshBase:.34, gain:1.0, energy:.0012, ratio:1.45, flux:1.6},
-    /* 镲片：高频瞬态，冷却最短（密集镲片能连续出波）。
-       flux 是「谱通量 / 常态背景」，ratio 是快/慢包络比（二者满足其一）。 */
-    hat  :{cooldown:150, thresh:.12, threshBase:.12, gain:1.0, energy:.0003, flux:1.2, ratio:1.15}
+  /* 门槛直接对应 FFT 频段均方根能量；颜色浓淡仅进入绘制 alpha。 */
+  var DEFAULT_TUNE={
+    bass:{cooldown:420,energy:.004,opacity:1,gain:1,sustain:2.6,pk:.60,postKick:280},
+    kick:{cooldown:320,energy:.005,opacity:1,gain:1,ratio:1.6},
+    mid:{cooldown:320,energy:.0012,opacity:1,gain:1,ratio:1.45,flux:1.6},
+    hat:{cooldown:150,energy:.0003,opacity:1,gain:1,flux:1.2,ratio:1.15}
   };
+  var TUNE=JSON.parse(JSON.stringify(DEFAULT_TUNE));
   var lastLowAt=-1e9, lastMidAt=-1e9, lastHatAt=-1e9, lastBassAt=-1e9, lastOnsetAt=-1e9, lastKickAt=-1e9;
   /* pkFloor：谱峰突出度的「低谷保持」（下滑即时、回升缓慢）。
      底鼓击打那一瞬 pk 从 0.9 掉到 0.006，但只持续一两帧，随后衰减段的谱形
@@ -281,15 +300,149 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
   function stopWork() { cancelAnimationFrame(raf);clearTimeout(idleTimer);raf=idleTimer=0;lastFrame=0; }
   function mixRgb(a,b,t){return [Math.round(a[0]+(b[0]-a[0])*t),Math.round(a[1]+(b[1]-a[1])*t),Math.round(a[2]+(b[2]-a[2])*t)];}
   function cssRgb(a){return 'rgb('+a[0]+','+a[1]+','+a[2]+')';}
+  function lumOf(c) {
+    function ch(v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }
+    return 0.2126 * ch(c[0]) + 0.7152 * ch(c[1]) + 0.0722 * ch(c[2]);
+  }
+
+  /* RGB → HSL（h 0~360, s/l 0~1）。 */
+  function toHsl(c) {
+    var r = c[0] / 255, g = c[1] / 255, b = c[2] / 255;
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+    var h = 0, s = 0, l = (mx + mn) / 2;
+    if (d > 1e-6) {
+      s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+      if (mx === r) h = ((g - b) / d + (g < b ? 6 : 0));
+      else if (mx === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h *= 60;
+    }
+    return [h, s, l];
+  }
+  /* HSL → RGB。 */
+  function fromHsl(h, s, l) {
+    h = ((h % 360) + 360) % 360;
+    function f(n) {
+      var k = (n + h / 30) % 12;
+      var a = s * Math.min(l, 1 - l);
+      return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))));
+    }
+    return [f(0), f(8), f(4)];
+  }
+  /* 背景撞色：取主色的互补色相（转 150° 附近，够撞但不髿），
+   * 再按极性定亮度 —— 深纱上提亮、浅纱上压深，保证在纱上可读。
+   * 输入主色 + 'light'/'dark'（当前极性）。 */
+  function accentFrom(color, polarity) {
+    var hsl = toHsl(color);
+    var h = hsl[0] + 150;                       // 互补偏一点，避开刺眼的纯 180
+    var s = Math.max(0.42, Math.min(0.72, hsl[1] * 0.9 + 0.22)); // 保底彩度
+    var l = polarity === 'dark' ? 0.72 : 0.40;  // 深纱亮、浅纱暗
+    return fromHsl(h, s, l);
+  }
+
+  /* ============================================================
+     涟漪三层色（bass 光波 / 鼓点等高线 / 镲片小环）
+     ------------------------------------------------------------
+     设计约束（罐头 2026-10-12）：
+       ① 不跟歌词色（--hl-accent）混 —— 每层偏一定色相角，与歌词拉开；
+       ② “弱一档” —— 饱和度相比歌词色降一档（更素，不抢镜头）；
+       ③ 不被封面环境色吃掉 —— 与背景保持最低对比度。
+     做法：以歌词色（同 --hl-accent 的派生 h/s）为基，逐层偏色相 + 降饱和，
+     明度从设计基线出发、**仅在必要时**向远端微移，直到与背景对比达标（solveByContrast）。
+     为什么不能只固定明度：背景是封面主色，可为任意明度；中调背景上固定明度必撞车
+     （实测最弱对比 1.1，等于隐形）。
+     ============================================================ */
+  var RIPPLE_HUE_OFF = { bass: -30, kick: 16, mid: 34, hat: 60 };   // 色相偏移（度）
+  /* 饱和度倍率（“弱一档”）：相对歌词色降一档，但不降成灰 ——
+     实测降太狠（0.78）时三层在强饱和背景上会掳成一堆低饱和色，看不清。 */
+  var RIPPLE_SAT_MUL = { bass: 0.86, kick: 0.90, mid: 0.92, hat: 0.96 };
+  var RIPPLE_LIGHT_BASE = { bass: 0.60, kick: 0.60, mid: 0.61, hat: 0.62 }; // 深底明度基线
+  var RIPPLE_DARK_BASE = { bass: 0.42, kick: 0.42, mid: 0.43, hat: 0.44 };  // 浅底明度基线
+  /* 与背景的最低对比。细线/细光波要 **4.0** 才真正看得清 ——
+     实测 2.2 时「数学及格、肉眼隐形」（罐头 2026-10-12 真机反馈）。 */
+  var RIPPLE_MIN_CONTRAST = 4.0;
+  /* 对比度（WCAG 相对亮度比）：与 lumOf 同一套系数，避免两处口径不一致。 */
+  function contrastOf(a, b) {
+    var la = lumOf(a), lb = lumOf(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  }
+  /* 解一个明度：从 baseL 向两端对称扩散，取第一个对比达标的 L；
+     全都不达标时退而取对比最大者。返回 [r,g,b]。 */
+  function solveByContrast(h, s, bg, baseL, floor) {
+    floor = floor || RIPPLE_MIN_CONTRAST;
+    var best = null;
+    for (var d = 0; d <= 200; d += 2) {   // d 单位为 1/100，上限 2.0（可一路扫到两端）
+      var dd = d / 100;
+      var tries = d === 0 ? [baseL] : [baseL - dd, baseL + dd];
+      for (var i = 0; i < tries.length; i++) {
+        var L = tries[i];
+        if (L < 0.04 || L > 0.96) continue;
+        var c = fromHsl(h, s, L);
+        if (contrastOf(c, bg) >= floor) { if (!best || dd < best.d) best = { d: dd, c: c }; }
+      }
+      if (best && best.d <= dd) break;
+    }
+    if (best) return best.c;
+    var fallback = null, fbCt = -1;
+    for (var L2 = 4; L2 <= 96; L2 += 2) {
+      var c2 = fromHsl(h, s, L2 / 100);
+      var ct = contrastOf(c2, bg);
+      if (ct > fbCt) { fbCt = ct; fallback = c2; }
+    }
+    return fallback || fromHsl(h, s, 0.5);
+  }
+  /* 从「歌词色基」（同一个 h/s 派生源）生成三层色。
+     accent = 歌词色（用于反推其 h/s 基），bg = 背景主色，polarity = 'light'/'dark'。 */
+  function ripplePalette(accent, bg, polarity) {
+    var ahsl = toHsl(accent);
+    var dark = polarity !== 'light';
+    var out = {};
+    var keys = ['bass', 'kick', 'mid', 'hat'];
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      var h = ahsl[0] + RIPPLE_HUE_OFF[k];
+      var s = Math.max(0.28, Math.min(0.85, ahsl[1] * RIPPLE_SAT_MUL[k]));
+      var baseL = (dark ? RIPPLE_LIGHT_BASE : RIPPLE_DARK_BASE)[k];
+      out[k] = solveByContrast(h, s, bg, baseL);
+    }
+    return out;
+  }
+  function dominantColor(data, w, h) {
+    var buckets = {};
+    for (var i = 0; i < data.length; i += 4) {
+      if (data[i + 3] < 128) continue;
+      var r = data[i], g = data[i + 1], b = data[i + 2];
+      var key = ((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4);
+      var bk = buckets[key] || (buckets[key] = { n: 0, r: 0, g: 0, b: 0 });
+      bk.n++; bk.r += r; bk.g += g; bk.b += b;
+    }
+    var best = null, bestColored = null;
+    for (var k in buckets) {
+      if (!Object.prototype.hasOwnProperty.call(buckets, k)) continue;
+      var x = buckets[k];
+      var avg = [Math.round(x.r / x.n), Math.round(x.g / x.n), Math.round(x.b / x.n)];
+      var mx = Math.max(avg[0], avg[1], avg[2]), mn = Math.min(avg[0], avg[1], avg[2]);
+      var sat = mx === 0 ? 0 : (mx - mn) / mx;
+      if (!best || x.n > best.n) best = { n: x.n, c: avg };
+      if (sat >= 0.14 && (!bestColored || x.n > bestColored.n)) bestColored = { n: x.n, c: avg };
+    }
+    return bestColored ? bestColored.c : (best ? best.c : null);
+  }
+
+
   function palette() {
     color=getComputedStyle($('accentProbe')).color;
     var styles=getComputedStyle(document.body); ink=styles.color;
     var probe=document.createElement('canvas').getContext('2d');
     probe.fillStyle=color;probe.fillRect(0,0,1,1);
     var p=probe.getImageData(0,0,1,1).data;rgb=[p[0],p[1],p[2]];
-    /* 强对比调色（实验用，先看区分度）：bass 深蓝、镲片亮金、鼓点用原 accent。 */
-    rgbBass=[64,110,200];      /* 深蓝：bass 大涟漪底座 */
-    rgbHat=[235,180,40];       /* 亮金：镲片 */
+    var bg=coverBg||rgb;
+    var pol=lumOf(bg)>.30?'light':'dark';
+    var accent=accentFrom(bg,pol),pal=ripplePalette(accent,bg,pol);
+    rgbBass=pal.bass;rgbKick=pal.kick;rgbMid=pal.mid;
+    // Preserve the production hue; increase contrast for the small cymbal rings.
+    var hatHsl=toHsl(pal.hat);rgbHat=solveByContrast(hatHsl[0],hatHsl[1],bg,hatHsl[2],5.5);
+    color=cssRgb(rgbKick);
     muted=getComputedStyle($('notice')).color;themeDirty=false;
   }
   function resize() {
@@ -297,7 +450,7 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
     var w=scene.clientWidth,h=scene.clientHeight,g=$('graphWrap');
     var ratio=Math.min(window.devicePixelRatio||1,2);
     if (w!==W||h!==H||ratio!==DPR||dirtySize) {
-      W=w;H=h;DPR=ratio;water.width=Math.max(1,Math.round(W*DPR));water.height=Math.max(1,Math.round(H*DPR));wc.setTransform(DPR,0,0,DPR,0,0);
+      W=w;H=h;DPR=ratio;scene.style.setProperty('--art-size',Math.max(h,w*.65)+'px');water.width=Math.max(1,Math.round(W*DPR));water.height=Math.max(1,Math.round(H*DPR));wc.setTransform(DPR,0,0,DPR,0,0);
       cols=Math.max(3,Math.min(260,Math.round(W/4.8)));rows=Math.max(3,Math.min(160,Math.round(H/4.8)));
       field=new Float32Array(cols*rows);previous=new Float32Array(cols*rows);fieldEnergy=0;
       low.width=cols;low.height=rows;pixels=lc.createImageData(cols,rows);
@@ -362,7 +515,7 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
        长出立体光波。 */
     var rad=kind==='bass'?2.2:kind==='high'?.85:1.15;
     var mul=kind==='bass'?2.0:kind==='high'?.5:.75;
-    inject(x,y,rad,power*strength*mul);
+    if(kind==='bass')inject(x,y,rad,power*strength*mul);
     wake();
   }
   function stepField() {
@@ -404,7 +557,7 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
         var edge=Math.abs(dx*.65+dy*.85),slope=Math.sqrt(dx*dx+dy*dy);
         var a=Math.min(.22,(edge*.10+slope*.035)*strength)*(.35+.65*envBass);
         data[o]=rgbBass[0];data[o+1]=rgbBass[1];data[o+2]=rgbBass[2];
-        data[o+3]=Math.round(a*255);
+        data[o+3]=Math.round(Math.min(.9,a*TUNE.bass.opacity)*255);
       }
     }
     lc.putImageData(pixels,0,0);
@@ -420,7 +573,7 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
        在那里只会变成噪底，还会跟 UI 抢注意力。这里的主角是三层击发。 */
     /* ---- bass：高度场光照（立体光波），最底层。
        只出光、不出描边等高线。 */
-    if(fieldEnergy>0.000005) {var ks=strength;strength*=.5;paintFieldGlow(fade);strength=ks;}
+    if(shownLayers.bass&&fieldEnergy>0.000005) {var ks=strength;strength*=.5;paintFieldGlow(fade);strength=ks;}
     /* ---- 鼓点 / 军鼓 / 镲片：同心等高线，快速出现、快速消散 ----
        ⚠ 只画这三类。bass 不走这里（历史上 bass 掉进 else，
        被画成了和鼓点同色的环 —— 这就是「bass 也有等高线」的根因）。 */
@@ -428,6 +581,8 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
       var w=waves[i],life=w.age/w.life;
       var kind=w.kind||'pointer';
       if(kind==='bass')continue;
+      if(kind==='high'&&!shownLayers.hat)continue;
+      if((kind==='low'||kind==='mid')&&!shownLayers.beat)continue;
       var birth=Math.min(1,w.age/.06);
       var baseAlpha=birth*Math.min(1.4,strength)*fade;
       var isHat=(kind==='high'),isKick=(kind==='low'),isMid=(kind==='mid');
@@ -448,16 +603,21 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
          层数上限压到 9 —— 之前 18 圈挤在一起就是“杂”的来源。 ---- */
       var gap=isHat?5:10;
       var layers=Math.max(3,Math.min(isHat?6:9,Math.floor(radius/gap)));
-      wc.strokeStyle=isHat?cssRgb(rgbHat):color;
-      wc.lineWidth=isHat?.6:.8;                   /* 细线等重 —— 等高线的质感 */
+      wc.strokeStyle=isHat?cssRgb(rgbHat):isMid?cssRgb(rgbMid):color;
+      wc.lineWidth=isHat?1.05:.8;                   /* 细线等重 —— 等高线的质感 */
       for(var k=0;k<layers;k++) {
         var rr=radius-k*gap;
         if(rr<1.5)continue;
         /* 外圈递减更陡：中心几圈清楚、外圈迅速收掉，
            一个波看起来是“一圈一圈”，而不是一把扇子。 */
-        var alpha=baseAlpha*end*Math.pow(1-k/layers,1.15)*(isHat?.5:1);
+        var opacity=isHat?TUNE.hat.opacity:isKick?TUNE.kick.opacity:isMid?TUNE.mid.opacity:1;
+        var alpha=Math.min(.94,baseAlpha*end*Math.pow(1-k/layers,1.15)*(isHat?.75:1)*opacity);
         if(alpha<=.006)continue;
         ringPath(w,rr,k*.16);
+        if(isHat&&coverBg){
+          wc.strokeStyle=cssRgb(coverBg);wc.lineWidth=3;wc.globalAlpha=alpha*.3;wc.stroke();
+          wc.strokeStyle=cssRgb(rgbHat);wc.lineWidth=1.05;
+        }
         wc.globalAlpha=alpha;
         wc.stroke();
       }
@@ -481,6 +641,7 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
   }
   function readSignal(now) {
     if(!analyser||!signalActive)return;
+    if(!signalWarmUntil)signalWarmUntil=now+320;
     /* 逐帧读（不再 30ms 节流）：底鼓的瞬态峰值落在 30ms 间，
        节流会把它整个跳过去。帧间隔 dt 用真实值，谱通量的时间常数靠它。 */
     var dt=readAt?(now-readAt)/1000:1/30;
@@ -549,6 +710,12 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
     /* bass 包络：只用于统计显示，不再驱动持续水面。 */
     envBass=approach(envBass,normE(be),.12,.5,dt);
     bass=be; bassAverage=bassAverage*.93+bass*.07;
+    // A short median background avoids both zero-history false kicks and a kick-biased startup baseline.
+    if(now<signalWarmUntil){warmupSamples.low.push(be);warmupSamples.mid.push(me);warmupSamples.high.push(he);return;}
+    if(warmupSamples){
+      ['low','mid','high'].forEach(function(k){var a=warmupSamples[k].sort(function(x,y){return x-y;});envs[k].slow=a.length?a[Math.floor(a.length/2)]:envs[k].fast;});
+      warmupSamples=null;
+    }
     /* 起音：快包络显著高于慢背景 + 谱通量超背景。同一瞬态只落一次。 */
     /* ================= bass 与 kick 的分离史=================
        一开始两者读同一组变量、只差一个阈值，所以一次底鼓会同时点亮 bass 光和鼓点涟漪。
@@ -566,13 +733,6 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
        仅作 bass 的辅证（需 > 0.60），不作 kick 的排除门。 */
     var loPeakiness=clamp01(Math.pow(peak/Math.max(1e-9,loAvg)/4,1/3));
 
-    /* 面板「阈值」滑杆 → 灵敏度 sens（默认位 = 校准值）。
-       所有绝对能量地板按 sens 反比缩放：调小 thresh 就更容易出波。 */
-    var sensBass=TUNE.bass.threshBase/TUNE.bass.thresh;
-    var sensKick=TUNE.kick.threshBase/TUNE.kick.thresh;
-    var sensMid=TUNE.mid.threshBase/TUNE.mid.thresh;
-    var sensHat=TUNE.hat.threshBase/TUNE.hat.thresh;
-
     /* bass：持续、有音高。三个条件同时成立才触发。
          1. 够响：绝对能量过地板
          2. 有音高：谱峰突出度高（pk > 0.60）—— 实测持续 bass 0.91~1.00，
@@ -583,32 +743,33 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
     var envRatio=envs.low.fast/Math.max(1e-9,envs.low.slow);
     if(loPeakiness<pkFloor) pkFloor=loPeakiness;
     else pkFloor+=(1-pkFloor)*(1-Math.exp(-dt/.45));
-    var bassOn=envs.low.fast>TUNE.bass.energy/sensBass
+    var bassOn=envs.low.fast>TUNE.bass.energy
             && loPeakiness>TUNE.bass.pk
             && pkFloor>TUNE.bass.pk*.9
             && envRatio<TUNE.bass.sustain;
     /* ---- kick：低频瞬态 ----
-       连奏 bass 时低频没有 note 起音，快/慢比稳定在低位（实测 ~1.3）；
-       底鼓一击，快能量相对慢基线跳起（实测 3~8），这是干净的区分量。 */
+       稳态背景预热后，纯连奏 bass 比值约 1.0，弹鼓混合峰值约 1.83；
+       1.6 可保留混合鼓点，原 1.9 只在背景尚未成熟时偶然通过。 */
     var lowRatio=envs.low.fast/Math.max(1e-9,envs.low.slow);
-    var kickOn=lowRatio>TUNE.kick.ratio
-            && envs.low.fast>TUNE.kick.energy/sensKick;
+    var kickOn=envs.low.fast>TUNE.kick.energy && bf>be*be*.015
+            && (lowRatio>TUNE.kick.ratio||(lowRatio>1.15&&fluxRatio(bf,fluxBg.low)>2.4));
     /* 互斥保护：kick 优先，并向后退一段「鼓余韵期」。
        底鼓击打后约 0.3s 内，低频能量仍高，但那是鼓的余韵：谱形收窄、pk 回升
        （实测衰减段 pk=1.000）、ratio 已回落，单帧判据很容易把它认成 bass。
        用 postKick 盖住这段，比单帧互斥可靠。 */
     if(kickOn) lastKickAt=now;
-    if(kickOn||now-lastKickAt<TUNE.bass.postKick) bassOn=false;
+    // A persistent pitched background can resume between kicks; only non-pitched tails need the full hold.
+    if(kickOn||(now-lastKickAt<TUNE.bass.postKick&&pkFloor<.75)) bassOn=false;
     var lowOn=kickOn;
     /* 军鼓/钢琴：中频瞬态。同样加绝对能量地板，挡掉低频谐波泄漏与噪声。 */
     var midRatio=envs.mid.fast/Math.max(1e-9,envs.mid.slow);
-    var midOn=envs.mid.fast>TUNE.mid.energy/sensMid
+    var midOn=envs.mid.fast>TUNE.mid.energy
             && midRatio>TUNE.mid.ratio
             && fluxRatio(mf,fluxBg.mid)>TUNE.mid.flux;
     /* 镲片：高频瞬态。主要靠谱通量尖峰抓（连续镲片也能出）。
        绝对能量地板在这里尤其重要：噪声地板上 ratio 能到 3.6，但能量只有 1e-5。 */
     var hiFluxRatio=fluxRatio(hf,fluxBg.high);
-    var highOn=envs.high.fast>TUNE.hat.energy/sensHat
+    var highOn=envs.high.fast>TUNE.hat.energy
             && hiFluxRatio>TUNE.hat.flux
             && (envs.high.fast>envs.high.slow*TUNE.hat.ratio||hiFluxRatio>1.9);
     /* 三路完全独立冷却，互不干扰、互不抢占 —— 每一路只跟自己的上一个波隔冷却。
@@ -623,7 +784,7 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
       lastBassAt=now;
       bassCount++;
       var gp=clamp01(normE(be))*.9*TUNE.bass.gain+.35;
-      var gx=.60+Math.sin(bassCount*1.3)*.13, gy=.50+Math.cos(bassCount*.9)*.11;
+      var gx=coverAnchor()+Math.sin(bassCount*1.3)*.09, gy=.48+Math.cos(bassCount*.9)*.14;
       dropKind('bass',Math.max(.4,Math.min(1.6,gp)),gx,gy);
     }
     /* 鼓点：独立冷却 */
@@ -631,7 +792,7 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
       lastLowAt=now;
       var power=.55+clamp01(normE(be))*.9*TUNE.kick.gain;
       kickCount++;
-      var x=.42+Math.sin(kickCount*2.4)*.12, y=.62+Math.cos(kickCount*1.7)*.10;
+      var x=coverAnchor()+Math.sin(kickCount*2.4)*.12, y=.54+Math.cos(kickCount*1.7)*.10;
       dropKind('low',Math.max(.4,Math.min(1.9,power)),x,y);
     }
     /* 军鼓：独立冷却（不再被鼓点抢）。 */
@@ -639,7 +800,7 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
       lastMidAt=now;
       var mp=.45+clamp01(normE(me))*.7*TUNE.kick.gain;
       midCount++;
-      var mx=.5+Math.sin(midCount*2.4)*.11, my=.68+Math.cos(midCount*1.7)*.08;
+      var mx=coverAnchor()+.06+Math.sin(midCount*2.4)*.11, my=.60+Math.cos(midCount*1.7)*.08;
       dropKind('mid',Math.max(.4,Math.min(1.8,mp)),mx,my);
     }
     /* 镲片：独立冷却（最短，密集镲片能连续出波）。 */
@@ -647,7 +808,7 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
       lastHatAt=now;
       var hp=.38+clamp01(normE(he))*.5*TUNE.hat.gain;
       hatCount++;
-      var hx=.70+Math.sin(hatCount*2.4)*.12, hy=.46+Math.cos(hatCount*1.7)*.08;
+      var hx=coverAnchor()+.05+Math.sin(hatCount*2.4)*.13, hy=.42+Math.cos(hatCount*1.7)*.12;
       dropKind('high',Math.max(.35,Math.min(1.6,hp)),hx,hy);
     }
     if(now-uiAt>180) {
@@ -711,8 +872,7 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
   function updateUI() {
     $('playBtn').disabled=sourceKind!=='local';$('seek').disabled=sourceKind!=='local'||!isFinite(audio.duration);
     $('playBtn').setAttribute('aria-label',audio.paused?'播放':'暂停');$('playBtn').querySelector('use').setAttribute('href',audio.paused?'#i-play':'#i-pause');
-    $('sourceDot').classList.toggle('connected',!!analyser&&signalActive);
-    $('sourceLabel').textContent=sourceKind==='none'?'手势演示 · 未接入音频':sourceKind==='shared'?'共享音轨 · 实时采样':signalActive?(analyser?'本地文件 · 实时采样':'本地文件 · 分析未连接'):'本地文件 · 已暂停';
+    $('demoBtn').hidden=isDemoSong||sourceKind==='none';
     $('gestureHint').textContent=sourceKind!=='none'&&!signalActive?'播放暂停 · 水面收敛':'轻移起波 · 按下共振';
     if(reduced.matches)emptyState('动态显示已关闭','音频播放不受影响。');
     else if(analyser&&signalActive)$('emptyGraph').hidden=true;
@@ -741,6 +901,7 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
   }
   function clearSignal() {
     bands.fill(0);peaks.fill(0);rms=bass=bassAverage=peakHz=0;
+    readAt=0;signalWarmUntil=0;warmupSamples={low:[],mid:[],high:[]};
     /* 三路检测状态一并归零：换歌/暂停后不残留上一帧频谱和包络。 */
     envBass=0;bassPhase=0;lastOnsetAt=-1e9;lastLowAt=lastMidAt=lastHatAt=lastBassAt=lastKickAt=-1e9;pkFloor=1;
     envs={low:{fast:0,slow:0},mid:{fast:0,slow:0},high:{fast:0,slow:0}};
@@ -754,6 +915,7 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
     if(streamBinding&&stream)stream.removeEventListener('addtrack',streamBinding);
     streamBinding=null;
     if(source){source.disconnect();source=null;}if(analyser){analyser.disconnect();analyser=null;}
+    if(analysisSink){analysisSink.disconnect();analysisSink=null;}
     var old=stream;stream=null;
     if(old)old.getTracks().forEach(function(t){t.onended=null;t.stop();});
     clearSignal();
@@ -766,7 +928,8 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
       source=context.createMediaStreamSource(s);
       if(!analyser){analyser=context.createAnalyser();analyser.fftSize=4096;analyser.smoothingTimeConstant=.2;analyser.minDecibels=-90;analyser.maxDecibels=-15;}
       bins=new Float32Array(analyser.frequencyBinCount);timeData=new Float32Array(analyser.fftSize);
-      source.connect(analyser); // Do not connect to destination: original audio already plays.
+      if(!analysisSink){analysisSink=context.createGain();analysisSink.gain.value=0;analyser.connect(analysisSink);analysisSink.connect(context.destination);}
+      source.connect(analyser);
       updateAxis();
       updateUI();wake();
     }
@@ -785,7 +948,7 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
   function setFile(file) {
     if(!file)return;
     if(!/^audio\//.test(file.type)&&!(/\.(mp3|wav|m4a|aac|ogg|flac|opus|webm)$/i).test(file.name)){notice('请选择 MP3、WAV、M4A、FLAC 等音频文件。');return;}
-    generation++;signalActive=false;audio.pause();releaseStream();
+    generation++;signalActive=false;audio.pause();releaseStream();isDemoSong=false;lyricLines=[];renderLyricPreview();
     if(mediaURL)URL.revokeObjectURL(mediaURL);
     sourceKind='local';mediaURL=URL.createObjectURL(file);audio.src=mediaURL;
     $('trackTitle').textContent=file.name.replace(/\.[^.]+$/,'');$('trackMeta').textContent='本地文件 · '+(file.size/1024/1024).toFixed(1)+' MB · 仅在此设备播放';
@@ -838,8 +1001,49 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
   function timeUpdate() {
     $('seek').max=isFinite(audio.duration)?audio.duration:1;$('seek').value=audio.currentTime||0;
     $('timeText').textContent=timeLabel(audio.currentTime)+' / '+timeLabel(audio.duration);
+    renderLyricPreview();
     $('seek').disabled=sourceKind!=='local'||!isFinite(audio.duration);
   }
+  function coverAnchor(){return Math.min(.42,Math.max(.23,Math.min(H,W*.7)/W*.5));}
+  function renderLyricPreview(){
+    var index=-1;for(var i=0;i<lyricLines.length;i++){if(lyricLines[i].t<=audio.currentTime)index=i;else break;}
+    if(!isDemoSong){$('lyricPreview').textContent='';lyricIndex=-1;return;}
+    if(index===lyricIndex)return;lyricIndex=index;
+    var wrap=$('lyricPreview');wrap.textContent='';
+    for(var j=Math.max(0,index-1);j<Math.min(lyricLines.length,Math.max(0,index)+5);j++){
+      var line=document.createElement('p');line.className=j===index?'current':'';line.textContent=lyricLines[j].text;wrap.appendChild(line);
+    }
+  }
+  function useDemoSong(play){
+    generation++;signalActive=false;audio.pause();releaseStream();
+    if(mediaURL){URL.revokeObjectURL(mediaURL);mediaURL=null;}
+    isDemoSong=true;sourceKind='local';audio.src='/demo/song.m4a';audio.load();
+    $('trackTitle').textContent='花一匁';$('trackMeta').textContent='ずっと真夜中でいいのに。 · 本地音频';
+    $('volume').disabled=false;lyricIndex=-2;renderLyricPreview();updateUI();sync();
+    if(play)ensureContext().then(function(){return audio.play();}).catch(function(e){notice('请点击播放重试：'+e.message);});
+    else notice('点击播放，听低音的光波、鼓点的细环和镲片的小环。');
+  }
+  $('demoBtn').onclick=function(){useDemoSong(true);};
+  function loadDemo(){
+    if(location.protocol==='file:'){notice('请选择本地音频开始试听。');return;}
+    fetch('/demo/info').then(function(r){if(!r.ok)throw new Error('no local demo');return r.json();}).then(function(info){
+      if(info.audio)useDemoSong(false);
+      if(info.lyrics)return fetch('/demo/lyrics').then(function(r){if(!r.ok)return '';return r.text();}).then(function(text){
+        lyricLines=[];text.split(/\r?\n/).forEach(function(line){var m=/^\[(\d+):(\d+(?:\.\d+)?)\]\s*(.*)$/.exec(line);if(m&&m[3].trim())lyricLines.push({t:Number(m[1])*60+Number(m[2]),text:m[3]});});
+        lyricLines.sort(function(a,b){return a.t-b.t;});lyricIndex=-2;renderLyricPreview();
+      });
+    }).catch(function(){notice('请选择本地音频开始试听。');});
+  }
+  function readCover(){
+    var img=$('coverImage');if(!img.complete||!img.naturalWidth)return;
+    var c=document.createElement('canvas');c.width=c.height=64;var cx=c.getContext('2d');cx.drawImage(img,0,0,64,64);
+    try{coverBg=dominantColor(cx.getImageData(0,0,64,64).data,64,64);}catch(e){return;}
+    if(!coverBg)return;
+    var light=lumOf(coverBg)>.30,neutral=fromHsl(0,0,light?.12:.93);
+    scene.style.setProperty('--cover-color',cssRgb(coverBg));scene.style.setProperty('--cover-ink',cssRgb(neutral));
+    scene.style.setProperty('--cover-muted',cssRgb(mixRgb(neutral,coverBg,.24)));themeDirty=true;sync();
+  }
+  $('coverImage').addEventListener('load',readCover);
   function pointerPosition(e) {var r=scene.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height,t:performance.now()};}
   function onMove(e) {
     if(!canInteract()||e.pointerType==='touch'||e.isPrimary===false)return;
@@ -870,19 +1074,41 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
   $('fileBtn').onclick=function(){$('fileInput').click();};$('fileInput').onchange=function(){setFile(this.files[0]);this.value='';};
   $('playBtn').onclick=playLocal;$('shareBtn').onclick=share;$('dropBtn').onclick=manualDrop;$('freezeBtn').onclick=toggleFreeze;$('themeBtn').onclick=toggleTheme;
   $('volume').oninput=function(){audio.volume=Number(this.value);};$('seek').oninput=function(){if(sourceKind==='local'&&isFinite(audio.duration))audio.currentTime=Number(this.value);};
-  $('intensity').oninput=function(){strength=Number(this.value);$('intensityValue').value=strength.toFixed(1);if(canInteract())drop(.64,.55,.8);};
-  /* ---- 三层参数滑杆绑定：每一层的冷却和阈值都能当场试 ---- */
-  function bindTune(key,cdId,cdOut,thId,thOut,cdSuffix) {
-    var cd=$(cdId), th=$(thId);
-    function sync1(){TUNE[key].cooldown=Number(cd.value);$(cdOut).value=Math.round(TUNE[key].cooldown)+cdSuffix;sync();}
-    function sync2(){TUNE[key].thresh=Number(th.value);$(thOut).value=TUNE[key].thresh.toFixed(2);sync();}
-    cd.oninput=sync1;th.oninput=sync2;
-    sync1();sync2();
+  function renderTune() {
+    ['Bass','Kick','Hat'].forEach(function(name){
+      var t=TUNE[name.toLowerCase()],digits=name==='Hat'?5:4;
+      $('t'+name+'Th').value=t.energy;$('t'+name+'ThV').value=t.energy.toFixed(digits);
+      $('t'+name+'Opacity').value=Math.round(t.opacity*100);$('t'+name+'OpacityV').value=Math.round(t.opacity*100)+'%';
+      $('t'+name+'Th').setAttribute('aria-valuetext',t.energy.toFixed(digits)+'，左边更多，右边更少');
+      $('t'+name+'Opacity').setAttribute('aria-valuetext',Math.round(t.opacity*100)+'%，左边更淡，右边更浓');
+    });
   }
-  bindTune('bass','tBassCd','tBassCdV','tBassTh','tBassThV','ms');
-  bindTune('kick','tKickCd','tKickCdV','tKickTh','tKickThV','ms');
-  bindTune('hat','tHatCd','tHatCdV','tHatTh','tHatThV','ms');
-  window.rippleTune=function(k,v){if(!TUNE[k])return null;if(v!=null){if(v.cooldown!=null)TUNE[k].cooldown=v.cooldown;if(v.thresh!=null)TUNE[k].thresh=v.thresh;if(v.gain!=null)TUNE[k].gain=v.gain;}return TUNE[k];};
+  function setTune(key,patch) {
+    if(!TUNE[key])return null;
+    var t=TUNE[key],name={bass:'Bass',kick:'Kick',hat:'Hat'}[key];
+    if(patch){
+      if(patch.energy!=null&&isFinite(patch.energy)){
+        var range=name?$('t'+name+'Th'):null;
+        t.energy=Math.max(range?Number(range.min):.00001,Math.min(range?Number(range.max):.02,Number(patch.energy)));
+      }
+      if(patch.opacity!=null&&isFinite(patch.opacity))t.opacity=Math.max(.2,Math.min(1.8,Number(patch.opacity)));
+      if(patch.cooldown!=null&&isFinite(patch.cooldown))t.cooldown=Math.max(40,Math.min(1500,Number(patch.cooldown)));
+      if(patch.gain!=null&&isFinite(patch.gain))t.gain=Math.max(.2,Math.min(3,Number(patch.gain)));
+      if(key==='kick'){TUNE.mid.energy=t.energy*.24;TUNE.mid.opacity=t.opacity;}
+    }
+    renderTune();if(!blocked())paintWater();wake();return JSON.parse(JSON.stringify(t));
+  }
+  ['Bass','Kick','Hat'].forEach(function(name){
+    var key=name.toLowerCase();
+    $('t'+name+'Th').oninput=function(){setTune(key,{energy:Number(this.value)});};
+    $('t'+name+'Opacity').oninput=function(){setTune(key,{opacity:Number(this.value)/100});};
+  });
+  $('resetTuneBtn').onclick=function(){TUNE=JSON.parse(JSON.stringify(DEFAULT_TUNE));renderTune();if(!blocked())paintWater();wake();};
+  Array.prototype.forEach.call(document.querySelectorAll('[data-layer]'),function(button){
+    button.onclick=function(){var k=this.getAttribute('data-layer');shownLayers[k]=!shownLayers[k];this.setAttribute('aria-pressed',String(shownLayers[k]));if(!blocked())paintWater();wake();};
+  });
+  window.rippleTune=setTune;
+  renderTune();
   audio.addEventListener('playing',localPlaying);audio.addEventListener('pause',localPaused);audio.addEventListener('ended',localPaused);audio.addEventListener('waiting',localPaused);audio.addEventListener('timeupdate',timeUpdate);audio.addEventListener('loadedmetadata',timeUpdate);
   audio.addEventListener('error',function(){signalActive=false;pausedDrain=.4;notice('无法解码这份音频，请换一个受 Chromium 支持的文件。');updateUI();sync();});
   var dragDepth=0;
@@ -916,10 +1142,12 @@ body.is-shot *,body.is-shot *:before,body.is-shot *:after { animation-play-state
     /* 内部触发计数器（累计，不因波退场而失真）与当帧判据快照。 */
     triggers:function(){return{bass:bassCount,kick:kickCount,mid:midCount,hat:hatCount};},
     resetTriggers:function(){bassCount=kickCount=midCount=hatCount=0;},
-    diag:function(){return window.__diag||null;},destroy:destroy};
+    diag:function(){return window.__diag||null;},
+    tune:function(){return JSON.parse(JSON.stringify(TUNE));},
+    layers:function(){return JSON.parse(JSON.stringify(shownLayers));},
+    palette:function(){return{bg:coverBg,bass:rgbBass,kick:rgbKick,mid:rgbMid,hat:rgbHat};},destroy:destroy};
   palette();resize();updateAxis();updateUI();paintGraph();
-  // One decorative welcome gesture, never audio or spectrum data.
-  if(!reduced.matches&&!shot()){drop(.65,.56,1.9,'welcome');drop(.79,.36,.9,'welcome');}
+  readCover();loadDemo();
 })();
 </script>
 </body>

@@ -1104,7 +1104,37 @@
     var el = $('firstRun');
     if (el) el.hidden = true;
     if (remember) storeSet(FIRST_RUN_KEY, 1);
+    /* cookie 首启提示关掉后，接着弹工具箱提示（避免两弹层同时出现）。 */
+    storeRead(RIPPLE_TIP_KEY).then(maybeShowRippleTip);
   }
+
+  /* ---------- 涟漪工具箱首启提示（只弹一次）----------
+   * 默认门槛偏克制，首启告知「涟漪可调、入口在左下角」。
+   * 只在工具箱**真实可见**的宽窗弹（窄卡里按钮不显示，提示了也找不到）；
+   * 存储读不到就不弹（不吃骚扰）；截图模式不弹（保图确定性）。 */
+  /* 键名带 -v2：v1 已写过（居中版曾弹过一次），宿主存储有内存缓存，改键名才能重新触发一次。 */
+  var RIPPLE_TIP_KEY = 'player-ripple-tip-seen-v2';
+  function closeRippleTip(remember) {
+    var el = $('rippleTip');
+    if (el) el.hidden = true;
+    if (remember) storeSet(RIPPLE_TIP_KEY, 1);
+  }
+  function rippleToolVisible() {
+    /* 与 CSS 的 .player[data-layout="wide"] .ripple-tool-btn { display:inline-flex } 对齐。 */
+    return player && player.getAttribute('data-layout') === 'wide';
+  }
+  function maybeShowRippleTip(read) {
+    var el = $('rippleTip');
+    if (!el || SHOT) return;
+    if (!read || read.ok !== true) return;   // 读不到 → 不弹
+    if (read.value) return;                  // 已读过 → 不弹
+    if ($('firstRun') && !$('firstRun').hidden) return;   // 与 cookie 首启提示错开，不叠弹
+    if (!rippleToolVisible()) return;        // 窄卡没有工具箱，不当
+    el.hidden = false;
+    var ok = $('rippleTipOk');
+    if (ok && !ok._bound) { ok._bound = true; ok.addEventListener('click', function () { closeRippleTip(true); }); }
+  }
+
   function maybeShowFirstRun(read) {
     var el = $('firstRun');
     if (!el || SHOT) return;                 // 截图模式不打扰（保持图确定性）
@@ -1590,7 +1620,7 @@
       var h = ahsl[0] + RIPPLE_HUE_OFF[k];
       var s = Math.max(0.28, Math.min(0.85, ahsl[1] * RIPPLE_SAT_MUL[k]));
       var baseL = (dark ? RIPPLE_LIGHT_BASE : RIPPLE_DARK_BASE)[k];
-      out[k] = solveByContrast(h, s, bg, baseL);
+      out[k] = solveByContrast(h, s, bg, baseL, k === 'hat' ? 5.5 : RIPPLE_MIN_CONTRAST);
     }
     return out;
   }
@@ -1718,7 +1748,7 @@
    * .5 不写死 —— 取 [0.5] 附近都给 light（浅纸那一片都在 0.8+，深板岩在 0.06）。 */
   function resolveTone() {
     var raw = '';
-    try { raw = getComputedStyle(player).getPropertyValue('--hk-surface').trim(); }
+    try { raw = getComputedStyle(player).getPropertyValue('--hk-bg').trim(); }
     catch (e) { raw = ''; }
     var c = rgbStr2arr(raw) || (themePolarity() === 'light' ? [252, 250, 245] : [65, 77, 86]);
     return lumOf(c) > 0.5 ? 'light' : 'dark';
@@ -2353,72 +2383,41 @@
     var low = null, lc = null, pixels = null;
     var dprQuery;
     var pointerOptions = { passive: true, capture: true };
-    var MAX_WAVES = 22, MAX_TRAIL = 40;
+    var MAX_WAVES = 40, MAX_TRAIL = 40;
     /* 基强度两档：无词更放（水面当主角），有词更收（不扰读词）。
        数值对齐 docs/player-ui/ripple-lab.html 的「波澜」滑杆（0.5 比 lab 最低档 0.6 略轻）。
        它管「输入力度 / 场能量 / 环的基础 alpha」，**不是**最终可见倍率。 */
     function baseStrength() { return (player && player.getAttribute('data-haslyrics') === '1') ? 0.32 : 0.50; }
-    /* ============================================================
-       可调参数（「玩具箱」面板）：默认值 = 原写死值，逐字节等效。
-       面板不动时 tune 恒等于旧行为；只有用户拖动才偏离。
-       · visualGain  **只在绘制阶段的 alpha 上乘一次**（见下），绝不进 inject()/readSignal()
-         （源码守卫 ripple-visual-gain-changes-look-only）
-       · bassDrive   持续低频注入系数
-       · onsetSens   起音灵敏度：门限 = 基准 / onsetSens（1.0 = 原基准，逐字节等效）
-       · midHighSens 中高频灵敏度（1.0 = 原严格度，越大越松）：一次松开中/高的四道门——
-                     绝对门限、归一化门限、包络比、通量比。低频段不参与（底鼓本就该出波）。
-       · maxAudioWaves / onsetCooldown  短波数量上限 / 落波最小间隔
-       ============================================================ */
+    /* 演示定稿：三组真实能量门槛 + 三组绘制浓淡。旧版灵敏度/推动量不迁作新门槛。
+       schemaVersion 隔离旧存储；透明度和调试倍率只进入 draw/paintField，不改声音或波场。
+       默认值 = 罐头真机调定的档位（门槛偏高、浓淡偏淡），作为三组基准与重置目标。 */
     var RIPPLE_DEFAULTS = {
-      visualGain: 1.6,
-      bassDrive: 9,
-      onsetSens: 1.0,
-      midHighSens: 1.6,
-      maxAudioWaves: 3,
-      onsetCooldown: 380
+      schemaVersion: 2,
+      bassThreshold: 0.0137, beatThreshold: 0.0178, hatThreshold: 0.0018,
+      bassOpacity: 0.6, beatOpacity: 0.1, hatOpacity: 0.05
     };
-    var tune = {
-      visualGain: RIPPLE_DEFAULTS.visualGain,
-      bassDrive: RIPPLE_DEFAULTS.bassDrive,
-      onsetSens: RIPPLE_DEFAULTS.onsetSens,
-      midHighSens: RIPPLE_DEFAULTS.midHighSens,
-      maxAudioWaves: RIPPLE_DEFAULTS.maxAudioWaves,
-      onsetCooldown: RIPPLE_DEFAULTS.onsetCooldown
+    var tune = Object.assign({}, RIPPLE_DEFAULTS);
+    /* 量程：门槛左端保留到出厂松端（0.004 / 0.005 / 0.0003），右端给到出厂值 7~12 倍，
+       让基准落在中偏右、两侧都有余量；浓淡下限 0（可整组关闭），上限 = 默认值 ×2。 */
+    var TUNE_LIMITS = {
+      bassThreshold: [0.004, 0.028], beatThreshold: [0.005, 0.036], hatThreshold: [0.0003, 0.0036],
+      bassOpacity: [0, 1.2], beatOpacity: [0, 0.2], hatOpacity: [0, 0.1]
     };
-    /* 起音门限基准（低/中/高）：低/中是原写死值，只做除法包装；
-       高是新增的踩镲路径，基准值与中频同档（实测校准）。 */
-    var ONSET_BASE_BASS = 0.003, ONSET_BASE_MID = 0.0015, ONSET_BASE_HIGH = 0.0015;
-    var ONSET_NORM_BASS = 0.20, ONSET_NORM_MID = 0.16, ONSET_NORM_HIGH = 0.16;
-    var WARMUP_MS = 320;
+    var AUDIO_STRENGTH = 2.6, visualGain = 2.6, WARMUP_MS = 320;
     var tuneListeners = [];
-    /* 合并一组参数并通知监听者（面板/存储）。传 null 即重置为默认。
-       只影响后续帧：不重建分析链、不动 audio.volume、不重置 onsetCount。 */
+    function getTune() { return Object.assign({}, tune); }
     function setTune(patch) {
-      if (patch == null) {
-        tune.visualGain = RIPPLE_DEFAULTS.visualGain;
-        tune.bassDrive = RIPPLE_DEFAULTS.bassDrive;
-        tune.onsetSens = RIPPLE_DEFAULTS.onsetSens;
-        tune.midHighSens = RIPPLE_DEFAULTS.midHighSens;
-        tune.maxAudioWaves = RIPPLE_DEFAULTS.maxAudioWaves;
-        tune.onsetCooldown = RIPPLE_DEFAULTS.onsetCooldown;
-      } else {
-        if (patch.visualGain != null && isFinite(patch.visualGain)) tune.visualGain = Math.max(0.2, Math.min(4, Number(patch.visualGain)));
-        if (patch.bassDrive != null && isFinite(patch.bassDrive)) tune.bassDrive = Math.max(0.5, Math.min(30, Number(patch.bassDrive)));
-        if (patch.onsetSens != null && isFinite(patch.onsetSens)) tune.onsetSens = Math.max(0.2, Math.min(4, Number(patch.onsetSens)));
-        if (patch.midHighSens != null && isFinite(patch.midHighSens)) tune.midHighSens = Math.max(1, Math.min(3, Number(patch.midHighSens)));
-        if (patch.maxAudioWaves != null && isFinite(patch.maxAudioWaves)) tune.maxAudioWaves = Math.max(1, Math.min(8, Math.round(patch.maxAudioWaves)));
-        if (patch.onsetCooldown != null && isFinite(patch.onsetCooldown)) tune.onsetCooldown = Math.max(60, Math.min(1500, Math.round(patch.onsetCooldown)));
-      }
+      if (patch && patch.schemaVersion != null && patch.schemaVersion !== 2) return getTune();
+      Object.keys(TUNE_LIMITS).forEach(function (k) {
+        if (patch == null) tune[k] = RIPPLE_DEFAULTS[k];
+        else if (typeof patch[k] === 'number' && isFinite(patch[k])) {
+          tune[k] = Math.max(TUNE_LIMITS[k][0], Math.min(TUNE_LIMITS[k][1], patch[k]));
+        }
+      });
       var snap = getTune();
       for (var i = 0; i < tuneListeners.length; i++) { try { tuneListeners[i](snap); } catch (e) {} }
-      if (!blocked()) { draw(); wake(); }   // 改观感立即反映到画布
+      if (!blocked()) { draw(); wake(); }
       return snap;
-    }
-    function getTune() {
-      return {
-        visualGain: tune.visualGain, bassDrive: tune.bassDrive, onsetSens: tune.onsetSens,
-        midHighSens: tune.midHighSens, maxAudioWaves: tune.maxAudioWaves, onsetCooldown: tune.onsetCooldown
-      };
     }
 
     function shot() { return document.body.classList.contains('is-shot'); }
@@ -2444,21 +2443,17 @@
        captureStream() 不碰元素输出：同源（走 music/go 的同源分片代理）拿到
        MediaStream 能读频域；跨源抛错 → 捕获后退回纯指针，**绝不静音**。
        ============================================================ */
-    var audioCtx = null, msSrc = null, analyser = null, freqData = null, prevBins = null;
+    var audioCtx = null, msSrc = null, analyser = null, freqData = null, prevBins = null, analysisSink = null;
     var audioReady = false, audioBuilding = false, audioRaf = 0;
     /* 代次：异步 resume/attach 的过期结果不得挂回新歌；detach 会 ++ 使在途请求失效。 */
     var audioGen = 0;
     var BANDS = null, binHz = 0;        // 每个分析器建一次：三频段的 bin 索引区间
     var analysisOn = false;             // 分析调度开关：hidden/离屏/reduced-motion/截图/暂停时真停
-    var readAt = 0, lastRead = 0;
-    var envBass = 0;                    // 低频包络（attack ~120ms / release ~500ms）→ 宽缓水面
-    var envs = null;                    // 各频段快/慢包络（起音用）
-    var fluxBg = null;                  // 各频段谱通量的自适应背景
-    var onsetAt = -1e9, onsetCount = 0;
-    var warmupUntil = 0;                // 换源/重建链后的预热，防首帧全亮被当强鼓点
-    var bassPhase = 0;                  // 宽缓驱动的游移相位
-    var bassField = 0;                  // 最近一次 stepField 的真实场能量（限注入用）
-    /* maxAudioWaves / onsetCooldown 现在在 tune 里（面板可调），见上。 */
+    var lastRead = 0, envBass = 0, envs = null, fluxBg = null;
+    var onsetCount = 0, warmupUntil = 0, warmupSamples = null, bassField = 0;
+    var lastOnsets = { bass: -1e9, low: -1e9, mid: -1e9, high: -1e9 };
+    var lastKickAt = -1e9, pkFloor = 1, signalStats = null;
+    var COOLDOWNS = { bass: 420, low: 320, mid: 288, high: 150 };
 
     function audioSupported() {
       return !!(window.AudioContext || window.webkitAudioContext) && !!(audio && audio.captureStream);
@@ -2489,9 +2484,9 @@
         g.gain.value = 0;                 // 副本静音：只取数据，不与元素自身出声叠加
         ms.connect(an); an.connect(g); g.connect(audioCtx.destination);  // 图要通到 destination，Analyser 才会被拉数据
         detachAudio();                    // 先释放可能残存的旧链（同代内只允许一条）
-        msSrc = ms; analyser = an; audioGen = gen;
+        msSrc = ms; analyser = an; analysisSink = g; audioGen = gen;
         freqData = new Float32Array(an.frequencyBinCount);
-        prevBins = new Float32Array(an.frequencyBinCount);
+        prevBins = { bass: new Float32Array(an.frequencyBinCount), mid: new Float32Array(an.frequencyBinCount), high: new Float32Array(an.frequencyBinCount) };
         binHz = audioCtx.sampleRate / an.fftSize;
         BANDS = makeBands(freqData.length, binHz);
         resetAnalysis(performance.now());
@@ -2522,6 +2517,7 @@
       stopAnalysis();
       if (msSrc) { try { msSrc.disconnect(); } catch (e) {} msSrc = null; }
       if (analyser) { try { analyser.disconnect(); } catch (e) {} analyser = null; }
+      if (analysisSink) { try { analysisSink.disconnect(); } catch (e) {} analysisSink = null; }
       freqData = null; prevBins = null; BANDS = null;
       audioReady = false; audioBuilding = false;
       envBass = 0; envs = null; fluxBg = null; bassField = 0;
@@ -2531,11 +2527,11 @@
       envBass = 0;
       envs = { bass: { fast: 0, slow: 0 }, mid: { fast: 0, slow: 0 }, high: { fast: 0, slow: 0 } };
       fluxBg = { bass: 0, mid: 0, high: 0 };
-      if (prevBins) prevBins.fill(0);
-      onsetAt = -1e9; lastRead = 0; onsetCount = 0;
-      kindCounts.low = 0; kindCounts.mid = 0; kindCounts.high = 0;
+      if (prevBins) Object.keys(prevBins).forEach(function (k) { prevBins[k].fill(0); });
+      lastRead = 0; onsetCount = 0; lastKickAt = -1e9; pkFloor = 1;
+      Object.keys(lastOnsets).forEach(function (k) { lastOnsets[k] = -1e9; kindCounts[k] = 0; });
       warmupUntil = now + WARMUP_MS;
-      bassPhase = 0;
+      warmupSamples = { bass: [], mid: [], high: [] };
     }
     /* 分析调度与可见性同步：hidden/离屏/reduced-motion/截图/暂停都不排尾帧。 */
     function startAnalysis() {
@@ -2573,55 +2569,51 @@
       for (var n = start; n < end; n++) { var v = freqData[n]; if (isFinite(v)) sum += Math.pow(10, v / 10); }
       return Math.sqrt(sum / Math.max(1, end - start));
     }
-    /* 正向谱通量（spectral flux）：只累计能量增长，同时推进 prevBins。 */
-    function bandFlux(start, end) {
-      if (!freqData || !prevBins) return 0;
+    /* 频段边界可能共用 bin；每一路保留自己的历史，互不覆盖谱通量。 */
+    function bandFlux(start, end, prev) {
       var f = 0;
       for (var n = start; n < end; n++) {
-        var v = freqData[n];
-        var cur = isFinite(v) ? Math.pow(10, v / 10) : 0;
-        if (cur > prevBins[n]) f += cur - prevBins[n];
-        prevBins[n] = cur;
+        var cur = isFinite(freqData[n]) ? Math.pow(10, freqData[n] / 10) : 0;
+        if (cur > prev[n]) f += cur - prev[n];
+        prev[n] = cur;
       }
       return f / Math.max(1, end - start);
     }
-    /* 落一个「音频短波」：一主环 + 一淡回声；同屏音频短波不超 tune.maxAudioWaves。 */
-    function audioWaveCount() {
+    function fluxRatio(f, bg) {
+      if (!isFinite(f) || f <= 0) return 0;
+      return !isFinite(bg) || bg <= 1e-11 ? 6 : f / bg;
+    }
+    function audioWaveCount(activeOnly) {
       var n = 0;
-      for (var i = 0; i < waves.length; i++) if (waves[i].origin === 'audio') n++;
+      for (var i = 0; i < waves.length; i++) if (waves[i].origin === 'audio' && (!activeOnly || !waves[i].fading)) n++;
       return n;
     }
-    /* 测试探针：各类型音频短波的累计起音数（重置分析时归零）。 */
-    var kindCounts = { low: 0, mid: 0, high: 0 };
-    var ringCalls = 0;   // 测试探针：上一次 draw() 里 ringPath 的调用次数
+    var kindCounts = { bass: 0, low: 0, mid: 0, high: 0 };
+    var ringCalls = 0;
     function dropAudio(power, kind, x, y) {
       if (blocked()) return false;
-      while (audioWaveCount() >= tune.maxAudioWaves) {
-        for (var i = 0; i < waves.length; i++) if (waves[i].origin === 'audio') { waves.splice(i, 1); break; }
+      /* 正常演出最多十四组；超预算的最老波用 450ms 退场，不在半路硬切。 */
+      if (audioWaveCount(true) >= 14) {
+        for (var i = 0; i < waves.length; i++) {
+          if (waves[i].origin === 'audio' && !waves[i].fading) {
+            waves[i].fading = true; waves[i].life = Math.min(waves[i].life, waves[i].age + 0.45); break;
+          }
+        }
       }
-      if (waves.length >= MAX_WAVES) waves.shift();
-      /* 低频占比高的瞬态稍宽厚；中频起音更轻薄、退得快；高频（踩镲）最轻最薄、寿命最短。 */
-      var low = kind === 'low', high = kind === 'high';
-      if (kindCounts[kind] != null) kindCounts[kind]++;
-      waves.push({
-        x: x, y: y, age: 0, power: power, origin: 'audio', kind: kind,
-        life: low ? (1.24 + power * 0.18) : high ? (0.82 + power * 0.14) : (1.02 + power * 0.18),
-        phase: Math.random() * 6.28
-      });
-      inject(x, y, low ? 1.5 : high ? 0.85 : 1.15, power * baseStrength() * (low ? 1.1 : high ? 0.5 : 0.75));
+      if (waves.length >= MAX_WAVES) {
+        for (var q = 0; q < waves.length; q++) if (!waves[q].fading) {
+          waves[q].fading = true; waves[q].life = Math.min(waves[q].life, waves[q].age + 0.3); break;
+        }
+        if (waves.length >= MAX_WAVES + 6) waves.shift();
+      }
+      kindCounts[kind]++;
+      waves.push({ x: x, y: y, age: 0, power: power, origin: 'audio', kind: kind,
+        life: kind === 'high' ? 1.1 + power * 0.15 : 1.5 + power * 0.2, phase: Math.random() * 6.28 });
+      /* 只有 bass 的离散脉冲进入光波场：鼓点、镲片只画线，不再留下固定注水点。 */
+      if (kind === 'bass') inject(x, y, 2.2, power * AUDIO_STRENGTH * 2);
       wake();
       return true;
     }
-    /* 统一起音事件：多频段合并一次、冷却限流、弱事件抑制。 */
-    function triggerOnset(power, kind, now) {
-      if (now - onsetAt < tune.onsetCooldown) return false;
-      onsetAt = now; onsetCount++;
-      /* 位置集中在封面附近的一小片，不满场跳。 */
-      var ax = bassAnchorX() + (Math.random() - 0.5) * 0.18;
-      var ay = bassAnchorY() + (Math.random() - 0.5) * 0.16;
-      return dropAudio(power, kind, Math.max(0.05, Math.min(0.95, ax)), Math.max(0.08, Math.min(0.92, ay)));
-    }
-    /* 封面锚点（归一化）：从 --cover-w 推封面区中心偏上，随布局计算。 */
     function bassAnchorX() {
       var coverRatio = 0.34;
       try {
@@ -2630,70 +2622,81 @@
       } catch (e) {}
       return coverRatio * 0.5 + 0.06;
     }
-    function bassAnchorY() { return 0.44; }
-    /* 持续低频 → 宽缓水面：按实际 dt 推进并限注入量/场能量，低频结束后自然收敛。 */
-    function driveBass(env, dt) {
-      if (!field || env <= 0.03) return;
-      if (bassField > 0.0009) return;          // 场能量封顶：连续长播不无限堆积
-      bassPhase += dt * 0.12;
-      var nx = bassAnchorX() + Math.sin(bassPhase) * 0.055;
-      var ny = bassAnchorY() + Math.cos(bassPhase * 0.7) * 0.045;
-      var amount = env * tune.bassDrive * Math.min(dt, 0.05);   // 按 dt 推进，不每帧无条件加固定能量
-      inject(nx, ny, 3.4, amount);
-      wake();
+    function triggerOnset(power, kind, now) {
+      if (now - lastOnsets[kind] < COOLDOWNS[kind]) return false;
+      var count = kindCounts[kind] + 1, x, y;
+      /* 空间分工（避开「重合」）：bass 仍锚在封面区（原位，不动）；鼓点/镲片是节拍，
+         推到右侧歌词一侧。只移动节拍类 —— 两者不再叠在同一处。
+         x 仍以 bassAnchorX() 为基准，右推用相对量，随封面宽度自适应。 */
+      if (kind === 'bass') { x = bassAnchorX() + Math.sin(count * 1.3) * 0.09; y = 0.48 + Math.cos(count * 0.9) * 0.14; }
+      else if (kind === 'low') { x = bassAnchorX() + 0.20 + Math.sin(count * 2.4) * 0.10; y = 0.58 + Math.cos(count * 1.7) * 0.09; }
+      else if (kind === 'mid') { x = bassAnchorX() + 0.26 + Math.sin(count * 2.4) * 0.09; y = 0.66 + Math.cos(count * 1.7) * 0.07; }
+      else { x = bassAnchorX() + 0.23 + Math.sin(count * 2.4) * 0.11; y = 0.40 + Math.cos(count * 1.7) * 0.10; }
+      if (!dropAudio(power, kind, Math.max(0.05, Math.min(0.95, x)), Math.max(0.16, Math.min(0.84, y)))) return false;
+      lastOnsets[kind] = now;
+      if (kind !== 'bass') onsetCount++;
+      return true;
     }
-    /* 读频域：一路低频包络驱动宽缓水面；一路（含中频）起音检测点短波。
-       **连续 Bass 不调用 drop()**；只有瞬态才落短波。 */
     function readSignal(now, forceBass) {
       if (forceBass != null) {
-        /* 测试/降级喂包络：真机走下面真实 FFT 分支。若在播，顺带推进宽缓水面。 */
         envBass = Math.max(envBass, Math.min(1, forceBass * 4));
-        if (playing && !blocked()) driveBass(envBass, 1 / 30);
+        if (playing && !blocked()) triggerOnset(0.35 + envBass * 0.9, 'bass', now);
         return envBass;
       }
       if (!analyser || !audioReady || !analysisOn) return;
-      if (readAt && now - readAt < 30) return;
-      var dt = lastRead ? Math.min(0.12, Math.max(0.005, (now - lastRead) / 1000)) : 1 / 30;
-      readAt = now; lastRead = now;
+      var dt = lastRead ? Math.min(0.12, Math.max(0.008, (now - lastRead) / 1000)) : 1 / 30;
+      lastRead = now;
       try { analyser.getFloatFrequencyData(freqData); } catch (e) { return; }
-      /* 逐频段能量 + 正向谱通量（bandFlux 顺带推进 prevBins）。 */
-      var be = bandEnergy(BANDS.bass.start, BANDS.bass.end), bf = bandFlux(BANDS.bass.start, BANDS.bass.end);
-      var me = bandEnergy(BANDS.mid.start, BANDS.mid.end), mf = bandFlux(BANDS.mid.start, BANDS.mid.end);
-      var he = bandEnergy(BANDS.high.start, BANDS.high.end), hf = bandFlux(BANDS.high.start, BANDS.high.end);
-      if (!isFinite(be)) be = 0; if (!isFinite(me)) me = 0; if (!isFinite(he)) he = 0;
-      if (!isFinite(bf)) bf = 0; if (!isFinite(mf)) mf = 0; if (!isFinite(hf)) hf = 0;
-      /* 快/慢包络（快 ~40ms 抓起音，慢 ~400ms 当背景）。 */
+      var be = bandEnergy(BANDS.bass.start, BANDS.bass.end), bf = bandFlux(BANDS.bass.start, BANDS.bass.end, prevBins.bass);
+      var me = bandEnergy(BANDS.mid.start, BANDS.mid.end), mf = bandFlux(BANDS.mid.start, BANDS.mid.end, prevBins.mid);
+      var he = bandEnergy(BANDS.high.start, BANDS.high.end), hf = bandFlux(BANDS.high.start, BANDS.high.end, prevBins.high);
       var eb = envs.bass, em = envs.mid, eh = envs.high;
-      eb.fast = approach(eb.fast, be, 0.04, 0.09, dt);
-      eb.slow = approach(eb.slow, be, 0.4, 0.4, dt);
-      em.fast = approach(em.fast, me, 0.04, 0.09, dt);
-      em.slow = approach(em.slow, me, 0.4, 0.4, dt);
-      eh.fast = approach(eh.fast, he, 0.04, 0.09, dt);
-      eh.slow = approach(eh.slow, he, 0.4, 0.4, dt);
-      /* 谱通量背景（自适应）：安静时阈值自动收敛，不会放大噪声。 */
+      eb.fast = approach(eb.fast, be, 0.04, 0.09, dt); eb.slow = approach(eb.slow, be, 1.4, 1.4, dt);
+      em.fast = approach(em.fast, me, 0.04, 0.09, dt); em.slow = approach(em.slow, me, 1, 1, dt);
+      eh.fast = approach(eh.fast, he, 0.04, 0.09, dt); eh.slow = approach(eh.slow, he, 0.6, 0.6, dt);
       fluxBg.bass = fluxBg.bass * 0.97 + bf * 0.03;
       fluxBg.mid = fluxBg.mid * 0.97 + mf * 0.03;
-      fluxBg.high = fluxBg.high * 0.97 + hf * 0.03;
-      /* 低频包络（attack ~120ms / release ~500ms）→ 宽缓水面。 */
+      fluxBg.high = fluxBg.high * 0.985 + hf * 0.015;
       envBass = approach(envBass, normEnergy(be), 0.12, 0.5, dt);
-      if (envBass > 0.05 && playing) driveBass(envBass, dt);
-      /* 起音：快包络显著高于慢背景 + 谱通量超背景 + 绝对门限；预热期与冷却期不落波。
-         门限 = 基准 / onsetSens（灵敏度高 → 门限低 → 更易触发）；onsetSens=1.0 时逐字节等效。 */
-      if (now < warmupUntil) return;
-      var sens = tune.onsetSens > 0 ? tune.onsetSens : 1;
-      /* 中高频灵敏度（mh，1.0 = 旧严格度）：一次松开中/高的四道门——
-         绝对门限、归一化门限、包络比、通量比。低频段不参与（底鼓本就该出波）。 */
-      var mh = tune.midHighSens > 0 ? tune.midHighSens : 1;
-      var bassOn = eb.fast > ONSET_BASE_BASS / sens && normEnergy(eb.fast) > ONSET_NORM_BASS / sens && eb.fast > eb.slow * 1.5 && bf > fluxBg.bass * 1.6 + 1e-6;
-      var midOn = em.fast > ONSET_BASE_MID / (sens * mh) && normEnergy(em.fast) > ONSET_NORM_MID / (sens * mh) && em.fast > em.slow * (1 + 0.45 / mh) && mf > fluxBg.mid * (1 + 0.6 / mh) + 1e-7;
-      var highOn = eh.fast > ONSET_BASE_HIGH / (sens * mh) && normEnergy(eh.fast) > ONSET_NORM_HIGH / (sens * mh) && eh.fast > eh.slow * (1 + 0.55 / mh) && hf > fluxBg.high * (1 + 0.7 / mh) + 1e-8;
-      if (!bassOn && !midOn && !highOn) return;
-      /* 同一瞬态同时出现在几个频段 → 只产一次敲击波。低频更厚，中频次之，高频（踩镲）最轻薄。 */
-      var kind = bassOn ? 'low' : (midOn ? 'mid' : 'high');
-      var p = kind === 'low' ? (0.55 + clamp01(normEnergy(be)) * 0.9)
-        : kind === 'mid' ? (0.45 + clamp01(normEnergy(me)) * 0.7)
-        : (0.38 + clamp01(normEnergy(he)) * 0.5);
-      triggerOnset(Math.max(kind === 'high' ? 0.35 : 0.5, Math.min(1.9, p)), kind, now);
+      /* 中位背景排除开场鼓峰；captureStream 尚未出帧的静音不参与中位数。 */
+      if (now < warmupUntil) {
+        if (be > 1e-7) warmupSamples.bass.push(be);
+        if (me > 1e-7) warmupSamples.mid.push(me);
+        if (he > 1e-7) warmupSamples.high.push(he);
+        return;
+      }
+      if (warmupSamples) {
+        Object.keys(envs).forEach(function (k) {
+          var a = warmupSamples[k].sort(function (x, y) { return x - y; });
+          envs[k].slow = a.length ? a[Math.floor(a.length / 2)] : envs[k].fast;
+        });
+        warmupSamples = null;
+      }
+      var sum = 0, peak = 0;
+      for (var n = BANDS.bass.start; n < BANDS.bass.end; n++) {
+        var e = isFinite(freqData[n]) ? Math.pow(10, freqData[n] / 10) : 0;
+        sum += e; peak = Math.max(peak, e);
+      }
+      var pk = clamp01(Math.pow(peak / Math.max(1e-9, sum / Math.max(1, BANDS.bass.end - BANDS.bass.start)) / 4, 1 / 3));
+      if (pk < pkFloor) pkFloor = pk;
+      else pkFloor += (1 - pkFloor) * (1 - Math.exp(-dt / 0.45));
+      var lowRatio = eb.fast / Math.max(1e-9, eb.slow);
+      var bassOn = eb.fast > tune.bassThreshold && pk > 0.60 && pkFloor > 0.54 && lowRatio < 2.6;
+      /* 快包络会滞后于起音；谱能量须仍在增长，避免开场/底鼓尾巴的假鼓点。
+         密集鼓被 FFT 平滑后比值偏低，用相对谱通量补抓，不依赖录音电平。 */
+      var kickOn = eb.fast > tune.beatThreshold && bf > be * be * 0.015 &&
+        (lowRatio > 1.6 || (lowRatio > 1.15 && fluxRatio(bf, fluxBg.bass) > 2.4));
+      if (kickOn) lastKickAt = now;
+      if (kickOn || (now - lastKickAt < 280 && pkFloor < 0.75)) bassOn = false;
+      var midOn = em.fast > tune.beatThreshold * 0.24 && em.fast > em.slow * 1.45 && fluxRatio(mf, fluxBg.mid) > 1.6;
+      var highFlux = fluxRatio(hf, fluxBg.high);
+      signalStats = { lowRatio: lowRatio, bf: bf, bgLow: fluxBg.bass, highFlux: highFlux };
+      var highOn = eh.fast > tune.hatThreshold && highFlux > 1.2 && (eh.fast > eh.slow * 1.15 || highFlux > 1.9);
+      /* 四路独立冷却：同一帧可同时有鼓和镲，不互相吞掉。 */
+      if (bassOn) triggerOnset(Math.max(0.4, Math.min(1.6, 0.35 + normEnergy(be) * 0.9)), 'bass', now);
+      if (kickOn) triggerOnset(Math.max(0.4, Math.min(1.9, 0.55 + normEnergy(be) * 0.9)), 'low', now);
+      if (midOn) triggerOnset(Math.max(0.4, Math.min(1.8, 0.45 + normEnergy(me) * 0.7)), 'mid', now);
+      if (highOn) triggerOnset(Math.max(0.35, Math.min(1.6, 0.38 + normEnergy(he) * 0.5)), 'high', now);
     }
 
     function size() {
@@ -2750,13 +2753,13 @@
       for (var y = 1; y < rows - 1; y++) {
         for (var x = 1; x < cols - 1; x++) {
           var i = y * cols + x;
-          var v = ((field[i - 1] + field[i + 1] + field[i - cols] + field[i + cols]) * 0.5 - previous[i]) * 0.976;
+          var v = ((field[i - 1] + field[i + 1] + field[i - cols] + field[i + cols]) * 0.5 - previous[i]) * 0.972;
           previous[i] = v; sum += v * v;
         }
       }
       var swap = previous; previous = field; field = swap;
       fieldEnergy = sum / (cols * rows);
-      bassField = fieldEnergy;   // 供 driveBass 限注入，避免连续低频无限堆积
+      bassField = fieldEnergy;   // 真实场能量（不含 inject 的活动标记）
     }
 
     /* 把 CSS 计算后的颜色串解成 [r,g,b]：能直接取 rgb() 就取，否则用 1×1 画布兜底。
@@ -2779,10 +2782,11 @@
     /* 四类颜色（bass 光波 / 鼓点 / 军鼓 / 镲片）从 CSS 变量读。
        变量由 applyAmbient 写入（有封面时按封面主色解算）；无封面时吃 CSS 兜底值。
        主题/封面变化由 sync() 重读（readRippleRGB）。 */
-    var rippleRGB = { bass: [0, 0, 0], kick: [0, 0, 0], mid: [0, 0, 0], hat: [0, 0, 0], pointer: [0, 0, 0] };
+    var rippleRGB = { bass: [0, 0, 0], kick: [0, 0, 0], mid: [0, 0, 0], hat: [0, 0, 0], pointer: [0, 0, 0], backdrop: [0, 0, 0] };
     function readRippleRGB() {
       var cs = getComputedStyle(canvas);
       rippleRGB.pointer = resolveRGB(cs.color);
+      rippleRGB.backdrop = rgbStr2arr(getComputedStyle(player).getPropertyValue('--ambient-color')) || resolveRGB(getComputedStyle(player).getPropertyValue('--hk-bg').trim());
       rippleRGB.bass = resolveRGB((cs.getPropertyValue('--rl-bass') || '').trim() || cs.color);
       rippleRGB.kick = resolveRGB((cs.getPropertyValue('--rl-kick') || '').trim() || cs.color);
       rippleRGB.mid = resolveRGB((cs.getPropertyValue('--rl-mid') || '').trim() || cs.color);
@@ -2842,31 +2846,23 @@
       }
     }
 
-    /* 流光：把高度场当水面法线，用「边缘 + 坡度」化成明暗，低分辨率放大 —— 波过处一片柔光漫开。
-       VISUAL_GAIN（tune.visualGain）在**此处（最终绘制）**只乘一次再限幅。
-       ⚠ 高度场被 driveBass 封顶在 0.0009，单格梯度极小，乘子必须放大（BASS_GLOW）；
-          不放大时 alpha 只有个位数/255、肉眼看不见（实测 maxAlpha=9）。
-       网格格距恒为 4.8 CSS px（cols = width/4.8），尺度不变，
-       所以不需要按宽度补偿亮度（早先「宽窗更暗」是 attMask 老 bug 的假象）。 */
-    var BASS_GLOW = 6;          // 光波亮度补偿（针对封顶后的弱场）
-    function paintField(fade, s) {
+    /* 演示定稿的坡度光照；浓淡只乘最终 alpha，歌词区保留原有阅读掩膜。 */
+    function paintField(fade) {
       if (!pixels) return;
-      var rgb = rippleRGB.bass;   // bass 光波用自己的色（不再吃 --hl-accent）
-      var data = pixels.data;
-      var gain = s * tune.visualGain * BASS_GLOW;
+      var rgb = rippleRGB.bass, data = pixels.data;
       for (var y = 1; y < rows - 1; y++) {
         for (var x = 1; x < cols - 1; x++) {
           var i = y * cols + x, o = i * 4;
           var dx = field[i + 1] - field[i - 1], dy = field[i + cols] - field[i - cols];
           var edge = Math.abs(dx * 0.65 + dy * 0.85), slope = Math.sqrt(dx * dx + dy * dy);
           var att = attMask ? attMask[i] : 1;
-          var a = Math.min(0.72, (edge * 0.22 + slope * 0.06) * gain * att);
-          data[o] = rgb[0]; data[o + 1] = rgb[1]; data[o + 2] = rgb[2]; data[o + 3] = Math.round(a * 255);
+          var a = Math.min(0.22, (edge * 0.10 + slope * 0.035) * AUDIO_STRENGTH * 0.5) * (0.35 + 0.65 * envBass);
+          data[o] = rgb[0]; data[o + 1] = rgb[1]; data[o + 2] = rgb[2];
+          data[o + 3] = Math.round(Math.min(0.9, a * tune.bassOpacity * att * visualGain / AUDIO_STRENGTH) * 255);
         }
       }
       lc.putImageData(pixels, 0, 0);
-      ctx.globalAlpha = fade;
-      ctx.imageSmoothingEnabled = true;
+      ctx.globalAlpha = fade; ctx.imageSmoothingEnabled = true;
       ctx.drawImage(low, 0, 0, width, height);
     }
 
@@ -2884,6 +2880,31 @@
       ctx.closePath();
     }
 
+    function drawAudioRing(w, life, fade) {
+      var hat = w.kind === 'high', kick = w.kind === 'low';
+      var end = life < 0.30 ? 1 : Math.pow(Math.max(0, (1 - life) / 0.70), 1.5);
+      if (w.fading) end *= Math.min(1, (w.life - w.age) / 0.35);
+      var baseAlpha = Math.min(1, w.age / 0.06) * 1.4 * fade * visualGain / AUDIO_STRENGTH;
+      var power = Math.max(0.25, Math.min(1, (w.power - 0.35) / 1.2));
+      var dim = Math.min(width, height), gap = hat ? 5 : 10;
+      var reach = Math.min(dim * (hat ? 0.11 : 0.24), dim * ((hat ? 0.05 : kick ? 0.15 : 0.13) + power * 0.12));
+      var radius = 4 + reach * Math.min(1, life * 1.15);
+      var layers = Math.max(3, Math.min(hat ? 6 : 9, Math.floor(radius / gap)));
+      var opacity = hat ? tune.hatOpacity : tune.beatOpacity;
+      for (var k = 0; k < layers; k++) {
+        var r = radius - k * gap;
+        if (r < 1.5) continue;
+        var alpha = Math.min(0.94, baseAlpha * end * Math.pow(1 - k / layers, 1.15) * (hat ? 0.75 : 1) * opacity);
+        if (alpha <= 0.006) continue;
+        ringPath(w, r, k * 0.16);
+        if (hat) {
+          ctx.strokeStyle = rgbStr(rippleRGB.backdrop); ctx.lineWidth = 3; ctx.globalAlpha = alpha * 0.3; ctx.stroke();
+        }
+        ctx.strokeStyle = strokeOf(w.kind); ctx.lineWidth = hat ? 1.05 : 0.8;
+        ctx.globalAlpha = alpha; ctx.stroke();
+      }
+    }
+
     function draw() {
       clear();
       ringCalls = 0;   // 探针：本轮绘制实际画了几层环
@@ -2894,18 +2915,18 @@
          颜色只在主题/封面变化时变，由 sync() 重读并缓存（不每帧 getComputedStyle）。 */
       var fade = drain > 0 ? Math.min(1, drain / 0.4) : 1;
       var s = baseStrength();
-      /* 最终可见倍率：流光、主环、回声、中心小圈、尾流共用同一次 tune.visualGain（限幅）。 */
-      var vis = Math.min(1.5, s * tune.visualGain);
-      if (fieldEnergy > 0.00001) paintField(fade, s);
+      /* 调试倍率只改变绘制透明度。 */
+      var vis = Math.min(1.5, s * visualGain);
+      if (fieldEnergy > 0.000005) paintField(fade);
       for (var i = 0; i < waves.length; i++) {
         var w = waves[i], p = w.age / w.life;
+        if (w.kind === 'bass') continue;
+        if (w.origin === 'audio') { drawAudioRing(w, p, fade); continue; }
         var birth = Math.min(1, w.age / 0.10), end = Math.pow(1 - p, 1.8);
         var reach = Math.min(width, height) * (0.44 + w.power * 0.14);
         var radius = 8 + reach * (1 - Math.pow(1 - p, 2));
         var audio = w.origin === 'audio';
-        /* 音频短波与指针波同口径：四层同心环（「等高线一圈一圈」），
-           但主次分明 —— 主环最亮，回声逐层变淡（1 / .42 / .24 / .13）。
-           高频（踩镲）整体再压一档，保持「更轻更薄」。 */
+        /* 指针保留四层主环/回声；音频波已交给 drawAudioRing。 */
         var layers = 4;
         var echo = [1, 0.42, 0.24, 0.13];
         var kindMul = (audio && w.kind === 'high') ? 0.72 : 1;
@@ -2970,7 +2991,7 @@
         if (!drain) {
           waves.length = 0; trail.length = 0;
           if (field) { field.fill(0); previous.fill(0); }
-          fieldEnergy = 0; clear(); return;
+          fieldEnergy = bassField = 0; clear(); return;
         }
       }
       for (var i = waves.length - 1; i >= 0; i--) {
@@ -2987,7 +3008,7 @@
         while (accumulator >= 1 / 60 && steps < 3) { stepField(); accumulator -= 1 / 60; steps++; }
       } else accumulator = 0;
       if (!waves.length && !trail.length && fieldEnergy < 0.00002) {
-        fieldEnergy = 0;
+        fieldEnergy = bassField = 0;
         if (field) { field.fill(0); previous.fill(0); }
       }
       draw();
@@ -3030,6 +3051,15 @@
       drain = immediate === true ? 0 : 0.4;
       if (immediate === true) { waves.length = 0; trail.length = 0; }
       sync();
+    }
+
+    function emptied() { detachAudio(); pause(); }
+    function resetSignal() {
+      waves.length = 0; trail.length = 0;
+      if (field) { field.fill(0); previous.fill(0); }
+      fieldEnergy = bassField = 0;
+      resetAnalysis(performance.now());
+      if (!blocked()) draw();
     }
 
     function position(e) {
@@ -3099,7 +3129,8 @@
       audio.addEventListener('play', resume);
       audio.addEventListener('pause', pause);
       audio.addEventListener('ended', pause);
-      audio.addEventListener('emptied', function () { detachAudio(); pause(); });
+      audio.addEventListener('emptied', emptied);
+      audio.addEventListener('seeking', resetSignal);
     }
     watchDpr();
     // 初始状态跟随当前 audio（可能是恢复的“在播”态，也可能未播）
@@ -3114,7 +3145,7 @@
         return {
           waves: waves.length, trail: trail.length, field: fieldEnergy, playing: playing,
           raf: !!raf, w: width, h: height, cols: cols, rows: rows,
-          strength: baseStrength(), gain: tune.visualGain, audioWaves: audioWaveCount(),
+          strength: baseStrength(), gain: visualGain, audioWaves: audioWaveCount(),
           /* 三层色（测试用）：当前实际用的 bass/kick/mid/hat RGB。 */
           colors: { bass: rippleRGB.bass.slice(), kick: rippleRGB.kick.slice(), mid: rippleRGB.mid.slice(), hat: rippleRGB.hat.slice() },
           mask: attMask ? (function () { var m = 1; for (var i = 0; i < attMask.length; i++) if (attMask[i] < m) m = attMask[i]; return m; })() : null
@@ -3128,9 +3159,9 @@
         return {
           ready: audioReady, analysing: analysisOn, playing: playing,
           envBass: envBass, onsets: onsetCount, bassField: bassField,
-          waves: waves.length, audioWaves: audioWaveCount(), gain: tune.visualGain,
-          kinds: { low: kindCounts.low, mid: kindCounts.mid, high: kindCounts.high },
-          midHighSens: tune.midHighSens,
+          waves: waves.length, audioWaves: audioWaveCount(), gain: visualGain,
+          kinds: Object.assign({}, kindCounts),
+          activeAudioWaves: audioWaveCount(true), signal: signalStats,
           /* 起音内部量（调试/校准用）：快包络 / 慢背景 / 谱通量 / 通量背景 */
           eFast: envs ? envs.bass.fast : 0, eSlow: envs ? envs.bass.slow : 0,
           mFast: envs ? envs.mid.fast : 0, mSlow: envs ? envs.mid.slow : 0,
@@ -3138,27 +3169,27 @@
           bf: fluxBg ? fluxBg.bass : 0, mf: fluxBg ? fluxBg.mid : 0, hf: fluxBg ? fluxBg.high : 0
         };
       },
-      /* 旧签名兼容（单值 = 低频包络）；对象签名走新三路。 */
+      /* 测试探针：喂单值低频包络，真实播放始终走 FFT。 */
       audioPoke: function (level) { return readSignal(performance.now(), level == null ? 0.08 : level); },
       pokeOnset: function (power, kind) { return triggerOnset(power == null ? 1.2 : power, kind === 'mid' ? 'mid' : (kind === 'high' ? 'high' : 'low'), performance.now()); },
-      /* 测试探针：单独画一个波，回报实际画了几层环（验证音频波 4 层）。 */
+      /* 测试探针：单独画一个波，回报实际画了几层环（验证各类的圈数预算）。 */
       ringLayers: function (kind) {
-        var saved = waves.slice();
+        var saved = waves.slice(), savedTrail = trail.slice();
         waves.length = 0; trail.length = 0;
-        waves.push({ x: 0.5, y: 0.5, age: 0.5, power: 1.0, origin: 'audio', kind: kind === 'high' ? 'high' : (kind === 'low' ? 'low' : 'mid'), life: 1.2, phase: 0 });
+        waves.push({ x: 0.5, y: 0.5, age: 0.5, power: 1.0, origin: 'audio', kind: kind === 'bass' ? 'bass' : kind === 'high' ? 'high' : (kind === 'low' ? 'low' : 'mid'), life: 1.2, phase: 0 });
         draw();
         var n = ringCalls;
         waves.length = 0;
         for (var i = 0; i < saved.length; i++) waves.push(saved[i]);
+        for (var t = 0; t < savedTrail.length; t++) trail.push(savedTrail[t]);
         return n;
       },
-      /* 旧名保留为 setTune 的薄封装（守卫 ripple-visual-gain-changes-look-only 靠它）。 */
-      setGain: function (g) { return setTune({ visualGain: Number(g) }); },
-      /* 面板可调参数的读写。 */
-      getTune: function () { return { visualGain: tune.visualGain, bassDrive: tune.bassDrive, onsetSens: tune.onsetSens, midHighSens: tune.midHighSens, maxAudioWaves: tune.maxAudioWaves, onsetCooldown: tune.onsetCooldown }; },
-      setTune: function (patch) { return setTune(patch); },
+      /* 调试倍率保留，纯绘制参数，不再出现在玩具箱或存储中。 */
+      setGain: function (g) { if (isFinite(g)) visualGain = Math.max(0.2, Math.min(4, Number(g))); if (!blocked()) draw(); return visualGain; },
+      getTune: getTune,
+      setTune: setTune,
       resetTune: function () { return setTune(null); },
-      defaults: function () { return { visualGain: RIPPLE_DEFAULTS.visualGain, bassDrive: RIPPLE_DEFAULTS.bassDrive, onsetSens: RIPPLE_DEFAULTS.onsetSens, midHighSens: RIPPLE_DEFAULTS.midHighSens, maxAudioWaves: RIPPLE_DEFAULTS.maxAudioWaves, onsetCooldown: RIPPLE_DEFAULTS.onsetCooldown }; },
+      defaults: function () { return Object.assign({}, RIPPLE_DEFAULTS); },
       onTune: function (fn) { tuneListeners.push(fn); },
       resetAnalysis: function () { resetAnalysis(performance.now()); },
       /* 测试用：清场（波包 / 尾流 / 高度场 / 包络 / 起音历史）——夹具间彻底隔离。 */
@@ -3166,9 +3197,7 @@
         waves.length = 0; trail.length = 0;
         if (field) { field.fill(0); previous.fill(0); }
         fieldEnergy = 0; bassField = 0; drain = 0;
-        envBass = 0; onsetAt = -1e9; onsetCount = 0; bassPhase = 0;
-        kindCounts.low = 0; kindCounts.mid = 0; kindCounts.high = 0;
-        if (prevBins) prevBins.fill(0);
+        resetAnalysis(performance.now());
         attKey = ''; draw();
       },
       destroy: function () {
@@ -3189,7 +3218,8 @@
           audio.removeEventListener('play', resume);
           audio.removeEventListener('pause', pause);
           audio.removeEventListener('ended', pause);
-          audio.removeEventListener('emptied', pause);
+          audio.removeEventListener('emptied', emptied);
+          audio.removeEventListener('seeking', resetSignal);
         }
       }
     };
@@ -5125,7 +5155,7 @@
   /* ============================================================
      涟漪参数「玩具箱」面板（仅宽窗，左下角）
      ------------------------------------------------------------
-     5 个滑杆 + 重置 + 说明；实时生效（改后续帧的观感，不重建分析链、不动音量）。
+     三组门槛/浓淡 + 重置 + 说明；实时生效（改后续帧的观感，不重建分析链、不动音量）。
      存储键 player-ripple-tune（跟 player-split 同路），SDK 就绪后读，读不到用默认。
      面板皮复用 .pop；图标常态半透明，hover/聚焦/打开提亮；沉浸淡出、截图隐藏由 CSS 管。
      ============================================================ */
@@ -5147,11 +5177,12 @@
   function renderRippleTune() {
     var t = rippleTuneNow();
     if (!t || !rippleToolPop) return;
-    ['visualGain', 'bassDrive', 'onsetSens', 'midHighSens', 'maxAudioWaves', 'onsetCooldown'].forEach(function (k) {
+    ['bassThreshold', 'bassOpacity', 'beatThreshold', 'beatOpacity', 'hatThreshold', 'hatOpacity'].forEach(function (k) {
+      var opacity = /Opacity$/.test(k), value = opacity ? Math.round(t[k] * 100) : t[k];
       var el = $('rt_' + k);
-      if (el && String(el.value) !== String(t[k])) el.value = t[k];
+      if (el && String(el.value) !== String(value)) el.value = value;
       var out = $('rtv_' + k);
-      if (out) out.textContent = (k === 'onsetCooldown') ? (t[k] + ' ms') : (k === 'maxAudioWaves' ? String(t[k]) : Number(t[k]).toFixed(2));
+      if (out) out.textContent = opacity ? value + '%' : Number(value).toFixed(k === 'hatThreshold' ? 5 : 4);
     });
   }
   function openRippleTool() {
@@ -5171,22 +5202,14 @@
       if (rippleToolPop.hidden) { closePops(); openRippleTool(); } else closeRippleTool();
     });
     rippleToolPop.addEventListener('click', function (e) { e.stopPropagation(); });
-    var rtMap = {
-      visualGain: function (v) { return { visualGain: v }; },
-      bassDrive: function (v) { return { bassDrive: v }; },
-      onsetSens: function (v) { return { onsetSens: v }; },
-      midHighSens: function (v) { return { midHighSens: v }; },
-      maxAudioWaves: function (v) { return { maxAudioWaves: v }; },
-      onsetCooldown: function (v) { return { onsetCooldown: v }; }
-    };
-    Object.keys(rtMap).forEach(function (k) {
+    ['bassThreshold', 'bassOpacity', 'beatThreshold', 'beatOpacity', 'hatThreshold', 'hatOpacity'].forEach(function (k) {
       var el = $('rt_' + k);
       if (!el) return;
       el.addEventListener('input', function () {
         if (!rippleHandle) return;
-        rippleHandle.setTune(rtMap[k](Number(el.value)));
-        renderRippleTune();
-        rippleSaveTune();
+        var patch = {}; patch[k] = Number(el.value) / (/Opacity$/.test(k) ? 100 : 1);
+        rippleHandle.setTune(patch);
+        renderRippleTune(); rippleSaveTune();
       });
     });
     var rtReset = $('rtResetBtn');
@@ -7879,8 +7902,8 @@
       if (dirRead.value) { state.localDir = String(dirRead.value); syncLocalFolder(false); }
       var sp = splitRead.value;
       if (typeof sp === 'number' && sp > 0 && sp < 1) setSplit(sp, false);
-      /* 涟漪参数：读到就套用（缺字段各自回落默认）；**读不到（ok:false）不覆盖**。 */
-      if (rippleHandle && tuneRead && tuneRead.ok && tuneRead.value && typeof tuneRead.value === 'object') {
+      /* 新门槛存储按 schemaVersion 恢复；旧推动量/灵敏度字段忽略，读取不自动回写。 */
+      if (rippleHandle && tuneRead && tuneRead.ok && tuneRead.value && typeof tuneRead.value === 'object' && tuneRead.value.schemaVersion === 2) {
         rippleHandle.setTune(tuneRead.value);
         renderRippleTune();
       }
@@ -7901,6 +7924,11 @@
       /* 首次使用提示与欢迎歌：各读各自专用的 key（不拿 listsRead 代表一切）。
        * 欢迎歌只在「列表确实读到且为空」时播一次 —— 加载失败（listsLoaded=false）不播。 */
       storeRead(FIRST_RUN_KEY).then(maybeShowFirstRun);
+      /* 工具箱提示：与 cookie 提示错开（若 cookie 提示在弹，则等它关闭后再弹，见 closeFirstRun）。
+      * 延迟一拍，等 applyLayout 跑完定下 data-layout，窄卡不弹。 */
+      storeRead(RIPPLE_TIP_KEY).then(function (r) {
+        setTimeout(function () { maybeShowRippleTip(r); }, 0);
+      });
       storeRead(WELCOME_KEY).then(function (w) {
         if (listsLoaded && !state.tracks.length) return maybeSeedWelcome(w);
       }).catch(function (e) { console.warn('[player] 欢迎歌播种失败', e); });
@@ -8191,7 +8219,7 @@
     rippleSetTune: function (patch) { return rippleHandle ? rippleHandle.setTune(patch) : null; },
     rippleResetTune: function () { return rippleHandle ? rippleHandle.resetTune() : null; },
     rippleTuneDefaults: function () { return rippleHandle ? rippleHandle.defaults() : null; },
-    /* 测试探针：单独画一个音频波，回报实际画了几层环（验证 4 层）。 */
+    /* 测试探针：单独画一个音频波，回报实际画了几层环（验证圈数预算）。 */
     rippleRingLayers: function (kind) { return rippleHandle ? rippleHandle.ringLayers(kind) : 0; },
     /* 跨源歌词兜底的匹配判定（测试用）：不依赖网络，直接喂结果集。 */
     pickLyricHit: pickLyricHit,
@@ -8304,6 +8332,17 @@
       var el = $('firstRun');
       if (el) el.hidden = true;
       maybeShowFirstRun(read);
+      return el ? el.hidden : null;
+    },
+    /* 涟漪工具箱首启提示（测试用）：与 firstRun 同形，但多一层「工具箱此刻可见」条件。 */
+    rippleTipState: function () {
+      var el = $('rippleTip');
+      return { hidden: el ? el.hidden : null, title: $('rippleTipTitle') ? $('rippleTipTitle').textContent : null };
+    },
+    rippleTipTry: function (read) {
+      var el = $('rippleTip');
+      if (el) el.hidden = true;
+      maybeShowRippleTip(read);
       return el ? el.hidden : null;
     },
     /* 欢迎歌播种（测试用）：隔离验条件 —— 每个场景自己在快照上装一份 state，跑完还原，
