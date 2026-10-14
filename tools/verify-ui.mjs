@@ -1606,6 +1606,15 @@ async function verifyMoodLists() {
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
 }
 if (!process.argv.includes('--ripple-only') && !process.argv.includes('--song-only')) {
+if (process.argv.includes('--audio-handoff-timing-only')) {
+  try {
+    const { probeAudioHandoff } = await import('./probe-audio-handoff.mjs');
+    const timing = await probeAudioHandoff({ newPage, BASE, API, UI_BASE, sleep, clickTab });
+    fs.writeFileSync(path.join(outDir, 'audio-handoff-timing.json'), JSON.stringify({ ...timing, runtimeErrors: report.runtimeErrors }, null, 2));
+    console.log(JSON.stringify({ summary: timing.summary, runtimeErrors: report.runtimeErrors, outDir }, null, 2));
+  } finally { await browser.close(); server.closeAllConnections(); server.close(); }
+  process.exit(report.runtimeErrors.length ? 1 : 0);
+}
 if (process.argv.includes('--lyric-lifecycle-only')) {
   await verifyLyricLifecycle();
   fs.writeFileSync(path.join(outDir, 'verify-lyric-lifecycle.json'), JSON.stringify(report, null, 2));
