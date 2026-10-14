@@ -1,0 +1,234 @@
+{
+  "selfCheck": [],
+  "wiring": {},
+  "four": {},
+  "darkFallback": {},
+  "runtimeErrors": [],
+  "expectedProbes": [
+    "http 404 http://127.0.0.1:60881/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E8%8A%B1%E4%B8%80%E5%8C%81",
+    "reqfail: http://127.0.0.1:60881/api/apps/hanako-simple-player/routes/_fixture/real-song.m4a?appSurfaceSession=fake-ticket net::ERR_ABORTED"
+  ],
+  "assertions": [
+    {
+      "name": "ripple-real-song-all-three-groups-trigger",
+      "ok": true,
+      "detail": "{\"audio\":{\"ready\":true,\"analysing\":true,\"playing\":true,\"envBass\":0.9242291841324884,\"onsets\":61,\"bassField\":0.040118757362648826,\"waves\":14,\"audioWaves\":14,\"gain\":2.6,\"kinds\":{\"bass\":8,\"low\":12,\"mid\":13,\"high\":36},\"activeAudioWaves\":14,\"signal\":{\"lowRatio\":1.9991105449604485,\"bf\":0.00024648848720268374,\"bgLow\":0.00002613888398921647,\"highFlux\":2.7901748468484673},\"eFast\":0.010118234895447793,\"eSlow\":0.005061368377529106,\"mFast\":0.0021343010896997666,\"mSlow\":0.0012336998145898587,\"hFast\":0.0003996197209223377,\"hSlow\":0.0003099540362892743,\"bf\":0.00002613888398921647,\"mf\":7.826387391576832e-7,\"hf\":3.911637064091408e-8},\"state\":{\"waves\":14,\"trail\":0,\"field\":0.040118757362648826,\"playing\":true,\"raf\":true,\"w\":1040,\"h\":680,\"cols\":217,\"rows\":142,\"strength\":0.32,\"gain\":2.6,\"audioWaves\":14,\"colors\":{\"bass\":[247,222,244],\"kick\":[250,230,232],\"mid\":[249,230,225],\"hat\":[252,246,238]},\"mask\":0.30000001192092896},\"tune\":{\"schemaVersion\":2,\"bassThreshold\":0.004,\"beatThreshold\":0.005,\"hatThreshold\":0.0003,\"bassOpacity\":1,\"beatOpacity\":1,\"hatOpacity\":1},\"time\":11.683783}"
+    },
+    {
+      "name": "ripple-all-opacity-controls-change-alpha-only",
+      "ok": true,
+      "detail": "{\"bass\":{\"light\":1251264,\"deep\":3418799,\"unchanged\":true},\"beat\":{\"light\":0.8015273525577978,\"deep\":5.141952035580092,\"unchanged\":true},\"hat\":{\"light\":0.6851058911916008,\"deep\":5.225283790988761,\"unchanged\":true}}"
+    },
+    {
+      "name": "ripple-real-song-bass-threshold-direction",
+      "ok": true,
+      "detail": "{\"more\":13,\"fewer\":0}"
+    },
+    {
+      "name": "ripple-real-song-beat-threshold-direction",
+      "ok": true,
+      "detail": "{\"more\":18,\"fewer\":0}"
+    },
+    {
+      "name": "ripple-real-song-hat-threshold-direction",
+      "ok": true,
+      "detail": "{\"more\":24,\"fewer\":0}"
+    },
+    {
+      "name": "ripple-real-song-pause-clears-residue",
+      "ok": true,
+      "detail": "{\"state\":{\"waves\":0,\"trail\":0,\"field\":0,\"playing\":false,\"raf\":false,\"w\":1040,\"h\":680,\"cols\":217,\"rows\":142,\"strength\":0.32,\"gain\":2.6,\"audioWaves\":0,\"colors\":{\"bass\":[247,222,244],\"kick\":[250,230,232],\"mid\":[249,230,225],\"hat\":[252,246,238]},\"mask\":0.30000001192092896},\"audio\":{\"ready\":true,\"analysing\":false,\"playing\":false,\"envBass\":0.9388267201598879,\"onsets\":11,\"bassField\":0,\"waves\":0,\"audioWaves\":0,\"gain\":2.6,\"kinds\":{\"bass\":2,\"low\":4,\"mid\":7,\"high\":0},\"activeAudioWaves\":0,\"signal\":{\"lowRatio\":4.2468311000175945,\"bf\":0.00031761534412145067,\"bgLow\":0.000021692632024793553,\"highFlux\":1.0184039365121966},\"eFast\":0.01135047956141286,\"eSlow\":0.0026726938967188587,\"mFast\":0.0014610576353657795,\"mSlow\":0.0010964147737566705,\"hFast\":0.0003989273796583735,\"hSlow\":0.0003355486198729129,\"bf\":0.000021692632024793553,\"mf\":4.581114272556835e-7,\"hf\":4.101009397636095e-8}}"
+    }
+  ],
+  "refine": [],
+  "narrowSelfCheck": [],
+  "theme": {},
+  "ambient": {},
+  "rippleSong": {
+    "baseline": {
+      "audio": {
+        "ready": true,
+        "analysing": true,
+        "playing": true,
+        "envBass": 0.9242291841324884,
+        "onsets": 61,
+        "bassField": 0.040118757362648826,
+        "waves": 14,
+        "audioWaves": 14,
+        "gain": 2.6,
+        "kinds": {
+          "bass": 8,
+          "low": 12,
+          "mid": 13,
+          "high": 36
+        },
+        "activeAudioWaves": 14,
+        "signal": {
+          "lowRatio": 1.9991105449604485,
+          "bf": 0.00024648848720268374,
+          "bgLow": 0.00002613888398921647,
+          "highFlux": 2.7901748468484673
+        },
+        "eFast": 0.010118234895447793,
+        "eSlow": 0.005061368377529106,
+        "mFast": 0.0021343010896997666,
+        "mSlow": 0.0012336998145898587,
+        "hFast": 0.0003996197209223377,
+        "hSlow": 0.0003099540362892743,
+        "bf": 0.00002613888398921647,
+        "mf": 7.826387391576832e-7,
+        "hf": 3.911637064091408e-8
+      },
+      "state": {
+        "waves": 14,
+        "trail": 0,
+        "field": 0.040118757362648826,
+        "playing": true,
+        "raf": true,
+        "w": 1040,
+        "h": 680,
+        "cols": 217,
+        "rows": 142,
+        "strength": 0.32,
+        "gain": 2.6,
+        "audioWaves": 14,
+        "colors": {
+          "bass": [
+            247,
+            222,
+            244
+          ],
+          "kick": [
+            250,
+            230,
+            232
+          ],
+          "mid": [
+            249,
+            230,
+            225
+          ],
+          "hat": [
+            252,
+            246,
+            238
+          ]
+        },
+        "mask": 0.30000001192092896
+      },
+      "tune": {
+        "schemaVersion": 2,
+        "bassThreshold": 0.004,
+        "beatThreshold": 0.005,
+        "hatThreshold": 0.0003,
+        "bassOpacity": 1,
+        "beatOpacity": 1,
+        "hatOpacity": 1
+      },
+      "time": 11.683783
+    },
+    "opacity": {
+      "bass": {
+        "light": 1251264,
+        "deep": 3418799,
+        "unchanged": true
+      },
+      "beat": {
+        "light": 0.8015273525577978,
+        "deep": 5.141952035580092,
+        "unchanged": true
+      },
+      "hat": {
+        "light": 0.6851058911916008,
+        "deep": 5.225283790988761,
+        "unchanged": true
+      }
+    },
+    "runs": {
+      "bass": {
+        "more": 13,
+        "fewer": 0
+      },
+      "beat": {
+        "more": 18,
+        "fewer": 0
+      },
+      "hat": {
+        "more": 24,
+        "fewer": 0
+      }
+    },
+    "paused": {
+      "state": {
+        "waves": 0,
+        "trail": 0,
+        "field": 0,
+        "playing": false,
+        "raf": false,
+        "w": 1040,
+        "h": 680,
+        "cols": 217,
+        "rows": 142,
+        "strength": 0.32,
+        "gain": 2.6,
+        "audioWaves": 0,
+        "colors": {
+          "bass": [
+            247,
+            222,
+            244
+          ],
+          "kick": [
+            250,
+            230,
+            232
+          ],
+          "mid": [
+            249,
+            230,
+            225
+          ],
+          "hat": [
+            252,
+            246,
+            238
+          ]
+        },
+        "mask": 0.30000001192092896
+      },
+      "audio": {
+        "ready": true,
+        "analysing": false,
+        "playing": false,
+        "envBass": 0.9388267201598879,
+        "onsets": 11,
+        "bassField": 0,
+        "waves": 0,
+        "audioWaves": 0,
+        "gain": 2.6,
+        "kinds": {
+          "bass": 2,
+          "low": 4,
+          "mid": 7,
+          "high": 0
+        },
+        "activeAudioWaves": 0,
+        "signal": {
+          "lowRatio": 4.2468311000175945,
+          "bf": 0.00031761534412145067,
+          "bgLow": 0.000021692632024793553,
+          "highFlux": 1.0184039365121966
+        },
+        "eFast": 0.01135047956141286,
+        "eSlow": 0.0026726938967188587,
+        "mFast": 0.0014610576353657795,
+        "mSlow": 0.0010964147737566705,
+        "hFast": 0.0003989273796583735,
+        "hSlow": 0.0003355486198729129,
+        "bf": 0.000021692632024793553,
+        "mf": 4.581114272556835e-7,
+        "hf": 4.101009397636095e-8
+      }
+    }
+  }
+}

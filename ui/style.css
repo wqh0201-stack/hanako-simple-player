@@ -1407,13 +1407,79 @@ button:disabled { cursor: default; }
 /* 截图模式隐藏，免污染夹具截图（is-shot 挂在 body 上；特异性要压过宽窗显示规则） */
 body.is-shot .player[data-layout] .ripple-tool-btn { display: none; }
 
+/* ---------- 涟漪工具箱首启提示（左下角指向气泡）----------
+   图标平时只有 0.45 透明度，很不起眼；用一根朝下的箭头指向它，一眼就找到。
+   定位对齐 .ripple-tool-btn：按钮 left:14px / bottom:14px / 34×34 → 中心 x=31px。
+   只在宽窗出现（工具箱只在宽窗存在）；沉浸/截图时一并隐藏。 */
+.ripple-tip {
+  position: absolute;
+  left: 14px;
+  bottom: 60px;                 /* 按钮上沿 48px + 12px 间距 = 箭头落点（与按钮同处 .scene 坐标系） */
+  z-index: 6;                   /* 高于 canvas(2) 与按钮(5) */
+  max-width: min(268px, calc(100% - 28px));
+  animation: rtTipIn 0.26s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+.ripple-tip[hidden] { display: none; }
+/* 非宽窗 / 沉浸 / 截图：与 .ripple-tool-btn 的可见性严格同步（不可提示一个看不见的入口）。 */
+.player[data-layout]:not([data-layout="wide"]) .ripple-tip,
+.player[data-controls-hidden="1"] .ripple-tip,
+body.is-shot .ripple-tip { display: none; }
+@keyframes rtTipIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ripple-tip { animation: none; } }
+.rt-bubble {
+  position: relative;
+  padding: 11px 12px 10px;
+  border-radius: var(--radius-m, 8px);
+  background: var(--hk-surface);
+  border: 1px solid var(--hk-hairline);
+  box-shadow: var(--hk-pop-shadow);
+}
+.rt-tip-title {
+  margin: 0 0 5px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hk-text);
+}
+.rt-tip-body {
+  margin: 0 0 9px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--hk-muted);
+}
+.rt-tip-ok {
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--radius-s, 5px);
+  background: var(--hk-accent);
+  color: var(--hk-bg);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .16s ease, transform .16s ease;
+}
+.rt-tip-ok:hover { background: var(--hk-accent-hover, var(--hk-accent)); }
+.rt-tip-ok:active { transform: scale(0.98); }
+/* 朝下的箭头：对齐到按钮中心（x=31px，相对气泡外框 14px），用旋转方块做尖角 + 同色描边。 */
+.rt-tip-arrow {
+  position: absolute;
+  left: 11px;                    /* 14(气泡左缘) + 11 + 6(半宽) = 31 = 按钮中心 */
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  background: var(--hk-surface);
+  border-right: 1px solid var(--hk-hairline);
+  border-bottom: 1px solid var(--hk-hairline);
+  transform: rotate(45deg);
+}
+
 .ripple-tool-pop {
   left: 14px;
   right: auto;
   bottom: 56px;
   top: auto;
   min-width: 0;
-  width: 216px;
+  width: 306px;
   max-width: calc(100% - 28px);
   /* 矮宽窗时别顶到 scene 上缘被裁（scene 是 overflow:hidden）：限高 + 内部滚动 */
   max-height: calc(100% - 70px);
@@ -1421,6 +1487,8 @@ body.is-shot .player[data-layout] .ripple-tool-btn { display: none; }
   overscroll-behavior: contain;
 }
 .ripple-tool-pop .pop-title { margin-bottom: 8px; }
+.rt-group { min-width: 0; margin: 0 0 8px; padding: 0; border: 0; }
+.rt-group legend { padding: 0 6px 4px; font-size: 12px; color: var(--hk-text); }
 .rt-row { padding: 2px 6px 6px; }
 .rt-label {
   display: flex;
@@ -1433,6 +1501,9 @@ body.is-shot .player[data-layout] .ripple-tool-btn { display: none; }
 }
 .rt-val { color: var(--hk-text); font-variant-numeric: tabular-nums; }
 .rt-hint {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
   margin: 3px 0 0;
   font-size: 11px;
   line-height: 1.4;

@@ -77,40 +77,59 @@
         <button class="ripple-tool-btn" id="rippleToolBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="涟漪调节" title="涟漪调节">
           <svg class="icon" aria-hidden="true"><use href="#i-sliders"></use></svg>
         </button>
+        <!-- 涟漪工具箱首启提示（只弹一次，记住已读）：左下角指向气泡，箭头朝下指那个很克制的
+             滑杆图标。与按钮同处 .scene 坐标系，定位才准。非宽窗/沉浸/截图由 CSS 隐。 -->
+        <div class="ripple-tip" id="rippleTip" hidden>
+          <div class="rt-bubble" role="dialog" aria-labelledby="rippleTipTitle">
+            <p class="rt-tip-title" id="rippleTipTitle">涟漪可以调</p>
+            <p class="rt-tip-body">这里的低音光波、鼓点等高线、镲片细波都能调；默认偏克制，想更热闹就往左拖。</p>
+            <button class="rt-tip-ok" id="rippleTipOk" type="button">我知道了</button>
+            <span class="rt-tip-arrow" aria-hidden="true"></span>
+          </div>
+        </div>
         <div class="pop ripple-tool-pop" id="rippleToolPop" hidden role="dialog" aria-label="涟漪调节">
           <p class="pop-title">涟漪调节</p>
-          <div class="rt-row">
-            <label class="rt-label" for="rt_visualGain">整体强度<span class="rt-val" id="rtv_visualGain">1.60</span></label>
-            <input class="range rt-range" id="rt_visualGain" type="range" min="0.5" max="3" step="0.05" value="1.6" aria-label="整体强度">
-            <p class="rt-hint">涟漪的明暗</p>
-          </div>
-          <div class="rt-row">
-            <label class="rt-label" for="rt_bassDrive">低频推动<span class="rt-val" id="rtv_bassDrive">9.00</span></label>
-            <input class="range rt-range" id="rt_bassDrive" type="range" min="1" max="20" step="0.5" value="9" aria-label="低频推动">
-            <p class="rt-hint">低音把水面推多高</p>
-          </div>
-          <div class="rt-row">
-            <label class="rt-label" for="rt_onsetSens">敲击灵敏度<span class="rt-val" id="rtv_onsetSens">1.00</span></label>
-            <input class="range rt-range" id="rt_onsetSens" type="range" min="0.5" max="2" step="0.05" value="1" aria-label="敲击灵敏度">
-            <p class="rt-hint">多大的敲击才出波</p>
-          </div>
-          <div class="rt-row">
-            <label class="rt-label" for="rt_midHighSens">中高频灵敏度<span class="rt-val" id="rtv_midHighSens">1.60</span></label>
-            <input class="range rt-range" id="rt_midHighSens" type="range" min="1" max="3" step="0.05" value="1.6" aria-label="中高频灵敏度">
-            <p class="rt-hint">军鼓、钢琴、踩镲也出波</p>
-          </div>
-          <div class="rt-row">
-            <label class="rt-label" for="rt_maxAudioWaves">同屏波数上限<span class="rt-val" id="rtv_maxAudioWaves">3</span></label>
-            <input class="range rt-range" id="rt_maxAudioWaves" type="range" min="1" max="6" step="1" value="3" aria-label="同屏波数上限">
-            <p class="rt-hint">最多同时几组波</p>
-          </div>
-          <div class="rt-row">
-            <label class="rt-label" for="rt_onsetCooldown">落波间隔<span class="rt-val" id="rtv_onsetCooldown">380 ms</span></label>
-            <input class="range rt-range" id="rt_onsetCooldown" type="range" min="120" max="900" step="20" value="380" aria-label="落波间隔">
-            <p class="rt-hint">两组波最短隔多久</p>
-          </div>
+          <fieldset class="rt-group">
+            <legend>低音 · 光波</legend>
+            <div class="rt-row">
+              <label class="rt-label" for="rt_bassThreshold">触发门槛<output class="rt-val" id="rtv_bassThreshold" for="rt_bassThreshold">0.01370</output></label>
+              <input class="range rt-range" id="rt_bassThreshold" type="range" min="0.004" max="0.028" step="0.0001" value="0.0137" aria-label="低音触发门槛" aria-describedby="rt_bassThreshold_hint">
+              <p class="rt-hint" id="rt_bassThreshold_hint"><span>低门槛 · 更多</span><span>高门槛 · 更少</span></p>
+            </div>
+            <div class="rt-row">
+              <label class="rt-label" for="rt_bassOpacity">颜色浓淡<output class="rt-val" id="rtv_bassOpacity" for="rt_bassOpacity">60%</output></label>
+              <input class="range rt-range" id="rt_bassOpacity" type="range" min="0" max="120" step="5" value="60" aria-label="低音颜色浓淡" aria-describedby="rt_bassOpacity_hint">
+              <p class="rt-hint" id="rt_bassOpacity_hint"><span>更浅、更淡</span><span>更深、更浓</span></p>
+            </div>
+          </fieldset>
+          <fieldset class="rt-group">
+            <legend>鼓点 · 等高线</legend>
+            <div class="rt-row">
+              <label class="rt-label" for="rt_beatThreshold">触发门槛<output class="rt-val" id="rtv_beatThreshold" for="rt_beatThreshold">0.01780</output></label>
+              <input class="range rt-range" id="rt_beatThreshold" type="range" min="0.005" max="0.036" step="0.0001" value="0.0178" aria-label="鼓点触发门槛" aria-describedby="rt_beatThreshold_hint">
+              <p class="rt-hint" id="rt_beatThreshold_hint"><span>低门槛 · 更多</span><span>高门槛 · 更少</span></p>
+            </div>
+            <div class="rt-row">
+              <label class="rt-label" for="rt_beatOpacity">颜色浓淡<output class="rt-val" id="rtv_beatOpacity" for="rt_beatOpacity">10%</output></label>
+              <input class="range rt-range" id="rt_beatOpacity" type="range" min="0" max="20" step="1" value="10" aria-label="鼓点颜色浓淡" aria-describedby="rt_beatOpacity_hint">
+              <p class="rt-hint" id="rt_beatOpacity_hint"><span>更浅、更淡</span><span>更深、更浓</span></p>
+            </div>
+          </fieldset>
+          <fieldset class="rt-group">
+            <legend>镲片 · 细波</legend>
+            <div class="rt-row">
+              <label class="rt-label" for="rt_hatThreshold">触发门槛<output class="rt-val" id="rtv_hatThreshold" for="rt_hatThreshold">0.00180</output></label>
+              <input class="range rt-range" id="rt_hatThreshold" type="range" min="0.0003" max="0.0036" step="0.00001" value="0.0018" aria-label="镲片触发门槛" aria-describedby="rt_hatThreshold_hint">
+              <p class="rt-hint" id="rt_hatThreshold_hint"><span>低门槛 · 更多</span><span>高门槛 · 更少</span></p>
+            </div>
+            <div class="rt-row">
+              <label class="rt-label" for="rt_hatOpacity">颜色浓淡<output class="rt-val" id="rtv_hatOpacity" for="rt_hatOpacity">5%</output></label>
+              <input class="range rt-range" id="rt_hatOpacity" type="range" min="0" max="10" step="1" value="5" aria-label="镲片颜色浓淡" aria-describedby="rt_hatOpacity_hint">
+              <p class="rt-hint" id="rt_hatOpacity_hint"><span>更浅、更淡</span><span>更深、更浓</span></p>
+            </div>
+          </fieldset>
           <button class="pop-item rt-reset" id="rtResetBtn" type="button"><span>重置为默认</span></button>
-          <p class="pop-note">只影响涟漪观感，不改声音；调完自动记住。</p>
+          <p class="pop-note">左边更易触发，右边更少；浓淡只改颜色。调完自动记住，不改声音。</p>
         </div>
       </div>
 
@@ -478,7 +497,7 @@
 </defs></svg>
 
 <script src="app.js" defer></script>
-<script>window.__HANA_BUILD = "1003131689";</script>
+<script>window.__HANA_BUILD = "1003131696";</script>
 <script type="module">
   import { hana } from "./sdk.js";
   window.hana = hana;

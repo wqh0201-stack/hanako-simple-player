@@ -1,0 +1,16 @@
+{
+  "build": "1003131690",
+  "version": "1.1.3",
+  "baseline": "9b07a7d",
+  "sha256": {
+    "ui/LUCIDE-LICENSE.txt": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57",
+    "ui/_build.json": "715f2ea231a29a4dc81cf2b18ba71ac095afe196059c7fef247f359d8ba830a3",
+    "ui/app.js": "0ac5299587f7a3259985fb0d6c0c543e66d3895c4d8f606258f97c6ee15eeae3",
+    "ui/face-portrait.png": "57dceb4e131decc71b5f91e3bb51bb8effebf8cd9f6f8e7947d8aa344951063b",
+    "ui/index.html": "58e7f3e4ea5bcd858f741559f3ad0bfe6c14dfba6e4778494ecb505800112e9b",
+    "ui/sdk.js": "67a99c430c73dbb85477f201c2626bdce3698b5552d5faa8b63abd031657c1b7",
+    "ui/sdk.js.bak-oldplugin-20261014-000637": "79dadec32a64f0a1812b33d576432b2f074c8fa2c615e6a0a8d9ee01e94b8e1a",
+    "ui/standalone.html": "b1e2e49f36e9b0b9576dc32c786354bceb00e80e4f438518e9a2f9d495f526b2",
+    "ui/style.css": "b5250d341f272d10ffefea750edb4347cc9acb7797da8c983f8dafabe28e4089"
+  }
+}

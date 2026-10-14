@@ -1,0 +1,12 @@
+{
+  "commit": "9b07a7d",
+  "build": "1003131689",
+  "sha256": {
+    "ui/app.js": "8c08a1f7c808dd79d2fc3de533464f0cca99378af29c4a9a12eff7acedfdf783",
+    "ui/style.css": "a8cc9bfa1ee878e0164f0fab3261c571d54f10bfc2330ff4c4118e1e6e2c25b2",
+    "ui/sdk.js": "67a99c430c73dbb85477f201c2626bdce3698b5552d5faa8b63abd031657c1b7",
+    "ui/index.html": "41f804fa0e254af68d7231df8c2e0a31ff93dd4793c58ba0e8acaf4a8f8081ba",
+    "ui/standalone.html": "1acf1e2e6b9f33004d9a0f2bb35623c01458521449ad2ac9d9db5d746e236ad9",
+    "ui/_build.json": "5b60877b8e4b06ed76922d11c874df0f32a5f2a10a58a752ae78c738de5bb942"
+  }
+}
