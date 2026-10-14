@@ -1,0 +1,250 @@
+--- /tmp/hana-lyric-lifecycle-baseline-1003131699/app.js	2026-10-14 21:46:36
++++ ui/app.js	2026-10-14 22:08:57
+@@ -3243,7 +3243,8 @@
+     }
+     stopLyricFrames();
+     lyrics.innerHTML = has ? '<div class="lyric-flow">' + html + '</div>' : '';
+-    lyricGeometry = { nodes: Array.from(lyrics.querySelectorAll('.lyric-line')), centers: [], slopes: [], clock: [], content: lyrics.firstElementChild, height: 0, maxScroll: 0, residual: 0, painted: [] };
++    lyricGeometry = { nodes: Array.from(lyrics.querySelectorAll('.lyric-line')), centers: [], slopes: [], clock: [], content: lyrics.firstElementChild, height: 0, width: 0, maxScroll: 0, residual: 0, painted: [] };
++    lyricNeedsMeasure = true;
+     buildLyricClock();
+   }
+ 
+@@ -3295,8 +3296,11 @@
+    * 行数是软约束，空间不足时守住11px；宽高增加也不把字推大。 */
+   var LYRIC_VIEW = { wide: { rows: 10, preference: .85 }, long: { rows: 6, preference: 1.10 }, compact: { rows: 5, preference: .90 } };
+   var LYRIC_WAVE_PEAK = .15;
+-  var lyricGeometry = { nodes: [], centers: [], slopes: [], clock: [], content: null, height: 0, maxScroll: 0, residual: 0, painted: [] };
++  var lyricGeometry = { nodes: [], centers: [], slopes: [], clock: [], content: null, height: 0, width: 0, maxScroll: 0, residual: 0, painted: [] };
+   var lyricFlowRaf = 0, lyricInView = true, lyricFocus = 0;
++  var lyricFrameAt = 0, lyricFrameEpoch = 0, lyricFrameRecoveries = 0;
++  var lyricNeedsMeasure = true, lyricSurfaceStopped = false, lyricHostVisible = true;
++  var lyricMeasureRaf = 0, lyricLifecycleStop = null, lyricEnvelopeStop = null;
+   var lyricReturn = null;
+ 
+   // 单调三次插值：长短句交替、时间间隔不等时，行中心和波峰速度都连续。
+@@ -3391,17 +3395,21 @@
+   function setLyricStyle(node, key, value) {
+     if (node.style.getPropertyValue(key) !== value) node.style.setProperty(key, value);
+   }
+-  function stopLyricFrames() {
++  function cancelLyricFrame() {
+     if (lyricFlowRaf) cancelAnimationFrame(lyricFlowRaf);
+     lyricFlowRaf = 0;
++    lyricFrameAt = 0; lyricFrameEpoch++;
++  }
++  function stopLyricFrames() {
++    cancelLyricFrame();
+     // 只为波峰附近最多十行留合成层；暂停/浏览/离屏时释放，长歌词不会堆满 GPU 层。
+     if (lyricGeometry) lyricGeometry.painted.forEach(function (i) { lyricGeometry.nodes[i].classList.remove('is-flowing'); });
+   }
+   function canFlowLyrics() {
+     var g = lyricGeometry;
+-    var base = !SHOT && !reducedMotion() && !document.hidden && lyricInView && !lyricAlign && state.follow
++    var base = !SHOT && !reducedMotion() && lyricSurfaceVisible() && lyricInView && !lyricAlign && state.follow
+       // 宽窗歌单是局部浮层，露出的歌词继续流动；窄卡队列/搜索整面替换才暂停。
+-      && g.nodes.length > 0 && g.height > 0 && state.page === 'play'
++      && !lyricNeedsMeasure && g.nodes.length > 0 && g.height > 0 && g.width > 0 && g.centers.length === g.nodes.length && state.page === 'play'
+       && player.getAttribute('data-search') !== '1';
+     if (!base) return false;
+     /* 回位动画在跑的时候不看时钟、也不看 seeking：
+@@ -3414,11 +3422,21 @@
+     return !audio.seeking && !audio.paused && !audio.ended && audio.readyState >= 3 && moving;
+   }
+   function startLyricFrames() {
++    // 搬窗时浏览器可能撤掉待执行帧，业务句柄仍非零。媒体事件是低频兜底，
++    // 不增加常驻 timer，也不在正常每帧里读布局。
++    if (lyricFlowRaf && performance.now() - lyricFrameAt > 250) {
++      stopLyricFrames(); lyricFrameRecoveries++;
++    }
+     if (lyricFlowRaf || !canFlowLyrics()) return;
+-    lyricFlowRaf = requestAnimationFrame(function () {
++    var epoch = lyricFrameEpoch;
++    lyricFrameAt = performance.now();
++    var handle = lyricFlowRaf = requestAnimationFrame(function () {
++      if (epoch !== lyricFrameEpoch || handle !== lyricFlowRaf) return;
++      // 先清当前帧，再更新。updateLyricIndex 内的启动入口只会登记下一枚帧。
++      lyricFlowRaf = 0; lyricFrameAt = performance.now();
++      if (!lyricSurfaceVisible()) { stopLyricFrames(); return; }
+       // 保留当前句的语义时间戳；视觉波峰可以提前流向下一句。
+       updateLyricIndex(false);
+-      lyricFlowRaf = 0;
+       startLyricFrames();
+     });
+   }
+@@ -3426,9 +3444,71 @@
+     if (!lyricGeometry) return;
+     stopLyricFrames();
+     if (!canFlowLyrics()) lyricReturn = null;
+-    if (!document.hidden) paintLyricFlow();
++    if (lyricSurfaceVisible()) paintLyricFlow();
++    startLyricFrames();
++  }
++  function lyricSurfaceVisible() {
++    return !lyricSurfaceStopped && lyricHostVisible && !document.hidden;
++  }
++  function refreshLyricVisibility() {
++    // 仅在恢复/无效可见性时读，避免迟到的离屏通知永久阻止启动。
++    var r = lyricWrap.getBoundingClientRect(), f = frame.getBoundingClientRect();
++    lyricInView = lyricSurfaceVisible() && r.width > 0 && r.height > 0
++      && r.right > Math.max(0, f.left) && r.left < Math.min(window.innerWidth, f.right)
++      && r.bottom > Math.max(0, f.top) && r.top < Math.min(window.innerHeight, f.bottom);
++    return lyricInView;
++  }
++  function refreshLyricLayout() {
++    var w = frame.clientWidth, h = frame.clientHeight;
++    if (!(w > 0 && h > 0)) return;
++    var next = w >= 720 ? 'wide' : (h < 560 ? 'compact' : 'long');
++    // 首次挂载/迁窗可能连 frame 的 RO 也漏掉，正预算恢复后按真实形态补布局。
++    if (next !== player.getAttribute('data-layout')) applyLayout();
++  }
++  function recoverLyricSurface() {
++    lyricNeedsMeasure = true;
++    if (!lyricSurfaceVisible()) { stopLyricFrames(); return; }
++    // 可见面恢复只取消帧句柄，不摘合成提示；连续缩放不反复销毁/创建附近行的层。
++    cancelLyricFrame(); refreshLyricLayout(); measureLyricTop();
++    if (!refreshLyricVisibility()) { stopLyricFrames(); return; }
++    sizeLyricPad();
++    // 恢复事件可能早于宿主提交新尺寸，下一帧再测一次；仍为零则等 RO/媒体脉冲。
++    if (!lyricMeasureRaf) lyricMeasureRaf = requestAnimationFrame(function () {
++      lyricMeasureRaf = 0;
++      if (!lyricSurfaceVisible()) return;
++      refreshLyricLayout(); measureLyricTop();
++      if (refreshLyricVisibility()) sizeLyricPad();
++    });
++  }
++  function recoverLyricOnMediaPulse() {
++    var g = lyricGeometry;
++    if (!lyricSurfaceVisible() || !state.follow || lyricAlign || SHOT || reducedMotion()
++      || state.page !== 'play' || player.getAttribute('data-search') === '1'
++      || !g.nodes.length) return;
++    // 真离屏只读矩形，不重排整首歌词；有效稳态完全不读几何。
++    if (lyricNeedsMeasure || !g.height || !g.width) refreshLyricLayout();
++    if (!lyricInView) {
++      if (lyricNeedsMeasure || !g.height || !g.width) measureLyricTop();
++      if (!refreshLyricVisibility()) return;
++    }
++    if (lyricNeedsMeasure || !g.height || !g.width || g.centers.length !== g.nodes.length) {
++      measureLyricTop(); sizeLyricPad();
++    }
+     startLyricFrames();
+   }
++  function subscribeLyricSurface() {
++    var hana = window.hana;
++    if (!hana || lyricSurfaceStopped) return;
++    if (!lyricLifecycleStop && hana.lifecycle && typeof hana.lifecycle.subscribe === 'function') {
++      lyricLifecycleStop = hana.lifecycle.subscribe(function (s) {
++        lyricHostVisible = !s || s.visible !== false;
++        recoverLyricSurface();
++      });
++    }
++    if (!lyricEnvelopeStop && hana.envelope && typeof hana.envelope.subscribe === 'function') {
++      lyricEnvelopeStop = hana.envelope.subscribe(function (s) { if (s) recoverLyricSurface(); });
++    }
++  }
+ 
+   function validLyricOffset(v) {
+     var n = typeof v === 'number' ? v : 0;
+@@ -3446,7 +3526,14 @@
+   function sizeLyricPad() {
+     // 读外层真实预算：滚动容器的旧 padding 会撑住 clientHeight，不能拿它反推新高度。
+     var h = lyricWrap.clientHeight, w = lyrics.clientWidth, g = lyricGeometry;
+-    if (!h || !w || !g) return;
++    if (!g) return;
++    if (!h || !w) {
++      stopLyricFrames();
++      // 零尺寸不是可用的旧几何；换歌/迁窗初期必须留下一次重测需求。
++      g.height = 0; g.width = 0; g.centers = []; g.slopes = []; g.maxScroll = 0;
++      lyricNeedsMeasure = true;
++      return;
++    }
+     var anchor = -1, distance = Infinity, anchorY = 0;
+     if (!state.follow && !lyricAlign) g.centers.forEach(function (y, i) {
+       var d = Math.abs(y - lyrics.scrollTop - g.height / 2);
+@@ -3465,7 +3552,7 @@
+     lyrics.style.paddingTop = pad + 'px';
+     lyrics.style.paddingBottom = pad + 'px';
+     if (g.content) g.content.style.transform = 'none';
+-    g.residual = 0; g.height = h;
++    g.residual = 0; g.height = h; g.width = w;
+     var reserves = g.nodes.map(function (node) { return node.firstElementChild.offsetHeight * g.wavePeak / 2 + 4.5; });
+     g.nodes.forEach(function (node, i) {
+       var reserve = reserves[i];
+@@ -3476,6 +3563,7 @@
+     g.slopes = lyricSlopes(g.centers.map(function (y, i) { return { x: i, y: y }; }), 'x', 'y');
+     // 行高在波峰动效中稳定，滚动范围只需在歌词/字号/容器尺寸重测后更新。
+     g.maxScroll = Math.max(0, lyrics.scrollHeight - h);
++    lyricNeedsMeasure = false;
+     if (anchor >= 0 && g.centers[anchor] != null) lyrics.scrollTop = Math.max(0, g.centers[anchor] - anchorY);
+     if (lyricAlign) { measureAlignLines(); paintLyricAlign(); }
+     else { paintLyricFlow(); startLyricFrames(); }
+@@ -3761,14 +3849,28 @@
+   audio.addEventListener('pause', function () { stopAlignFrames(); paintLyricAlign(); });
+   audio.addEventListener('seeked', paintLyricAlign);
+   ['play', 'playing', 'pause', 'ended', 'seeking', 'seeked', 'emptied', 'waiting'].forEach(function (name) { audio.addEventListener(name, syncLyricFrames); });
+-  document.addEventListener('visibilitychange', syncLyricFrames);
+-  window.addEventListener('pagehide', stopLyricFrames);
++  document.addEventListener('visibilitychange', recoverLyricSurface);
++  window.addEventListener('pagehide', function () {
++    lyricSurfaceStopped = true; lyricNeedsMeasure = true;
++    stopLyricFrames();
++    if (lyricMeasureRaf) { cancelAnimationFrame(lyricMeasureRaf); lyricMeasureRaf = 0; }
++    if (lyricLifecycleStop) { lyricLifecycleStop(); lyricLifecycleStop = null; }
++    if (lyricEnvelopeStop) { lyricEnvelopeStop(); lyricEnvelopeStop = null; }
++  });
++  window.addEventListener('pageshow', function () {
++    lyricSurfaceStopped = false;
++    subscribeLyricSurface(); recoverLyricSurface();
++  });
++  window.addEventListener('hana-sdk-ready', subscribeLyricSurface);
++  window.addEventListener('resize', recoverLyricSurface);
++  audio.addEventListener('timeupdate', recoverLyricOnMediaPulse);
++  audio.addEventListener('playing', recoverLyricOnMediaPulse);
+   if (window.IntersectionObserver) new IntersectionObserver(function (entries) {
+-    lyricInView = entries[0].isIntersecting;
+-    syncLyricFrames();
++    lyricInView = entries[entries.length - 1].isIntersecting;
++    if (lyricInView) recoverLyricSurface(); else syncLyricFrames();
+   }).observe(lyricWrap);
+   if (window.ResizeObserver) new ResizeObserver(function () {
+-    measureLyricTop(); sizeLyricPad();
++    refreshLyricVisibility(); measureLyricTop(); sizeLyricPad();
+   }).observe(lyricWrap);
+   var lyricMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+   if (lyricMotionQuery.addEventListener) lyricMotionQuery.addEventListener('change', syncLyricFrames);
+@@ -7580,6 +7682,8 @@
+     var r = frame.getBoundingClientRect();
+     var w = r.width;
+     var h = r.height;
++    // 迁窗的零预算是挂载中间态，不能当作 compact 提交，丢 RO 时会留下错误形态。
++    if (!(w > 0 && h > 0)) { lyricNeedsMeasure = true; stopLyricFrames(); return; }
+     var next = w >= 720 ? 'wide' : (h < 560 ? 'compact' : 'long');
+     /* 窄容器（真机聊天卡实测 ~312px）控制条走紧凑排布（R6）：
+      * 只收排布不藏控件，断言里 control-visible:* 仍然逐个校验。 */
+@@ -7607,7 +7711,7 @@
+       if ($('firstRun') && !$('firstRun').hidden) fillFirstRunAddHint();
+     }
+     updateStageMetrics();
+-    sizeLyricPad();
++    refreshLyricVisibility(); sizeLyricPad();
+     updateLyricIndex(true);
+     if (lyricAlign) { measureAlignLines(); paintLyricAlign(); }
+     positionSplitHandle();
+@@ -7931,6 +8035,7 @@
+        * 再读存储：读到就套用真名 / 本地目录 / 分隔比例。 */
+       return sdkReady.then(function () {
+         subscribeAudioOwner();
++        subscribeLyricSurface();
+         applyHostTheme();
+         applyTone();                                   // 主题值落地后重判一次底色
+         return Promise.all([readLists(), storeRead(LOCALDIR_KEY), storeRead(SPLIT_KEY), storeRead(RIPPLE_TUNE_KEY)]);
+@@ -8287,6 +8392,9 @@
+     lyricFlowState: function () {
+       return { focus: lyricFocus, index: lyricIndex, raf: !!lyricFlowRaf, follow: state.follow,
+         width: lyrics.clientWidth, height: lyricGeometry.height, residual: lyricGeometry.residual,
++        measuredWidth: lyricGeometry.width, maxScroll: lyricGeometry.maxScroll, needsMeasure: lyricNeedsMeasure,
++        inView: lyricInView, surfaceVisible: lyricSurfaceVisible(), canFlow: canFlowLyrics(),
++        frameAge: lyricFlowRaf ? performance.now() - lyricFrameAt : 0, frameRecoveries: lyricFrameRecoveries,
+         position: lyrics.scrollTop - lyricGeometry.residual, font: parseFloat(lyrics.style.getPropertyValue('--lyric-font')),
+         centers: lyricGeometry.centers.slice(), clock: lyricGeometry.clock.map(function (p) { return { t: p.t, f: p.f }; }) };
+     },

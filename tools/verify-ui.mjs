@@ -1046,6 +1046,293 @@ async function verifyLyricFlow() {
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
 }
 
+/* 生命周期故障注入只放在测试文档：真实 ui/ + 媒体时钟，模拟迁窗丢帧、迟到的
+ * IntersectionObserver 和首次零尺寸。它不是 Electron 原生拖窗验收。 */
+async function verifyLyricLifecycle() {
+  await fetch(`${BASE}${API}/__fixture/reset?mode=lyric-flow&appSurfaceSession=fake-ticket`);
+  const page = await newPage({ teardown: true });
+  await page.evaluateOnNewDocument(() => {
+    const fault = window.__lyricLifecycleFault = { dropNext: false, dropped: 0, zeroHeight: false, muteObservers: false, observer: null, pending: new Set(), maxPending: 0 };
+    const raf = window.requestAnimationFrame.bind(window), cancel = window.cancelAnimationFrame.bind(window);
+    window.cancelAnimationFrame = id => { fault.pending.delete(id); cancel(id); };
+    window.requestAnimationFrame = function (fn) {
+      const lyric = /startLyricFrames/.test(new Error().stack || '');
+      const id = raf(at => { if (lyric) fault.pending.delete(id); fn(at); });
+      if (lyric) { fault.pending.add(id); fault.maxPending = Math.max(fault.maxPending, fault.pending.size); }
+      if (lyric && fault.dropNext) {
+        fault.dropNext = false; fault.dropped++; fault.staleFrame = fn;
+        window.cancelAnimationFrame(id);
+      }
+      return id;
+    };
+    const height = Object.getOwnPropertyDescriptor(Element.prototype, 'clientHeight');
+    Object.defineProperty(Element.prototype, 'clientHeight', { configurable: true, get() {
+      return fault.zeroHeight && this.id === 'lyricWrap' ? 0 : height.get.call(this);
+    } });
+    const IO = window.IntersectionObserver;
+    window.IntersectionObserver = class extends IO {
+      constructor(fn, opts) {
+        super((entries, observer) => { if (!fault.muteObservers) fn(entries, observer); }, opts);
+        this.lyricCallback = fn;
+      }
+      observe(el) {
+        if (el.id === 'lyricWrap') fault.observer = { callback: this.lyricCallback, element: el };
+        return super.observe(el);
+      }
+    };
+    const RO = window.ResizeObserver;
+    window.ResizeObserver = class extends RO {
+      constructor(fn) { super((entries, observer) => { if (!fault.muteObservers) fn(entries, observer); }); }
+    };
+    fault.intersection = visible => {
+      const o = fault.observer;
+      o.callback([{ target: o.element, isIntersecting: visible, time: performance.now() }]);
+    };
+    fault.staleOffscreen = () => fault.intersection(false);
+  });
+  const info = () => page.evaluate(() => ({ ...window.__playerDebug.lyricFlowState(),
+    media: document.querySelector('audio').currentTime, paused: document.querySelector('audio').paused,
+    layout: document.getElementById('player').getAttribute('data-layout'), dropped: window.__lyricLifecycleFault.dropped,
+    pendingFrames: window.__lyricLifecycleFault.pending.size, maxPendingFrames: window.__lyricLifecycleFault.maxPending }));
+  const ready = async () => {
+    await page.waitForFunction(() => window.__playerDebug && document.querySelectorAll('.lyric-line').length === 7
+      && !document.querySelector('audio').paused && !document.querySelector('audio').seeking, { timeout: 8000 });
+  };
+  const seek = async t => {
+    await page.evaluate(t => { document.querySelector('audio').currentTime = t; }, t);
+    await page.waitForFunction(() => !document.querySelector('audio').seeking);
+    await sleep(300); // 排除新文档 seek 后真实媒体缓冲/输出启动的短暂停留
+  };
+  // 只读行内波峰与内容层 transform，采样本身不触发布局。
+  const sample = async () => {
+    const frames = await page.evaluate(() => new Promise(resolve => {
+      const result = [], start = performance.now(), a = document.querySelector('audio');
+      const line = document.querySelector('.lyric-line[data-i="2"]'), content = document.querySelector('.lyric-flow');
+      function tick(at) {
+        result.push({ media: a.currentTime, scale: line.style.getPropertyValue('--lyric-scale'),
+          scroll: document.getElementById('lyrics').scrollTop, residual: content.style.transform });
+        if (at - start < 900) requestAnimationFrame(tick); else resolve(result);
+      }
+      requestAnimationFrame(tick);
+    }));
+    const changes = frames.slice(1).filter((f, i) => f.scale !== frames[i].scale).length;
+    const scrollChanges = frames.slice(1).filter((f, i) => f.scroll !== frames[i].scroll || f.residual !== frames[i].residual).length;
+    return { frames: frames.length, changes, scrollChanges, movingRatio: changes / (frames.length - 1),
+      scrollingRatio: scrollChanges / (frames.length - 1), mediaAdvance: frames.at(-1).media - frames[0].media, state: await info() };
+  };
+  const flowing = s => s.frames > 25 && s.movingRatio > .85 && s.scrollingRatio > .85 && s.mediaAdvance > .7 && s.state.raf;
+  const rounds = [];
+  await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await clickTab(page, 'imp:1');
+  await page.evaluate(() => document.querySelector('#queueList .q-hit').click());
+  await ready();
+  for (let round = 1; round <= 2; round++) {
+    await seek(3.4);
+    await page.evaluate(() => window.__playerDebug.persistNow());
+    // 新文档的 detach/reattach，不复用旧文档变量或替换业务函数。
+    await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
+    await page.goto(`${UI_BASE}/standalone.html?appSurfaceSession=fake-ticket&round=${round}`, { waitUntil: 'domcontentloaded' });
+    await ready(); await seek(3.4);
+    const detached = await sample();
+    assert(`lyrics-lifecycle-detach-${round}-restores-flow`, detached.state.layout === 'wide' && flowing(detached), JSON.stringify(detached));
+    // 浏览器取消了帧，而业务变量还持有句柄。音乐与高亮继续，不能靠切歌/改比例才解锁。
+    await page.evaluate(() => { window.__lyricLifecycleFault.dropNext = true; });
+    await page.waitForFunction(() => window.__lyricLifecycleFault.dropped === 1);
+    const before = await info();
+    await sleep(600);
+    const healed = await sample();
+    assert(`lyrics-lifecycle-detach-${round}-lost-frame-self-heals`, flowing(healed), JSON.stringify(healed));
+    await sleep(1600);
+    const semantic = await info();
+    assert(`lyrics-lifecycle-detach-${round}-media-and-highlight-continue`, !semantic.paused && semantic.media > before.media + 2 && semantic.index > before.index,
+      JSON.stringify({ before, semantic }));
+    // 第二次失帧后立即调比例：wide→compact / wide→long，两条原有救援入口都保留。
+    await seek(3.4);
+    await page.evaluate(() => { window.__lyricLifecycleFault.dropNext = true; });
+    await page.waitForFunction(() => window.__lyricLifecycleFault.dropped === 2);
+    const size = round === 1 ? { width: 531, height: 451 } : { width: 465, height: 930 };
+    const layout = round === 1 ? 'compact' : 'long';
+    await page.setViewport({ ...size, deviceScaleFactor: 1 });
+    await page.waitForFunction(l => document.getElementById('player').getAttribute('data-layout') === l, {}, layout);
+    await sleep(120);
+    const resized = await sample();
+    const measured = await page.$eval('#lyricWrap', el => el.clientHeight);
+    assert(`lyrics-lifecycle-detach-${round}-ratio-${layout}-recovers`, flowing(resized) && resized.state.height === measured,
+      JSON.stringify({ resized, measured }));
+    // 回到 wide 后仍工作，不能只把故障藏进另一个形态。
+    await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
+    await seek(3.4);
+    const wideAgain = await sample();
+    assert(`lyrics-lifecycle-detach-${round}-ratio-back-wide-keeps-flow`, wideAgain.state.layout === 'wide' && flowing(wideAgain), JSON.stringify(wideAgain));
+    await page.evaluate(() => window.__playerDebug.persistNow());
+    await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
+    await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket&attached=${round}`, { waitUntil: 'domcontentloaded' });
+    await ready(); await seek(3.4);
+    const attached = await sample();
+    assert(`lyrics-lifecycle-reattach-${round}-restores-flow`, attached.state.layout === 'long' && flowing(attached), JSON.stringify(attached));
+    rounds.push({ round, detached, healed, semantic, resized, wideAgain, attached });
+  }
+  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
+  await seek(3.4);
+  await page.evaluate(() => window.__lyricLifecycleFault.staleOffscreen());
+  await sleep(450);
+  const visibleAgain = await sample();
+  assert('lyrics-lifecycle-stale-offscreen-recovers-without-resize', flowing(visibleAgain), JSON.stringify(visibleAgain));
+  await seek(3.4);
+  await page.evaluate(() => {
+    window.__lyricHintReadds = 0;
+    window.__lyricHintObserver = new MutationObserver(entries => {
+      for (const e of entries) if (!(e.oldValue || '').split(/\s+/).includes('is-flowing') && e.target.classList.contains('is-flowing')) window.__lyricHintReadds++;
+    });
+    document.querySelectorAll('.lyric-line').forEach(el => window.__lyricHintObserver.observe(el, { attributes: true, attributeFilter: ['class'], attributeOldValue: true }));
+  });
+  // 先恢复真实 IO，再采正常连续宽窗重测的合成提示；波峰在7行夹具内，不会自然移出附近行。
+  await page.evaluate(() => window.__lyricLifecycleFault.intersection(true));
+  await sleep(100);
+  await page.evaluate(() => { window.__lyricHintReadds = 0; });
+  for (const width of [1080, 1100, 1040]) { await page.setViewport({ width, height: 780, deviceScaleFactor: 1 }); await sleep(100); }
+  const hints = await page.evaluate(() => {
+    window.__lyricHintObserver.disconnect();
+    return { readds: window.__lyricHintReadds, flowing: document.querySelectorAll('.lyric-line.is-flowing').length };
+  });
+  assert('lyrics-lifecycle-resize-keeps-compositor-hints-stable', hints.readds === 0 && hints.flowing > 0 && hints.flowing <= 10, JSON.stringify(hints));
+  // 每个故障用例独立准备；给旧实现补回已注入的 IO false，避免靠下一首 ended 才走到后续断言。
+  await page.evaluate(() => window.__lyricLifecycleFault.intersection(true));
+  // 同文档恢复信号必须清掉失效句柄，并重测；不依赖新的播放事件。
+  await seek(3.4);
+  await page.evaluate(() => { window.__lyricLifecycleFault.dropNext = true; });
+  await page.waitForFunction(() => window.__lyricLifecycleFault.dropped === 1);
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
+  const shown = await sample();
+  assert('lyrics-lifecycle-pageshow-restarts-without-new-play-event', flowing(shown), JSON.stringify(shown));
+  // 迟到的旧帧不能创建第二条循环；之后 seek 独立准备下一条用例，旧实现也能走到断言。
+  await page.evaluate(() => window.__lyricLifecycleFault.staleFrame(performance.now()));
+  await seek(3.4);
+  const loop = await info();
+  assert('lyrics-lifecycle-stale-callback-never-duplicates-loop', loop.pendingFrames === 1 && loop.maxPendingFrames === 1, JSON.stringify(loop));
+  await page.evaluate(() => { window.__lyricLifecycleFault.dropNext = true; });
+  await page.waitForFunction(() => window.__lyricLifecycleFault.dropped === 2);
+  await page.evaluate(() => document.getElementById('nextBtn').click());
+  await ready(); await seek(3.4);
+  const switched = await sample();
+  assert('lyrics-lifecycle-track-change-does-not-inherit-stale-loop', flowing(switched), JSON.stringify(switched));
+  // 走打包在仓库里的真实 SDK 接收入口，假宿主只发公开 event，不替换业务函数/SDK。
+  const hostEvent = (type, payload) => page.evaluate(({ type, payload }) => {
+    window.postMessage({ protocol: 'hana.plugin.ui', version: 1, kind: 'event', id: 'fixture-lifecycle', type, payload }, location.origin);
+  }, { type, payload });
+  await hostEvent('hana.surface.runtime.changed', { visible: false, slot: 'card', reason: 'fixture-hidden' });
+  await page.waitForFunction(() => window.hana.lifecycle.getSnapshot().visible === false);
+  await sleep(350);
+  const hostHidden = await info();
+  assert('lyrics-lifecycle-sdk-hidden-stops-flow-despite-local-rect', !hostHidden.raf, JSON.stringify(hostHidden));
+  await page.setViewport({ width: 1041, height: 780, deviceScaleFactor: 1 });
+  await sleep(100);
+  const hiddenResized = await info();
+  assert('lyrics-lifecycle-sdk-hidden-resize-does-not-revive', !hiddenResized.raf, JSON.stringify(hiddenResized));
+  await hostEvent('hana.surface.runtime.changed', { visible: true, slot: 'card', reason: 'fixture-detached-visible' });
+  await page.waitForFunction(() => window.hana.lifecycle.getSnapshot().visible === true);
+  await seek(3.4);
+  const hostShown = await sample();
+  assert('lyrics-lifecycle-sdk-visible-remeasures-and-restarts', flowing(hostShown), JSON.stringify(hostShown));
+  await seek(3.4);
+  const drops = await page.evaluate(() => window.__lyricLifecycleFault.dropped);
+  await page.evaluate(() => { window.__lyricLifecycleFault.dropNext = true; });
+  await page.waitForFunction(n => window.__lyricLifecycleFault.dropped === n + 1, {}, drops);
+  await hostEvent('hana.surface.envelope.changed', { width: { mode: 'fixed', value: 1041 }, height: { mode: 'fixed', value: 780 } });
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const envelope = await info();
+  assert('lyrics-lifecycle-sdk-envelope-clears-stale-handle-immediately', envelope.pendingFrames === 1, JSON.stringify(envelope));
+  // 首次 mount 尚无尺寸，随后变为可读尺寸，但没有新的 ResizeObserver 通知。
+  await page.evaluateOnNewDocument(() => {
+    window.__lyricLifecycleFault.zeroHeight = true;
+    const mount = new MutationObserver(() => {
+      const frame = document.getElementById('frame');
+      if (frame) { frame.style.display = 'none'; mount.disconnect(); }
+    });
+    mount.observe(document, { childList: true, subtree: true });
+  });
+  await page.evaluate(() => window.__playerDebug.persistNow());
+  await page.goto(`${UI_BASE}/standalone.html?appSurfaceSession=fake-ticket&zero=1`, { waitUntil: 'domcontentloaded' });
+  await ready(); await seek(3.4);
+  const zero = await info();
+  assert('lyrics-lifecycle-zero-mount-has-no-flow', !zero.raf && zero.centers.length === 0, JSON.stringify(zero));
+  await page.evaluate(() => {
+    window.__lyricLifecycleFault.zeroHeight = false;
+    window.__lyricLifecycleFault.muteObservers = true;
+    document.getElementById('frame').style.display = '';
+  });
+  await sleep(600);
+  const positive = await sample();
+  assert('lyrics-lifecycle-positive-budget-remeasures-and-starts', flowing(positive) && positive.state.height > 0 && positive.state.centers.length === 7 && positive.state.layout === 'wide',
+    JSON.stringify(positive));
+  // 真实外层尺寸归零，再变为正常尺寸；刻意漏掉恢复那次 RO/IO，媒体脉冲需重新测量。
+  await page.evaluate(() => { window.__lyricLifecycleFault.muteObservers = false; document.getElementById('frame').style.display = 'none'; });
+  await sleep(150);
+  const zeroFrame = await info();
+  assert('lyrics-lifecycle-real-zero-frame-invalidates-geometry', !zeroFrame.raf && zeroFrame.height === 0 && zeroFrame.layout === 'wide', JSON.stringify(zeroFrame));
+  await page.evaluate(() => {
+    window.__lyricLifecycleFault.muteObservers = true;
+    document.getElementById('frame').style.display = '';
+  });
+  await sleep(600);
+  const frameRestored = await sample();
+  assert('lyrics-lifecycle-real-frame-restores-with-missed-observers', flowing(frameRestored) && frameRestored.state.height > 0 && frameRestored.state.layout === 'wide', JSON.stringify(frameRestored));
+  // 暂停时同样可能经历零预算；playing 入口重测，不能沿用暂停前的失效几何。
+  await page.evaluate(() => {
+    window.__lyricLifecycleFault.muteObservers = false;
+    document.querySelector('audio').pause();
+    document.getElementById('frame').style.display = 'none';
+  });
+  await sleep(150);
+  await page.evaluate(() => {
+    window.__lyricLifecycleFault.muteObservers = true;
+    document.getElementById('frame').style.display = '';
+    window.__playerDebug.requestPlay('fixture');
+  });
+  await seek(3.4);
+  const pausedGeometry = await sample();
+  assert('lyrics-lifecycle-paused-zero-budget-play-remeasures', flowing(pausedGeometry) && pausedGeometry.state.layout === 'wide', JSON.stringify(pausedGeometry));
+  // 恢复夹具到正常 observer 状态，保护性测试独立于前面的故障是否被救回。
+  await page.evaluate(() => { window.__lyricLifecycleFault.muteObservers = false; window.__lyricLifecycleFault.intersection(true); });
+  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
+  await seek(3.4);
+  // 真离屏与暂停仍停，恢复后重新流动，不用常驻定时器维持动画。
+  await page.evaluate(() => { document.getElementById('scene').style.transform = 'translateX(200vw)'; });
+  await sleep(650);
+  const offscreen = await info();
+  assert('lyrics-lifecycle-real-offscreen-remains-stopped', !offscreen.raf, JSON.stringify(offscreen));
+  await page.evaluate(() => { document.getElementById('scene').style.transform = 'none'; });
+  await seek(3.4);
+  const returned = await sample();
+  assert('lyrics-lifecycle-real-offscreen-return-restarts', flowing(returned), JSON.stringify(returned));
+  await page.evaluate(() => document.querySelector('audio').pause());
+  const paused = await info();
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
+  await sleep(400);
+  const stillPaused = await info();
+  assert('lyrics-lifecycle-recovery-does-not-start-paused-media', !stillPaused.raf && stillPaused.paused && Math.abs(stillPaused.position - paused.position) < 1,
+    JSON.stringify({ paused, stillPaused }));
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })));
+  await hostEvent('hana.surface.runtime.changed', { visible: true, slot: 'card', reason: 'fixture-hidden-document' });
+  await sleep(100);
+  const hiddenDocument = await info();
+  assert('lyrics-lifecycle-pagehide-cleanup-cannot-revive-old-document', !hiddenDocument.raf && hiddenDocument.surfaceVisible === false && hiddenDocument.pendingFrames === 0, JSON.stringify(hiddenDocument));
+  await page.evaluate(() => {
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+  });
+  await sleep(200);
+  const restoredDocument = await info();
+  assert('lyrics-lifecycle-repeated-pageshow-rebinds-without-autoplay', restoredDocument.surfaceVisible !== false && !restoredDocument.raf && restoredDocument.paused && restoredDocument.maxPendingFrames <= 1, JSON.stringify(restoredDocument));
+  report.lyricLifecycle = { rounds, visibleAgain, hints, zero, positive, shown, loop, switched, hostHidden, hiddenResized, hostShown, envelope, zeroFrame, frameRestored, pausedGeometry, offscreen, returned, stillPaused, hiddenDocument, restoredDocument,
+    probe: 'headless Chrome, real document navigation + media; lost native rAF and delayed/zero observer fault injection, not native Hana detach' };
+  await page.screenshot({ path: path.join(outDir, 'lyric-lifecycle-wide.png') });
+  await page.evaluate(() => window.__playerDebug.pauseAll());
+  await page.close(); await sleep(300);
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+}
+
 /* 同一段真媒体时钟对照：rAF 采样只读行内样式，不读布局，避免探针自己迫使重排。
  * CDP 时间仅作为本机诊断记录，不拿机器相关的毫秒数作回归门槛。 */
 async function verifyLyricPerformance() {
@@ -1319,6 +1606,13 @@ async function verifyMoodLists() {
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
 }
 if (!process.argv.includes('--ripple-only') && !process.argv.includes('--song-only')) {
+if (process.argv.includes('--lyric-lifecycle-only')) {
+  await verifyLyricLifecycle();
+  fs.writeFileSync(path.join(outDir, 'verify-lyric-lifecycle.json'), JSON.stringify(report, null, 2));
+  console.log(JSON.stringify({ assertions: `${report.assertions.filter(a => a.ok).length}/${report.assertions.length}`, failed: report.assertions.filter(a => !a.ok), runtimeErrors: report.runtimeErrors, outDir }, null, 2));
+  await browser.close(); server.closeAllConnections(); server.close();
+  process.exit(report.assertions.some(a => !a.ok) || report.runtimeErrors.length ? 1 : 0);
+}
 if (process.argv.includes('--lyric-perf-only')) {
   await verifyLyricPerformance();
   await verifySlowLyricFlow();
@@ -1347,6 +1641,7 @@ if (process.argv.includes('--surface-motion-only')) {
   process.exit(report.assertions.some((a) => !a.ok) || report.runtimeErrors.length ? 1 : 0);
 }
 await verifyLyricFlow();
+await verifyLyricLifecycle();
 await verifyLyricPerformance();
 await verifySlowLyricFlow();
 if (process.argv.includes('--lyrics-only')) {

@@ -1,0 +1,198 @@
+{
+  "selfCheck": [],
+  "wiring": {},
+  "four": {},
+  "darkFallback": {},
+  "runtimeErrors": [],
+  "expectedProbes": [
+    "http 404 http://127.0.0.1:57455/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:57455/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:57455/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:57455/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:57455/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:57455/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED"
+  ],
+  "assertions": [
+    {
+      "name": "lyrics-perf-closed-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":109,\"changed\":103,\"movingRatio\":0.9537037037037037,\"medianFrameMs\":16.699999999999818,\"p95FrameMs\":16.700000000000273,\"mediaAdvance\":1.6577439999999997,\"geometry\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":127.21799832058736,\"focus\":2.0413985762608777},\"paint\":null,\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":133,\"LayoutDuration\":0.000829,\"RecalcStyleDuration\":0.020215,\"ScriptDuration\":0.027268,\"TaskDuration\":0.096779}}"
+    },
+    {
+      "name": "lyrics-perf-opened-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":110,\"changed\":103,\"movingRatio\":0.944954128440367,\"medianFrameMs\":16.699999999999818,\"p95FrameMs\":16.800000000000182,\"mediaAdvance\":1.6759789999999999,\"geometry\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":127.38793292644732,\"focus\":2.044565380259809},\"paint\":null,\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":221,\"LayoutDuration\":0.00071,\"RecalcStyleDuration\":0.021032,\"ScriptDuration\":0.022119,\"TaskDuration\":0.102277}}"
+    },
+    {
+      "name": "lyrics-perf-reclosed-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":109,\"changed\":101,\"movingRatio\":0.9351851851851852,\"medianFrameMs\":16.699999999999818,\"p95FrameMs\":16.799999999999272,\"mediaAdvance\":1.65746,\"geometry\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":126.94938521893505,\"focus\":2.0363914515674595},\"paint\":null,\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":131,\"LayoutDuration\":0.000552,\"RecalcStyleDuration\":0.018947,\"ScriptDuration\":0.020976,\"TaskDuration\":0.084218}}"
+    },
+    {
+      "name": "lyrics-drawer-preserves-reading-geometry",
+      "ok": true,
+      "detail": "{\"closed\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":127.21799832058736,\"focus\":2.0413985762608777},\"opened\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":127.38793292644732,\"focus\":2.044565380259809}}"
+    },
+    {
+      "name": "lyrics-drawer-has-no-per-frame-layout",
+      "ok": true,
+      "detail": "{\"LayoutCount\":8,\"RecalcStyleCount\":221,\"LayoutDuration\":0.00071,\"RecalcStyleDuration\":0.021032,\"ScriptDuration\":0.022119,\"TaskDuration\":0.102277}"
+    },
+    {
+      "name": "lyrics-long-wrapped-line-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":109,\"changed\":100,\"movingRatio\":0.9259259259259259,\"medianFrameMs\":16.69999999999891,\"p95FrameMs\":16.700000000000728,\"mediaAdvance\":1.6560070000000002,\"geometry\":{\"raf\":true,\"width\":268,\"height\":410,\"position\":128.76528973832927,\"focus\":2.0318274051831895},\"paint\":null,\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":216,\"LayoutDuration\":0.001716,\"RecalcStyleDuration\":0.055498,\"ScriptDuration\":0.056994,\"TaskDuration\":0.29835}}"
+    },
+    {
+      "name": "lyrics-long-card-has-no-per-frame-layout",
+      "ok": true,
+      "detail": "{\"LayoutCount\":8,\"RecalcStyleCount\":216,\"LayoutDuration\":0.001716,\"RecalcStyleDuration\":0.055498,\"ScriptDuration\":0.056994,\"TaskDuration\":0.29835}"
+    },
+    {
+      "name": "lyrics-compositor-hints-are-bounded-and-release-on-pause",
+      "ok": true,
+      "detail": "{\"layersOn\":7,\"layersOff\":0}"
+    },
+    {
+      "name": "queue-equalizer-retains-three-svg-strokes-without-path-animation",
+      "ok": true,
+      "detail": "{\"paths\":3,\"svgTransforms\":[\"none\",\"none\",\"none\"],\"animations\":3}"
+    },
+    {
+      "name": "lyrics-compact-queue-replaces-scene-and-stops-frames",
+      "ok": true,
+      "detail": "{\"page\":\"queue\",\"raf\":false}"
+    },
+    {
+      "name": "lyrics-slow-bilingual-long-line-is-wrapped",
+      "ok": true,
+      "detail": "{\"frames\":146,\"moving\":134,\"maxStepPx\":0.21478271484375,\"travelPx\":25.177886962890625,\"firstMedia\":21.5,\"lastMedia\":23.651481,\"fit\":{\"height\":51,\"lineHeight\":25.575},\"externalLrc\":true}"
+    },
+    {
+      "name": "lyrics-slow-bilingual-line-moves-at-subpixel-steps",
+      "ok": true,
+      "detail": "{\"frames\":146,\"moving\":134,\"maxStepPx\":0.21478271484375,\"travelPx\":25.177886962890625,\"firstMedia\":21.5,\"lastMedia\":23.651481,\"fit\":{\"height\":51,\"lineHeight\":25.575},\"externalLrc\":true}"
+    }
+  ],
+  "refine": [],
+  "narrowSelfCheck": [],
+  "theme": {},
+  "ambient": {},
+  "lyricPerformance": {
+    "closed": {
+      "frames": 109,
+      "changed": 103,
+      "movingRatio": 0.9537037037037037,
+      "medianFrameMs": 16.699999999999818,
+      "p95FrameMs": 16.700000000000273,
+      "mediaAdvance": 1.6577439999999997,
+      "geometry": {
+        "raf": true,
+        "width": 479,
+        "height": 571,
+        "position": 127.21799832058736,
+        "focus": 2.0413985762608777
+      },
+      "paint": null,
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 133,
+        "LayoutDuration": 0.000829,
+        "RecalcStyleDuration": 0.020215,
+        "ScriptDuration": 0.027268,
+        "TaskDuration": 0.096779
+      }
+    },
+    "opened": {
+      "frames": 110,
+      "changed": 103,
+      "movingRatio": 0.944954128440367,
+      "medianFrameMs": 16.699999999999818,
+      "p95FrameMs": 16.800000000000182,
+      "mediaAdvance": 1.6759789999999999,
+      "geometry": {
+        "raf": true,
+        "width": 479,
+        "height": 571,
+        "position": 127.38793292644732,
+        "focus": 2.044565380259809
+      },
+      "paint": null,
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 221,
+        "LayoutDuration": 0.00071,
+        "RecalcStyleDuration": 0.021032,
+        "ScriptDuration": 0.022119,
+        "TaskDuration": 0.102277
+      }
+    },
+    "reclosed": {
+      "frames": 109,
+      "changed": 101,
+      "movingRatio": 0.9351851851851852,
+      "medianFrameMs": 16.699999999999818,
+      "p95FrameMs": 16.799999999999272,
+      "mediaAdvance": 1.65746,
+      "geometry": {
+        "raf": true,
+        "width": 479,
+        "height": 571,
+        "position": 126.94938521893505,
+        "focus": 2.0363914515674595
+      },
+      "paint": null,
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 131,
+        "LayoutDuration": 0.000552,
+        "RecalcStyleDuration": 0.018947,
+        "ScriptDuration": 0.020976,
+        "TaskDuration": 0.084218
+      }
+    },
+    "long": {
+      "frames": 109,
+      "changed": 100,
+      "movingRatio": 0.9259259259259259,
+      "medianFrameMs": 16.69999999999891,
+      "p95FrameMs": 16.700000000000728,
+      "mediaAdvance": 1.6560070000000002,
+      "geometry": {
+        "raf": true,
+        "width": 268,
+        "height": 410,
+        "position": 128.76528973832927,
+        "focus": 2.0318274051831895
+      },
+      "paint": null,
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 216,
+        "LayoutDuration": 0.001716,
+        "RecalcStyleDuration": 0.055498,
+        "ScriptDuration": 0.056994,
+        "TaskDuration": 0.29835
+      }
+    },
+    "compact": {
+      "page": "queue",
+      "raf": false
+    },
+    "eqDisabled": false,
+    "probe": "headless Chrome, synthetic silent media, CSS scale sample without layout reads; CDP renderer metrics"
+  },
+  "slowLyricFlow": {
+    "frames": 146,
+    "moving": 134,
+    "maxStepPx": 0.21478271484375,
+    "travelPx": 25.177886962890625,
+    "firstMedia": 21.5,
+    "lastMedia": 23.651481,
+    "fit": {
+      "height": 51,
+      "lineHeight": 25.575
+    },
+    "externalLrc": true
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "head": "e8a97aca54dabcea33005cfe5bb4bf5cb4f1fedd",
+  "status": " M docs/CHANGELOG.md\n M docs/PITFALLS.md\n M docs/TODO.md\n M docs/player-ui/README.md\n M tools/verify-ui.mjs\n M ui/_build.json\n M ui/app.js\n M ui/index.html\n M ui/standalone.html\n M ui/style.css\n?? docs/player-ui/handoffs/PLAYLIST-PERF-ACCEPT-1003131699.md\n?? docs/player-ui/handoffs/PLAYLIST-PERF-DONE.md\n?? docs/player-ui/handoffs/lyric-lifecycle-20261014/\n?? docs/player-ui/handoffs/playlist-perf-20261014/\n",
+  "sha256": {
+    "docs/CHANGELOG.md": "2d9e8a023325e40d62c0a66a9dd9a1a73795659f380c15994c937ab2ef5bf60d",
+    "docs/PITFALLS.md": "f107496510566637143e3187482a71f2deaa5ce695375d5c001cae010bed51ca",
+    "docs/TODO.md": "bccdbeb9f5db175ed4ce74f0713d86e3fd582c819ccd093996ce7e1979950956",
+    "docs/player-ui/README.md": "c00317d10302854b88c1b3529444335527d6d98e1cc4b559a59ad7f4c338a5d3",
+    "tools/verify-ui.mjs": "cc089a64fbd1bddc5edb1150896dfb661ac5a1da3ea2c95d50a7140a03df6e31",
+    "ui/_build.json": "ee211a686ad8098f2d921465292249bfbf4529e43cfb2a2b3ce6050d82e0722e",
+    "ui/app.js": "77b069f9bba95e2c54e3f3ccce65c9ab5ed4bbb94e6d052088dcd13d14a153a1",
+    "ui/index.html": "a05de2c8ae8792f4ff4a2088885c7af107e4299f162d3da32ccf586df4299537",
+    "ui/standalone.html": "842291997a2e3c13a88cb7ddf83318ab2fe7b3c879185b5fc416a9ed7d6a4dfa",
+    "ui/style.css": "23cbdc90b86d2868534d4fec695b78ca2376be0ad9d4abdf3f99d081d3400428"
+  },
+  "snapshot": "/tmp/hana-lyric-lifecycle-baseline-1003131699"
+}

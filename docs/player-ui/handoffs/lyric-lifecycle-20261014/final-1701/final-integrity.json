@@ -1,0 +1,13 @@
+{
+  "build": "1003131701",
+  "sourceMatchesFrozen": true,
+  "installedStill1699": true,
+  "cssBaselineRetained": true,
+  "inFlightDocLinesRetained": {
+    "docs/CHANGELOG.md": true,
+    "docs/PITFALLS.md": true,
+    "docs/TODO.md": true,
+    "docs/player-ui/README.md": true
+  },
+  "status": " M docs/CHANGELOG.md\n M docs/PITFALLS.md\n M docs/TODO.md\n M docs/player-ui/README.md\n M tools/verify-ui.mjs\n M ui/_build.json\n M ui/app.js\n M ui/index.html\n M ui/standalone.html\n M ui/style.css\n?? docs/player-ui/handoffs/LYRIC-LIFECYCLE-DONE-1003131700.md\n?? docs/player-ui/handoffs/LYRIC-LIFECYCLE-DONE-1003131701.md\n?? docs/player-ui/handoffs/LYRIC-LIFECYCLE-REVIEW.md\n?? docs/player-ui/handoffs/PLAYLIST-PERF-ACCEPT-1003131699.md\n?? docs/player-ui/handoffs/PLAYLIST-PERF-DONE.md\n?? docs/player-ui/handoffs/lyric-lifecycle-20261014/\n?? docs/player-ui/handoffs/playlist-perf-20261014/\n"
+}

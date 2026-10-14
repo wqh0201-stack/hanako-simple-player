@@ -1,0 +1,328 @@
+{
+  "build": "1003131701",
+  "lifecycle": {
+    "passed": 31,
+    "total": 31
+  },
+  "lyrics": {
+    "passed": 118,
+    "total": 118,
+    "runtimeErrors": []
+  },
+  "perf": {
+    "passed": 12,
+    "total": 12,
+    "runtimeErrors": [],
+    "stages": {
+      "closed": {
+        "frames": 109,
+        "changed": 103,
+        "movingRatio": 0.9537037037037037,
+        "LayoutCount": 8,
+        "RecalcStyleCount": 133,
+        "medianFrameMs": 16.699999999999818
+      },
+      "opened": {
+        "frames": 110,
+        "changed": 100,
+        "movingRatio": 0.9174311926605505,
+        "LayoutCount": 8,
+        "RecalcStyleCount": 218,
+        "medianFrameMs": 16.699999999999818
+      },
+      "reclosed": {
+        "frames": 109,
+        "changed": 103,
+        "movingRatio": 0.9537037037037037,
+        "LayoutCount": 8,
+        "RecalcStyleCount": 133,
+        "medianFrameMs": 16.699999999999818
+      },
+      "long": {
+        "frames": 109,
+        "changed": 101,
+        "movingRatio": 0.9351851851851852,
+        "LayoutCount": 8,
+        "RecalcStyleCount": 218,
+        "medianFrameMs": 16.69999999999891
+      }
+    },
+    "slow": {
+      "frames": 145,
+      "moving": 135,
+      "maxStepPx": 0.281707763671875,
+      "travelPx": 33.601898193359375,
+      "firstMedia": 21.5,
+      "lastMedia": 23.678277,
+      "fit": {
+        "height": 77,
+        "lineHeight": 25.575
+      },
+      "externalLrc": false
+    }
+  },
+  "negative": {
+    "passed": 19,
+    "total": 31,
+    "failed": [
+      "lyrics-lifecycle-detach-1-lost-frame-self-heals",
+      "lyrics-lifecycle-detach-2-lost-frame-self-heals",
+      "lyrics-lifecycle-stale-offscreen-recovers-without-resize",
+      "lyrics-lifecycle-pageshow-restarts-without-new-play-event",
+      "lyrics-lifecycle-sdk-hidden-stops-flow-despite-local-rect",
+      "lyrics-lifecycle-sdk-hidden-resize-does-not-revive",
+      "lyrics-lifecycle-sdk-envelope-clears-stale-handle-immediately",
+      "lyrics-lifecycle-positive-budget-remeasures-and-starts",
+      "lyrics-lifecycle-real-zero-frame-invalidates-geometry",
+      "lyrics-lifecycle-real-frame-restores-with-missed-observers",
+      "lyrics-lifecycle-paused-zero-budget-play-remeasures",
+      "lyrics-lifecycle-pagehide-cleanup-cannot-revive-old-document"
+    ]
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "recovered": 1,
+      "ratio": "compact",
+      "detached": "wide",
+      "reattached": "long",
+      "maxPendingFrames": 1,
+      "movingRatio": 1,
+      "scrollingRatio": 1
+    },
+    {
+      "round": 2,
+      "recovered": 1,
+      "ratio": "long",
+      "detached": "wide",
+      "reattached": "long",
+      "maxPendingFrames": 1,
+      "movingRatio": 0.9814814814814815,
+      "scrollingRatio": 1
+    }
+  ],
+  "hints": {
+    "readds": 0,
+    "flowing": 7
+  },
+  "positive": {
+    "focus": 1.933143329079205,
+    "index": 1,
+    "raf": true,
+    "follow": true,
+    "width": 480,
+    "height": 571,
+    "residual": -0.4277605385448169,
+    "measuredWidth": 480,
+    "maxScroll": 328,
+    "needsMeasure": false,
+    "inView": true,
+    "surfaceVisible": true,
+    "canFlow": true,
+    "frameAge": 1.2999999523162842,
+    "frameRecoveries": 0,
+    "position": 121.42776053854482,
+    "font": 16.5,
+    "centers": [
+      304.5,
+      357.5,
+      410.5,
+      464.5,
+      516.5,
+      555.5,
+      593.5
+    ],
+    "clock": [
+      {
+        "t": 1,
+        "f": 0
+      },
+      {
+        "t": 3,
+        "f": 1
+      },
+      {
+        "t": 5,
+        "f": 2
+      },
+      {
+        "t": 8,
+        "f": 4
+      },
+      {
+        "t": 10,
+        "f": 5
+      },
+      {
+        "t": 21,
+        "f": 5
+      },
+      {
+        "t": 27,
+        "f": 6
+      }
+    ],
+    "media": 4.881542,
+    "paused": false,
+    "layout": "wide",
+    "dropped": 0,
+    "pendingFrames": 1,
+    "maxPendingFrames": 1
+  },
+  "frameRestored": {
+    "focus": 3.034162448420208,
+    "index": 2,
+    "raf": true,
+    "follow": true,
+    "width": 480,
+    "height": 571,
+    "residual": 0.18391228907859158,
+    "measuredWidth": 480,
+    "maxScroll": 328,
+    "needsMeasure": false,
+    "inView": true,
+    "surfaceVisible": true,
+    "canFlow": true,
+    "frameAge": 0.8999999761581421,
+    "frameRecoveries": 0,
+    "position": 180.8160877109214,
+    "font": 16.5,
+    "centers": [
+      304.5,
+      357.5,
+      410.5,
+      464.5,
+      516.5,
+      555.5,
+      593.5
+    ],
+    "clock": [
+      {
+        "t": 1,
+        "f": 0
+      },
+      {
+        "t": 3,
+        "f": 1
+      },
+      {
+        "t": 5,
+        "f": 2
+      },
+      {
+        "t": 8,
+        "f": 4
+      },
+      {
+        "t": 10,
+        "f": 5
+      },
+      {
+        "t": 21,
+        "f": 5
+      },
+      {
+        "t": 27,
+        "f": 6
+      }
+    ],
+    "media": 6.548653,
+    "paused": false,
+    "layout": "wide",
+    "dropped": 0,
+    "pendingFrames": 1,
+    "maxPendingFrames": 1
+  },
+  "pausedGeometry": {
+    "focus": 1.7082248653332155,
+    "index": 1,
+    "raf": true,
+    "follow": true,
+    "width": 480,
+    "height": 571,
+    "residual": -0.4634270929578861,
+    "measuredWidth": 480,
+    "maxScroll": 328,
+    "needsMeasure": false,
+    "inView": true,
+    "surfaceVisible": true,
+    "canFlow": true,
+    "frameAge": 1,
+    "frameRecoveries": 0,
+    "position": 109.46342709295789,
+    "font": 16.5,
+    "centers": [
+      304.5,
+      357.5,
+      410.5,
+      464.5,
+      516.5,
+      555.5,
+      593.5
+    ],
+    "clock": [
+      {
+        "t": 1,
+        "f": 0
+      },
+      {
+        "t": 3,
+        "f": 1
+      },
+      {
+        "t": 5,
+        "f": 2
+      },
+      {
+        "t": 8,
+        "f": 4
+      },
+      {
+        "t": 10,
+        "f": 5
+      },
+      {
+        "t": 21,
+        "f": 5
+      },
+      {
+        "t": 27,
+        "f": 6
+      }
+    ],
+    "media": 4.455564,
+    "paused": false,
+    "layout": "wide",
+    "dropped": 0,
+    "pendingFrames": 1,
+    "maxPendingFrames": 1
+  },
+  "song": {
+    "passed": 12,
+    "total": 12,
+    "runtimeErrors": [],
+    "slow": {
+      "frames": 146,
+      "moving": 134,
+      "maxStepPx": 0.21478271484375,
+      "travelPx": 25.177886962890625,
+      "firstMedia": 21.5,
+      "lastMedia": 23.651481,
+      "fit": {
+        "height": 51,
+        "lineHeight": 25.575
+      },
+      "externalLrc": true
+    }
+  },
+  "backend": {
+    "passed": 132,
+    "total": 132,
+    "failed": []
+  },
+  "finalIntegrity": {
+    "sourceMatchesFrozen": true,
+    "installedStill1699": true,
+    "noDeploy": true
+  }
+}

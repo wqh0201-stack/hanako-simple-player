@@ -1,0 +1,2820 @@
+{
+  "selfCheck": [],
+  "wiring": {},
+  "four": {},
+  "darkFallback": {},
+  "runtimeErrors": [],
+  "expectedProbes": [
+    "http 404 http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%91%A8%E6%9D%B0%E4%BC%A6%20-%20%E7%A8%BB%E9%A6%99",
+    "reqfail: http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/_fixture/audio.wav?appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%91%A8%E6%9D%B0%E4%BC%A6%20-%20%E7%A8%BB%E9%A6%99",
+    "reqfail: http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/_fixture/audio.wav?appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog?kind=artist&name=%E5%91%A8%E6%9D%B0%E4%BC%A6 net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%202",
+    "reqfail: http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/music/go/900001?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "http 404 http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%202",
+    "reqfail: http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/music/go/900001?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%202",
+    "reqfail: http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/music/go/900001?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:56509/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED"
+  ],
+  "assertions": [
+    {
+      "name": "mood-lists-backend-priority-and-order",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-rename-backend-persistence",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-rename-survives-reload",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-own-echo-no-rerender",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-external-create-shows-tracks-immediately",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-broadcast-does-not-write-back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-same-name-replacement-refreshes-tracks",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-no-direct-storage-write",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-backend-unavailable-legacy-fallback",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-clean-keeps-single-character-songs",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-clean-preserves-multiple-artists",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-clean-aimer-dates-translations-and-instrumental-heading",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-clean-skips-live-versions",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-match-selects-original-before-covers-live-compilation-reissue",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-menu-opens-prefilled-current-list",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-panel-fits-312",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-panel-fits-465",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-panel-fits-1040",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-fill-syncs-source-favorite-and-recent-copies",
+      "ok": true,
+      "detail": "[{\"uid\":\"imp:1|bilibili:BV16XpM6EEtF_1\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"match\":{\"originalPic\":\"\",\"source\":\"netease\",\"artistId\":6452,\"artist\":\"周杰伦\",\"songId\":185709,\"albumId\":18877,\"album\":\"魔杰座\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"at\":1791987029373}},{\"uid\":\"fav|bilibili:BV16XpM6EEtF_1\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"match\":{\"originalPic\":\"\",\"source\":\"netease\",\"artistId\":6452,\"artist\":\"周杰伦\",\"songId\":185709,\"albumId\":18877,\"album\":\"魔杰座\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"at\":1791987029373}},{\"uid\":\"recent|bilibili:BV16XpM6EEtF_1\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"match\":{\"originalPic\":\"\",\"source\":\"netease\",\"artistId\":6452,\"artist\":\"周杰伦\",\"songId\":185709,\"albumId\":18877,\"album\":\"魔杰座\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"at\":1791987029373}}]"
+    },
+    {
+      "name": "cover-fill-preserves-live-custom-and-other-platform-covers",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-fill-saves-match-provenance",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-repeat-preserves-original-backup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-restore-after-reload-syncs-copies-and-removes-binding",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-stop-prevents-commit-and-further-catalog-requests",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-metadata-failure-preserves-original",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-undecodable-image-is-not-written",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-save-failure-rolls-back-pics-and-backups",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "search-cover-home-has-no-slot-or-focus",
+      "ok": true,
+      "detail": "{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true}"
+    },
+    {
+      "name": "surface-motion-unified-clock-and-easing",
+      "ok": true,
+      "detail": "[{\"start\":791,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"},{\"start\":791,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"},{\"start\":791,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"}]"
+    },
+    {
+      "name": "search-cover-grows-and-moves-title",
+      "ok": true,
+      "detail": "{\"width\":30.359375,\"titleX\":111.875,\"inert\":false,\"disabled\":false,\"opacity\":0.690029,\"searchHidden\":false,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true}"
+    },
+    {
+      "name": "search-cover-keeps-play-centered",
+      "ok": true,
+      "detail": "{\"home\":{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"mid\":{\"width\":30.359375,\"titleX\":111.875,\"inert\":false,\"disabled\":false,\"opacity\":0.690029,\"searchHidden\":false,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"before\":\"matrix(1, 0, 0, 1, -322.37, 0)\",\"reverse\":\"matrix(1, 0, 0, 1, -322.37, 0)\",\"closed\":{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"opened\":{\"width\":44,\"titleX\":128,\"inert\":false,\"disabled\":false,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true},\"cover\":{\"shown\":true,\"crop\":\"cover\",\"position\":\"50% 50%\",\"width\":32,\"height\":32,\"between\":true},\"changed\":{\"previousSrc\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png?appSurfaceSession=fake-ticket\",\"currentSrc\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png?appSurfaceSession=fake-ticket\",\"expected\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\",\"naturalWidth\":1536,\"naturalHeight\":1024},\"leaving\":{\"width\":44,\"titleX\":128,\"inert\":true,\"disabled\":true,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true},\"byCover\":{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"reopened\":{\"width\":44,\"titleX\":128,\"inert\":false,\"disabled\":false,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true},\"fallback\":true,\"brokenFallback\":true,\"timing\":[{\"start\":791,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"},{\"start\":791,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"},{\"start\":791,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"}],\"queueTiming\":{\"delay\":0,\"direction\":\"normal\",\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\",\"endDelay\":0,\"fill\":\"both\",\"iterationStart\":0,\"iterations\":1},\"queueBefore\":\"matrix(1, 0, 0, 1, 109.604, 0)\",\"queueReverse\":\"matrix(1, 0, 0, 1, 109.604, 0)\",\"scrimShown\":true,\"queueClosed\":true}"
+    },
+    {
+      "name": "search-motion-reverses-from-visible-frame",
+      "ok": true,
+      "detail": "{\"before\":\"matrix(1, 0, 0, 1, -322.37, 0)\",\"reverse\":\"matrix(1, 0, 0, 1, -322.37, 0)\"}"
+    },
+    {
+      "name": "search-cover-exit-finishes-with-page",
+      "ok": true,
+      "detail": "{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true}"
+    },
+    {
+      "name": "search-cover-is-centered-square-between-search-and-title",
+      "ok": true,
+      "detail": "{\"shown\":true,\"crop\":\"cover\",\"position\":\"50% 50%\",\"width\":32,\"height\":32,\"between\":true}"
+    },
+    {
+      "name": "search-cover-follows-track-and-crops-landscape",
+      "ok": true,
+      "detail": "{\"previousSrc\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png?appSurfaceSession=fake-ticket\",\"currentSrc\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png?appSurfaceSession=fake-ticket\",\"expected\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\",\"naturalWidth\":1536,\"naturalHeight\":1024}"
+    },
+    {
+      "name": "search-exit-keeps-solid-controls-through-real-animation",
+      "ok": true,
+      "detail": "{\"width\":44,\"titleX\":128,\"inert\":true,\"disabled\":true,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true}"
+    },
+    {
+      "name": "search-cover-click-closes-with-immediate-focus-removal",
+      "ok": true,
+      "detail": "{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true}"
+    },
+    {
+      "name": "search-cover-reopen-cancels-stale-unmount",
+      "ok": true,
+      "detail": "{\"width\":44,\"titleX\":128,\"inert\":false,\"disabled\":false,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true}"
+    },
+    {
+      "name": "search-cover-missing-and-broken-image-fallback",
+      "ok": true,
+      "detail": "{\"missing\":true,\"broken\":true}"
+    },
+    {
+      "name": "queue-motion-reverses-and-finishes-with-scrim",
+      "ok": true,
+      "detail": "{\"home\":{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"mid\":{\"width\":30.359375,\"titleX\":111.875,\"inert\":false,\"disabled\":false,\"opacity\":0.690029,\"searchHidden\":false,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"before\":\"matrix(1, 0, 0, 1, -322.37, 0)\",\"reverse\":\"matrix(1, 0, 0, 1, -322.37, 0)\",\"closed\":{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"opened\":{\"width\":44,\"titleX\":128,\"inert\":false,\"disabled\":false,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true},\"cover\":{\"shown\":true,\"crop\":\"cover\",\"position\":\"50% 50%\",\"width\":32,\"height\":32,\"between\":true},\"changed\":{\"previousSrc\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png?appSurfaceSession=fake-ticket\",\"currentSrc\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png?appSurfaceSession=fake-ticket\",\"expected\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\",\"naturalWidth\":1536,\"naturalHeight\":1024},\"leaving\":{\"width\":44,\"titleX\":128,\"inert\":true,\"disabled\":true,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true},\"byCover\":{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"reopened\":{\"width\":44,\"titleX\":128,\"inert\":false,\"disabled\":false,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true},\"fallback\":true,\"brokenFallback\":true,\"timing\":[{\"start\":791,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"},{\"start\":791,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"},{\"start\":791,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"}],\"queueTiming\":{\"delay\":0,\"direction\":\"normal\",\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\",\"endDelay\":0,\"fill\":\"both\",\"iterationStart\":0,\"iterations\":1},\"queueBefore\":\"matrix(1, 0, 0, 1, 109.604, 0)\",\"queueReverse\":\"matrix(1, 0, 0, 1, 109.604, 0)\",\"scrimShown\":true,\"queueClosed\":true}"
+    },
+    {
+      "name": "search-cover-fits-small-wide-window",
+      "ok": true,
+      "detail": "{\"gap\":16,\"copyWidth\":34}"
+    },
+    {
+      "name": "surface-motion-reduced-is-opacity-only",
+      "ok": true,
+      "detail": "{\"keys\":[\"offset\",\"easing\",\"composite\",\"opacity\",\"computedOffset\",\"offset\",\"easing\",\"composite\",\"opacity\",\"computedOffset\",\"offset\",\"easing\",\"composite\",\"opacity\",\"computedOffset\",\"offset\",\"easing\",\"composite\",\"opacity\",\"computedOffset\"],\"hidden\":true}"
+    },
+    {
+      "name": "search-cover-hidden-in-card",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "surface-motion-layout-switch-cleans-obsolete-scene",
+      "ok": true,
+      "detail": "{\"opacity\":1,\"transform\":\"none\",\"animations\":0}"
+    },
+    {
+      "name": "lyrics-flow-through-phrase-and-boundary",
+      "ok": true,
+      "detail": "{\"frames\":127,\"first\":{\"focus\":1.5809811320754719,\"position\":126.3170667179304,\"index\":1,\"height\":38},\"last\":{\"focus\":2.7468965641365903,\"position\":205.43926577121312,\"index\":2,\"height\":38},\"stalled\":6,\"maxStep\":0.011804942237367833}"
+    },
+    {
+      "name": "lyrics-wave-keeps-row-geometry-stable",
+      "ok": true,
+      "detail": "[38]"
+    },
+    {
+      "name": "lyrics-flow-preserves-subpixel-motion",
+      "ok": true,
+      "detail": "[{\"focus\":0.0013484854460277251,\"pos\":0.09268368081023937},{\"focus\":0.008190581699448751,\"pos\":0.5629325272990968},{\"focus\":0.00013265048147048653,\"pos\":0.009116674874746877},{\"focus\":0,\"pos\":0},{\"focus\":0.0016404600507231581,\"pos\":0.11274316135802565},{\"focus\":0,\"pos\":0}]"
+    },
+    {
+      "name": "lyrics-pause-resume-keeps-phase",
+      "ok": true,
+      "detail": "{\"paused\":{\"focus\":2.748104011004711,\"index\":2,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0.4794195790965432,\"measuredWidth\":374,\"maxScroll\":387,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":205.52058042090346,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]},\"frozen\":{\"focus\":2.748104011004711,\"index\":2,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0.4794195790965432,\"measuredWidth\":374,\"maxScroll\":387,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":205.52058042090346,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]},\"resumed\":{\"focus\":2.900450492091768,\"index\":2,\"raf\":true,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0.21516281175797758,\"measuredWidth\":374,\"maxScroll\":387,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":8.5,\"frameRecoveries\":0,\"position\":215.78483718824202,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}}"
+    },
+    {
+      "name": "lyrics-same-phrase-resize-recenters-with-readable-size-cap",
+      "ok": true,
+      "detail": "{\"beforeResize\":{\"focus\":2,\"index\":2,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0,\"measuredWidth\":374,\"maxScroll\":387,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":155,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]},\"afterResize\":{\"focus\":2,\"index\":2,\"raf\":false,\"follow\":true,\"width\":518,\"height\":731,\"residual\":0,\"measuredWidth\":518,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":125,\"font\":16.5,\"centers\":[384.5,437.5,490.5,544.5,596.5,635.5,673.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]},\"centerError\":0.40625}"
+    },
+    {
+      "name": "lyrics-readable-and-wave-fits-820x700",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0.5,\"measuredWidth\":374,\"maxScroll\":387,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":86.5,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"layout\":\"wide\",\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"bodyFontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"peakFont\":18.974999999999998,\"actualHeight\":491,\"centerError\":0.546875,\"overlaps\":false,\"overflow\":false,\"wrapped\":true,\"titleHeight\":28,\"titleFont\":22,\"queueTitleFont\":15,\"titleFull\":true}"
+    },
+    {
+      "name": "lyrics-peak-stays-three-pixels-below-title-820x700",
+      "ok": true,
+      "detail": "{\"peakFont\":18.974999999999998,\"titleFont\":22,\"queueTitleFont\":15,\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"layout\":\"wide\"}"
+    },
+    {
+      "name": "lyrics-readable-and-wave-fits-465x930",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":268,\"height\":410,\"residual\":0,\"measuredWidth\":268,\"maxScroll\":318,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":71,\"font\":13,\"centers\":[221,276,332,387,442,474,506],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"layout\":\"long\",\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"bodyFontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"peakFont\":14.95,\"actualHeight\":410,\"centerError\":0.3515625,\"overlaps\":false,\"overflow\":false,\"wrapped\":true,\"titleHeight\":23,\"titleFont\":18,\"queueTitleFont\":15,\"titleFull\":true}"
+    },
+    {
+      "name": "lyrics-peak-stays-three-pixels-below-title-465x930",
+      "ok": true,
+      "detail": "{\"peakFont\":14.95,\"titleFont\":18,\"queueTitleFont\":15,\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"layout\":\"long\"}"
+    },
+    {
+      "name": "lyrics-readable-and-wave-fits-380x430",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":216,\"height\":218,\"residual\":0,\"measuredWidth\":216,\"maxScroll\":364,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":83,\"font\":13,\"centers\":[125,192,259,326,393,425,457],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"layout\":\"compact\",\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"bodyFontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"peakFont\":14.95,\"actualHeight\":218,\"centerError\":0.015625,\"overlaps\":false,\"overflow\":false,\"wrapped\":true,\"titleHeight\":23,\"titleFont\":18,\"queueTitleFont\":15,\"titleFull\":true}"
+    },
+    {
+      "name": "lyrics-peak-stays-three-pixels-below-title-380x430",
+      "ok": true,
+      "detail": "{\"peakFont\":14.95,\"titleFont\":18,\"queueTitleFont\":15,\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"layout\":\"compact\"}"
+    },
+    {
+      "name": "lyrics-readable-and-wave-fits-312x494",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":173,\"height\":281,\"residual\":0.5,\"measuredWidth\":173,\"maxScroll\":318,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":72.5,\"font\":11,\"centers\":[155,213,271,329,387,415,444],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"layout\":\"compact\",\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"bodyFontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"peakFont\":12.649999999999999,\"actualHeight\":281,\"centerError\":0.234375,\"overlaps\":false,\"overflow\":false,\"wrapped\":true,\"titleHeight\":23,\"titleFont\":18,\"queueTitleFont\":15,\"titleFull\":true}"
+    },
+    {
+      "name": "lyrics-peak-stays-three-pixels-below-title-312x494",
+      "ok": true,
+      "detail": "{\"peakFont\":12.649999999999999,\"titleFont\":18,\"queueTitleFont\":15,\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"layout\":\"compact\"}"
+    },
+    {
+      "name": "lyrics-readable-and-wave-fits-719x559",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":426,\"height\":354,\"residual\":0.5,\"measuredWidth\":426,\"maxScroll\":271,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":59.5,\"font\":13,\"centers\":[193,236.5,280,324.5,368,400,432],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"layout\":\"compact\",\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"bodyFontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"peakFont\":14.95,\"actualHeight\":354,\"centerError\":0.28125,\"overlaps\":false,\"overflow\":false,\"wrapped\":true,\"titleHeight\":23,\"titleFont\":18,\"queueTitleFont\":15,\"titleFull\":true}"
+    },
+    {
+      "name": "lyrics-peak-stays-three-pixels-below-title-719x559",
+      "ok": true,
+      "detail": "{\"peakFont\":14.95,\"titleFont\":18,\"queueTitleFont\":15,\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"layout\":\"compact\"}"
+    },
+    {
+      "name": "lyrics-readable-and-wave-fits-720x560",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":326,\"height\":351,\"residual\":0.5,\"measuredWidth\":326,\"maxScroll\":306,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":68.5,\"font\":12.4,\"centers\":[191,244,297,350,404,435,466],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"layout\":\"wide\",\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"bodyFontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"peakFont\":14.26,\"actualHeight\":351,\"centerError\":0.234375,\"overlaps\":false,\"overflow\":false,\"wrapped\":true,\"titleHeight\":28,\"titleFont\":22,\"queueTitleFont\":15,\"titleFull\":true}"
+    },
+    {
+      "name": "lyrics-peak-stays-three-pixels-below-title-720x560",
+      "ok": true,
+      "detail": "{\"peakFont\":14.26,\"titleFont\":22,\"queueTitleFont\":15,\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"layout\":\"wide\"}"
+    },
+    {
+      "name": "lyrics-split-keeps-reading-area-and-remeasures",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":268,\"height\":128,\"residual\":0,\"measuredWidth\":268,\"maxScroll\":278,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":63,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-flow-does-not-steal-browsing",
+      "ok": true,
+      "detail": "{\"browsed\":{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":false,\"width\":268,\"height\":128,\"residual\":0,\"measuredWidth\":268,\"maxScroll\":278,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":143,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]},\"stayed\":{\"focus\":1.061155812232782,\"index\":1,\"raf\":false,\"follow\":false,\"width\":268,\"height\":128,\"residual\":0,\"measuredWidth\":268,\"maxScroll\":278,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":143,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}}"
+    },
+    {
+      "name": "lyrics-flow-resumes-after-browsing",
+      "ok": true,
+      "detail": "{\"focus\":3.0394603464667256,\"index\":2,\"raf\":true,\"follow\":true,\"width\":268,\"height\":128,\"residual\":0.06673431581526756,\"measuredWidth\":268,\"maxScroll\":278,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":5.100000023841858,\"frameRecoveries\":0,\"position\":160.93326568418473,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-bounce-back-is-animated",
+      "ok": true,
+      "detail": "{\"awayFromLine\":{\"follow\":false,\"position\":0},\"backStart\":169,\"backEnd\":{\"t\":4208,\"pos\":201.03,\"follow\":true},\"backMid\":{\"t\":2975,\"pos\":34.15,\"follow\":true},\"ramp\":[[2825,0],[2842,0.46],[2859,1.94],[2874,4.31],[2892,7.3],[2908,14.8],[2925,16.02],[2942,21.63],[2959,27.6],[2975,34.15],[2992,41.12],[3009,48.46],[3024,56.32],[3041,63.97],[3058,72.11],[3075,80.94],[3092,89.38],[3109,97.82],[3125,106.12],[3142,114.3],[3159,122.22],[3175,134.69],[3192,137.03],[3209,143.87],[3225,150.14]]}"
+    },
+    {
+      "name": "lyrics-click-line-jumps-with-animation",
+      "ok": true,
+      "detail": "{\"beforeJump\":235.5,\"jumpEnd\":{\"t\":913,\"pos\":18.97,\"index\":0,\"raf\":true,\"follow\":true},\"jumpMid\":{\"t\":163,\"pos\":189.15,\"index\":0,\"raf\":true,\"follow\":true},\"ramp\":[[14,235.49],[31,235],[47,233.09],[64,229.99],[81,225.56],[97,220.12],[114,213.73],[130,206.23],[148,198.35],[163,189.15],[181,180.29],[198,169.71],[214,159.36],[231,148.57],[248,137.71],[264,126.72],[280,115.33],[297,105.14],[314,94.47],[331,83.51],[347,73.37],[364,64.17],[380,54.64],[398,46.63]]}"
+    },
+    {
+      "name": "lyrics-lost-pointerup-self-heals",
+      "ok": true,
+      "detail": "{\"pressedNoUp\":{\"follow\":false,\"position\":73},\"healed\":{\"follow\":true,\"raf\":true,\"position\":181.69414867418865,\"target\":180.28917459522424,\"focus\":3.438952053509778}}"
+    },
+    {
+      "name": "lyrics-reduced-motion-stops-flow-and-scaling",
+      "ok": true,
+      "detail": "{\"focus\":2,\"index\":2,\"raf\":false,\"follow\":true,\"width\":268,\"height\":128,\"residual\":0.5,\"measuredWidth\":268,\"maxScroll\":278,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":110.5,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"transforms\":[\"matrix(1, 0, 0, 1, 0, 0)\",\"matrix(1, 0, 0, 1, 0, 0)\",\"matrix(1, 0, 0, 1, 0, 0)\",\"matrix(1, 0, 0, 1, 0, 0)\",\"matrix(1, 0, 0, 1, 0, 0)\",\"matrix(1, 0, 0, 1, 0, 0)\",\"matrix(1, 0, 0, 1, 0, 0)\"]}"
+    },
+    {
+      "name": "lyrics-offscreen-stops-flow",
+      "ok": true,
+      "detail": "{\"focus\":3.5081254361541268,\"index\":2,\"raf\":false,\"follow\":true,\"width\":268,\"height\":128,\"residual\":-0.29464017379331153,\"measuredWidth\":268,\"maxScroll\":278,\"needsMeasure\":false,\"inView\":false,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":185.2946401737933,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-same-timestamp-lines-have-one-semantic-current",
+      "ok": true,
+      "detail": "{\"focus\":4.070650745195511,\"index\":4,\"raf\":true,\"follow\":true,\"width\":268,\"height\":128,\"residual\":0.06620588038333608,\"measuredWidth\":268,\"maxScroll\":278,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":8.5,\"frameRecoveries\":0,\"position\":209.93379411961666,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-visible-behind-drawer-keeps-frames",
+      "ok": true,
+      "detail": "{\"focus\":2.6753759010566056,\"index\":2,\"raf\":true,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0.3768025109080213,\"measuredWidth\":374,\"maxScroll\":387,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.100000023841858,\"frameRecoveries\":0,\"position\":200.62319748909198,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-covered-by-search-stops-frames",
+      "ok": true,
+      "detail": "{\"focus\":2.927145220343913,\"index\":2,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0.4152551596644116,\"measuredWidth\":374,\"maxScroll\":387,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":217.5847448403356,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-returning-from-overlay-resumes-frames",
+      "ok": true,
+      "detail": "{\"focus\":3.2451653765078503,\"index\":2,\"raf\":true,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0.1317990556540849,\"measuredWidth\":374,\"maxScroll\":387,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":12.600000023841858,\"frameRecoveries\":0,\"position\":239.86820094434592,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-long-instrumental-holds-until-upcoming-phrase",
+      "ok": true,
+      "detail": "{\"focus\":5,\"index\":5,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0,\"measuredWidth\":374,\"maxScroll\":387,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":329,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-last-phrase-has-finite-position-and-stops-frames",
+      "ok": true,
+      "detail": "{\"focus\":6,\"index\":6,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0,\"measuredWidth\":374,\"maxScroll\":387,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":367,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-lifecycle-detach-1-restores-flow",
+      "ok": true,
+      "detail": "{\"frames\":56,\"changes\":55,\"scrollChanges\":55,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.9167499999999995,\"state\":{\"focus\":1.7123181185216512,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.3194420969177827,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.899999976158142,\"frameRecoveries\":0,\"position\":109.68055790308222,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.464569,\"paused\":false,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-detach-1-lost-frame-self-heals",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.8991820000000006,\"state\":{\"focus\":2.640759683488597,\"index\":2,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.29043240105875157,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.5,\"frameRecoveries\":1,\"position\":159.70956759894125,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":5.996584,\"paused\":false,\"layout\":\"wide\",\"dropped\":1,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-detach-1-media-and-highlight-continue",
+      "ok": true,
+      "detail": "{\"before\":{\"focus\":1.7208033896693937,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":-0.13072814672824506,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.5,\"frameRecoveries\":0,\"position\":110.13072814672825,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.480768,\"paused\":false,\"layout\":\"wide\",\"dropped\":1,\"pendingFrames\":0,\"maxPendingFrames\":1},\"semantic\":{\"focus\":3.7558020388123223,\"index\":2,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":-0.3821735099706416,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":3.100000023841858,\"frameRecoveries\":1,\"position\":219.38217350997064,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":7.598329,\"paused\":false,\"layout\":\"wide\",\"dropped\":1,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-detach-1-ratio-compact-recovers",
+      "ok": true,
+      "detail": "{\"resized\":{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.90015,\"state\":{\"focus\":1.7935199137877782,\"index\":1,\"raf\":true,\"follow\":true,\"width\":309,\"height\":247,\"residual\":-0.4856405155780692,\"measuredWidth\":309,\"maxScroll\":318,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":3.299999952316284,\"frameRecoveries\":1,\"position\":115.48564051557807,\"font\":13,\"centers\":[139.5,194.5,250.5,305.5,360.5,392.5,424.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.623516,\"paused\":false,\"layout\":\"compact\",\"dropped\":2,\"pendingFrames\":1,\"maxPendingFrames\":1}},\"measured\":247}"
+    },
+    {
+      "name": "lyrics-lifecycle-detach-1-ratio-back-wide-keeps-flow",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.8997360000000003,\"state\":{\"focus\":1.7194957785679876,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":-0.06134991877121365,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.7000000476837158,\"frameRecoveries\":1,\"position\":110.06134991877121,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.478509,\"paused\":false,\"layout\":\"wide\",\"dropped\":2,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-reattach-1-restores-flow",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.9001740000000003,\"state\":{\"focus\":1.710731323503814,\"index\":1,\"raf\":true,\"follow\":true,\"width\":268,\"height\":410,\"residual\":0.15533083137870562,\"measuredWidth\":268,\"maxScroll\":318,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":0.8999999761581421,\"frameRecoveries\":0,\"position\":110.8446691686213,\"font\":13,\"centers\":[221,276,332,387,442,474,506],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.460559,\"paused\":false,\"layout\":\"long\",\"dropped\":0,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-detach-2-restores-flow",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.8752309999999994,\"state\":{\"focus\":1.6284883774434118,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":-0.2371966272952477,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1,\"frameRecoveries\":0,\"position\":105.23719662729525,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.297072,\"paused\":false,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-detach-2-lost-frame-self-heals",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":53,\"scrollChanges\":54,\"movingRatio\":0.9814814814814815,\"scrollingRatio\":1,\"mediaAdvance\":0.9001939999999999,\"state\":{\"focus\":2.5259863330656978,\"index\":2,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":-0.4772338229709021,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1,\"frameRecoveries\":1,\"position\":153.4772338229709,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":5.830621,\"paused\":false,\"layout\":\"wide\",\"dropped\":1,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-detach-2-media-and-highlight-continue",
+      "ok": true,
+      "detail": "{\"before\":{\"focus\":1.6367398303921574,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.3257404358004692,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":0.8999999761581421,\"frameRecoveries\":0,\"position\":105.67425956419953,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.313576,\"paused\":false,\"layout\":\"wide\",\"dropped\":1,\"pendingFrames\":0,\"maxPendingFrames\":1},\"semantic\":{\"focus\":3.6485260243477553,\"index\":2,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.0999145207622405,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":3.399999976158142,\"frameRecoveries\":1,\"position\":213.90008547923776,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":7.433072,\"paused\":false,\"layout\":\"wide\",\"dropped\":1,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-detach-2-ratio-long-recovers",
+      "ok": true,
+      "detail": "{\"resized\":{\"frames\":56,\"changes\":55,\"scrollChanges\":55,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.9156719999999998,\"state\":{\"focus\":1.8000302037509255,\"index\":1,\"raf\":true,\"follow\":true,\"width\":268,\"height\":410,\"residual\":0.14987676786137172,\"measuredWidth\":268,\"maxScroll\":318,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1,\"frameRecoveries\":1,\"position\":115.85012323213863,\"font\":13,\"centers\":[221,276,332,387,442,474,506],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.633578,\"paused\":false,\"layout\":\"long\",\"dropped\":2,\"pendingFrames\":1,\"maxPendingFrames\":1}},\"measured\":410}"
+    },
+    {
+      "name": "lyrics-lifecycle-detach-2-ratio-back-wide-keeps-flow",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.8991569999999998,\"state\":{\"focus\":1.708987543734271,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.496117270854711,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.2999999523162842,\"frameRecoveries\":1,\"position\":109.50388272914529,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.457366,\"paused\":false,\"layout\":\"wide\",\"dropped\":2,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-reattach-2-restores-flow",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":53,\"scrollChanges\":53,\"movingRatio\":0.9814814814814815,\"scrollingRatio\":0.9814814814814815,\"mediaAdvance\":0.8699129999999995,\"state\":{\"focus\":1.6262025396076343,\"index\":1,\"raf\":true,\"follow\":true,\"width\":268,\"height\":410,\"residual\":-0.09714894636124427,\"measuredWidth\":268,\"maxScroll\":318,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.100000023841858,\"frameRecoveries\":0,\"position\":106.09714894636124,\"font\":13,\"centers\":[221,276,332,387,442,474,506],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.292519,\"paused\":false,\"layout\":\"long\",\"dropped\":0,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-stale-offscreen-recovers-without-resize",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.9000529999999998,\"state\":{\"focus\":1.9512925187103782,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":-0.39667036535780653,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":0.8999999761581421,\"frameRecoveries\":0,\"position\":122.3966703653578,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.914151,\"paused\":false,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-resize-keeps-compositor-hints-stable",
+      "ok": true,
+      "detail": "{\"readds\":0,\"flowing\":7}"
+    },
+    {
+      "name": "lyrics-lifecycle-pageshow-restarts-without-new-play-event",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.8996249999999995,\"state\":{\"focus\":1.7167546175304207,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.08408214266620462,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.100000023841858,\"frameRecoveries\":0,\"position\":109.9159178573338,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.472487,\"paused\":false,\"layout\":\"wide\",\"dropped\":1,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-stale-callback-never-duplicates-loop",
+      "ok": true,
+      "detail": "{\"focus\":1.2629962362736047,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.08644944737716287,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":5.200000047683716,\"frameRecoveries\":0,\"position\":85.91355055262284,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":3.545341,\"paused\":false,\"layout\":\"wide\",\"dropped\":1,\"pendingFrames\":1,\"maxPendingFrames\":1}"
+    },
+    {
+      "name": "lyrics-lifecycle-track-change-does-not-inherit-stale-loop",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.8989630000000002,\"state\":{\"focus\":1.7154909489514616,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.15112308256078677,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.2000000476837158,\"frameRecoveries\":0,\"position\":109.84887691743921,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.470064,\"paused\":false,\"layout\":\"wide\",\"dropped\":2,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-sdk-hidden-stops-flow-despite-local-rect",
+      "ok": true,
+      "detail": "{\"focus\":1.7661560622454302,\"index\":1,\"raf\":false,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.461719898781098,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":true,\"inView\":true,\"surfaceVisible\":false,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":112.5382801012189,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.823382,\"paused\":false,\"layout\":\"wide\",\"dropped\":2,\"pendingFrames\":0,\"maxPendingFrames\":1}"
+    },
+    {
+      "name": "lyrics-lifecycle-sdk-hidden-resize-does-not-revive",
+      "ok": true,
+      "detail": "{\"focus\":1.911270468417468,\"index\":1,\"raf\":false,\"follow\":true,\"width\":480,\"height\":571,\"residual\":-0.26083801892571046,\"measuredWidth\":480,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":false,\"surfaceVisible\":false,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":120.26083801892571,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.931316,\"paused\":false,\"layout\":\"wide\",\"dropped\":2,\"pendingFrames\":0,\"maxPendingFrames\":1}"
+    },
+    {
+      "name": "lyrics-lifecycle-sdk-visible-remeasures-and-restarts",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.8990709999999997,\"state\":{\"focus\":1.7096078900484464,\"index\":1,\"raf\":true,\"follow\":true,\"width\":480,\"height\":571,\"residual\":0.46321104199085994,\"measuredWidth\":480,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.9000000953674316,\"frameRecoveries\":0,\"position\":109.53678895800914,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.459269,\"paused\":false,\"layout\":\"wide\",\"dropped\":2,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-sdk-envelope-clears-stale-handle-immediately",
+      "ok": true,
+      "detail": "{\"focus\":1.2916342937443956,\"index\":1,\"raf\":true,\"follow\":true,\"width\":480,\"height\":571,\"residual\":-0.4267756455702738,\"measuredWidth\":480,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":0.8999999761581421,\"frameRecoveries\":0,\"position\":87.42677564557027,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":3.600839,\"paused\":false,\"layout\":\"wide\",\"dropped\":3,\"pendingFrames\":1,\"maxPendingFrames\":1}"
+    },
+    {
+      "name": "lyrics-lifecycle-zero-mount-has-no-flow",
+      "ok": true,
+      "detail": "{\"focus\":0,\"index\":1,\"raf\":false,\"follow\":true,\"width\":0,\"height\":0,\"residual\":0,\"measuredWidth\":0,\"maxScroll\":0,\"needsMeasure\":true,\"inView\":false,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":0,\"font\":null,\"centers\":[],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":3.423218,\"paused\":false,\"layout\":\"long\",\"dropped\":0,\"pendingFrames\":0,\"maxPendingFrames\":0}"
+    },
+    {
+      "name": "lyrics-lifecycle-positive-budget-remeasures-and-starts",
+      "ok": true,
+      "detail": "{\"frames\":56,\"changes\":55,\"scrollChanges\":55,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.916086,\"state\":{\"focus\":1.933143329079205,\"index\":1,\"raf\":true,\"follow\":true,\"width\":480,\"height\":571,\"residual\":-0.4277605385448169,\"measuredWidth\":480,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.2999999523162842,\"frameRecoveries\":0,\"position\":121.42776053854482,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.881542,\"paused\":false,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-real-zero-frame-invalidates-geometry",
+      "ok": true,
+      "detail": "{\"focus\":1.9426405716272408,\"index\":1,\"raf\":false,\"follow\":true,\"width\":0,\"height\":0,\"residual\":-121.93470449477599,\"measuredWidth\":0,\"maxScroll\":0,\"needsMeasure\":true,\"inView\":false,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":121.93470449477599,\"font\":16.5,\"centers\":[],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":5.033243,\"paused\":false,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":0,\"maxPendingFrames\":1}"
+    },
+    {
+      "name": "lyrics-lifecycle-real-frame-restores-with-missed-observers",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.9003860000000001,\"state\":{\"focus\":3.034162448420208,\"index\":2,\"raf\":true,\"follow\":true,\"width\":480,\"height\":571,\"residual\":0.18391228907859158,\"measuredWidth\":480,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":0.8999999761581421,\"frameRecoveries\":0,\"position\":180.8160877109214,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":6.548653,\"paused\":false,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-paused-zero-budget-play-remeasures",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.8999370000000004,\"state\":{\"focus\":1.7082248653332155,\"index\":1,\"raf\":true,\"follow\":true,\"width\":480,\"height\":571,\"residual\":-0.4634270929578861,\"measuredWidth\":480,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1,\"frameRecoveries\":0,\"position\":109.46342709295789,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.455564,\"paused\":false,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-real-offscreen-remains-stopped",
+      "ok": true,
+      "detail": "{\"focus\":1.5015277443379127,\"index\":1,\"raf\":false,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.4811340414216261,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":false,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":98.51886595857837,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.20482,\"paused\":false,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":0,\"maxPendingFrames\":1}"
+    },
+    {
+      "name": "lyrics-lifecycle-real-offscreen-return-restarts",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.9004709999999996,\"state\":{\"focus\":1.7118943552057864,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.34192192851685377,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.3000000715255737,\"frameRecoveries\":0,\"position\":109.65807807148315,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.463264,\"paused\":false,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-recovery-does-not-start-paused-media",
+      "ok": true,
+      "detail": "{\"paused\":{\"focus\":1.7128850891707879,\"index\":1,\"raf\":false,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.2893650744225056,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":109.7106349255775,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.463708,\"paused\":true,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":0,\"maxPendingFrames\":1},\"stillPaused\":{\"focus\":1.7128850891707879,\"index\":1,\"raf\":false,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.2893650744225056,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":109.7106349255775,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.463708,\"paused\":true,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":0,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-pagehide-cleanup-cannot-revive-old-document",
+      "ok": true,
+      "detail": "{\"focus\":1.7128850891707879,\"index\":1,\"raf\":false,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.2893650744225056,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":true,\"inView\":true,\"surfaceVisible\":false,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":109.7106349255775,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.463708,\"paused\":true,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":0,\"maxPendingFrames\":1}"
+    },
+    {
+      "name": "lyrics-lifecycle-repeated-pageshow-rebinds-without-autoplay",
+      "ok": true,
+      "detail": "{\"focus\":1.7128850891707879,\"index\":1,\"raf\":false,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.2893650744225056,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":109.7106349255775,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.463708,\"paused\":true,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":0,\"maxPendingFrames\":1}"
+    },
+    {
+      "name": "lyrics-perf-closed-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":109,\"changed\":102,\"movingRatio\":0.9444444444444444,\"medianFrameMs\":16.699999999999818,\"p95FrameMs\":16.799999999999955,\"mediaAdvance\":1.6579229999999998,\"geometry\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":127.18114593533579,\"focus\":2.040711725789817},\"paint\":null,\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":134,\"LayoutDuration\":0.000797,\"RecalcStyleDuration\":0.020815,\"ScriptDuration\":0.025104,\"TaskDuration\":0.093071}}"
+    },
+    {
+      "name": "lyrics-perf-opened-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":109,\"changed\":101,\"movingRatio\":0.9351851851851852,\"medianFrameMs\":16.699999999999818,\"p95FrameMs\":16.700000000000728,\"mediaAdvance\":1.659325,\"geometry\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":127.34193303679012,\"focus\":2.0437082201974},\"paint\":null,\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":220,\"LayoutDuration\":0.000596,\"RecalcStyleDuration\":0.023647,\"ScriptDuration\":0.02362,\"TaskDuration\":0.109249}}"
+    },
+    {
+      "name": "lyrics-perf-reclosed-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":109,\"changed\":100,\"movingRatio\":0.9259259259259259,\"medianFrameMs\":16.699999999999818,\"p95FrameMs\":16.700000000000728,\"mediaAdvance\":1.6594750000000005,\"geometry\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":126.90877382970211,\"focus\":2.035634277637217},\"paint\":null,\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":133,\"LayoutDuration\":0.000606,\"RecalcStyleDuration\":0.019949,\"ScriptDuration\":0.020248,\"TaskDuration\":0.08631}}"
+    },
+    {
+      "name": "lyrics-drawer-preserves-reading-geometry",
+      "ok": true,
+      "detail": "{\"closed\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":127.18114593533579,\"focus\":2.040711725789817},\"opened\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":127.34193303679012,\"focus\":2.0437082201974}}"
+    },
+    {
+      "name": "lyrics-drawer-has-no-per-frame-layout",
+      "ok": true,
+      "detail": "{\"LayoutCount\":8,\"RecalcStyleCount\":220,\"LayoutDuration\":0.000596,\"RecalcStyleDuration\":0.023647,\"ScriptDuration\":0.02362,\"TaskDuration\":0.109249}"
+    },
+    {
+      "name": "lyrics-long-wrapped-line-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":109,\"changed\":102,\"movingRatio\":0.9444444444444444,\"medianFrameMs\":16.69999999999891,\"p95FrameMs\":16.700000000000728,\"mediaAdvance\":1.6595730000000004,\"geometry\":{\"raf\":true,\"width\":268,\"height\":410,\"position\":128.9263141404901,\"focus\":2.034732347745738},\"paint\":null,\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":219,\"LayoutDuration\":0.000626,\"RecalcStyleDuration\":0.024865,\"ScriptDuration\":0.021648,\"TaskDuration\":0.108464}}"
+    },
+    {
+      "name": "lyrics-long-card-has-no-per-frame-layout",
+      "ok": true,
+      "detail": "{\"LayoutCount\":8,\"RecalcStyleCount\":219,\"LayoutDuration\":0.000626,\"RecalcStyleDuration\":0.024865,\"ScriptDuration\":0.021648,\"TaskDuration\":0.108464}"
+    },
+    {
+      "name": "lyrics-compositor-hints-are-bounded-and-release-on-pause",
+      "ok": true,
+      "detail": "{\"layersOn\":7,\"layersOff\":0}"
+    },
+    {
+      "name": "queue-equalizer-retains-three-svg-strokes-without-path-animation",
+      "ok": true,
+      "detail": "{\"paths\":3,\"svgTransforms\":[\"none\",\"none\",\"none\"],\"animations\":3}"
+    },
+    {
+      "name": "lyrics-compact-queue-replaces-scene-and-stops-frames",
+      "ok": true,
+      "detail": "{\"page\":\"queue\",\"raf\":false}"
+    },
+    {
+      "name": "lyrics-slow-bilingual-long-line-is-wrapped",
+      "ok": true,
+      "detail": "{\"frames\":145,\"moving\":134,\"maxStepPx\":0.271087646484375,\"travelPx\":33.36669921875,\"firstMedia\":21.5,\"lastMedia\":23.66093,\"fit\":{\"height\":77,\"lineHeight\":25.575},\"externalLrc\":false}"
+    },
+    {
+      "name": "lyrics-slow-bilingual-line-moves-at-subpixel-steps",
+      "ok": true,
+      "detail": "{\"frames\":145,\"moving\":134,\"maxStepPx\":0.271087646484375,\"travelPx\":33.36669921875,\"firstMedia\":21.5,\"lastMedia\":23.66093,\"fit\":{\"height\":77,\"lineHeight\":25.575},\"externalLrc\":false}"
+    }
+  ],
+  "refine": [],
+  "narrowSelfCheck": [],
+  "theme": {},
+  "ambient": {},
+  "lyricLifecycle": {
+    "rounds": [
+      {
+        "round": 1,
+        "detached": {
+          "frames": 56,
+          "changes": 55,
+          "scrollChanges": 55,
+          "movingRatio": 1,
+          "scrollingRatio": 1,
+          "mediaAdvance": 0.9167499999999995,
+          "state": {
+            "focus": 1.7123181185216512,
+            "index": 1,
+            "raf": true,
+            "follow": true,
+            "width": 479,
+            "height": 571,
+            "residual": 0.3194420969177827,
+            "measuredWidth": 479,
+            "maxScroll": 328,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 1.899999976158142,
+            "frameRecoveries": 0,
+            "position": 109.68055790308222,
+            "font": 16.5,
+            "centers": [
+              304.5,
+              357.5,
+              410.5,
+              464.5,
+              516.5,
+              555.5,
+              593.5
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 4.464569,
+            "paused": false,
+            "layout": "wide",
+            "dropped": 0,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        },
+        "healed": {
+          "frames": 55,
+          "changes": 54,
+          "scrollChanges": 54,
+          "movingRatio": 1,
+          "scrollingRatio": 1,
+          "mediaAdvance": 0.8991820000000006,
+          "state": {
+            "focus": 2.640759683488597,
+            "index": 2,
+            "raf": true,
+            "follow": true,
+            "width": 479,
+            "height": 571,
+            "residual": 0.29043240105875157,
+            "measuredWidth": 479,
+            "maxScroll": 328,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 1.5,
+            "frameRecoveries": 1,
+            "position": 159.70956759894125,
+            "font": 16.5,
+            "centers": [
+              304.5,
+              357.5,
+              410.5,
+              464.5,
+              516.5,
+              555.5,
+              593.5
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 5.996584,
+            "paused": false,
+            "layout": "wide",
+            "dropped": 1,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        },
+        "semantic": {
+          "focus": 3.7558020388123223,
+          "index": 2,
+          "raf": true,
+          "follow": true,
+          "width": 479,
+          "height": 571,
+          "residual": -0.3821735099706416,
+          "measuredWidth": 479,
+          "maxScroll": 328,
+          "needsMeasure": false,
+          "inView": true,
+          "surfaceVisible": true,
+          "canFlow": true,
+          "frameAge": 3.100000023841858,
+          "frameRecoveries": 1,
+          "position": 219.38217350997064,
+          "font": 16.5,
+          "centers": [
+            304.5,
+            357.5,
+            410.5,
+            464.5,
+            516.5,
+            555.5,
+            593.5
+          ],
+          "clock": [
+            {
+              "t": 1,
+              "f": 0
+            },
+            {
+              "t": 3,
+              "f": 1
+            },
+            {
+              "t": 5,
+              "f": 2
+            },
+            {
+              "t": 8,
+              "f": 4
+            },
+            {
+              "t": 10,
+              "f": 5
+            },
+            {
+              "t": 21,
+              "f": 5
+            },
+            {
+              "t": 27,
+              "f": 6
+            }
+          ],
+          "media": 7.598329,
+          "paused": false,
+          "layout": "wide",
+          "dropped": 1,
+          "pendingFrames": 1,
+          "maxPendingFrames": 1
+        },
+        "resized": {
+          "frames": 55,
+          "changes": 54,
+          "scrollChanges": 54,
+          "movingRatio": 1,
+          "scrollingRatio": 1,
+          "mediaAdvance": 0.90015,
+          "state": {
+            "focus": 1.7935199137877782,
+            "index": 1,
+            "raf": true,
+            "follow": true,
+            "width": 309,
+            "height": 247,
+            "residual": -0.4856405155780692,
+            "measuredWidth": 309,
+            "maxScroll": 318,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 3.299999952316284,
+            "frameRecoveries": 1,
+            "position": 115.48564051557807,
+            "font": 13,
+            "centers": [
+              139.5,
+              194.5,
+              250.5,
+              305.5,
+              360.5,
+              392.5,
+              424.5
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 4.623516,
+            "paused": false,
+            "layout": "compact",
+            "dropped": 2,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        },
+        "wideAgain": {
+          "frames": 55,
+          "changes": 54,
+          "scrollChanges": 54,
+          "movingRatio": 1,
+          "scrollingRatio": 1,
+          "mediaAdvance": 0.8997360000000003,
+          "state": {
+            "focus": 1.7194957785679876,
+            "index": 1,
+            "raf": true,
+            "follow": true,
+            "width": 479,
+            "height": 571,
+            "residual": -0.06134991877121365,
+            "measuredWidth": 479,
+            "maxScroll": 328,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 1.7000000476837158,
+            "frameRecoveries": 1,
+            "position": 110.06134991877121,
+            "font": 16.5,
+            "centers": [
+              304.5,
+              357.5,
+              410.5,
+              464.5,
+              516.5,
+              555.5,
+              593.5
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 4.478509,
+            "paused": false,
+            "layout": "wide",
+            "dropped": 2,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        },
+        "attached": {
+          "frames": 55,
+          "changes": 54,
+          "scrollChanges": 54,
+          "movingRatio": 1,
+          "scrollingRatio": 1,
+          "mediaAdvance": 0.9001740000000003,
+          "state": {
+            "focus": 1.710731323503814,
+            "index": 1,
+            "raf": true,
+            "follow": true,
+            "width": 268,
+            "height": 410,
+            "residual": 0.15533083137870562,
+            "measuredWidth": 268,
+            "maxScroll": 318,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 0.8999999761581421,
+            "frameRecoveries": 0,
+            "position": 110.8446691686213,
+            "font": 13,
+            "centers": [
+              221,
+              276,
+              332,
+              387,
+              442,
+              474,
+              506
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 4.460559,
+            "paused": false,
+            "layout": "long",
+            "dropped": 0,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        }
+      },
+      {
+        "round": 2,
+        "detached": {
+          "frames": 55,
+          "changes": 54,
+          "scrollChanges": 54,
+          "movingRatio": 1,
+          "scrollingRatio": 1,
+          "mediaAdvance": 0.8752309999999994,
+          "state": {
+            "focus": 1.6284883774434118,
+            "index": 1,
+            "raf": true,
+            "follow": true,
+            "width": 479,
+            "height": 571,
+            "residual": -0.2371966272952477,
+            "measuredWidth": 479,
+            "maxScroll": 328,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 1,
+            "frameRecoveries": 0,
+            "position": 105.23719662729525,
+            "font": 16.5,
+            "centers": [
+              304.5,
+              357.5,
+              410.5,
+              464.5,
+              516.5,
+              555.5,
+              593.5
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 4.297072,
+            "paused": false,
+            "layout": "wide",
+            "dropped": 0,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        },
+        "healed": {
+          "frames": 55,
+          "changes": 53,
+          "scrollChanges": 54,
+          "movingRatio": 0.9814814814814815,
+          "scrollingRatio": 1,
+          "mediaAdvance": 0.9001939999999999,
+          "state": {
+            "focus": 2.5259863330656978,
+            "index": 2,
+            "raf": true,
+            "follow": true,
+            "width": 479,
+            "height": 571,
+            "residual": -0.4772338229709021,
+            "measuredWidth": 479,
+            "maxScroll": 328,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 1,
+            "frameRecoveries": 1,
+            "position": 153.4772338229709,
+            "font": 16.5,
+            "centers": [
+              304.5,
+              357.5,
+              410.5,
+              464.5,
+              516.5,
+              555.5,
+              593.5
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 5.830621,
+            "paused": false,
+            "layout": "wide",
+            "dropped": 1,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        },
+        "semantic": {
+          "focus": 3.6485260243477553,
+          "index": 2,
+          "raf": true,
+          "follow": true,
+          "width": 479,
+          "height": 571,
+          "residual": 0.0999145207622405,
+          "measuredWidth": 479,
+          "maxScroll": 328,
+          "needsMeasure": false,
+          "inView": true,
+          "surfaceVisible": true,
+          "canFlow": true,
+          "frameAge": 3.399999976158142,
+          "frameRecoveries": 1,
+          "position": 213.90008547923776,
+          "font": 16.5,
+          "centers": [
+            304.5,
+            357.5,
+            410.5,
+            464.5,
+            516.5,
+            555.5,
+            593.5
+          ],
+          "clock": [
+            {
+              "t": 1,
+              "f": 0
+            },
+            {
+              "t": 3,
+              "f": 1
+            },
+            {
+              "t": 5,
+              "f": 2
+            },
+            {
+              "t": 8,
+              "f": 4
+            },
+            {
+              "t": 10,
+              "f": 5
+            },
+            {
+              "t": 21,
+              "f": 5
+            },
+            {
+              "t": 27,
+              "f": 6
+            }
+          ],
+          "media": 7.433072,
+          "paused": false,
+          "layout": "wide",
+          "dropped": 1,
+          "pendingFrames": 1,
+          "maxPendingFrames": 1
+        },
+        "resized": {
+          "frames": 56,
+          "changes": 55,
+          "scrollChanges": 55,
+          "movingRatio": 1,
+          "scrollingRatio": 1,
+          "mediaAdvance": 0.9156719999999998,
+          "state": {
+            "focus": 1.8000302037509255,
+            "index": 1,
+            "raf": true,
+            "follow": true,
+            "width": 268,
+            "height": 410,
+            "residual": 0.14987676786137172,
+            "measuredWidth": 268,
+            "maxScroll": 318,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 1,
+            "frameRecoveries": 1,
+            "position": 115.85012323213863,
+            "font": 13,
+            "centers": [
+              221,
+              276,
+              332,
+              387,
+              442,
+              474,
+              506
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 4.633578,
+            "paused": false,
+            "layout": "long",
+            "dropped": 2,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        },
+        "wideAgain": {
+          "frames": 55,
+          "changes": 54,
+          "scrollChanges": 54,
+          "movingRatio": 1,
+          "scrollingRatio": 1,
+          "mediaAdvance": 0.8991569999999998,
+          "state": {
+            "focus": 1.708987543734271,
+            "index": 1,
+            "raf": true,
+            "follow": true,
+            "width": 479,
+            "height": 571,
+            "residual": 0.496117270854711,
+            "measuredWidth": 479,
+            "maxScroll": 328,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 1.2999999523162842,
+            "frameRecoveries": 1,
+            "position": 109.50388272914529,
+            "font": 16.5,
+            "centers": [
+              304.5,
+              357.5,
+              410.5,
+              464.5,
+              516.5,
+              555.5,
+              593.5
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 4.457366,
+            "paused": false,
+            "layout": "wide",
+            "dropped": 2,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        },
+        "attached": {
+          "frames": 55,
+          "changes": 53,
+          "scrollChanges": 53,
+          "movingRatio": 0.9814814814814815,
+          "scrollingRatio": 0.9814814814814815,
+          "mediaAdvance": 0.8699129999999995,
+          "state": {
+            "focus": 1.6262025396076343,
+            "index": 1,
+            "raf": true,
+            "follow": true,
+            "width": 268,
+            "height": 410,
+            "residual": -0.09714894636124427,
+            "measuredWidth": 268,
+            "maxScroll": 318,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 1.100000023841858,
+            "frameRecoveries": 0,
+            "position": 106.09714894636124,
+            "font": 13,
+            "centers": [
+              221,
+              276,
+              332,
+              387,
+              442,
+              474,
+              506
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 4.292519,
+            "paused": false,
+            "layout": "long",
+            "dropped": 0,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        }
+      }
+    ],
+    "visibleAgain": {
+      "frames": 55,
+      "changes": 54,
+      "scrollChanges": 54,
+      "movingRatio": 1,
+      "scrollingRatio": 1,
+      "mediaAdvance": 0.9000529999999998,
+      "state": {
+        "focus": 1.9512925187103782,
+        "index": 1,
+        "raf": true,
+        "follow": true,
+        "width": 479,
+        "height": 571,
+        "residual": -0.39667036535780653,
+        "measuredWidth": 479,
+        "maxScroll": 328,
+        "needsMeasure": false,
+        "inView": true,
+        "surfaceVisible": true,
+        "canFlow": true,
+        "frameAge": 0.8999999761581421,
+        "frameRecoveries": 0,
+        "position": 122.3966703653578,
+        "font": 16.5,
+        "centers": [
+          304.5,
+          357.5,
+          410.5,
+          464.5,
+          516.5,
+          555.5,
+          593.5
+        ],
+        "clock": [
+          {
+            "t": 1,
+            "f": 0
+          },
+          {
+            "t": 3,
+            "f": 1
+          },
+          {
+            "t": 5,
+            "f": 2
+          },
+          {
+            "t": 8,
+            "f": 4
+          },
+          {
+            "t": 10,
+            "f": 5
+          },
+          {
+            "t": 21,
+            "f": 5
+          },
+          {
+            "t": 27,
+            "f": 6
+          }
+        ],
+        "media": 4.914151,
+        "paused": false,
+        "layout": "wide",
+        "dropped": 0,
+        "pendingFrames": 1,
+        "maxPendingFrames": 1
+      }
+    },
+    "hints": {
+      "readds": 0,
+      "flowing": 7
+    },
+    "zero": {
+      "focus": 0,
+      "index": 1,
+      "raf": false,
+      "follow": true,
+      "width": 0,
+      "height": 0,
+      "residual": 0,
+      "measuredWidth": 0,
+      "maxScroll": 0,
+      "needsMeasure": true,
+      "inView": false,
+      "surfaceVisible": true,
+      "canFlow": false,
+      "frameAge": 0,
+      "frameRecoveries": 0,
+      "position": 0,
+      "font": null,
+      "centers": [],
+      "clock": [
+        {
+          "t": 1,
+          "f": 0
+        },
+        {
+          "t": 3,
+          "f": 1
+        },
+        {
+          "t": 5,
+          "f": 2
+        },
+        {
+          "t": 8,
+          "f": 4
+        },
+        {
+          "t": 10,
+          "f": 5
+        },
+        {
+          "t": 21,
+          "f": 5
+        },
+        {
+          "t": 27,
+          "f": 6
+        }
+      ],
+      "media": 3.423218,
+      "paused": false,
+      "layout": "long",
+      "dropped": 0,
+      "pendingFrames": 0,
+      "maxPendingFrames": 0
+    },
+    "positive": {
+      "frames": 56,
+      "changes": 55,
+      "scrollChanges": 55,
+      "movingRatio": 1,
+      "scrollingRatio": 1,
+      "mediaAdvance": 0.916086,
+      "state": {
+        "focus": 1.933143329079205,
+        "index": 1,
+        "raf": true,
+        "follow": true,
+        "width": 480,
+        "height": 571,
+        "residual": -0.4277605385448169,
+        "measuredWidth": 480,
+        "maxScroll": 328,
+        "needsMeasure": false,
+        "inView": true,
+        "surfaceVisible": true,
+        "canFlow": true,
+        "frameAge": 1.2999999523162842,
+        "frameRecoveries": 0,
+        "position": 121.42776053854482,
+        "font": 16.5,
+        "centers": [
+          304.5,
+          357.5,
+          410.5,
+          464.5,
+          516.5,
+          555.5,
+          593.5
+        ],
+        "clock": [
+          {
+            "t": 1,
+            "f": 0
+          },
+          {
+            "t": 3,
+            "f": 1
+          },
+          {
+            "t": 5,
+            "f": 2
+          },
+          {
+            "t": 8,
+            "f": 4
+          },
+          {
+            "t": 10,
+            "f": 5
+          },
+          {
+            "t": 21,
+            "f": 5
+          },
+          {
+            "t": 27,
+            "f": 6
+          }
+        ],
+        "media": 4.881542,
+        "paused": false,
+        "layout": "wide",
+        "dropped": 0,
+        "pendingFrames": 1,
+        "maxPendingFrames": 1
+      }
+    },
+    "shown": {
+      "frames": 55,
+      "changes": 54,
+      "scrollChanges": 54,
+      "movingRatio": 1,
+      "scrollingRatio": 1,
+      "mediaAdvance": 0.8996249999999995,
+      "state": {
+        "focus": 1.7167546175304207,
+        "index": 1,
+        "raf": true,
+        "follow": true,
+        "width": 479,
+        "height": 571,
+        "residual": 0.08408214266620462,
+        "measuredWidth": 479,
+        "maxScroll": 328,
+        "needsMeasure": false,
+        "inView": true,
+        "surfaceVisible": true,
+        "canFlow": true,
+        "frameAge": 1.100000023841858,
+        "frameRecoveries": 0,
+        "position": 109.9159178573338,
+        "font": 16.5,
+        "centers": [
+          304.5,
+          357.5,
+          410.5,
+          464.5,
+          516.5,
+          555.5,
+          593.5
+        ],
+        "clock": [
+          {
+            "t": 1,
+            "f": 0
+          },
+          {
+            "t": 3,
+            "f": 1
+          },
+          {
+            "t": 5,
+            "f": 2
+          },
+          {
+            "t": 8,
+            "f": 4
+          },
+          {
+            "t": 10,
+            "f": 5
+          },
+          {
+            "t": 21,
+            "f": 5
+          },
+          {
+            "t": 27,
+            "f": 6
+          }
+        ],
+        "media": 4.472487,
+        "paused": false,
+        "layout": "wide",
+        "dropped": 1,
+        "pendingFrames": 1,
+        "maxPendingFrames": 1
+      }
+    },
+    "loop": {
+      "focus": 1.2629962362736047,
+      "index": 1,
+      "raf": true,
+      "follow": true,
+      "width": 479,
+      "height": 571,
+      "residual": 0.08644944737716287,
+      "measuredWidth": 479,
+      "maxScroll": 328,
+      "needsMeasure": false,
+      "inView": true,
+      "surfaceVisible": true,
+      "canFlow": true,
+      "frameAge": 5.200000047683716,
+      "frameRecoveries": 0,
+      "position": 85.91355055262284,
+      "font": 16.5,
+      "centers": [
+        304.5,
+        357.5,
+        410.5,
+        464.5,
+        516.5,
+        555.5,
+        593.5
+      ],
+      "clock": [
+        {
+          "t": 1,
+          "f": 0
+        },
+        {
+          "t": 3,
+          "f": 1
+        },
+        {
+          "t": 5,
+          "f": 2
+        },
+        {
+          "t": 8,
+          "f": 4
+        },
+        {
+          "t": 10,
+          "f": 5
+        },
+        {
+          "t": 21,
+          "f": 5
+        },
+        {
+          "t": 27,
+          "f": 6
+        }
+      ],
+      "media": 3.545341,
+      "paused": false,
+      "layout": "wide",
+      "dropped": 1,
+      "pendingFrames": 1,
+      "maxPendingFrames": 1
+    },
+    "switched": {
+      "frames": 55,
+      "changes": 54,
+      "scrollChanges": 54,
+      "movingRatio": 1,
+      "scrollingRatio": 1,
+      "mediaAdvance": 0.8989630000000002,
+      "state": {
+        "focus": 1.7154909489514616,
+        "index": 1,
+        "raf": true,
+        "follow": true,
+        "width": 479,
+        "height": 571,
+        "residual": 0.15112308256078677,
+        "measuredWidth": 479,
+        "maxScroll": 328,
+        "needsMeasure": false,
+        "inView": true,
+        "surfaceVisible": true,
+        "canFlow": true,
+        "frameAge": 1.2000000476837158,
+        "frameRecoveries": 0,
+        "position": 109.84887691743921,
+        "font": 16.5,
+        "centers": [
+          304.5,
+          357.5,
+          410.5,
+          464.5,
+          516.5,
+          555.5,
+          593.5
+        ],
+        "clock": [
+          {
+            "t": 1,
+            "f": 0
+          },
+          {
+            "t": 3,
+            "f": 1
+          },
+          {
+            "t": 5,
+            "f": 2
+          },
+          {
+            "t": 8,
+            "f": 4
+          },
+          {
+            "t": 10,
+            "f": 5
+          },
+          {
+            "t": 21,
+            "f": 5
+          },
+          {
+            "t": 27,
+            "f": 6
+          }
+        ],
+        "media": 4.470064,
+        "paused": false,
+        "layout": "wide",
+        "dropped": 2,
+        "pendingFrames": 1,
+        "maxPendingFrames": 1
+      }
+    },
+    "hostHidden": {
+      "focus": 1.7661560622454302,
+      "index": 1,
+      "raf": false,
+      "follow": true,
+      "width": 479,
+      "height": 571,
+      "residual": 0.461719898781098,
+      "measuredWidth": 479,
+      "maxScroll": 328,
+      "needsMeasure": true,
+      "inView": true,
+      "surfaceVisible": false,
+      "canFlow": false,
+      "frameAge": 0,
+      "frameRecoveries": 0,
+      "position": 112.5382801012189,
+      "font": 16.5,
+      "centers": [
+        304.5,
+        357.5,
+        410.5,
+        464.5,
+        516.5,
+        555.5,
+        593.5
+      ],
+      "clock": [
+        {
+          "t": 1,
+          "f": 0
+        },
+        {
+          "t": 3,
+          "f": 1
+        },
+        {
+          "t": 5,
+          "f": 2
+        },
+        {
+          "t": 8,
+          "f": 4
+        },
+        {
+          "t": 10,
+          "f": 5
+        },
+        {
+          "t": 21,
+          "f": 5
+        },
+        {
+          "t": 27,
+          "f": 6
+        }
+      ],
+      "media": 4.823382,
+      "paused": false,
+      "layout": "wide",
+      "dropped": 2,
+      "pendingFrames": 0,
+      "maxPendingFrames": 1
+    },
+    "hiddenResized": {
+      "focus": 1.911270468417468,
+      "index": 1,
+      "raf": false,
+      "follow": true,
+      "width": 480,
+      "height": 571,
+      "residual": -0.26083801892571046,
+      "measuredWidth": 480,
+      "maxScroll": 328,
+      "needsMeasure": false,
+      "inView": false,
+      "surfaceVisible": false,
+      "canFlow": false,
+      "frameAge": 0,
+      "frameRecoveries": 0,
+      "position": 120.26083801892571,
+      "font": 16.5,
+      "centers": [
+        304.5,
+        357.5,
+        410.5,
+        464.5,
+        516.5,
+        555.5,
+        593.5
+      ],
+      "clock": [
+        {
+          "t": 1,
+          "f": 0
+        },
+        {
+          "t": 3,
+          "f": 1
+        },
+        {
+          "t": 5,
+          "f": 2
+        },
+        {
+          "t": 8,
+          "f": 4
+        },
+        {
+          "t": 10,
+          "f": 5
+        },
+        {
+          "t": 21,
+          "f": 5
+        },
+        {
+          "t": 27,
+          "f": 6
+        }
+      ],
+      "media": 4.931316,
+      "paused": false,
+      "layout": "wide",
+      "dropped": 2,
+      "pendingFrames": 0,
+      "maxPendingFrames": 1
+    },
+    "hostShown": {
+      "frames": 55,
+      "changes": 54,
+      "scrollChanges": 54,
+      "movingRatio": 1,
+      "scrollingRatio": 1,
+      "mediaAdvance": 0.8990709999999997,
+      "state": {
+        "focus": 1.7096078900484464,
+        "index": 1,
+        "raf": true,
+        "follow": true,
+        "width": 480,
+        "height": 571,
+        "residual": 0.46321104199085994,
+        "measuredWidth": 480,
+        "maxScroll": 328,
+        "needsMeasure": false,
+        "inView": true,
+        "surfaceVisible": true,
+        "canFlow": true,
+        "frameAge": 1.9000000953674316,
+        "frameRecoveries": 0,
+        "position": 109.53678895800914,
+        "font": 16.5,
+        "centers": [
+          304.5,
+          357.5,
+          410.5,
+          464.5,
+          516.5,
+          555.5,
+          593.5
+        ],
+        "clock": [
+          {
+            "t": 1,
+            "f": 0
+          },
+          {
+            "t": 3,
+            "f": 1
+          },
+          {
+            "t": 5,
+            "f": 2
+          },
+          {
+            "t": 8,
+            "f": 4
+          },
+          {
+            "t": 10,
+            "f": 5
+          },
+          {
+            "t": 21,
+            "f": 5
+          },
+          {
+            "t": 27,
+            "f": 6
+          }
+        ],
+        "media": 4.459269,
+        "paused": false,
+        "layout": "wide",
+        "dropped": 2,
+        "pendingFrames": 1,
+        "maxPendingFrames": 1
+      }
+    },
+    "envelope": {
+      "focus": 1.2916342937443956,
+      "index": 1,
+      "raf": true,
+      "follow": true,
+      "width": 480,
+      "height": 571,
+      "residual": -0.4267756455702738,
+      "measuredWidth": 480,
+      "maxScroll": 328,
+      "needsMeasure": false,
+      "inView": true,
+      "surfaceVisible": true,
+      "canFlow": true,
+      "frameAge": 0.8999999761581421,
+      "frameRecoveries": 0,
+      "position": 87.42677564557027,
+      "font": 16.5,
+      "centers": [
+        304.5,
+        357.5,
+        410.5,
+        464.5,
+        516.5,
+        555.5,
+        593.5
+      ],
+      "clock": [
+        {
+          "t": 1,
+          "f": 0
+        },
+        {
+          "t": 3,
+          "f": 1
+        },
+        {
+          "t": 5,
+          "f": 2
+        },
+        {
+          "t": 8,
+          "f": 4
+        },
+        {
+          "t": 10,
+          "f": 5
+        },
+        {
+          "t": 21,
+          "f": 5
+        },
+        {
+          "t": 27,
+          "f": 6
+        }
+      ],
+      "media": 3.600839,
+      "paused": false,
+      "layout": "wide",
+      "dropped": 3,
+      "pendingFrames": 1,
+      "maxPendingFrames": 1
+    },
+    "zeroFrame": {
+      "focus": 1.9426405716272408,
+      "index": 1,
+      "raf": false,
+      "follow": true,
+      "width": 0,
+      "height": 0,
+      "residual": -121.93470449477599,
+      "measuredWidth": 0,
+      "maxScroll": 0,
+      "needsMeasure": true,
+      "inView": false,
+      "surfaceVisible": true,
+      "canFlow": false,
+      "frameAge": 0,
+      "frameRecoveries": 0,
+      "position": 121.93470449477599,
+      "font": 16.5,
+      "centers": [],
+      "clock": [
+        {
+          "t": 1,
+          "f": 0
+        },
+        {
+          "t": 3,
+          "f": 1
+        },
+        {
+          "t": 5,
+          "f": 2
+        },
+        {
+          "t": 8,
+          "f": 4
+        },
+        {
+          "t": 10,
+          "f": 5
+        },
+        {
+          "t": 21,
+          "f": 5
+        },
+        {
+          "t": 27,
+          "f": 6
+        }
+      ],
+      "media": 5.033243,
+      "paused": false,
+      "layout": "wide",
+      "dropped": 0,
+      "pendingFrames": 0,
+      "maxPendingFrames": 1
+    },
+    "frameRestored": {
+      "frames": 55,
+      "changes": 54,
+      "scrollChanges": 54,
+      "movingRatio": 1,
+      "scrollingRatio": 1,
+      "mediaAdvance": 0.9003860000000001,
+      "state": {
+        "focus": 3.034162448420208,
+        "index": 2,
+        "raf": true,
+        "follow": true,
+        "width": 480,
+        "height": 571,
+        "residual": 0.18391228907859158,
+        "measuredWidth": 480,
+        "maxScroll": 328,
+        "needsMeasure": false,
+        "inView": true,
+        "surfaceVisible": true,
+        "canFlow": true,
+        "frameAge": 0.8999999761581421,
+        "frameRecoveries": 0,
+        "position": 180.8160877109214,
+        "font": 16.5,
+        "centers": [
+          304.5,
+          357.5,
+          410.5,
+          464.5,
+          516.5,
+          555.5,
+          593.5
+        ],
+        "clock": [
+          {
+            "t": 1,
+            "f": 0
+          },
+          {
+            "t": 3,
+            "f": 1
+          },
+          {
+            "t": 5,
+            "f": 2
+          },
+          {
+            "t": 8,
+            "f": 4
+          },
+          {
+            "t": 10,
+            "f": 5
+          },
+          {
+            "t": 21,
+            "f": 5
+          },
+          {
+            "t": 27,
+            "f": 6
+          }
+        ],
+        "media": 6.548653,
+        "paused": false,
+        "layout": "wide",
+        "dropped": 0,
+        "pendingFrames": 1,
+        "maxPendingFrames": 1
+      }
+    },
+    "pausedGeometry": {
+      "frames": 55,
+      "changes": 54,
+      "scrollChanges": 54,
+      "movingRatio": 1,
+      "scrollingRatio": 1,
+      "mediaAdvance": 0.8999370000000004,
+      "state": {
+        "focus": 1.7082248653332155,
+        "index": 1,
+        "raf": true,
+        "follow": true,
+        "width": 480,
+        "height": 571,
+        "residual": -0.4634270929578861,
+        "measuredWidth": 480,
+        "maxScroll": 328,
+        "needsMeasure": false,
+        "inView": true,
+        "surfaceVisible": true,
+        "canFlow": true,
+        "frameAge": 1,
+        "frameRecoveries": 0,
+        "position": 109.46342709295789,
+        "font": 16.5,
+        "centers": [
+          304.5,
+          357.5,
+          410.5,
+          464.5,
+          516.5,
+          555.5,
+          593.5
+        ],
+        "clock": [
+          {
+            "t": 1,
+            "f": 0
+          },
+          {
+            "t": 3,
+            "f": 1
+          },
+          {
+            "t": 5,
+            "f": 2
+          },
+          {
+            "t": 8,
+            "f": 4
+          },
+          {
+            "t": 10,
+            "f": 5
+          },
+          {
+            "t": 21,
+            "f": 5
+          },
+          {
+            "t": 27,
+            "f": 6
+          }
+        ],
+        "media": 4.455564,
+        "paused": false,
+        "layout": "wide",
+        "dropped": 0,
+        "pendingFrames": 1,
+        "maxPendingFrames": 1
+      }
+    },
+    "offscreen": {
+      "focus": 1.5015277443379127,
+      "index": 1,
+      "raf": false,
+      "follow": true,
+      "width": 479,
+      "height": 571,
+      "residual": 0.4811340414216261,
+      "measuredWidth": 479,
+      "maxScroll": 328,
+      "needsMeasure": false,
+      "inView": false,
+      "surfaceVisible": true,
+      "canFlow": false,
+      "frameAge": 0,
+      "frameRecoveries": 0,
+      "position": 98.51886595857837,
+      "font": 16.5,
+      "centers": [
+        304.5,
+        357.5,
+        410.5,
+        464.5,
+        516.5,
+        555.5,
+        593.5
+      ],
+      "clock": [
+        {
+          "t": 1,
+          "f": 0
+        },
+        {
+          "t": 3,
+          "f": 1
+        },
+        {
+          "t": 5,
+          "f": 2
+        },
+        {
+          "t": 8,
+          "f": 4
+        },
+        {
+          "t": 10,
+          "f": 5
+        },
+        {
+          "t": 21,
+          "f": 5
+        },
+        {
+          "t": 27,
+          "f": 6
+        }
+      ],
+      "media": 4.20482,
+      "paused": false,
+      "layout": "wide",
+      "dropped": 0,
+      "pendingFrames": 0,
+      "maxPendingFrames": 1
+    },
+    "returned": {
+      "frames": 55,
+      "changes": 54,
+      "scrollChanges": 54,
+      "movingRatio": 1,
+      "scrollingRatio": 1,
+      "mediaAdvance": 0.9004709999999996,
+      "state": {
+        "focus": 1.7118943552057864,
+        "index": 1,
+        "raf": true,
+        "follow": true,
+        "width": 479,
+        "height": 571,
+        "residual": 0.34192192851685377,
+        "measuredWidth": 479,
+        "maxScroll": 328,
+        "needsMeasure": false,
+        "inView": true,
+        "surfaceVisible": true,
+        "canFlow": true,
+        "frameAge": 1.3000000715255737,
+        "frameRecoveries": 0,
+        "position": 109.65807807148315,
+        "font": 16.5,
+        "centers": [
+          304.5,
+          357.5,
+          410.5,
+          464.5,
+          516.5,
+          555.5,
+          593.5
+        ],
+        "clock": [
+          {
+            "t": 1,
+            "f": 0
+          },
+          {
+            "t": 3,
+            "f": 1
+          },
+          {
+            "t": 5,
+            "f": 2
+          },
+          {
+            "t": 8,
+            "f": 4
+          },
+          {
+            "t": 10,
+            "f": 5
+          },
+          {
+            "t": 21,
+            "f": 5
+          },
+          {
+            "t": 27,
+            "f": 6
+          }
+        ],
+        "media": 4.463264,
+        "paused": false,
+        "layout": "wide",
+        "dropped": 0,
+        "pendingFrames": 1,
+        "maxPendingFrames": 1
+      }
+    },
+    "stillPaused": {
+      "focus": 1.7128850891707879,
+      "index": 1,
+      "raf": false,
+      "follow": true,
+      "width": 479,
+      "height": 571,
+      "residual": 0.2893650744225056,
+      "measuredWidth": 479,
+      "maxScroll": 328,
+      "needsMeasure": false,
+      "inView": true,
+      "surfaceVisible": true,
+      "canFlow": false,
+      "frameAge": 0,
+      "frameRecoveries": 0,
+      "position": 109.7106349255775,
+      "font": 16.5,
+      "centers": [
+        304.5,
+        357.5,
+        410.5,
+        464.5,
+        516.5,
+        555.5,
+        593.5
+      ],
+      "clock": [
+        {
+          "t": 1,
+          "f": 0
+        },
+        {
+          "t": 3,
+          "f": 1
+        },
+        {
+          "t": 5,
+          "f": 2
+        },
+        {
+          "t": 8,
+          "f": 4
+        },
+        {
+          "t": 10,
+          "f": 5
+        },
+        {
+          "t": 21,
+          "f": 5
+        },
+        {
+          "t": 27,
+          "f": 6
+        }
+      ],
+      "media": 4.463708,
+      "paused": true,
+      "layout": "wide",
+      "dropped": 0,
+      "pendingFrames": 0,
+      "maxPendingFrames": 1
+    },
+    "hiddenDocument": {
+      "focus": 1.7128850891707879,
+      "index": 1,
+      "raf": false,
+      "follow": true,
+      "width": 479,
+      "height": 571,
+      "residual": 0.2893650744225056,
+      "measuredWidth": 479,
+      "maxScroll": 328,
+      "needsMeasure": true,
+      "inView": true,
+      "surfaceVisible": false,
+      "canFlow": false,
+      "frameAge": 0,
+      "frameRecoveries": 0,
+      "position": 109.7106349255775,
+      "font": 16.5,
+      "centers": [
+        304.5,
+        357.5,
+        410.5,
+        464.5,
+        516.5,
+        555.5,
+        593.5
+      ],
+      "clock": [
+        {
+          "t": 1,
+          "f": 0
+        },
+        {
+          "t": 3,
+          "f": 1
+        },
+        {
+          "t": 5,
+          "f": 2
+        },
+        {
+          "t": 8,
+          "f": 4
+        },
+        {
+          "t": 10,
+          "f": 5
+        },
+        {
+          "t": 21,
+          "f": 5
+        },
+        {
+          "t": 27,
+          "f": 6
+        }
+      ],
+      "media": 4.463708,
+      "paused": true,
+      "layout": "wide",
+      "dropped": 0,
+      "pendingFrames": 0,
+      "maxPendingFrames": 1
+    },
+    "restoredDocument": {
+      "focus": 1.7128850891707879,
+      "index": 1,
+      "raf": false,
+      "follow": true,
+      "width": 479,
+      "height": 571,
+      "residual": 0.2893650744225056,
+      "measuredWidth": 479,
+      "maxScroll": 328,
+      "needsMeasure": false,
+      "inView": true,
+      "surfaceVisible": true,
+      "canFlow": false,
+      "frameAge": 0,
+      "frameRecoveries": 0,
+      "position": 109.7106349255775,
+      "font": 16.5,
+      "centers": [
+        304.5,
+        357.5,
+        410.5,
+        464.5,
+        516.5,
+        555.5,
+        593.5
+      ],
+      "clock": [
+        {
+          "t": 1,
+          "f": 0
+        },
+        {
+          "t": 3,
+          "f": 1
+        },
+        {
+          "t": 5,
+          "f": 2
+        },
+        {
+          "t": 8,
+          "f": 4
+        },
+        {
+          "t": 10,
+          "f": 5
+        },
+        {
+          "t": 21,
+          "f": 5
+        },
+        {
+          "t": 27,
+          "f": 6
+        }
+      ],
+      "media": 4.463708,
+      "paused": true,
+      "layout": "wide",
+      "dropped": 0,
+      "pendingFrames": 0,
+      "maxPendingFrames": 1
+    },
+    "probe": "headless Chrome, real document navigation + media; lost native rAF and delayed/zero observer fault injection, not native Hana detach"
+  },
+  "lyricPerformance": {
+    "closed": {
+      "frames": 109,
+      "changed": 102,
+      "movingRatio": 0.9444444444444444,
+      "medianFrameMs": 16.699999999999818,
+      "p95FrameMs": 16.799999999999955,
+      "mediaAdvance": 1.6579229999999998,
+      "geometry": {
+        "raf": true,
+        "width": 479,
+        "height": 571,
+        "position": 127.18114593533579,
+        "focus": 2.040711725789817
+      },
+      "paint": null,
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 134,
+        "LayoutDuration": 0.000797,
+        "RecalcStyleDuration": 0.020815,
+        "ScriptDuration": 0.025104,
+        "TaskDuration": 0.093071
+      }
+    },
+    "opened": {
+      "frames": 109,
+      "changed": 101,
+      "movingRatio": 0.9351851851851852,
+      "medianFrameMs": 16.699999999999818,
+      "p95FrameMs": 16.700000000000728,
+      "mediaAdvance": 1.659325,
+      "geometry": {
+        "raf": true,
+        "width": 479,
+        "height": 571,
+        "position": 127.34193303679012,
+        "focus": 2.0437082201974
+      },
+      "paint": null,
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 220,
+        "LayoutDuration": 0.000596,
+        "RecalcStyleDuration": 0.023647,
+        "ScriptDuration": 0.02362,
+        "TaskDuration": 0.109249
+      }
+    },
+    "reclosed": {
+      "frames": 109,
+      "changed": 100,
+      "movingRatio": 0.9259259259259259,
+      "medianFrameMs": 16.699999999999818,
+      "p95FrameMs": 16.700000000000728,
+      "mediaAdvance": 1.6594750000000005,
+      "geometry": {
+        "raf": true,
+        "width": 479,
+        "height": 571,
+        "position": 126.90877382970211,
+        "focus": 2.035634277637217
+      },
+      "paint": null,
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 133,
+        "LayoutDuration": 0.000606,
+        "RecalcStyleDuration": 0.019949,
+        "ScriptDuration": 0.020248,
+        "TaskDuration": 0.08631
+      }
+    },
+    "long": {
+      "frames": 109,
+      "changed": 102,
+      "movingRatio": 0.9444444444444444,
+      "medianFrameMs": 16.69999999999891,
+      "p95FrameMs": 16.700000000000728,
+      "mediaAdvance": 1.6595730000000004,
+      "geometry": {
+        "raf": true,
+        "width": 268,
+        "height": 410,
+        "position": 128.9263141404901,
+        "focus": 2.034732347745738
+      },
+      "paint": null,
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 219,
+        "LayoutDuration": 0.000626,
+        "RecalcStyleDuration": 0.024865,
+        "ScriptDuration": 0.021648,
+        "TaskDuration": 0.108464
+      }
+    },
+    "compact": {
+      "page": "queue",
+      "raf": false
+    },
+    "eqDisabled": false,
+    "probe": "headless Chrome, synthetic silent media, CSS scale sample without layout reads; CDP renderer metrics"
+  },
+  "slowLyricFlow": {
+    "frames": 145,
+    "moving": 134,
+    "maxStepPx": 0.271087646484375,
+    "travelPx": 33.36669921875,
+    "firstMedia": 21.5,
+    "lastMedia": 23.66093,
+    "fit": {
+      "height": 77,
+      "lineHeight": 25.575
+    },
+    "externalLrc": false
+  }
+}

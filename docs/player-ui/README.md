@@ -61,6 +61,8 @@
 | [LYRIC-FOLLOW-FIX.md](handoffs/LYRIC-FOLLOW-FIX.md) | 跟随不再卡死（丢松手事件自愈）+ 点歌词跳句也走 0.5s 回位动画 |
 | [PLAYLIST-PERF-DONE.md](handoffs/PLAYLIST-PERF-DONE.md) | 歌单展开继续逐帧流动、播放指示不再每帧布局、长句与慢歌性能自验 |
 | [PLAYLIST-PERF-ACCEPT-1003131699.md](handoffs/PLAYLIST-PERF-ACCEPT-1003131699.md) | 独立验收：真机手感流畅、无头 12/12 + 87/87 + 后端 132/132；全量 UI 与真机长卡/窄卡待验 |
+| [LYRIC-LIFECYCLE-DONE-1003131701.md](handoffs/LYRIC-LIFECYCLE-DONE-1003131701.md) | 未部署候选：失帧、零预算、漏 observer 的歌词恢复；两轮迁窗/比例回归 31/31，歌词 118/118、性能 12/12 |
+| [LYRIC-LIFECYCLE-REVIEW.md](handoffs/LYRIC-LIFECYCLE-REVIEW.md) | 独立静态终审与原始证据核对；绘制权威/持续零尺寸的真机边界 |
 
 ### 沉浸播放页（ETE）
 | 文件 | 一句话 |

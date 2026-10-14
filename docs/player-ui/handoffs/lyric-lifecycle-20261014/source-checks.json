@@ -1,0 +1,29 @@
+{
+  "build": "1003131700",
+  "version": "1.1.5",
+  "head": "e8a97aca54dabcea33005cfe5bb4bf5cb4f1fedd",
+  "sha256": {
+    "ui/app.js": "a510b4dfb7817bfbc983ea81246fb2bb84e59f6fdca0a201a75b43ae37b5a233",
+    "ui/style.css": "23cbdc90b86d2868534d4fec695b78ca2376be0ad9d4abdf3f99d081d3400428",
+    "ui/index.html": "152d35d31bef1f4ac6cda853ee2b4eb7c3f8cfcb449e4dfc569de95f03e15305",
+    "ui/standalone.html": "cd12a512d2e40f62d9dbf4cfa4a985a324ddf44a7372f2945e47c8a70b2f91f6",
+    "ui/_build.json": "a6eabedf0cf93c107d65bae7d97f4e2ed9deed61defbdd0e583e75d6c11b21db",
+    "tools/verify-ui.mjs": "b64c0ab25c97e42dfece2adf47f9b2c0cdab9696db9aee88cc90c69379bf168e",
+    "manifest.json": "24c3e7195faa1a1d68c9af928f6097d89ca08da0fae9bba2e16665c194e567f9"
+  },
+  "twins": true,
+  "htmlBuilds": [
+    "1003131700",
+    "1003131700"
+  ],
+  "cssBaselineRetained": true,
+  "installedStillBaseline": true,
+  "installedHashes": {
+    "ui/app.js": "77b069f9bba95e2c54e3f3ccce65c9ab5ed4bbb94e6d052088dcd13d14a153a1",
+    "ui/style.css": "23cbdc90b86d2868534d4fec695b78ca2376be0ad9d4abdf3f99d081d3400428",
+    "ui/index.html": "a05de2c8ae8792f4ff4a2088885c7af107e4299f162d3da32ccf586df4299537",
+    "ui/standalone.html": "842291997a2e3c13a88cb7ddf83318ab2fe7b3c879185b5fc416a9ed7d6a4dfa",
+    "ui/_build.json": "ee211a686ad8098f2d921465292249bfbf4529e43cfb2a2b3ce6050d82e0722e"
+  },
+  "probe": "local source only; installed hashes still match accepted 1003131699; no deploy/reload"
+}

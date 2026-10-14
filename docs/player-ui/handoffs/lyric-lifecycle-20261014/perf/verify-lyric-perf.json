@@ -1,0 +1,196 @@
+{
+  "selfCheck": [],
+  "wiring": {},
+  "four": {},
+  "darkFallback": {},
+  "runtimeErrors": [],
+  "expectedProbes": [
+    "http 404 http://127.0.0.1:54580/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:54580/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:54580/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:54580/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED"
+  ],
+  "assertions": [
+    {
+      "name": "lyrics-perf-closed-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":109,\"changed\":102,\"movingRatio\":0.9444444444444444,\"medianFrameMs\":16.699999999999818,\"p95FrameMs\":16.700000000000273,\"mediaAdvance\":1.6586320000000003,\"geometry\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":127.17221539947599,\"focus\":2.0405452746265262},\"paint\":null,\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":132,\"LayoutDuration\":0.000691,\"RecalcStyleDuration\":0.019743,\"ScriptDuration\":0.023114,\"TaskDuration\":0.090079}}"
+    },
+    {
+      "name": "lyrics-perf-opened-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":109,\"changed\":103,\"movingRatio\":0.9537037037037037,\"medianFrameMs\":16.699999999999818,\"p95FrameMs\":16.700000000000728,\"mediaAdvance\":1.659557,\"geometry\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":127.31655803396006,\"focus\":2.0432353620117607},\"paint\":null,\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":222,\"LayoutDuration\":0.000635,\"RecalcStyleDuration\":0.021654,\"ScriptDuration\":0.021655,\"TaskDuration\":0.10304}}"
+    },
+    {
+      "name": "lyrics-perf-reclosed-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":109,\"changed\":102,\"movingRatio\":0.9444444444444444,\"medianFrameMs\":16.699999999999818,\"p95FrameMs\":16.700000000000728,\"mediaAdvance\":1.6587069999999997,\"geometry\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":126.90049266192415,\"focus\":2.0354798755552737},\"paint\":null,\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":132,\"LayoutDuration\":0.000726,\"RecalcStyleDuration\":0.019449,\"ScriptDuration\":0.021507,\"TaskDuration\":0.085856}}"
+    },
+    {
+      "name": "lyrics-drawer-preserves-reading-geometry",
+      "ok": true,
+      "detail": "{\"closed\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":127.17221539947599,\"focus\":2.0405452746265262},\"opened\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":127.31655803396006,\"focus\":2.0432353620117607}}"
+    },
+    {
+      "name": "lyrics-drawer-has-no-per-frame-layout",
+      "ok": true,
+      "detail": "{\"LayoutCount\":8,\"RecalcStyleCount\":222,\"LayoutDuration\":0.000635,\"RecalcStyleDuration\":0.021654,\"ScriptDuration\":0.021655,\"TaskDuration\":0.10304}"
+    },
+    {
+      "name": "lyrics-long-wrapped-line-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":109,\"changed\":102,\"movingRatio\":0.9444444444444444,\"medianFrameMs\":16.69999999999891,\"p95FrameMs\":16.799999999999272,\"mediaAdvance\":1.6593109999999998,\"geometry\":{\"raf\":true,\"width\":268,\"height\":410,\"position\":128.91433256711053,\"focus\":2.0345161856570835},\"paint\":null,\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":219,\"LayoutDuration\":0.000753,\"RecalcStyleDuration\":0.025429,\"ScriptDuration\":0.024778,\"TaskDuration\":0.113772}}"
+    },
+    {
+      "name": "lyrics-long-card-has-no-per-frame-layout",
+      "ok": true,
+      "detail": "{\"LayoutCount\":8,\"RecalcStyleCount\":219,\"LayoutDuration\":0.000753,\"RecalcStyleDuration\":0.025429,\"ScriptDuration\":0.024778,\"TaskDuration\":0.113772}"
+    },
+    {
+      "name": "lyrics-compositor-hints-are-bounded-and-release-on-pause",
+      "ok": true,
+      "detail": "{\"layersOn\":7,\"layersOff\":0}"
+    },
+    {
+      "name": "queue-equalizer-retains-three-svg-strokes-without-path-animation",
+      "ok": true,
+      "detail": "{\"paths\":3,\"svgTransforms\":[\"none\",\"none\",\"none\"],\"animations\":3}"
+    },
+    {
+      "name": "lyrics-compact-queue-replaces-scene-and-stops-frames",
+      "ok": true,
+      "detail": "{\"page\":\"queue\",\"raf\":false}"
+    },
+    {
+      "name": "lyrics-slow-bilingual-long-line-is-wrapped",
+      "ok": true,
+      "detail": "{\"frames\":145,\"moving\":135,\"maxStepPx\":0.28619384765625,\"travelPx\":33.596710205078125,\"firstMedia\":21.5,\"lastMedia\":23.678098,\"fit\":{\"height\":77,\"lineHeight\":25.575},\"externalLrc\":false}"
+    },
+    {
+      "name": "lyrics-slow-bilingual-line-moves-at-subpixel-steps",
+      "ok": true,
+      "detail": "{\"frames\":145,\"moving\":135,\"maxStepPx\":0.28619384765625,\"travelPx\":33.596710205078125,\"firstMedia\":21.5,\"lastMedia\":23.678098,\"fit\":{\"height\":77,\"lineHeight\":25.575},\"externalLrc\":false}"
+    }
+  ],
+  "refine": [],
+  "narrowSelfCheck": [],
+  "theme": {},
+  "ambient": {},
+  "lyricPerformance": {
+    "closed": {
+      "frames": 109,
+      "changed": 102,
+      "movingRatio": 0.9444444444444444,
+      "medianFrameMs": 16.699999999999818,
+      "p95FrameMs": 16.700000000000273,
+      "mediaAdvance": 1.6586320000000003,
+      "geometry": {
+        "raf": true,
+        "width": 479,
+        "height": 571,
+        "position": 127.17221539947599,
+        "focus": 2.0405452746265262
+      },
+      "paint": null,
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 132,
+        "LayoutDuration": 0.000691,
+        "RecalcStyleDuration": 0.019743,
+        "ScriptDuration": 0.023114,
+        "TaskDuration": 0.090079
+      }
+    },
+    "opened": {
+      "frames": 109,
+      "changed": 103,
+      "movingRatio": 0.9537037037037037,
+      "medianFrameMs": 16.699999999999818,
+      "p95FrameMs": 16.700000000000728,
+      "mediaAdvance": 1.659557,
+      "geometry": {
+        "raf": true,
+        "width": 479,
+        "height": 571,
+        "position": 127.31655803396006,
+        "focus": 2.0432353620117607
+      },
+      "paint": null,
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 222,
+        "LayoutDuration": 0.000635,
+        "RecalcStyleDuration": 0.021654,
+        "ScriptDuration": 0.021655,
+        "TaskDuration": 0.10304
+      }
+    },
+    "reclosed": {
+      "frames": 109,
+      "changed": 102,
+      "movingRatio": 0.9444444444444444,
+      "medianFrameMs": 16.699999999999818,
+      "p95FrameMs": 16.700000000000728,
+      "mediaAdvance": 1.6587069999999997,
+      "geometry": {
+        "raf": true,
+        "width": 479,
+        "height": 571,
+        "position": 126.90049266192415,
+        "focus": 2.0354798755552737
+      },
+      "paint": null,
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 132,
+        "LayoutDuration": 0.000726,
+        "RecalcStyleDuration": 0.019449,
+        "ScriptDuration": 0.021507,
+        "TaskDuration": 0.085856
+      }
+    },
+    "long": {
+      "frames": 109,
+      "changed": 102,
+      "movingRatio": 0.9444444444444444,
+      "medianFrameMs": 16.69999999999891,
+      "p95FrameMs": 16.799999999999272,
+      "mediaAdvance": 1.6593109999999998,
+      "geometry": {
+        "raf": true,
+        "width": 268,
+        "height": 410,
+        "position": 128.91433256711053,
+        "focus": 2.0345161856570835
+      },
+      "paint": null,
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 219,
+        "LayoutDuration": 0.000753,
+        "RecalcStyleDuration": 0.025429,
+        "ScriptDuration": 0.024778,
+        "TaskDuration": 0.113772
+      }
+    },
+    "compact": {
+      "page": "queue",
+      "raf": false
+    },
+    "eqDisabled": false,
+    "probe": "headless Chrome, synthetic silent media, CSS scale sample without layout reads; CDP renderer metrics"
+  },
+  "slowLyricFlow": {
+    "frames": 145,
+    "moving": 135,
+    "maxStepPx": 0.28619384765625,
+    "travelPx": 33.596710205078125,
+    "firstMedia": 21.5,
+    "lastMedia": 23.678098,
+    "fit": {
+      "height": 77,
+      "lineHeight": 25.575
+    },
+    "externalLrc": false
+  }
+}

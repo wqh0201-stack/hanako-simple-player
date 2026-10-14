@@ -1,0 +1,471 @@
+diff --git a/docs/CHANGELOG.md b/docs/CHANGELOG.md
+index 9aae2d9..9235afb 100644
+--- a/docs/CHANGELOG.md
++++ b/docs/CHANGELOG.md
+@@ -8,6 +8,13 @@
+ 
+ ---
+ 
++## 未发布 · 2026-10-14 · build 1003131699
++
++- 宽窗展开歌单时，仍露出的歌词继续逐帧滚动与波浪，不再退回播放进度事件的低频更新。
++- 歌单播放指示改由外层缩放，消除 SVG 路径动画带来的逐帧布局；长卡常驻歌单也受益。
++- 长句动效减少重复样式写入与细微色阶重绘，只在播放时为波峰附近的行保留合成提示。
++- 慢歌《決意の唄》的本地歌词已用于亚像素连续性自验；真实宿主手感仍需独立验收。见 [性能交接](player-ui/handoffs/PLAYLIST-PERF-DONE.md)。
++
+ ## 1.1.5 · 2026-10-14
+ 
+ - 修：歌词有时会整个「冻住」—— 波浪没了、只剩高亮一句句往下跳、视图不跟着走，滚轮也拉不回来，切歌才能救。根因是「按住歌词后松手事件没送到」（在卡片外松手、宿主自己接管了拖拽）时，自动跟随的回位被永久挡住。现在停手 3 秒就自己回位，不需要切歌。
+diff --git a/docs/PITFALLS.md b/docs/PITFALLS.md
+index 9ec8fac..8b0ab64 100644
+--- a/docs/PITFALLS.md
++++ b/docs/PITFALLS.md
+@@ -84,6 +84,18 @@
+ 
+ ## 歌词
+ 
++- **宽窗歌单只部分遮住歌词，不能用 `state.drawer` 停掉歌词 rAF**。
++  旧代码展开后退回约 4Hz 的 `timeupdate`，浏览器本身仍约 60Hz，造成低帧率观感。
++  真正替换整个舞台的窄卡队列、搜索页、离屏、暂停与减少动态偏好仍暂停。
++  断言 `lyrics-visible-behind-drawer-keeps-frames`、`lyrics-perf-opened-updates-each-frame`。
++- **SVG path 的 `transform-box: fill-box` 动画会触发持续布局**。
++  歌单当前曲三根播放指示线在 Chromium 中令 1.8s 的 `LayoutCount` 从 8 增至约 115，
++  长卡常驻队列也受影响。保持 SVG 描边，缩放放到 HTML 外层；不要改回 path 上动画。
++  断言 `lyrics-drawer-has-no-per-frame-layout`、`lyrics-long-card-has-no-per-frame-layout`。
++- **歌词先写波峰样式再读 `scrollHeight` / `scrollTop`，会额外强制样式计算**。
++  行高稳定，滚动范围在几何重测后缓存；每帧先完成滚动读回，再批量写波峰。
++  临时合成提示只给波峰附近最多十行，暂停、浏览、离屏时释放，不给整首歌常驻层。
++  构建号 1003131699，见 [性能交接](player-ui/handoffs/PLAYLIST-PERF-DONE.md)。
+ - **回位（自动跟随的恢复）不能押在 `pointerup` 上**。`pointerdown` 一按下就会
+   `pauseFollow()`，而旧代码紧接着 `clearFollowTimer()` —— 唯一能重新立起 3s 回位
+   定时器的路径只剩松手事件。卡片是 iframe：在卡片/窗口外松手、宿主自己接管拖拽、
+diff --git a/docs/TODO.md b/docs/TODO.md
+index f8c7cd0..d424819 100644
+--- a/docs/TODO.md
++++ b/docs/TODO.md
+@@ -4,6 +4,10 @@
+ 
+ ## 待真机验收
+ 
++- **歌单展开与慢歌长句流畅度**（build 1003131699）：全量 UI 394/394、歌词专项 85/85、
++  指定歌曲本地 LRC 亚像素检查 12/12；待 Hana 整包同步、reload 后复验独立窗与长卡，
++  尤其《決意の唄》21–25s 的两行长句。官方 UI smoke 缺独立 Electron runtime，不能算通过。
++  见 [性能交接](player-ui/handoffs/PLAYLIST-PERF-DONE.md)。
+ - **歌词跟随自愈 + 跳句动画**（1.1.5，build 1003131698）：合成指针复现与无头回归已过（含反向验证），
+   但「在卡片外松手」在真宿主的真实手感需重开卡片确认。见 [交接](player-ui/handoffs/LYRIC-FOLLOW-FIX.md)。
+ - **本地文件夹选择**：需真机点一次确认（`<input type=file webkitdirectory>` 在宿主 webview 的行为）。
+diff --git a/docs/player-ui/README.md b/docs/player-ui/README.md
+index ffbc73c..b850694 100644
+--- a/docs/player-ui/README.md
++++ b/docs/player-ui/README.md
+@@ -59,6 +59,8 @@
+ | [LYRIC-PICK-DONE.md](handoffs/LYRIC-PICK-DONE.md) | 歌词「挑 / 换」——匹配错了能自选 |
+ | [LYRIC-FLOW-DONE.md](handoffs/LYRIC-FLOW-DONE.md) | 响应式歌词与连续波浪 |
+ | [LYRIC-FOLLOW-FIX.md](handoffs/LYRIC-FOLLOW-FIX.md) | 跟随不再卡死（丢松手事件自愈）+ 点歌词跳句也走 0.5s 回位动画 |
++| [PLAYLIST-PERF-DONE.md](handoffs/PLAYLIST-PERF-DONE.md) | 歌单展开继续逐帧流动、播放指示不再每帧布局、长句与慢歌性能自验 |
++| [PLAYLIST-PERF-ACCEPT-1003131699.md](handoffs/PLAYLIST-PERF-ACCEPT-1003131699.md) | 独立验收：真机手感流畅、无头 12/12 + 87/87 + 后端 132/132；全量 UI 与真机长卡/窄卡待验 |
+ 
+ ### 沉浸播放页（ETE）
+ | 文件 | 一句话 |
+diff --git a/tools/verify-ui.mjs b/tools/verify-ui.mjs
+index e46f5b9..9fe1462 100644
+--- a/tools/verify-ui.mjs
++++ b/tools/verify-ui.mjs
+@@ -26,7 +26,7 @@ const puppeteer = require(process.env.PUPPETEER_CORE || '/Volumes/SSD/hanadesk/
+ const CHROME = process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+ 
+ const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+-const uiDir = path.join(repo, 'ui');
++const uiDir = process.env.VERIFY_UI_DIR ? path.resolve(process.env.VERIFY_UI_DIR) : path.join(repo, 'ui');
+ const outDir = process.env.OUT_DIR || '/tmp/hap-verify';
+ const API = '/api/apps/hanako-simple-player/routes';
+ const COVER_FILE = path.join(repo, 'docs/player-ui/assets/demo-cover.png');
+@@ -370,6 +370,11 @@ const server = http.createServer((req, res) => {
+     if (id === '900099') return text(res, 200, '', 'text/plain; charset=utf-8');  // 无词纯音乐
+     if (id === '900098') return text(res, 200, '[00:00.00]这似乎是一首纯音乐呢，请尽情欣赏它吧！', 'text/plain; charset=utf-8');  // 占位词纯音乐
+     if (fixtureMode === 'align') return text(res, 200, '[offset:250]\n' + Array.from({ length: 12 }, (_, i) => `[00:${String(1 + i * 2).padStart(2, '0')}.00]校准试听 第 ${i + 1} 句`).join('\n'), 'text/plain; charset=utf-8');
++    if (fixtureMode === 'lyric-slow') return text(res, 200, process.env.LYRIC_PERF_LRC ? fs.readFileSync(process.env.LYRIC_PERF_LRC, 'utf8') : [
++      '[00:00.00]作词信息', '[00:01.00]作曲信息', '[00:02.00]编曲信息',
++      '[00:12.55]ゆっくりと夜道を歩いて遠くの灯りを見つめている（这是一句日文与中文合并显示的长句，验证缓慢流动时仍然连续）',
++      '[00:24.81]続く言葉を待っている（等待下一句）', '[00:30.48]この先も歩いていく（继续向前走）'
++    ].join('\n'), 'text/plain; charset=utf-8');
+     if (fixtureMode === 'lyric-flow') return text(res, 200, [
+       '[00:01.00]风慢慢经过窗前',
+       '[00:03.00]这是一句很长的中文歌词，让它自然换行之后仍然能够看清，每一个字都不会被波浪挤到旁边的句子上',
+@@ -1020,7 +1025,8 @@ async function verifyLyricFlow() {
+   await seekTo(6);
+   await page.evaluate(() => document.querySelector('#queueBtn').click());
+   await sleep(100);
+-  assert('lyrics-covered-by-drawer-stops-frames', !(await info()).raf, JSON.stringify(await info()));
++  // 宽窗抽屉只盖住阅读列的一部分，露出的歌词必须继续逐帧流动。
++  assert('lyrics-visible-behind-drawer-keeps-frames', (await info()).raf, JSON.stringify(await info()));
+   await page.evaluate(() => document.querySelector('#queueBtn').click());
+   await sleep(350);
+   await page.evaluate(() => window.__playerDebug.openSearch());
+@@ -1039,6 +1045,138 @@ async function verifyLyricFlow() {
+   await page.close();
+   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+ }
++
++/* 同一段真媒体时钟对照：rAF 采样只读行内样式，不读布局，避免探针自己迫使重排。
++ * CDP 时间仅作为本机诊断记录，不拿机器相关的毫秒数作回归门槛。 */
++async function verifyLyricPerformance() {
++  await fetch(`${BASE}${API}/__fixture/reset?mode=lyric-flow&appSurfaceSession=fake-ticket`);
++  const page = await newPage();
++  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
++  await page.goto(`${UI_BASE}/standalone.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
++  await sleep(700);
++  await clickTab(page, 'imp:1');
++  await page.evaluate(() => document.querySelector('#queueList .q-hit').click());
++  await page.waitForFunction(() => document.querySelectorAll('.lyric-line').length === 7);
++  const cdp = await page.target().createCDPSession();
++  await cdp.send('Performance.enable');
++  if (process.env.LYRIC_PERF_DISABLE_EQ === '1') await page.addStyleTag({ content: '.q-eq path, .q-eq > span { animation: none !important; }' });
++  const metrics = async () => Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map(m => [m.name, m.value]));
++  async function sample(open, name) {
++    await page.evaluate(async open => {
++      const a = document.querySelector('audio'), p = document.getElementById('player');
++      a.pause(); a.currentTime = 3.4;
++      await new Promise(resolve => a.addEventListener('seeked', resolve, { once: true }));
++      if ((p.getAttribute('data-drawer') === '1') !== open) document.getElementById('queueBtn').click();
++    }, open);
++    await sleep(400); // 表面入/退场不混入稳态测量
++    await page.evaluate(() => window.__playerDebug.requestPlay('fixture'));
++    if (process.env.LYRIC_PERF_TRACE === '1') await page.tracing.start({ path: path.join(outDir, 'trace-' + name + '.json'), categories: ['devtools.timeline'] });
++    const before = await metrics();
++    const frames = await page.evaluate(() => new Promise(resolve => {
++      const line = document.querySelector('.lyric-line[data-i="2"]'), a = document.querySelector('audio');
++      const frames = [], start = performance.now();
++      function tick(now) {
++        frames.push({ at: now, scale: line.style.getPropertyValue('--lyric-scale'), media: a.currentTime });
++        if (now - start < 1800) requestAnimationFrame(tick); else resolve(frames);
++      }
++      requestAnimationFrame(tick);
++    }));
++    const after = await metrics();
++    const trace = process.env.LYRIC_PERF_TRACE === '1' ? JSON.parse(Buffer.from(await page.tracing.stop()).toString('utf8')).traceEvents : null;
++    const paint = trace ? trace.filter(e => e.name === 'Paint' && e.ph === 'X') : null;
++    const geometry = await page.evaluate(() => {
++      const d = window.__playerDebug.lyricFlowState();
++      return { raf: d.raf, width: d.width, height: d.height, position: d.position, focus: d.focus };
++    });
++    await page.evaluate(() => document.querySelector('audio').pause());
++    const intervals = frames.slice(1).map((f, i) => f.at - frames[i].at).sort((a, b) => a - b);
++    const changed = frames.slice(1).filter((f, i) => f.scale !== frames[i].scale).length;
++    return {
++      frames: frames.length, changed, movingRatio: changed / Math.max(1, frames.length - 1),
++      medianFrameMs: intervals[Math.floor(intervals.length / 2)], p95FrameMs: intervals[Math.floor(intervals.length * .95)],
++      mediaAdvance: frames.at(-1).media - frames[0].media, geometry,
++      paint: paint ? { count: paint.length, durationMs: paint.reduce((sum, e) => sum + (e.dur || 0), 0) / 1000 } : null,
++      metrics: Object.fromEntries(['LayoutCount', 'RecalcStyleCount', 'LayoutDuration', 'RecalcStyleDuration', 'ScriptDuration', 'TaskDuration']
++        .map(key => [key, +(after[key] - before[key]).toFixed(6)]))
++    };
++  }
++  const closed = await sample(false, 'closed'), opened = await sample(true, 'opened'), reclosed = await sample(false, 'reclosed');
++  for (const [name, s] of Object.entries({ closed, opened, reclosed })) {
++    assert('lyrics-perf-' + name + '-updates-each-frame', s.frames > 30 && s.mediaAdvance > 1.5 && s.movingRatio > .9,
++      JSON.stringify(s));
++  }
++  assert('lyrics-drawer-preserves-reading-geometry', closed.geometry.width === opened.geometry.width && closed.geometry.height === opened.geometry.height,
++    JSON.stringify({ closed: closed.geometry, opened: opened.geometry }));
++  assert('lyrics-drawer-has-no-per-frame-layout', opened.metrics.LayoutCount < opened.frames / 4, JSON.stringify(opened.metrics));
++  await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
++  await sleep(150);
++  const long = await sample(false, 'long-line');
++  const wrapped = await page.$eval('.lyric-line[data-i="1"] .lyric-text', el => el.offsetHeight > parseFloat(getComputedStyle(el).lineHeight) * 2);
++  assert('lyrics-long-wrapped-line-updates-each-frame', wrapped && long.frames > 30 && long.movingRatio > .9, JSON.stringify(long));
++  assert('lyrics-long-card-has-no-per-frame-layout', long.metrics.LayoutCount < long.frames / 4, JSON.stringify(long.metrics));
++  await page.evaluate(() => window.__playerDebug.requestPlay('fixture'));
++  await sleep(100);
++  const layersOn = await page.$$eval('.lyric-line.is-flowing', els => els.length);
++  await page.evaluate(() => document.querySelector('audio').pause());
++  const layersOff = await page.$$eval('.lyric-line.is-flowing', els => els.length);
++  assert('lyrics-compositor-hints-are-bounded-and-release-on-pause', layersOn > 0 && layersOn <= 10 && layersOff === 0, JSON.stringify({ layersOn, layersOff }));
++  const eq = await page.evaluate(() => {
++    const eq = document.querySelector('.q-row.is-current .q-eq');
++    return { paths: eq.querySelectorAll('path').length, svgTransforms: [...eq.querySelectorAll('path')].map(el => getComputedStyle(el).transform), animations: eq.getAnimations({ subtree: true }).length };
++  });
++  assert('queue-equalizer-retains-three-svg-strokes-without-path-animation', eq.paths === 3 && eq.svgTransforms.every(t => t === 'none') && eq.animations === 3, JSON.stringify(eq));
++  await page.setViewport({ width: 312, height: 494, deviceScaleFactor: 1 });
++  await sleep(150);
++  await page.evaluate(() => { window.__playerDebug.requestPlay('fixture'); document.getElementById('queueBtn').click(); });
++  await sleep(100);
++  const covered = await page.evaluate(() => ({ page: document.getElementById('player').getAttribute('data-page'), raf: window.__playerDebug.lyricFlowState().raf }));
++  assert('lyrics-compact-queue-replaces-scene-and-stops-frames', covered.page === 'queue' && !covered.raf, JSON.stringify(covered));
++  report.lyricPerformance = { closed, opened, reclosed, long, compact: covered, eqDisabled: process.env.LYRIC_PERF_DISABLE_EQ === '1', probe: 'headless Chrome, synthetic silent media, CSS scale sample without layout reads; CDP renderer metrics' };
++  await cdp.detach();
++  await page.close();
++  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
++}
++
++/* 慢歌：时间来自用户反馈的 12.55→24.81s 句间距；外部 LRC 仅由本地环境变量读取，
++ * 不进入生产 ui/ 或发布包。几何采样用于检查亚像素连续性，不能充当无扰动性能测量。 */
++async function verifySlowLyricFlow() {
++  await fetch(`${BASE}${API}/__fixture/reset?mode=lyric-slow&appSurfaceSession=fake-ticket`);
++  const page = await newPage();
++  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
++  await page.goto(`${UI_BASE}/standalone.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
++  await sleep(700);
++  await clickTab(page, 'imp:1');
++  await page.evaluate(() => document.querySelector('#queueList .q-hit').click());
++  await page.waitForFunction(() => document.querySelectorAll('.lyric-line').length >= 6);
++  await page.evaluate(async () => {
++    const a = document.querySelector('audio'); a.pause(); a.currentTime = 21.5;
++    await new Promise(resolve => a.addEventListener('seeked', resolve, { once: true }));
++    await window.__playerDebug.requestPlay('fixture');
++  });
++  const curve = await page.evaluate(() => new Promise(resolve => {
++    const frames = [], line = document.querySelector('.lyric-line[data-i="3"]'), a = document.querySelector('audio');
++    const start = performance.now();
++    function tick(now) {
++      const r = line.getBoundingClientRect();
++      frames.push({ at: now, media: a.currentTime, center: (r.top + r.bottom) / 2 });
++      if (now - start < 2400) requestAnimationFrame(tick); else resolve(frames);
++    }
++    requestAnimationFrame(tick);
++  }));
++  const steps = curve.slice(1).map((f, i) => f.center - curve[i].center);
++  const fit = await page.$eval('.lyric-line[data-i="3"] .lyric-text', el => ({ height: el.offsetHeight, lineHeight: parseFloat(getComputedStyle(el).lineHeight) }));
++  const summary = { frames: curve.length, moving: steps.filter(s => Math.abs(s) > .00001).length,
++    maxStepPx: Math.max(...steps.map(Math.abs)), travelPx: curve[0].center - curve.at(-1).center,
++    firstMedia: curve[0].media, lastMedia: curve.at(-1).media, fit, externalLrc: !!process.env.LYRIC_PERF_LRC };
++  assert('lyrics-slow-bilingual-long-line-is-wrapped', fit.height > fit.lineHeight * 1.5, JSON.stringify(summary));
++  assert('lyrics-slow-bilingual-line-moves-at-subpixel-steps', curve.length > 60 && summary.moving > steps.length * .9 && summary.travelPx > 2 && summary.maxStepPx < 2
++    && steps.every(s => s < .01) && steps.some(s => Math.abs(s) > .01 && Math.abs(s - Math.round(s)) > .01), JSON.stringify(summary));
++  fs.writeFileSync(path.join(outDir, 'slow-lyric-curve.json'), JSON.stringify({ summary, curve }, null, 2));
++  await page.screenshot({ path: path.join(outDir, 'slow-bilingual-1040x780.png') });
++  report.slowLyricFlow = summary;
++  await page.close();
++  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
++}
+ async function verifyCoverFill() {
+   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+   const bili = (id, title, list = 'imp:1') => ({ id: 'bilibili:' + id, name: title, pic: '', list, mode: '在线', url: WAV_URL });
+@@ -1181,6 +1319,14 @@ async function verifyMoodLists() {
+   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+ }
+ if (!process.argv.includes('--ripple-only') && !process.argv.includes('--song-only')) {
++if (process.argv.includes('--lyric-perf-only')) {
++  await verifyLyricPerformance();
++  await verifySlowLyricFlow();
++  fs.writeFileSync(path.join(outDir, 'verify-lyric-perf.json'), JSON.stringify(report, null, 2));
++  console.log(JSON.stringify({ assertions: `${report.assertions.filter(a => a.ok).length}/${report.assertions.length}`, failed: report.assertions.filter(a => !a.ok), lyricPerformance: report.lyricPerformance, runtimeErrors: report.runtimeErrors, outDir }, null, 2));
++  await browser.close(); server.closeAllConnections(); server.close();
++  process.exit(report.assertions.some(a => !a.ok) || report.runtimeErrors.length ? 1 : 0);
++}
+ await verifyMoodLists();
+ if (process.argv.includes('--lists-only')) {
+   console.log(JSON.stringify({ assertions: `${report.assertions.filter(a => a.ok).length}/${report.assertions.length}`, failed: report.assertions.filter(a => !a.ok), runtimeErrors: report.runtimeErrors }, null, 2));
+@@ -1201,6 +1347,8 @@ if (process.argv.includes('--surface-motion-only')) {
+   process.exit(report.assertions.some((a) => !a.ok) || report.runtimeErrors.length ? 1 : 0);
+ }
+ await verifyLyricFlow();
++await verifyLyricPerformance();
++await verifySlowLyricFlow();
+ if (process.argv.includes('--lyrics-only')) {
+   fs.writeFileSync(path.join(outDir, 'verify-lyrics.json'), JSON.stringify(report, null, 2));
+   console.log(JSON.stringify({ assertions: `${report.assertions.filter((a) => a.ok).length}/${report.assertions.length}`, failed: report.assertions.filter((a) => !a.ok), runtimeErrors: report.runtimeErrors, outDir }, null, 2));
+diff --git a/ui/_build.json b/ui/_build.json
+index ab5cc45..3cccb5b 100644
+--- a/ui/_build.json
++++ b/ui/_build.json
+@@ -1 +1 @@
+-{"build":"1003131698"}
+\ No newline at end of file
++{"build":"1003131699"}
+\ No newline at end of file
+diff --git a/ui/app.js b/ui/app.js
+index a99b571..b526470 100644
+--- a/ui/app.js
++++ b/ui/app.js
+@@ -2237,10 +2237,12 @@
+             /* 队列第二行：有歌手显歌手，没有就留空（不让 group 再冒充） */
+             '<span class="q-artist">' + esc(t.author || '') + '</span>' +
+           '</span>' +
+-          /* 正在播放指示：行内 SVG（不走 <use>，否则选择器进不了 shadow tree，条形动画不会生效） */
+-          '<span class="q-eq"><svg viewBox="0 0 24 24" aria-hidden="true">' +
+-            '<path d="M6.5 9.5v9"/><path d="M12 5.5v13"/><path d="M17.5 11.5v7"/>' +
+-          '</svg></span>' +
++          /* SVG 描边保持原样；缩放交给 HTML 外层，避免 SVG path 动画每帧触发布局。 */
++          '<span class="q-eq" aria-hidden="true">' +
++            '<span><svg viewBox="0 0 24 24"><path d="M6.5 9.5v9"/></svg></span>' +
++            '<span><svg viewBox="0 0 24 24"><path d="M12 5.5v13"/></svg></span>' +
++            '<span><svg viewBox="0 0 24 24"><path d="M17.5 11.5v7"/></svg></span>' +
++          '</span>' +
+           '<span class="q-dur">' + (t.dur ? fmtTime(t.dur) : '--:--') + '</span>' +
+         '</button>' +
+         '<button class="q-fav' + (isFav(t.id) ? ' is-on' : '') + '" id="qFav' + i + '" type="button" aria-pressed="' + (isFav(t.id) ? 'true' : 'false') + '" aria-label="' + (isFav(t.id) ? '取消喜欢' : '加入我的喜欢') + '" title="' + (isFav(t.id) ? '取消喜欢' : '加入我的喜欢') + '">' + icon('i-heart') + '</button>' +
+@@ -3241,7 +3243,7 @@
+     }
+     stopLyricFrames();
+     lyrics.innerHTML = has ? '<div class="lyric-flow">' + html + '</div>' : '';
+-    lyricGeometry = { nodes: Array.from(lyrics.querySelectorAll('.lyric-line')), centers: [], slopes: [], clock: [], content: lyrics.firstElementChild, height: 0, residual: 0, painted: [] };
++    lyricGeometry = { nodes: Array.from(lyrics.querySelectorAll('.lyric-line')), centers: [], slopes: [], clock: [], content: lyrics.firstElementChild, height: 0, maxScroll: 0, residual: 0, painted: [] };
+     buildLyricClock();
+   }
+ 
+@@ -3293,7 +3295,7 @@
+    * 行数是软约束，空间不足时守住11px；宽高增加也不把字推大。 */
+   var LYRIC_VIEW = { wide: { rows: 10, preference: .85 }, long: { rows: 6, preference: 1.10 }, compact: { rows: 5, preference: .90 } };
+   var LYRIC_WAVE_PEAK = .15;
+-  var lyricGeometry = { nodes: [], centers: [], slopes: [], clock: [], content: null, height: 0, residual: 0, painted: [] };
++  var lyricGeometry = { nodes: [], centers: [], slopes: [], clock: [], content: null, height: 0, maxScroll: 0, residual: 0, painted: [] };
+   var lyricFlowRaf = 0, lyricInView = true, lyricFocus = 0;
+   var lyricReturn = null;
+ 
+@@ -3343,7 +3345,7 @@
+   }
+   function scrollLyricPosition(target) {
+     var g = lyricGeometry;
+-    target = Math.max(0, Math.min(lyrics.scrollHeight - g.height, target));
++    target = Math.max(0, Math.min(g.maxScroll, target));
+     lyrics.scrollTop = target;
+     // Chromium 的 scrollTop 可能舍入到整像素，用内容层补回慢流动的亚像素。
+     g.residual = lyrics.scrollTop - target;
+@@ -3354,7 +3356,18 @@
+     if (!g.nodes.length || !g.centers.length || lyricAlign) return;
+     var still = reducedMotion() || SHOT;
+     lyricFocus = still ? Math.max(0, lyricIndex) : lyricFocusAt(lyricTimeAt(liveProgress()));
++    // 先读回 scrollTop，再写波峰样式；写完样式才读几何会强迫每帧再算一次样式。
++    if (state.follow) {
++      var target = lyricCenterAt(lyricFocus) - g.height / 2;
++      if (lyricReturn) {
++        var p = Math.min(1, (performance.now() - lyricReturn.at) / 500);
++        target = lyricReturn.from + (target - lyricReturn.from) * (p * p * (3 - 2 * p));
++        if (p === 1) lyricReturn = null;
++      }
++      scrollLyricPosition(target);
++    }
+     var first = Math.max(0, Math.floor(lyricFocus) - 4), last = Math.min(g.nodes.length - 1, Math.ceil(lyricFocus) + 4);
++    var flowing = canFlowLyrics();
+     var active = [];
+     for (var i = first; i <= last; i++) active.push(i);
+     g.painted.forEach(function (i) {
+@@ -3362,32 +3375,33 @@
+       g.nodes[i].style.removeProperty('--lyric-scale');
+       g.nodes[i].style.removeProperty('--lyric-opacity');
+       g.nodes[i].style.removeProperty('--lyric-strength');
++      g.nodes[i].classList.remove('is-flowing');
+     });
+     active.forEach(function (i) {
+       var strength = Math.exp(-.5 * Math.pow(i - lyricFocus, 2));
+-      g.nodes[i].style.setProperty('--lyric-scale', String(still ? 1 : 1 + g.wavePeak * strength));
+-      g.nodes[i].style.setProperty('--lyric-opacity', String(.65 + .35 * strength));
+-      g.nodes[i].style.setProperty('--lyric-strength', (Math.pow(strength, 3) * 100).toFixed(2) + '%');
++      var node = g.nodes[i];
++      // 位移/缩放逐帧保留精度；肉眼不可分的色阶合并，免得长句每帧反复栅格化。
++      setLyricStyle(node, '--lyric-scale', (still ? 1 : 1 + g.wavePeak * strength).toFixed(5));
++      setLyricStyle(node, '--lyric-opacity', (.65 + .35 * strength).toFixed(3));
++      setLyricStyle(node, '--lyric-strength', (Math.pow(strength, 3) * 100).toFixed(0) + '%');
++      if (node.classList.contains('is-flowing') !== flowing) node.classList.toggle('is-flowing', flowing);
+     });
+     g.painted = active;
+-    if (state.follow) {
+-      var target = lyricCenterAt(lyricFocus) - g.height / 2;
+-      if (lyricReturn) {
+-        var p = Math.min(1, (performance.now() - lyricReturn.at) / 500);
+-        target = lyricReturn.from + (target - lyricReturn.from) * (p * p * (3 - 2 * p));
+-        if (p === 1) lyricReturn = null;
+-      }
+-      scrollLyricPosition(target);
+-    }
++  }
++  function setLyricStyle(node, key, value) {
++    if (node.style.getPropertyValue(key) !== value) node.style.setProperty(key, value);
+   }
+   function stopLyricFrames() {
+     if (lyricFlowRaf) cancelAnimationFrame(lyricFlowRaf);
+     lyricFlowRaf = 0;
++    // 只为波峰附近最多十行留合成层；暂停/浏览/离屏时释放，长歌词不会堆满 GPU 层。
++    if (lyricGeometry) lyricGeometry.painted.forEach(function (i) { lyricGeometry.nodes[i].classList.remove('is-flowing'); });
+   }
+   function canFlowLyrics() {
+     var g = lyricGeometry;
+     var base = !SHOT && !reducedMotion() && !document.hidden && lyricInView && !lyricAlign && state.follow
+-      && g.nodes.length > 0 && g.height > 0 && state.page === 'play' && !state.drawer
++      // 宽窗歌单是局部浮层，露出的歌词继续流动；窄卡队列/搜索整面替换才暂停。
++      && g.nodes.length > 0 && g.height > 0 && state.page === 'play'
+       && player.getAttribute('data-search') !== '1';
+     if (!base) return false;
+     /* 回位动画在跑的时候不看时钟、也不看 seeking：
+@@ -3460,6 +3474,8 @@
+     });
+     g.centers = g.nodes.map(function (node) { return pad + node.offsetTop + node.offsetHeight / 2; });
+     g.slopes = lyricSlopes(g.centers.map(function (y, i) { return { x: i, y: y }; }), 'x', 'y');
++    // 行高在波峰动效中稳定，滚动范围只需在歌词/字号/容器尺寸重测后更新。
++    g.maxScroll = Math.max(0, lyrics.scrollHeight - h);
+     if (anchor >= 0 && g.centers[anchor] != null) lyrics.scrollTop = Math.max(0, g.centers[anchor] - anchorY);
+     if (lyricAlign) { measureAlignLines(); paintLyricAlign(); }
+     else { paintLyricFlow(); startLyricFrames(); }
+diff --git a/ui/index.html b/ui/index.html
+index 824e98f..4f496c6 100644
+--- a/ui/index.html
++++ b/ui/index.html
+@@ -497,7 +497,7 @@
+ </defs></svg>
+ 
+ <script src="app.js" defer></script>
+-<script>window.__HANA_BUILD = "1003131698";</script>
++<script>window.__HANA_BUILD = "1003131699";</script>
+ <script type="module">
+   import { hana } from "./sdk.js";
+   window.hana = hana;
+diff --git a/ui/standalone.html b/ui/standalone.html
+index a0932e9..7080fd4 100644
+--- a/ui/standalone.html
++++ b/ui/standalone.html
+@@ -497,7 +497,7 @@
+ </defs></svg>
+ 
+ <script src="app.js" defer></script>
+-<script>window.__HANA_BUILD = "1003131698";</script>
++<script>window.__HANA_BUILD = "1003131699";</script>
+ <script type="module">
+   import { hana } from "./sdk.js";
+   window.hana = hana;
+diff --git a/ui/style.css b/ui/style.css
+index 0026d48..51a92c1 100644
+--- a/ui/style.css
++++ b/ui/style.css
+@@ -748,6 +748,8 @@ button:disabled { cursor: default; }
+   transform: scale(var(--lyric-scale, 1));
+   transform-origin: left center;
+ }
++.lyric-line.is-flowing { will-change: opacity; }
++.lyric-line.is-flowing .lyric-text { will-change: transform; }
+ .lyric-line.is-current {
+   /* 反差阴影垫底（保可读）+ accent 柔光（把当前句从纱上挑出来） */
+   text-shadow: var(--lyric-shadow), var(--lyric-glow);
+@@ -1151,8 +1153,15 @@ button:disabled { cursor: default; }
+ }
+ .q-row.is-current .q-title { color: var(--hk-accent); }
+ 
+-.q-eq { display: none; flex: 0 0 auto; color: var(--hk-accent); }
++.q-eq { display: none; position: relative; width: 15px; height: 15px; flex: 0 0 auto; color: var(--hk-accent); }
+ .q-row.is-current .q-eq { display: inline-flex; }
++.q-eq > span {
++  position: absolute;
++  inset: 0;
++  /* 三条线的底端均为 viewBox 的 y=18.5；原 fill-box 缩放轴保持不变。 */
++  transform-origin: 50% 77.083333%;
++  animation: eqb 1.05s ease-in-out infinite alternate;
++}
+ .q-eq svg {
+   width: 15px;
+   height: 15px;
+@@ -1162,13 +1171,8 @@ button:disabled { cursor: default; }
+   stroke-linecap: round;
+   stroke-linejoin: round;
+ }
+-.q-eq path {
+-  transform-box: fill-box;
+-  transform-origin: 50% 100%;
+-  animation: eqb 1.05s ease-in-out infinite alternate;
+-}
+-.q-eq path:nth-child(2) { animation-delay: -0.35s; }
+-.q-eq path:nth-child(3) { animation-delay: -0.7s; }
++.q-eq > span:nth-child(2) { animation-delay: -0.35s; }
++.q-eq > span:nth-child(3) { animation-delay: -0.7s; }
+ @keyframes eqb {
+   from { transform: scaleY(0.5); }
+   to   { transform: scaleY(1.06); }

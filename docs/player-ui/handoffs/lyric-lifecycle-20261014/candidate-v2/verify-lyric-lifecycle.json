@@ -1,0 +1,2102 @@
+{
+  "selfCheck": [],
+  "wiring": {},
+  "four": {},
+  "darkFallback": {},
+  "runtimeErrors": [],
+  "expectedProbes": [
+    "http 404 http://127.0.0.1:52845/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:52845/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:52845/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:52845/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:52845/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:52845/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:52845/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:52845/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:52845/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:52845/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:52845/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:52845/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:52845/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%202",
+    "reqfail: http://127.0.0.1:52845/api/apps/hanako-simple-player/routes/widget/api/music/go/900001?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:52845/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%202",
+    "reqfail: http://127.0.0.1:52845/api/apps/hanako-simple-player/routes/widget/api/music/go/900001?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED"
+  ],
+  "assertions": [
+    {
+      "name": "lyrics-lifecycle-detach-1-restores-flow",
+      "ok": true,
+      "detail": "{\"frames\":56,\"changes\":55,\"scrollChanges\":55,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.916058,\"state\":{\"focus\":1.7120975714312383,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.3311417225257287,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.4000000953674316,\"frameRecoveries\":0,\"position\":109.66885827747427,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.463742,\"paused\":false,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-detach-1-lost-frame-self-heals",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.8999479999999993,\"state\":{\"focus\":2.6416625698027643,\"index\":2,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.24148049281063777,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.1999999284744263,\"frameRecoveries\":1,\"position\":159.75851950718936,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":5.997443,\"paused\":false,\"layout\":\"wide\",\"dropped\":1,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-detach-1-media-and-highlight-continue",
+      "ok": true,
+      "detail": "{\"before\":{\"focus\":1.7208932721973418,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":-0.13549713727746848,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1,\"frameRecoveries\":0,\"position\":110.13549713727747,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.48052,\"paused\":false,\"layout\":\"wide\",\"dropped\":1,\"pendingFrames\":0,\"maxPendingFrames\":1},\"semantic\":{\"focus\":3.7565893112702327,\"index\":2,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":-0.42168496094762986,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":4.5,\"frameRecoveries\":1,\"position\":219.42168496094763,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":7.600999,\"paused\":false,\"layout\":\"wide\",\"dropped\":1,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-detach-1-ratio-compact-recovers",
+      "ok": true,
+      "detail": "{\"resized\":{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.8966080000000005,\"state\":{\"focus\":1.7900811481577394,\"index\":1,\"raf\":true,\"follow\":true,\"width\":309,\"height\":247,\"residual\":-0.293088535162525,\"measuredWidth\":309,\"maxScroll\":318,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":2.5,\"frameRecoveries\":1,\"position\":115.29308853516252,\"font\":13,\"centers\":[139.5,194.5,250.5,305.5,360.5,392.5,424.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.616068,\"paused\":false,\"layout\":\"compact\",\"dropped\":2,\"pendingFrames\":1,\"maxPendingFrames\":1}},\"measured\":247}"
+    },
+    {
+      "name": "lyrics-lifecycle-detach-1-ratio-back-wide-keeps-flow",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.8997279999999996,\"state\":{\"focus\":1.7132503862021755,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.2699863712587103,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.9000000953674316,\"frameRecoveries\":1,\"position\":109.73001362874129,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.466359,\"paused\":false,\"layout\":\"wide\",\"dropped\":2,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-reattach-1-restores-flow",
+      "ok": true,
+      "detail": "{\"frames\":56,\"changes\":55,\"scrollChanges\":55,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.9167230000000002,\"state\":{\"focus\":1.7160722370013177,\"index\":1,\"raf\":true,\"follow\":true,\"width\":268,\"height\":410,\"residual\":-0.14437128908281238,\"measuredWidth\":268,\"maxScroll\":318,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.8000000715255737,\"frameRecoveries\":0,\"position\":111.14437128908281,\"font\":13,\"centers\":[221,276,332,387,442,474,506],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.471898,\"paused\":false,\"layout\":\"long\",\"dropped\":0,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-detach-2-restores-flow",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.9001640000000002,\"state\":{\"focus\":1.6445850971994385,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":-0.0898645448059483,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.2999999523162842,\"frameRecoveries\":0,\"position\":106.08986454480595,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.329654,\"paused\":false,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-detach-2-lost-frame-self-heals",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":53,\"scrollChanges\":54,\"movingRatio\":0.9814814814814815,\"scrollingRatio\":1,\"mediaAdvance\":0.9000649999999997,\"state\":{\"focus\":2.5481664141749714,\"index\":2,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.31716009866642025,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.1999999284744263,\"frameRecoveries\":1,\"position\":154.68283990133358,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":5.863014,\"paused\":false,\"layout\":\"wide\",\"dropped\":1,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-detach-2-media-and-highlight-continue",
+      "ok": true,
+      "detail": "{\"before\":{\"focus\":1.652929270700924,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.46803825380493436,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1,\"frameRecoveries\":0,\"position\":106.53196174619507,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.346023,\"paused\":false,\"layout\":\"wide\",\"dropped\":1,\"pendingFrames\":0,\"maxPendingFrames\":1},\"semantic\":{\"focus\":3.6698779122811898,\"index\":2,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":-0.005729952829938156,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":2.600000023841858,\"frameRecoveries\":1,\"position\":215.00572995282994,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":7.464833,\"paused\":false,\"layout\":\"wide\",\"dropped\":1,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-detach-2-ratio-long-recovers",
+      "ok": true,
+      "detail": "{\"resized\":{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.9002630000000003,\"state\":{\"focus\":1.7933290257669554,\"index\":1,\"raf\":true,\"follow\":true,\"width\":268,\"height\":410,\"residual\":-0.47495238385573657,\"measuredWidth\":268,\"maxScroll\":318,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":2.6999999284744263,\"frameRecoveries\":1,\"position\":115.47495238385574,\"font\":13,\"centers\":[221,276,332,387,442,474,506],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.622445,\"paused\":false,\"layout\":\"long\",\"dropped\":2,\"pendingFrames\":1,\"maxPendingFrames\":1}},\"measured\":410}"
+    },
+    {
+      "name": "lyrics-lifecycle-detach-2-ratio-back-wide-keeps-flow",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.8997209999999995,\"state\":{\"focus\":1.7108026008641395,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.3998364733613471,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.3000000715255737,\"frameRecoveries\":1,\"position\":109.60016352663865,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.461056,\"paused\":false,\"layout\":\"wide\",\"dropped\":2,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-reattach-2-restores-flow",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.8999890000000001,\"state\":{\"focus\":1.708729058005913,\"index\":1,\"raf\":true,\"follow\":true,\"width\":268,\"height\":410,\"residual\":0.26769617338891294,\"measuredWidth\":268,\"maxScroll\":318,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.600000023841858,\"frameRecoveries\":0,\"position\":110.73230382661109,\"font\":13,\"centers\":[221,276,332,387,442,474,506],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.457469,\"paused\":false,\"layout\":\"long\",\"dropped\":0,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-stale-offscreen-recovers-without-resize",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.9002540000000003,\"state\":{\"focus\":1.957724163838839,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.2598265664940982,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.100000023841858,\"frameRecoveries\":0,\"position\":122.7401734335059,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.925968,\"paused\":false,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-pageshow-restarts-without-new-play-event",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.8992410000000004,\"state\":{\"focus\":1.7241664935415986,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":-0.3091741955441307,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.399999976158142,\"frameRecoveries\":0,\"position\":110.30917419554413,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.487363,\"paused\":false,\"layout\":\"wide\",\"dropped\":1,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-stale-callback-never-duplicates-loop",
+      "ok": true,
+      "detail": "{\"focus\":1.2701651158534473,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":-0.29236503728265006,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":7.200000047683716,\"frameRecoveries\":0,\"position\":86.29236503728265,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":3.562281,\"paused\":false,\"layout\":\"wide\",\"dropped\":1,\"pendingFrames\":1,\"maxPendingFrames\":1}"
+    },
+    {
+      "name": "lyrics-lifecycle-track-change-does-not-inherit-stale-loop",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.89994,\"state\":{\"focus\":1.714746133378193,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.19063665670142882,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.2999999523162842,\"frameRecoveries\":0,\"position\":109.80936334329857,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.468654,\"paused\":false,\"layout\":\"wide\",\"dropped\":2,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-sdk-hidden-stops-flow-despite-local-rect",
+      "ok": true,
+      "detail": "{\"focus\":1.7724870161118844,\"index\":1,\"raf\":false,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.1254363446993807,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":true,\"inView\":true,\"surfaceVisible\":false,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":112.87456365530062,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.822264,\"paused\":false,\"layout\":\"wide\",\"dropped\":2,\"pendingFrames\":0,\"maxPendingFrames\":1}"
+    },
+    {
+      "name": "lyrics-lifecycle-sdk-hidden-resize-does-not-revive",
+      "ok": true,
+      "detail": "{\"focus\":1.9140981642266748,\"index\":1,\"raf\":false,\"follow\":true,\"width\":480,\"height\":571,\"residual\":-0.411649380024528,\"measuredWidth\":480,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":false,\"surfaceVisible\":false,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":120.41164938002453,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.925851,\"paused\":false,\"layout\":\"wide\",\"dropped\":2,\"pendingFrames\":0,\"maxPendingFrames\":1}"
+    },
+    {
+      "name": "lyrics-lifecycle-sdk-visible-remeasures-and-restarts",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.9000149999999998,\"state\":{\"focus\":1.7121266033445146,\"index\":1,\"raf\":true,\"follow\":true,\"width\":480,\"height\":571,\"residual\":0.32960163498688644,\"measuredWidth\":480,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.3000000715255737,\"frameRecoveries\":0,\"position\":109.67039836501311,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.463617,\"paused\":false,\"layout\":\"wide\",\"dropped\":2,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-sdk-envelope-clears-stale-handle-immediately",
+      "ok": true,
+      "detail": "{\"focus\":1.293970741843656,\"index\":1,\"raf\":true,\"follow\":true,\"width\":480,\"height\":571,\"residual\":0.4497726687955037,\"measuredWidth\":480,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":0.8999999761581421,\"frameRecoveries\":0,\"position\":87.5502273312045,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":3.605772,\"paused\":false,\"layout\":\"wide\",\"dropped\":3,\"pendingFrames\":1,\"maxPendingFrames\":1}"
+    },
+    {
+      "name": "lyrics-lifecycle-zero-mount-has-no-flow",
+      "ok": true,
+      "detail": "{\"focus\":0,\"index\":1,\"raf\":false,\"follow\":true,\"width\":480,\"height\":0,\"residual\":0,\"measuredWidth\":0,\"maxScroll\":0,\"needsMeasure\":true,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":0,\"font\":null,\"centers\":[],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":3.544746,\"paused\":false,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":0,\"maxPendingFrames\":0}"
+    },
+    {
+      "name": "lyrics-lifecycle-positive-budget-remeasures-and-starts",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":53,\"scrollChanges\":54,\"movingRatio\":0.9814814814814815,\"scrollingRatio\":1,\"mediaAdvance\":0.9007930000000002,\"state\":{\"focus\":2.0310762678792806,\"index\":2,\"raf\":true,\"follow\":true,\"width\":480,\"height\":571,\"residual\":0.3356518924794045,\"measuredWidth\":480,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.1999999284744263,\"frameRecoveries\":0,\"position\":126.6643481075206,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":5.055553,\"paused\":false,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-real-zero-frame-invalidates-geometry",
+      "ok": true,
+      "detail": "{\"focus\":2.0402576471377754,\"index\":2,\"raf\":false,\"follow\":true,\"width\":0,\"height\":0,\"residual\":-127.15678368074117,\"measuredWidth\":0,\"maxScroll\":0,\"needsMeasure\":true,\"inView\":false,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":127.15678368074117,\"font\":16.5,\"centers\":[],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":5.207885,\"paused\":false,\"layout\":\"compact\",\"dropped\":0,\"pendingFrames\":0,\"maxPendingFrames\":1}"
+    },
+    {
+      "name": "lyrics-lifecycle-real-frame-restores-with-missed-observers",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.9006809999999996,\"state\":{\"focus\":3.1581693494127028,\"index\":2,\"raf\":true,\"follow\":true,\"width\":480,\"height\":562,\"residual\":-0.4912321969866298,\"measuredWidth\":480,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.1999999284744263,\"frameRecoveries\":0,\"position\":187.49123219698663,\"font\":16.5,\"centers\":[300,353,406,460,512,551,589],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":6.722228,\"paused\":false,\"layout\":\"compact\",\"dropped\":0,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-paused-zero-budget-play-remeasures",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.900118,\"state\":{\"focus\":1.721988916073388,\"index\":1,\"raf\":true,\"follow\":true,\"width\":480,\"height\":562,\"residual\":-0.19363059997147047,\"measuredWidth\":480,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.1999999284744263,\"frameRecoveries\":0,\"position\":110.19363059997147,\"font\":16.5,\"centers\":[300,353,406,460,512,551,589],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.482789,\"paused\":false,\"layout\":\"compact\",\"dropped\":0,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-real-offscreen-remains-stopped",
+      "ok": true,
+      "detail": "{\"focus\":1.5003730796703318,\"index\":1,\"raf\":false,\"follow\":true,\"width\":479,\"height\":571,\"residual\":-0.4578111700567433,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":false,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":98.45781117005674,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.197368,\"paused\":false,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":0,\"maxPendingFrames\":1}"
+    },
+    {
+      "name": "lyrics-lifecycle-real-offscreen-return-restarts",
+      "ok": true,
+      "detail": "{\"frames\":55,\"changes\":54,\"scrollChanges\":54,\"movingRatio\":1,\"scrollingRatio\":1,\"mediaAdvance\":0.899902,\"state\":{\"focus\":1.7106172829288253,\"index\":1,\"raf\":true,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.4096669438451386,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":true,\"frameAge\":1.4000000953674316,\"frameRecoveries\":0,\"position\":109.59033305615486,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.460837,\"paused\":false,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":1,\"maxPendingFrames\":1}}"
+    },
+    {
+      "name": "lyrics-lifecycle-recovery-does-not-start-paused-media",
+      "ok": true,
+      "detail": "{\"paused\":{\"focus\":1.7117354580211444,\"index\":1,\"raf\":false,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.35035106748040334,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":109.6496489325196,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.461451,\"paused\":true,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":0,\"maxPendingFrames\":1},\"stillPaused\":{\"focus\":1.7117354580211444,\"index\":1,\"raf\":false,\"follow\":true,\"width\":479,\"height\":571,\"residual\":0.35035106748040334,\"measuredWidth\":479,\"maxScroll\":328,\"needsMeasure\":false,\"inView\":true,\"surfaceVisible\":true,\"canFlow\":false,\"frameAge\":0,\"frameRecoveries\":0,\"position\":109.6496489325196,\"font\":16.5,\"centers\":[304.5,357.5,410.5,464.5,516.5,555.5,593.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"media\":4.461451,\"paused\":true,\"layout\":\"wide\",\"dropped\":0,\"pendingFrames\":0,\"maxPendingFrames\":1}}"
+    }
+  ],
+  "refine": [],
+  "narrowSelfCheck": [],
+  "theme": {},
+  "ambient": {},
+  "lyricLifecycle": {
+    "rounds": [
+      {
+        "round": 1,
+        "detached": {
+          "frames": 56,
+          "changes": 55,
+          "scrollChanges": 55,
+          "movingRatio": 1,
+          "scrollingRatio": 1,
+          "mediaAdvance": 0.916058,
+          "state": {
+            "focus": 1.7120975714312383,
+            "index": 1,
+            "raf": true,
+            "follow": true,
+            "width": 479,
+            "height": 571,
+            "residual": 0.3311417225257287,
+            "measuredWidth": 479,
+            "maxScroll": 328,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 1.4000000953674316,
+            "frameRecoveries": 0,
+            "position": 109.66885827747427,
+            "font": 16.5,
+            "centers": [
+              304.5,
+              357.5,
+              410.5,
+              464.5,
+              516.5,
+              555.5,
+              593.5
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 4.463742,
+            "paused": false,
+            "layout": "wide",
+            "dropped": 0,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        },
+        "healed": {
+          "frames": 55,
+          "changes": 54,
+          "scrollChanges": 54,
+          "movingRatio": 1,
+          "scrollingRatio": 1,
+          "mediaAdvance": 0.8999479999999993,
+          "state": {
+            "focus": 2.6416625698027643,
+            "index": 2,
+            "raf": true,
+            "follow": true,
+            "width": 479,
+            "height": 571,
+            "residual": 0.24148049281063777,
+            "measuredWidth": 479,
+            "maxScroll": 328,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 1.1999999284744263,
+            "frameRecoveries": 1,
+            "position": 159.75851950718936,
+            "font": 16.5,
+            "centers": [
+              304.5,
+              357.5,
+              410.5,
+              464.5,
+              516.5,
+              555.5,
+              593.5
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 5.997443,
+            "paused": false,
+            "layout": "wide",
+            "dropped": 1,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        },
+        "semantic": {
+          "focus": 3.7565893112702327,
+          "index": 2,
+          "raf": true,
+          "follow": true,
+          "width": 479,
+          "height": 571,
+          "residual": -0.42168496094762986,
+          "measuredWidth": 479,
+          "maxScroll": 328,
+          "needsMeasure": false,
+          "inView": true,
+          "surfaceVisible": true,
+          "canFlow": true,
+          "frameAge": 4.5,
+          "frameRecoveries": 1,
+          "position": 219.42168496094763,
+          "font": 16.5,
+          "centers": [
+            304.5,
+            357.5,
+            410.5,
+            464.5,
+            516.5,
+            555.5,
+            593.5
+          ],
+          "clock": [
+            {
+              "t": 1,
+              "f": 0
+            },
+            {
+              "t": 3,
+              "f": 1
+            },
+            {
+              "t": 5,
+              "f": 2
+            },
+            {
+              "t": 8,
+              "f": 4
+            },
+            {
+              "t": 10,
+              "f": 5
+            },
+            {
+              "t": 21,
+              "f": 5
+            },
+            {
+              "t": 27,
+              "f": 6
+            }
+          ],
+          "media": 7.600999,
+          "paused": false,
+          "layout": "wide",
+          "dropped": 1,
+          "pendingFrames": 1,
+          "maxPendingFrames": 1
+        },
+        "resized": {
+          "frames": 55,
+          "changes": 54,
+          "scrollChanges": 54,
+          "movingRatio": 1,
+          "scrollingRatio": 1,
+          "mediaAdvance": 0.8966080000000005,
+          "state": {
+            "focus": 1.7900811481577394,
+            "index": 1,
+            "raf": true,
+            "follow": true,
+            "width": 309,
+            "height": 247,
+            "residual": -0.293088535162525,
+            "measuredWidth": 309,
+            "maxScroll": 318,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 2.5,
+            "frameRecoveries": 1,
+            "position": 115.29308853516252,
+            "font": 13,
+            "centers": [
+              139.5,
+              194.5,
+              250.5,
+              305.5,
+              360.5,
+              392.5,
+              424.5
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 4.616068,
+            "paused": false,
+            "layout": "compact",
+            "dropped": 2,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        },
+        "wideAgain": {
+          "frames": 55,
+          "changes": 54,
+          "scrollChanges": 54,
+          "movingRatio": 1,
+          "scrollingRatio": 1,
+          "mediaAdvance": 0.8997279999999996,
+          "state": {
+            "focus": 1.7132503862021755,
+            "index": 1,
+            "raf": true,
+            "follow": true,
+            "width": 479,
+            "height": 571,
+            "residual": 0.2699863712587103,
+            "measuredWidth": 479,
+            "maxScroll": 328,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 1.9000000953674316,
+            "frameRecoveries": 1,
+            "position": 109.73001362874129,
+            "font": 16.5,
+            "centers": [
+              304.5,
+              357.5,
+              410.5,
+              464.5,
+              516.5,
+              555.5,
+              593.5
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 4.466359,
+            "paused": false,
+            "layout": "wide",
+            "dropped": 2,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        },
+        "attached": {
+          "frames": 56,
+          "changes": 55,
+          "scrollChanges": 55,
+          "movingRatio": 1,
+          "scrollingRatio": 1,
+          "mediaAdvance": 0.9167230000000002,
+          "state": {
+            "focus": 1.7160722370013177,
+            "index": 1,
+            "raf": true,
+            "follow": true,
+            "width": 268,
+            "height": 410,
+            "residual": -0.14437128908281238,
+            "measuredWidth": 268,
+            "maxScroll": 318,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 1.8000000715255737,
+            "frameRecoveries": 0,
+            "position": 111.14437128908281,
+            "font": 13,
+            "centers": [
+              221,
+              276,
+              332,
+              387,
+              442,
+              474,
+              506
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 4.471898,
+            "paused": false,
+            "layout": "long",
+            "dropped": 0,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        }
+      },
+      {
+        "round": 2,
+        "detached": {
+          "frames": 55,
+          "changes": 54,
+          "scrollChanges": 54,
+          "movingRatio": 1,
+          "scrollingRatio": 1,
+          "mediaAdvance": 0.9001640000000002,
+          "state": {
+            "focus": 1.6445850971994385,
+            "index": 1,
+            "raf": true,
+            "follow": true,
+            "width": 479,
+            "height": 571,
+            "residual": -0.0898645448059483,
+            "measuredWidth": 479,
+            "maxScroll": 328,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 1.2999999523162842,
+            "frameRecoveries": 0,
+            "position": 106.08986454480595,
+            "font": 16.5,
+            "centers": [
+              304.5,
+              357.5,
+              410.5,
+              464.5,
+              516.5,
+              555.5,
+              593.5
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 4.329654,
+            "paused": false,
+            "layout": "wide",
+            "dropped": 0,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        },
+        "healed": {
+          "frames": 55,
+          "changes": 53,
+          "scrollChanges": 54,
+          "movingRatio": 0.9814814814814815,
+          "scrollingRatio": 1,
+          "mediaAdvance": 0.9000649999999997,
+          "state": {
+            "focus": 2.5481664141749714,
+            "index": 2,
+            "raf": true,
+            "follow": true,
+            "width": 479,
+            "height": 571,
+            "residual": 0.31716009866642025,
+            "measuredWidth": 479,
+            "maxScroll": 328,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 1.1999999284744263,
+            "frameRecoveries": 1,
+            "position": 154.68283990133358,
+            "font": 16.5,
+            "centers": [
+              304.5,
+              357.5,
+              410.5,
+              464.5,
+              516.5,
+              555.5,
+              593.5
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 5.863014,
+            "paused": false,
+            "layout": "wide",
+            "dropped": 1,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        },
+        "semantic": {
+          "focus": 3.6698779122811898,
+          "index": 2,
+          "raf": true,
+          "follow": true,
+          "width": 479,
+          "height": 571,
+          "residual": -0.005729952829938156,
+          "measuredWidth": 479,
+          "maxScroll": 328,
+          "needsMeasure": false,
+          "inView": true,
+          "surfaceVisible": true,
+          "canFlow": true,
+          "frameAge": 2.600000023841858,
+          "frameRecoveries": 1,
+          "position": 215.00572995282994,
+          "font": 16.5,
+          "centers": [
+            304.5,
+            357.5,
+            410.5,
+            464.5,
+            516.5,
+            555.5,
+            593.5
+          ],
+          "clock": [
+            {
+              "t": 1,
+              "f": 0
+            },
+            {
+              "t": 3,
+              "f": 1
+            },
+            {
+              "t": 5,
+              "f": 2
+            },
+            {
+              "t": 8,
+              "f": 4
+            },
+            {
+              "t": 10,
+              "f": 5
+            },
+            {
+              "t": 21,
+              "f": 5
+            },
+            {
+              "t": 27,
+              "f": 6
+            }
+          ],
+          "media": 7.464833,
+          "paused": false,
+          "layout": "wide",
+          "dropped": 1,
+          "pendingFrames": 1,
+          "maxPendingFrames": 1
+        },
+        "resized": {
+          "frames": 55,
+          "changes": 54,
+          "scrollChanges": 54,
+          "movingRatio": 1,
+          "scrollingRatio": 1,
+          "mediaAdvance": 0.9002630000000003,
+          "state": {
+            "focus": 1.7933290257669554,
+            "index": 1,
+            "raf": true,
+            "follow": true,
+            "width": 268,
+            "height": 410,
+            "residual": -0.47495238385573657,
+            "measuredWidth": 268,
+            "maxScroll": 318,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 2.6999999284744263,
+            "frameRecoveries": 1,
+            "position": 115.47495238385574,
+            "font": 13,
+            "centers": [
+              221,
+              276,
+              332,
+              387,
+              442,
+              474,
+              506
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 4.622445,
+            "paused": false,
+            "layout": "long",
+            "dropped": 2,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        },
+        "wideAgain": {
+          "frames": 55,
+          "changes": 54,
+          "scrollChanges": 54,
+          "movingRatio": 1,
+          "scrollingRatio": 1,
+          "mediaAdvance": 0.8997209999999995,
+          "state": {
+            "focus": 1.7108026008641395,
+            "index": 1,
+            "raf": true,
+            "follow": true,
+            "width": 479,
+            "height": 571,
+            "residual": 0.3998364733613471,
+            "measuredWidth": 479,
+            "maxScroll": 328,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 1.3000000715255737,
+            "frameRecoveries": 1,
+            "position": 109.60016352663865,
+            "font": 16.5,
+            "centers": [
+              304.5,
+              357.5,
+              410.5,
+              464.5,
+              516.5,
+              555.5,
+              593.5
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 4.461056,
+            "paused": false,
+            "layout": "wide",
+            "dropped": 2,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        },
+        "attached": {
+          "frames": 55,
+          "changes": 54,
+          "scrollChanges": 54,
+          "movingRatio": 1,
+          "scrollingRatio": 1,
+          "mediaAdvance": 0.8999890000000001,
+          "state": {
+            "focus": 1.708729058005913,
+            "index": 1,
+            "raf": true,
+            "follow": true,
+            "width": 268,
+            "height": 410,
+            "residual": 0.26769617338891294,
+            "measuredWidth": 268,
+            "maxScroll": 318,
+            "needsMeasure": false,
+            "inView": true,
+            "surfaceVisible": true,
+            "canFlow": true,
+            "frameAge": 1.600000023841858,
+            "frameRecoveries": 0,
+            "position": 110.73230382661109,
+            "font": 13,
+            "centers": [
+              221,
+              276,
+              332,
+              387,
+              442,
+              474,
+              506
+            ],
+            "clock": [
+              {
+                "t": 1,
+                "f": 0
+              },
+              {
+                "t": 3,
+                "f": 1
+              },
+              {
+                "t": 5,
+                "f": 2
+              },
+              {
+                "t": 8,
+                "f": 4
+              },
+              {
+                "t": 10,
+                "f": 5
+              },
+              {
+                "t": 21,
+                "f": 5
+              },
+              {
+                "t": 27,
+                "f": 6
+              }
+            ],
+            "media": 4.457469,
+            "paused": false,
+            "layout": "long",
+            "dropped": 0,
+            "pendingFrames": 1,
+            "maxPendingFrames": 1
+          }
+        }
+      }
+    ],
+    "visibleAgain": {
+      "frames": 55,
+      "changes": 54,
+      "scrollChanges": 54,
+      "movingRatio": 1,
+      "scrollingRatio": 1,
+      "mediaAdvance": 0.9002540000000003,
+      "state": {
+        "focus": 1.957724163838839,
+        "index": 1,
+        "raf": true,
+        "follow": true,
+        "width": 479,
+        "height": 571,
+        "residual": 0.2598265664940982,
+        "measuredWidth": 479,
+        "maxScroll": 328,
+        "needsMeasure": false,
+        "inView": true,
+        "surfaceVisible": true,
+        "canFlow": true,
+        "frameAge": 1.100000023841858,
+        "frameRecoveries": 0,
+        "position": 122.7401734335059,
+        "font": 16.5,
+        "centers": [
+          304.5,
+          357.5,
+          410.5,
+          464.5,
+          516.5,
+          555.5,
+          593.5
+        ],
+        "clock": [
+          {
+            "t": 1,
+            "f": 0
+          },
+          {
+            "t": 3,
+            "f": 1
+          },
+          {
+            "t": 5,
+            "f": 2
+          },
+          {
+            "t": 8,
+            "f": 4
+          },
+          {
+            "t": 10,
+            "f": 5
+          },
+          {
+            "t": 21,
+            "f": 5
+          },
+          {
+            "t": 27,
+            "f": 6
+          }
+        ],
+        "media": 4.925968,
+        "paused": false,
+        "layout": "wide",
+        "dropped": 0,
+        "pendingFrames": 1,
+        "maxPendingFrames": 1
+      }
+    },
+    "zero": {
+      "focus": 0,
+      "index": 1,
+      "raf": false,
+      "follow": true,
+      "width": 480,
+      "height": 0,
+      "residual": 0,
+      "measuredWidth": 0,
+      "maxScroll": 0,
+      "needsMeasure": true,
+      "inView": true,
+      "surfaceVisible": true,
+      "canFlow": false,
+      "frameAge": 0,
+      "frameRecoveries": 0,
+      "position": 0,
+      "font": null,
+      "centers": [],
+      "clock": [
+        {
+          "t": 1,
+          "f": 0
+        },
+        {
+          "t": 3,
+          "f": 1
+        },
+        {
+          "t": 5,
+          "f": 2
+        },
+        {
+          "t": 8,
+          "f": 4
+        },
+        {
+          "t": 10,
+          "f": 5
+        },
+        {
+          "t": 21,
+          "f": 5
+        },
+        {
+          "t": 27,
+          "f": 6
+        }
+      ],
+      "media": 3.544746,
+      "paused": false,
+      "layout": "wide",
+      "dropped": 0,
+      "pendingFrames": 0,
+      "maxPendingFrames": 0
+    },
+    "positive": {
+      "frames": 55,
+      "changes": 53,
+      "scrollChanges": 54,
+      "movingRatio": 0.9814814814814815,
+      "scrollingRatio": 1,
+      "mediaAdvance": 0.9007930000000002,
+      "state": {
+        "focus": 2.0310762678792806,
+        "index": 2,
+        "raf": true,
+        "follow": true,
+        "width": 480,
+        "height": 571,
+        "residual": 0.3356518924794045,
+        "measuredWidth": 480,
+        "maxScroll": 328,
+        "needsMeasure": false,
+        "inView": true,
+        "surfaceVisible": true,
+        "canFlow": true,
+        "frameAge": 1.1999999284744263,
+        "frameRecoveries": 0,
+        "position": 126.6643481075206,
+        "font": 16.5,
+        "centers": [
+          304.5,
+          357.5,
+          410.5,
+          464.5,
+          516.5,
+          555.5,
+          593.5
+        ],
+        "clock": [
+          {
+            "t": 1,
+            "f": 0
+          },
+          {
+            "t": 3,
+            "f": 1
+          },
+          {
+            "t": 5,
+            "f": 2
+          },
+          {
+            "t": 8,
+            "f": 4
+          },
+          {
+            "t": 10,
+            "f": 5
+          },
+          {
+            "t": 21,
+            "f": 5
+          },
+          {
+            "t": 27,
+            "f": 6
+          }
+        ],
+        "media": 5.055553,
+        "paused": false,
+        "layout": "wide",
+        "dropped": 0,
+        "pendingFrames": 1,
+        "maxPendingFrames": 1
+      }
+    },
+    "shown": {
+      "frames": 55,
+      "changes": 54,
+      "scrollChanges": 54,
+      "movingRatio": 1,
+      "scrollingRatio": 1,
+      "mediaAdvance": 0.8992410000000004,
+      "state": {
+        "focus": 1.7241664935415986,
+        "index": 1,
+        "raf": true,
+        "follow": true,
+        "width": 479,
+        "height": 571,
+        "residual": -0.3091741955441307,
+        "measuredWidth": 479,
+        "maxScroll": 328,
+        "needsMeasure": false,
+        "inView": true,
+        "surfaceVisible": true,
+        "canFlow": true,
+        "frameAge": 1.399999976158142,
+        "frameRecoveries": 0,
+        "position": 110.30917419554413,
+        "font": 16.5,
+        "centers": [
+          304.5,
+          357.5,
+          410.5,
+          464.5,
+          516.5,
+          555.5,
+          593.5
+        ],
+        "clock": [
+          {
+            "t": 1,
+            "f": 0
+          },
+          {
+            "t": 3,
+            "f": 1
+          },
+          {
+            "t": 5,
+            "f": 2
+          },
+          {
+            "t": 8,
+            "f": 4
+          },
+          {
+            "t": 10,
+            "f": 5
+          },
+          {
+            "t": 21,
+            "f": 5
+          },
+          {
+            "t": 27,
+            "f": 6
+          }
+        ],
+        "media": 4.487363,
+        "paused": false,
+        "layout": "wide",
+        "dropped": 1,
+        "pendingFrames": 1,
+        "maxPendingFrames": 1
+      }
+    },
+    "loop": {
+      "focus": 1.2701651158534473,
+      "index": 1,
+      "raf": true,
+      "follow": true,
+      "width": 479,
+      "height": 571,
+      "residual": -0.29236503728265006,
+      "measuredWidth": 479,
+      "maxScroll": 328,
+      "needsMeasure": false,
+      "inView": true,
+      "surfaceVisible": true,
+      "canFlow": true,
+      "frameAge": 7.200000047683716,
+      "frameRecoveries": 0,
+      "position": 86.29236503728265,
+      "font": 16.5,
+      "centers": [
+        304.5,
+        357.5,
+        410.5,
+        464.5,
+        516.5,
+        555.5,
+        593.5
+      ],
+      "clock": [
+        {
+          "t": 1,
+          "f": 0
+        },
+        {
+          "t": 3,
+          "f": 1
+        },
+        {
+          "t": 5,
+          "f": 2
+        },
+        {
+          "t": 8,
+          "f": 4
+        },
+        {
+          "t": 10,
+          "f": 5
+        },
+        {
+          "t": 21,
+          "f": 5
+        },
+        {
+          "t": 27,
+          "f": 6
+        }
+      ],
+      "media": 3.562281,
+      "paused": false,
+      "layout": "wide",
+      "dropped": 1,
+      "pendingFrames": 1,
+      "maxPendingFrames": 1
+    },
+    "switched": {
+      "frames": 55,
+      "changes": 54,
+      "scrollChanges": 54,
+      "movingRatio": 1,
+      "scrollingRatio": 1,
+      "mediaAdvance": 0.89994,
+      "state": {
+        "focus": 1.714746133378193,
+        "index": 1,
+        "raf": true,
+        "follow": true,
+        "width": 479,
+        "height": 571,
+        "residual": 0.19063665670142882,
+        "measuredWidth": 479,
+        "maxScroll": 328,
+        "needsMeasure": false,
+        "inView": true,
+        "surfaceVisible": true,
+        "canFlow": true,
+        "frameAge": 1.2999999523162842,
+        "frameRecoveries": 0,
+        "position": 109.80936334329857,
+        "font": 16.5,
+        "centers": [
+          304.5,
+          357.5,
+          410.5,
+          464.5,
+          516.5,
+          555.5,
+          593.5
+        ],
+        "clock": [
+          {
+            "t": 1,
+            "f": 0
+          },
+          {
+            "t": 3,
+            "f": 1
+          },
+          {
+            "t": 5,
+            "f": 2
+          },
+          {
+            "t": 8,
+            "f": 4
+          },
+          {
+            "t": 10,
+            "f": 5
+          },
+          {
+            "t": 21,
+            "f": 5
+          },
+          {
+            "t": 27,
+            "f": 6
+          }
+        ],
+        "media": 4.468654,
+        "paused": false,
+        "layout": "wide",
+        "dropped": 2,
+        "pendingFrames": 1,
+        "maxPendingFrames": 1
+      }
+    },
+    "hostHidden": {
+      "focus": 1.7724870161118844,
+      "index": 1,
+      "raf": false,
+      "follow": true,
+      "width": 479,
+      "height": 571,
+      "residual": 0.1254363446993807,
+      "measuredWidth": 479,
+      "maxScroll": 328,
+      "needsMeasure": true,
+      "inView": true,
+      "surfaceVisible": false,
+      "canFlow": false,
+      "frameAge": 0,
+      "frameRecoveries": 0,
+      "position": 112.87456365530062,
+      "font": 16.5,
+      "centers": [
+        304.5,
+        357.5,
+        410.5,
+        464.5,
+        516.5,
+        555.5,
+        593.5
+      ],
+      "clock": [
+        {
+          "t": 1,
+          "f": 0
+        },
+        {
+          "t": 3,
+          "f": 1
+        },
+        {
+          "t": 5,
+          "f": 2
+        },
+        {
+          "t": 8,
+          "f": 4
+        },
+        {
+          "t": 10,
+          "f": 5
+        },
+        {
+          "t": 21,
+          "f": 5
+        },
+        {
+          "t": 27,
+          "f": 6
+        }
+      ],
+      "media": 4.822264,
+      "paused": false,
+      "layout": "wide",
+      "dropped": 2,
+      "pendingFrames": 0,
+      "maxPendingFrames": 1
+    },
+    "hiddenResized": {
+      "focus": 1.9140981642266748,
+      "index": 1,
+      "raf": false,
+      "follow": true,
+      "width": 480,
+      "height": 571,
+      "residual": -0.411649380024528,
+      "measuredWidth": 480,
+      "maxScroll": 328,
+      "needsMeasure": false,
+      "inView": false,
+      "surfaceVisible": false,
+      "canFlow": false,
+      "frameAge": 0,
+      "frameRecoveries": 0,
+      "position": 120.41164938002453,
+      "font": 16.5,
+      "centers": [
+        304.5,
+        357.5,
+        410.5,
+        464.5,
+        516.5,
+        555.5,
+        593.5
+      ],
+      "clock": [
+        {
+          "t": 1,
+          "f": 0
+        },
+        {
+          "t": 3,
+          "f": 1
+        },
+        {
+          "t": 5,
+          "f": 2
+        },
+        {
+          "t": 8,
+          "f": 4
+        },
+        {
+          "t": 10,
+          "f": 5
+        },
+        {
+          "t": 21,
+          "f": 5
+        },
+        {
+          "t": 27,
+          "f": 6
+        }
+      ],
+      "media": 4.925851,
+      "paused": false,
+      "layout": "wide",
+      "dropped": 2,
+      "pendingFrames": 0,
+      "maxPendingFrames": 1
+    },
+    "hostShown": {
+      "frames": 55,
+      "changes": 54,
+      "scrollChanges": 54,
+      "movingRatio": 1,
+      "scrollingRatio": 1,
+      "mediaAdvance": 0.9000149999999998,
+      "state": {
+        "focus": 1.7121266033445146,
+        "index": 1,
+        "raf": true,
+        "follow": true,
+        "width": 480,
+        "height": 571,
+        "residual": 0.32960163498688644,
+        "measuredWidth": 480,
+        "maxScroll": 328,
+        "needsMeasure": false,
+        "inView": true,
+        "surfaceVisible": true,
+        "canFlow": true,
+        "frameAge": 1.3000000715255737,
+        "frameRecoveries": 0,
+        "position": 109.67039836501311,
+        "font": 16.5,
+        "centers": [
+          304.5,
+          357.5,
+          410.5,
+          464.5,
+          516.5,
+          555.5,
+          593.5
+        ],
+        "clock": [
+          {
+            "t": 1,
+            "f": 0
+          },
+          {
+            "t": 3,
+            "f": 1
+          },
+          {
+            "t": 5,
+            "f": 2
+          },
+          {
+            "t": 8,
+            "f": 4
+          },
+          {
+            "t": 10,
+            "f": 5
+          },
+          {
+            "t": 21,
+            "f": 5
+          },
+          {
+            "t": 27,
+            "f": 6
+          }
+        ],
+        "media": 4.463617,
+        "paused": false,
+        "layout": "wide",
+        "dropped": 2,
+        "pendingFrames": 1,
+        "maxPendingFrames": 1
+      }
+    },
+    "envelope": {
+      "focus": 1.293970741843656,
+      "index": 1,
+      "raf": true,
+      "follow": true,
+      "width": 480,
+      "height": 571,
+      "residual": 0.4497726687955037,
+      "measuredWidth": 480,
+      "maxScroll": 328,
+      "needsMeasure": false,
+      "inView": true,
+      "surfaceVisible": true,
+      "canFlow": true,
+      "frameAge": 0.8999999761581421,
+      "frameRecoveries": 0,
+      "position": 87.5502273312045,
+      "font": 16.5,
+      "centers": [
+        304.5,
+        357.5,
+        410.5,
+        464.5,
+        516.5,
+        555.5,
+        593.5
+      ],
+      "clock": [
+        {
+          "t": 1,
+          "f": 0
+        },
+        {
+          "t": 3,
+          "f": 1
+        },
+        {
+          "t": 5,
+          "f": 2
+        },
+        {
+          "t": 8,
+          "f": 4
+        },
+        {
+          "t": 10,
+          "f": 5
+        },
+        {
+          "t": 21,
+          "f": 5
+        },
+        {
+          "t": 27,
+          "f": 6
+        }
+      ],
+      "media": 3.605772,
+      "paused": false,
+      "layout": "wide",
+      "dropped": 3,
+      "pendingFrames": 1,
+      "maxPendingFrames": 1
+    },
+    "zeroFrame": {
+      "focus": 2.0402576471377754,
+      "index": 2,
+      "raf": false,
+      "follow": true,
+      "width": 0,
+      "height": 0,
+      "residual": -127.15678368074117,
+      "measuredWidth": 0,
+      "maxScroll": 0,
+      "needsMeasure": true,
+      "inView": false,
+      "surfaceVisible": true,
+      "canFlow": false,
+      "frameAge": 0,
+      "frameRecoveries": 0,
+      "position": 127.15678368074117,
+      "font": 16.5,
+      "centers": [],
+      "clock": [
+        {
+          "t": 1,
+          "f": 0
+        },
+        {
+          "t": 3,
+          "f": 1
+        },
+        {
+          "t": 5,
+          "f": 2
+        },
+        {
+          "t": 8,
+          "f": 4
+        },
+        {
+          "t": 10,
+          "f": 5
+        },
+        {
+          "t": 21,
+          "f": 5
+        },
+        {
+          "t": 27,
+          "f": 6
+        }
+      ],
+      "media": 5.207885,
+      "paused": false,
+      "layout": "compact",
+      "dropped": 0,
+      "pendingFrames": 0,
+      "maxPendingFrames": 1
+    },
+    "frameRestored": {
+      "frames": 55,
+      "changes": 54,
+      "scrollChanges": 54,
+      "movingRatio": 1,
+      "scrollingRatio": 1,
+      "mediaAdvance": 0.9006809999999996,
+      "state": {
+        "focus": 3.1581693494127028,
+        "index": 2,
+        "raf": true,
+        "follow": true,
+        "width": 480,
+        "height": 562,
+        "residual": -0.4912321969866298,
+        "measuredWidth": 480,
+        "maxScroll": 328,
+        "needsMeasure": false,
+        "inView": true,
+        "surfaceVisible": true,
+        "canFlow": true,
+        "frameAge": 1.1999999284744263,
+        "frameRecoveries": 0,
+        "position": 187.49123219698663,
+        "font": 16.5,
+        "centers": [
+          300,
+          353,
+          406,
+          460,
+          512,
+          551,
+          589
+        ],
+        "clock": [
+          {
+            "t": 1,
+            "f": 0
+          },
+          {
+            "t": 3,
+            "f": 1
+          },
+          {
+            "t": 5,
+            "f": 2
+          },
+          {
+            "t": 8,
+            "f": 4
+          },
+          {
+            "t": 10,
+            "f": 5
+          },
+          {
+            "t": 21,
+            "f": 5
+          },
+          {
+            "t": 27,
+            "f": 6
+          }
+        ],
+        "media": 6.722228,
+        "paused": false,
+        "layout": "compact",
+        "dropped": 0,
+        "pendingFrames": 1,
+        "maxPendingFrames": 1
+      }
+    },
+    "pausedGeometry": {
+      "frames": 55,
+      "changes": 54,
+      "scrollChanges": 54,
+      "movingRatio": 1,
+      "scrollingRatio": 1,
+      "mediaAdvance": 0.900118,
+      "state": {
+        "focus": 1.721988916073388,
+        "index": 1,
+        "raf": true,
+        "follow": true,
+        "width": 480,
+        "height": 562,
+        "residual": -0.19363059997147047,
+        "measuredWidth": 480,
+        "maxScroll": 328,
+        "needsMeasure": false,
+        "inView": true,
+        "surfaceVisible": true,
+        "canFlow": true,
+        "frameAge": 1.1999999284744263,
+        "frameRecoveries": 0,
+        "position": 110.19363059997147,
+        "font": 16.5,
+        "centers": [
+          300,
+          353,
+          406,
+          460,
+          512,
+          551,
+          589
+        ],
+        "clock": [
+          {
+            "t": 1,
+            "f": 0
+          },
+          {
+            "t": 3,
+            "f": 1
+          },
+          {
+            "t": 5,
+            "f": 2
+          },
+          {
+            "t": 8,
+            "f": 4
+          },
+          {
+            "t": 10,
+            "f": 5
+          },
+          {
+            "t": 21,
+            "f": 5
+          },
+          {
+            "t": 27,
+            "f": 6
+          }
+        ],
+        "media": 4.482789,
+        "paused": false,
+        "layout": "compact",
+        "dropped": 0,
+        "pendingFrames": 1,
+        "maxPendingFrames": 1
+      }
+    },
+    "offscreen": {
+      "focus": 1.5003730796703318,
+      "index": 1,
+      "raf": false,
+      "follow": true,
+      "width": 479,
+      "height": 571,
+      "residual": -0.4578111700567433,
+      "measuredWidth": 479,
+      "maxScroll": 328,
+      "needsMeasure": false,
+      "inView": false,
+      "surfaceVisible": true,
+      "canFlow": false,
+      "frameAge": 0,
+      "frameRecoveries": 0,
+      "position": 98.45781117005674,
+      "font": 16.5,
+      "centers": [
+        304.5,
+        357.5,
+        410.5,
+        464.5,
+        516.5,
+        555.5,
+        593.5
+      ],
+      "clock": [
+        {
+          "t": 1,
+          "f": 0
+        },
+        {
+          "t": 3,
+          "f": 1
+        },
+        {
+          "t": 5,
+          "f": 2
+        },
+        {
+          "t": 8,
+          "f": 4
+        },
+        {
+          "t": 10,
+          "f": 5
+        },
+        {
+          "t": 21,
+          "f": 5
+        },
+        {
+          "t": 27,
+          "f": 6
+        }
+      ],
+      "media": 4.197368,
+      "paused": false,
+      "layout": "wide",
+      "dropped": 0,
+      "pendingFrames": 0,
+      "maxPendingFrames": 1
+    },
+    "returned": {
+      "frames": 55,
+      "changes": 54,
+      "scrollChanges": 54,
+      "movingRatio": 1,
+      "scrollingRatio": 1,
+      "mediaAdvance": 0.899902,
+      "state": {
+        "focus": 1.7106172829288253,
+        "index": 1,
+        "raf": true,
+        "follow": true,
+        "width": 479,
+        "height": 571,
+        "residual": 0.4096669438451386,
+        "measuredWidth": 479,
+        "maxScroll": 328,
+        "needsMeasure": false,
+        "inView": true,
+        "surfaceVisible": true,
+        "canFlow": true,
+        "frameAge": 1.4000000953674316,
+        "frameRecoveries": 0,
+        "position": 109.59033305615486,
+        "font": 16.5,
+        "centers": [
+          304.5,
+          357.5,
+          410.5,
+          464.5,
+          516.5,
+          555.5,
+          593.5
+        ],
+        "clock": [
+          {
+            "t": 1,
+            "f": 0
+          },
+          {
+            "t": 3,
+            "f": 1
+          },
+          {
+            "t": 5,
+            "f": 2
+          },
+          {
+            "t": 8,
+            "f": 4
+          },
+          {
+            "t": 10,
+            "f": 5
+          },
+          {
+            "t": 21,
+            "f": 5
+          },
+          {
+            "t": 27,
+            "f": 6
+          }
+        ],
+        "media": 4.460837,
+        "paused": false,
+        "layout": "wide",
+        "dropped": 0,
+        "pendingFrames": 1,
+        "maxPendingFrames": 1
+      }
+    },
+    "stillPaused": {
+      "focus": 1.7117354580211444,
+      "index": 1,
+      "raf": false,
+      "follow": true,
+      "width": 479,
+      "height": 571,
+      "residual": 0.35035106748040334,
+      "measuredWidth": 479,
+      "maxScroll": 328,
+      "needsMeasure": false,
+      "inView": true,
+      "surfaceVisible": true,
+      "canFlow": false,
+      "frameAge": 0,
+      "frameRecoveries": 0,
+      "position": 109.6496489325196,
+      "font": 16.5,
+      "centers": [
+        304.5,
+        357.5,
+        410.5,
+        464.5,
+        516.5,
+        555.5,
+        593.5
+      ],
+      "clock": [
+        {
+          "t": 1,
+          "f": 0
+        },
+        {
+          "t": 3,
+          "f": 1
+        },
+        {
+          "t": 5,
+          "f": 2
+        },
+        {
+          "t": 8,
+          "f": 4
+        },
+        {
+          "t": 10,
+          "f": 5
+        },
+        {
+          "t": 21,
+          "f": 5
+        },
+        {
+          "t": 27,
+          "f": 6
+        }
+      ],
+      "media": 4.461451,
+      "paused": true,
+      "layout": "wide",
+      "dropped": 0,
+      "pendingFrames": 0,
+      "maxPendingFrames": 1
+    },
+    "probe": "headless Chrome, real document navigation + media; lost native rAF and delayed/zero observer fault injection, not native Hana detach"
+  }
+}
