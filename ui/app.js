@@ -2398,10 +2398,11 @@
     };
     var tune = Object.assign({}, RIPPLE_DEFAULTS);
     /* 量程：门槛左端保留到出厂松端（0.004 / 0.005 / 0.0003），右端给到出厂值 7~12 倍，
-       让基准落在中偏右、两侧都有余量；浓淡下限 0（可整组关闭），上限 = 默认值 ×2。 */
+       让基准落在中偏右、两侧都有余量。颜色浓淡三组统一 0–180%（下限 0 = 整组关闭），
+       默认 60% / 10% / 5% 落在左侧偏淡区。 */
     var TUNE_LIMITS = {
       bassThreshold: [0.004, 0.028], beatThreshold: [0.005, 0.036], hatThreshold: [0.0003, 0.0036],
-      bassOpacity: [0, 1.2], beatOpacity: [0, 0.2], hatOpacity: [0, 0.1]
+      bassOpacity: [0, 1.8], beatOpacity: [0, 1.8], hatOpacity: [0, 1.8]
     };
     var AUDIO_STRENGTH = 2.6, visualGain = 2.6, WARMUP_MS = 320;
     var tuneListeners = [];
@@ -3384,14 +3385,19 @@
     lyricFlowRaf = 0;
   }
   function canFlowLyrics() {
-    var clock = lyricGeometry.clock, time = lyricTimeAt(liveProgress()), moving = false;
+    var g = lyricGeometry;
+    var base = !SHOT && !reducedMotion() && !document.hidden && lyricInView && !lyricAlign && state.follow
+      && g.nodes.length > 0 && g.height > 0 && state.page === 'play' && !state.drawer
+      && player.getAttribute('data-search') !== '1';
+    if (!base) return false;
+    /* 回位动画在跑的时候不看时钟、也不看 seeking：
+     * 点歌词跳转必然经过一段 seeking，那几帧把动画掐了，用户看到的就是瞬移。 */
+    if (lyricReturn) return true;
+    var clock = g.clock, time = lyricTimeAt(liveProgress()), moving = false;
     for (var i = 1; i < clock.length; i++) {
       if (time >= clock[i - 1].t && time < clock[i].t) { moving = clock[i].f !== clock[i - 1].f; break; }
     }
-    return !SHOT && !reducedMotion() && !document.hidden && lyricInView && !lyricAlign && state.follow
-      && lyricGeometry.nodes.length > 0 && lyricGeometry.height > 0 && state.page === 'play' && !state.drawer
-      && player.getAttribute('data-search') !== '1' && !audio.seeking
-      && ((!audio.paused && !audio.ended && audio.readyState >= 3 && moving) || !!lyricReturn);
+    return !audio.seeking && !audio.paused && !audio.ended && audio.readyState >= 3 && moving;
   }
   function startLyricFrames() {
     if (lyricFlowRaf || !canFlowLyrics()) return;
@@ -3489,13 +3495,22 @@
 
   /* 歌词跟随：滚完停 3s 自动回归（motion 2）。
    * 去掉「回到当前歌词」按钮 —— 不再需要手动回。
-   * 定时器在交互进行中不触发；每次滚动/指针交互重置计时。 */
+   * 定时器在交互进行中不触发；每次滚动/指针交互重置计时。
+   * 回位是「自愈」的：松手事件可能根本送不到（在卡片/窗口外松手、
+   * 宿主自己接管了拖拽），所以不能把回位押在 pointerup 上 —— 只要 follow 关着，
+   * 就必有一枚 3s 定时器在跑，到时把僵死的按压清掉再回位。 */
   var followTimer = 0;
   function clearFollowTimer() { if (followTimer) { clearTimeout(followTimer); followTimer = 0; } }
   function scheduleResume() {
     clearFollowTimer();
-    if (state.follow || lyricAlign || lyricPress) return;
-    followTimer = setTimeout(function () { followTimer = 0; resumeFollow(); }, 3000);
+    if (state.follow || lyricAlign) return;
+    followTimer = setTimeout(function () {
+      followTimer = 0;
+      if (lyricAlign) return;
+      if (lyricPress && lyricPress.dragging) { scheduleResume(); return; }   // 校准拖拽中：不打扰，继续等
+      clearLyricPress(true);   // 非拖拽的残留按压一定是僵死的（松手事件丢了）
+      resumeFollow();
+    }, 3000);
   }
   function pauseFollow() {
     if (lyricAlign) return;
@@ -3679,7 +3694,7 @@
     // 保留原生滚动条的拖拽，别把滚动条长按识别成歌词校准。
     if (e.clientX >= lyrics.getBoundingClientRect().right - 10) { pauseFollow(); return; }
     clearLyricPress(true);
-    pauseFollow(); clearFollowTimer();
+    pauseFollow();   // 它已经立好 3s 自愈定时器，这里别再清：松手事件丢了也得能自己回位
     var p = lyricPress = { id: e.pointerId, x: e.clientX, y: e.clientY, dragging: false, timer: 0 };
     if (lyricAlign) { beginAlignDrag(p); e.preventDefault(); }
     else p.timer = setTimeout(function () { if (lyricPress === p) beginAlignDrag(p); }, 450);
@@ -3708,6 +3723,9 @@
     var line = e.target.closest('.lyric-line');
     if (line) seekLyricLine(Number(line.getAttribute('data-i')));
   });
+  /* 点一句歌词跳过去：音频立刻跳，视图滑过去。
+   * 顺序很重要 —— 先立起回位动画（resumeFollow → centerCurrentLine(false)）再刷高亮；
+   * 这里绝不能走 updateLyricIndex(true)，那一下瞬移会把刚立起来的动画抹掉。 */
   function seekLyricLine(i) {
     var line = state.lyricLines[i], t = currentTrack();
     if (!line || !t) return;
@@ -3715,7 +3733,9 @@
     if (isFinite(audio.duration) && audio.duration > 0) time = Math.min(time, audio.duration);
     try { audio.currentTime = time; } catch (e) { return; }
     state.progress = time;
-    resumeFollow(); updateLyricIndex(true); renderProgress(); persistNow();
+    resumeFollow();
+    updateLyricIndex(false);
+    renderProgress(); persistNow();
   }
   $('lyricAlignEarlier').addEventListener('click', function () { changeLyricOffset(50); });
   $('lyricAlignLater').addEventListener('click', function () { changeLyricOffset(-50); });
@@ -4557,7 +4577,9 @@
     if (!isFinite(audio.currentTime)) return;
     state.progress = audio.currentTime;
     renderProgress();
-    updateLyricIndex(true);
+    /* 落点后默认瞬移到位；但如果正有一次回位动画在跑（点歌词跳转 / 滚轮回弹），
+     * 就让它跑完 —— 否则 seeking 一结束动画就被抹成瞬移。 */
+    updateLyricIndex(!lyricReturn);
     syncPositionState(true);
   });
 

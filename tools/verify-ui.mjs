@@ -933,6 +933,75 @@ async function verifyLyricFlow() {
   await sleep(3300);
   assert('lyrics-flow-resumes-after-browsing', (await info()).follow && (await info()).raf, JSON.stringify(await info()));
 
+  /* 回位必须是「滑」而不是「跳」：中途要有若干中间位置。 */
+  await seekTo(3.4);
+  await page.evaluate(() => {
+    document.querySelector('#lyricWrap').dispatchEvent(new WheelEvent('wheel', { deltaY: 100, bubbles: true }));
+    document.querySelector('#lyrics').scrollTop -= 150;
+  });
+  await sleep(200);
+  const awayFromLine = await info();
+  const backCurve = await page.evaluate(() => new Promise((resolve) => {
+    const frames = [], start = performance.now();
+    function sample() {
+      const st = window.__playerDebug.lyricFlowState();
+      frames.push({ t: Math.round(performance.now() - start), pos: Math.round(st.position * 100) / 100, follow: st.follow });
+      if (performance.now() - start < 4200) requestAnimationFrame(sample); else resolve(frames);
+    }
+    requestAnimationFrame(sample);
+  }));
+  const backStart = backCurve.findIndex((f) => f.follow);
+  const backRamp = backStart < 0 ? [] : backCurve.filter((f) => f.t >= backCurve[backStart].t && f.t <= backCurve[backStart].t + 400);
+  const backMid = backRamp.find((f) => f.t >= backCurve[backStart].t + 150);
+  const backEnd = backCurve[backCurve.length - 1];
+  assert('lyrics-bounce-back-is-animated',
+    !awayFromLine.follow && backStart > 0 && backRamp.length >= 4 && new Set(backRamp.map((f) => Math.round(f.pos))).size >= 4
+      && !!backMid && Math.abs(backMid.pos - backEnd.pos) > 8 && backEnd.follow,
+    JSON.stringify({ awayFromLine: { follow: awayFromLine.follow, position: awayFromLine.position }, backStart, backEnd, backMid, ramp: backRamp.map((f) => [f.t, f.pos]) }));
+
+  /* 点歌词跳转也要有动画：从当前句滑到目标句，不能瞬移。 */
+  await seekTo(15);
+  const beforeJump = await info();
+  const jumpCurve = await page.evaluate(() => new Promise((resolve) => {
+    const frames = [], start = performance.now();
+    const el = document.querySelector('.lyric-line[data-i="0"] .lyric-text');
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    function sample() {
+      const st = window.__playerDebug.lyricFlowState();
+      frames.push({ t: Math.round(performance.now() - start), pos: Math.round(st.position * 100) / 100, index: st.index, raf: st.raf, follow: st.follow });
+      if (performance.now() - start < 900) requestAnimationFrame(sample); else resolve(frames);
+    }
+    requestAnimationFrame(sample);
+  }));
+  const jumpEnd = jumpCurve[jumpCurve.length - 1];
+  const jumpRamp = jumpCurve.filter((f) => f.t <= 400);
+  const jumpMid = jumpCurve.find((f) => f.t >= 150);
+  assert('lyrics-click-line-jumps-with-animation',
+    Math.abs(beforeJump.position - jumpEnd.pos) > 40 && jumpEnd.index === 0 && jumpEnd.follow
+      && new Set(jumpRamp.map((f) => Math.round(f.pos))).size >= 4 && !!jumpMid && Math.abs(jumpMid.pos - jumpEnd.pos) > 8,
+    JSON.stringify({ beforeJump: beforeJump.position, jumpEnd, jumpMid, ramp: jumpRamp.map((f) => [f.t, f.pos]) }));
+
+  /* 松手事件丢失（在卡片/窗口外松手、宿主吞掉 pointerup）不能让跟随永久卡死。 */
+  await seekTo(3.4);
+  await page.evaluate(() => {
+    const el = document.querySelector('.lyric-line.is-current') || document.querySelector('.lyric-line');
+    const b = el.getBoundingClientRect();
+    el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 77, pointerType: 'mouse', button: 0, buttons: 1, clientX: b.left + b.width / 2, clientY: b.top + b.height / 2 }));
+    el.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, cancelable: true, pointerId: 77, pointerType: 'mouse', buttons: 1, clientX: b.left + b.width / 2 + 40, clientY: b.top + b.height / 2 }));
+  });
+  await sleep(200);
+  const pressedNoUp = await info();
+  await sleep(3600);
+  const healed = await info();
+  /* 期望落点 = 当前插值句中心 - 半屏（和 lyricCenterAt 同口径）。 */
+  const healedN = Math.max(0, Math.min(healed.centers.length - 1, healed.focus));
+  const healedA = Math.floor(healedN), healedB = Math.min(healedA + 1, healed.centers.length - 1);
+  const healedCenter = healedA === healedB ? healed.centers[healedA]
+    : healed.centers[healedA] + (healed.centers[healedB] - healed.centers[healedA]) * (healedN - healedA);
+  assert('lyrics-lost-pointerup-self-heals',
+    !pressedNoUp.follow && healed.follow && healed.raf && Math.abs(healed.position - (healedCenter - healed.height / 2)) < 10,
+    JSON.stringify({ pressedNoUp: { follow: pressedNoUp.follow, position: pressedNoUp.position }, healed: { follow: healed.follow, raf: healed.raf, position: healed.position, target: healedCenter - healed.height / 2, focus: healed.focus } }));
+
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
   await sleep(80);
   const reduced = await page.evaluate(() => ({ ...window.__playerDebug.lyricFlowState(), transforms: [...document.querySelectorAll('.lyric-text')].map((e) => getComputedStyle(e).transform) }));
@@ -2623,7 +2692,7 @@ const rippleTool = {};
     await new Promise((r) => setTimeout(r, 40));
     // 先改一个值再重置
     const el = document.getElementById('rt_bassOpacity');
-    el.value = '120'; el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.value = '180'; el.dispatchEvent(new Event('input', { bubbles: true }));
     await new Promise((r) => setTimeout(r, 40));
     const changed = window.__playerDebug.rippleTune().bassOpacity;
     document.getElementById('rtResetBtn').click();
@@ -2635,7 +2704,7 @@ const rippleTool = {};
   rippleTool.reset = resetInfo;
   assert('ripple-tool-six-sliders-and-reset',
     wide.ranges === 6 && wide.hasReset === true && wide.note.length > 12 &&
-    resetInfo.changed === 1.2 &&
+    resetInfo.changed === 1.8 &&
     JSON.stringify(resetInfo.tune) === JSON.stringify(resetInfo.defaults),
     JSON.stringify({ ranges: wide.ranges, hasReset: wide.hasReset, noteLen: wide.note.length, changed: resetInfo.changed, tune: resetInfo.tune }));
 
@@ -2644,14 +2713,14 @@ const rippleTool = {};
     const D = window.__playerDebug, audio = document.getElementById('audio');
     const before = { gain: D.rippleTune().hatOpacity, vol: audio.volume, onsets: D.rippleAudio().onsets };
     const el = document.getElementById('rt_hatOpacity');
-    el.value = '9'; el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.value = '90'; el.dispatchEvent(new Event('input', { bubbles: true }));
     await new Promise((r) => setTimeout(r, 60));
     const after = { gain: D.rippleTune().hatOpacity, vol: audio.volume, onsets: D.rippleAudio().onsets };
     return { before, after };
   });
   rippleTool.gainLive = gainLive;
   assert('ripple-tool-slider-live-and-volume-untouched',
-    gainLive.after.gain === 0.09 && gainLive.before.vol === gainLive.after.vol &&
+    gainLive.after.gain === 0.9 && gainLive.before.vol === gainLive.after.vol &&
     gainLive.before.onsets === gainLive.after.onsets,
     JSON.stringify(gainLive));
 
@@ -2769,7 +2838,7 @@ const rippleTool = {};
     const partial=D.rippleSetTune({schemaVersion:2,bassThreshold:-1,beatThreshold:Infinity,hatThreshold:9,bassOpacity:NaN,hatOpacity:9});
     return {before,unknown,partial};
   });
-  assert('ripple-tune-version-and-finite-bounds', JSON.stringify(bounds.before)===JSON.stringify(bounds.unknown) && bounds.partial.bassThreshold===.004 && bounds.partial.hatThreshold===.0036 && bounds.partial.hatOpacity===.1 && bounds.partial.beatThreshold===bounds.before.beatThreshold && bounds.partial.bassOpacity===bounds.before.bassOpacity,JSON.stringify(bounds));
+  assert('ripple-tune-version-and-finite-bounds', JSON.stringify(bounds.before)===JSON.stringify(bounds.unknown) && bounds.partial.bassThreshold===.004 && bounds.partial.hatThreshold===.0036 && bounds.partial.hatOpacity===1.8 && bounds.partial.beatThreshold===bounds.before.beatThreshold && bounds.partial.bassOpacity===bounds.before.bassOpacity,JSON.stringify(bounds));
   await page.close();
 }
 
@@ -2820,7 +2889,7 @@ if (process.env.RIPPLE_SONG) {
         try{D.rippleRingLayers(k==='hat'?'high':'low');}finally{ctx.stroke=real;}
         return alphas.reduce((x,y)=>x+y,0);
       };
-      const maxOp={bass:1.2,beat:0.2,hat:0.1}[k];
+      const maxOp={bass:1.8,beat:1.8,hat:1.8}[k];
       const light=render(maxOp/6),deep=render(maxOp),after=state();
       results[k]={light,deep,unchanged:before===after};D.rippleResetTune();
     });return results;
