@@ -1,0 +1,407 @@
+{
+  "selfCheck": [],
+  "wiring": {},
+  "four": {},
+  "darkFallback": {},
+  "runtimeErrors": [],
+  "expectedProbes": [
+    "http 404 http://127.0.0.1:61513/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:61513/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:61513/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:61513/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:61513/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:61513/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:61513/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%91%A8%E6%9D%B0%E4%BC%A6%20-%20%E7%A8%BB%E9%A6%99",
+    "reqfail: http://127.0.0.1:61513/api/apps/hanako-simple-player/routes/_fixture/audio.wav?appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:61513/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%91%A8%E6%9D%B0%E4%BC%A6%20-%20%E7%A8%BB%E9%A6%99",
+    "reqfail: http://127.0.0.1:61513/api/apps/hanako-simple-player/routes/_fixture/audio.wav?appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:61513/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog?kind=artist&name=%E5%91%A8%E6%9D%B0%E4%BC%A6 net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:61513/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:61513/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:61513/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%202",
+    "reqfail: http://127.0.0.1:61513/api/apps/hanako-simple-player/routes/widget/api/music/go/900001?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:61513/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:61513/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED"
+  ],
+  "assertions": [
+    {
+      "name": "mood-lists-backend-priority-and-order",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-rename-backend-persistence",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-rename-survives-reload",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-own-echo-no-rerender",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-external-create-shows-tracks-immediately",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-broadcast-does-not-write-back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-same-name-replacement-refreshes-tracks",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-no-direct-storage-write",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-backend-unavailable-legacy-fallback",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-clean-keeps-single-character-songs",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-clean-preserves-multiple-artists",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-clean-aimer-dates-translations-and-instrumental-heading",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-clean-skips-live-versions",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-match-selects-original-before-covers-live-compilation-reissue",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-menu-opens-prefilled-current-list",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-panel-fits-312",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-panel-fits-465",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-panel-fits-1040",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-fill-syncs-source-favorite-and-recent-copies",
+      "ok": true,
+      "detail": "[{\"uid\":\"imp:1|bilibili:BV16XpM6EEtF_1\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"match\":{\"originalPic\":\"\",\"source\":\"netease\",\"artistId\":6452,\"artist\":\"周杰伦\",\"songId\":185709,\"albumId\":18877,\"album\":\"魔杰座\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"at\":1791982817892}},{\"uid\":\"fav|bilibili:BV16XpM6EEtF_1\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"match\":{\"originalPic\":\"\",\"source\":\"netease\",\"artistId\":6452,\"artist\":\"周杰伦\",\"songId\":185709,\"albumId\":18877,\"album\":\"魔杰座\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"at\":1791982817892}},{\"uid\":\"recent|bilibili:BV16XpM6EEtF_1\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"match\":{\"originalPic\":\"\",\"source\":\"netease\",\"artistId\":6452,\"artist\":\"周杰伦\",\"songId\":185709,\"albumId\":18877,\"album\":\"魔杰座\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"at\":1791982817892}}]"
+    },
+    {
+      "name": "cover-fill-preserves-live-custom-and-other-platform-covers",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-fill-saves-match-provenance",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-repeat-preserves-original-backup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-restore-after-reload-syncs-copies-and-removes-binding",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-stop-prevents-commit-and-further-catalog-requests",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-metadata-failure-preserves-original",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-undecodable-image-is-not-written",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-save-failure-rolls-back-pics-and-backups",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "search-cover-home-has-no-slot-or-focus",
+      "ok": true,
+      "detail": "{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true}"
+    },
+    {
+      "name": "surface-motion-unified-clock-and-easing",
+      "ok": true,
+      "detail": "[{\"start\":789.4,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"},{\"start\":789.4,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"},{\"start\":789.4,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"}]"
+    },
+    {
+      "name": "search-cover-grows-and-moves-title",
+      "ok": true,
+      "detail": "{\"width\":30.359375,\"titleX\":111.875,\"inert\":false,\"disabled\":false,\"opacity\":0.690029,\"searchHidden\":false,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true}"
+    },
+    {
+      "name": "search-cover-keeps-play-centered",
+      "ok": true,
+      "detail": "{\"home\":{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"mid\":{\"width\":30.359375,\"titleX\":111.875,\"inert\":false,\"disabled\":false,\"opacity\":0.690029,\"searchHidden\":false,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"before\":\"matrix(1, 0, 0, 1, -322.37, 0)\",\"reverse\":\"matrix(1, 0, 0, 1, -322.37, 0)\",\"closed\":{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"opened\":{\"width\":44,\"titleX\":128,\"inert\":false,\"disabled\":false,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true},\"cover\":{\"shown\":true,\"crop\":\"cover\",\"position\":\"50% 50%\",\"width\":32,\"height\":32,\"between\":true},\"changed\":{\"previousSrc\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png?appSurfaceSession=fake-ticket\",\"currentSrc\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png?appSurfaceSession=fake-ticket\",\"expected\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\",\"naturalWidth\":1536,\"naturalHeight\":1024},\"leaving\":{\"width\":44,\"titleX\":128,\"inert\":true,\"disabled\":true,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true},\"byCover\":{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"reopened\":{\"width\":44,\"titleX\":128,\"inert\":false,\"disabled\":false,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true},\"fallback\":true,\"brokenFallback\":true,\"timing\":[{\"start\":789.4,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"},{\"start\":789.4,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"},{\"start\":789.4,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"}],\"queueTiming\":{\"delay\":0,\"direction\":\"normal\",\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\",\"endDelay\":0,\"fill\":\"both\",\"iterationStart\":0,\"iterations\":1},\"queueBefore\":\"matrix(1, 0, 0, 1, 109.604, 0)\",\"queueReverse\":\"matrix(1, 0, 0, 1, 109.604, 0)\",\"scrimShown\":true,\"queueClosed\":true}"
+    },
+    {
+      "name": "search-motion-reverses-from-visible-frame",
+      "ok": true,
+      "detail": "{\"before\":\"matrix(1, 0, 0, 1, -322.37, 0)\",\"reverse\":\"matrix(1, 0, 0, 1, -322.37, 0)\"}"
+    },
+    {
+      "name": "search-cover-exit-finishes-with-page",
+      "ok": true,
+      "detail": "{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true}"
+    },
+    {
+      "name": "search-cover-is-centered-square-between-search-and-title",
+      "ok": true,
+      "detail": "{\"shown\":true,\"crop\":\"cover\",\"position\":\"50% 50%\",\"width\":32,\"height\":32,\"between\":true}"
+    },
+    {
+      "name": "search-cover-follows-track-and-crops-landscape",
+      "ok": true,
+      "detail": "{\"previousSrc\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png?appSurfaceSession=fake-ticket\",\"currentSrc\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png?appSurfaceSession=fake-ticket\",\"expected\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\",\"naturalWidth\":1536,\"naturalHeight\":1024}"
+    },
+    {
+      "name": "search-exit-keeps-solid-controls-through-real-animation",
+      "ok": true,
+      "detail": "{\"width\":44,\"titleX\":128,\"inert\":true,\"disabled\":true,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true}"
+    },
+    {
+      "name": "search-cover-click-closes-with-immediate-focus-removal",
+      "ok": true,
+      "detail": "{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true}"
+    },
+    {
+      "name": "search-cover-reopen-cancels-stale-unmount",
+      "ok": true,
+      "detail": "{\"width\":44,\"titleX\":128,\"inert\":false,\"disabled\":false,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true}"
+    },
+    {
+      "name": "search-cover-missing-and-broken-image-fallback",
+      "ok": true,
+      "detail": "{\"missing\":true,\"broken\":true}"
+    },
+    {
+      "name": "queue-motion-reverses-and-finishes-with-scrim",
+      "ok": true,
+      "detail": "{\"home\":{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"mid\":{\"width\":30.359375,\"titleX\":111.875,\"inert\":false,\"disabled\":false,\"opacity\":0.690029,\"searchHidden\":false,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"before\":\"matrix(1, 0, 0, 1, -322.37, 0)\",\"reverse\":\"matrix(1, 0, 0, 1, -322.37, 0)\",\"closed\":{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"opened\":{\"width\":44,\"titleX\":128,\"inert\":false,\"disabled\":false,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true},\"cover\":{\"shown\":true,\"crop\":\"cover\",\"position\":\"50% 50%\",\"width\":32,\"height\":32,\"between\":true},\"changed\":{\"previousSrc\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png?appSurfaceSession=fake-ticket\",\"currentSrc\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png?appSurfaceSession=fake-ticket\",\"expected\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\",\"naturalWidth\":1536,\"naturalHeight\":1024},\"leaving\":{\"width\":44,\"titleX\":128,\"inert\":true,\"disabled\":true,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true},\"byCover\":{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"reopened\":{\"width\":44,\"titleX\":128,\"inert\":false,\"disabled\":false,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true},\"fallback\":true,\"brokenFallback\":true,\"timing\":[{\"start\":789.4,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"},{\"start\":789.4,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"},{\"start\":789.4,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"}],\"queueTiming\":{\"delay\":0,\"direction\":\"normal\",\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\",\"endDelay\":0,\"fill\":\"both\",\"iterationStart\":0,\"iterations\":1},\"queueBefore\":\"matrix(1, 0, 0, 1, 109.604, 0)\",\"queueReverse\":\"matrix(1, 0, 0, 1, 109.604, 0)\",\"scrimShown\":true,\"queueClosed\":true}"
+    },
+    {
+      "name": "search-cover-fits-small-wide-window",
+      "ok": true,
+      "detail": "{\"gap\":16,\"copyWidth\":34}"
+    },
+    {
+      "name": "surface-motion-reduced-is-opacity-only",
+      "ok": true,
+      "detail": "{\"keys\":[\"offset\",\"easing\",\"composite\",\"opacity\",\"computedOffset\",\"offset\",\"easing\",\"composite\",\"opacity\",\"computedOffset\",\"offset\",\"easing\",\"composite\",\"opacity\",\"computedOffset\",\"offset\",\"easing\",\"composite\",\"opacity\",\"computedOffset\"],\"hidden\":true}"
+    },
+    {
+      "name": "search-cover-hidden-in-card",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "surface-motion-layout-switch-cleans-obsolete-scene",
+      "ok": true,
+      "detail": "{\"opacity\":1,\"transform\":\"none\",\"animations\":0}"
+    },
+    {
+      "name": "lyrics-flow-through-phrase-and-boundary",
+      "ok": true,
+      "detail": "{\"frames\":127,\"first\":{\"focus\":1.589480829857972,\"position\":126.90124981468966,\"index\":1,\"height\":38},\"last\":{\"focus\":2.7973542523978874,\"position\":208.83766345140907,\"index\":2,\"height\":38},\"stalled\":5,\"maxStep\":0.012381569217948751}"
+    },
+    {
+      "name": "lyrics-wave-keeps-row-geometry-stable",
+      "ok": true,
+      "detail": "[38]"
+    },
+    {
+      "name": "lyrics-flow-preserves-subpixel-motion",
+      "ok": true,
+      "detail": "[{\"focus\":0,\"pos\":0},{\"focus\":0.0018057395071979787,\"pos\":0.12410332919824896},{\"focus\":0,\"pos\":0},{\"focus\":0,\"pos\":0},{\"focus\":0,\"pos\":0},{\"focus\":0,\"pos\":0}]"
+    },
+    {
+      "name": "lyrics-pause-resume-keeps-phase",
+      "ok": true,
+      "detail": "{\"paused\":{\"focus\":2.7988864045402977,\"index\":2,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0.059130338062743704,\"position\":208.94086966193726,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]},\"frozen\":{\"focus\":2.7988864045402977,\"index\":2,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0.059130338062743704,\"position\":208.94086966193726,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]},\"resumed\":{\"focus\":2.9507678468875813,\"index\":2,\"raf\":true,\"follow\":true,\"width\":374,\"height\":491,\"residual\":-0.17797343045748448,\"position\":219.17797343045748,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}}"
+    },
+    {
+      "name": "lyrics-same-phrase-resize-recenters-with-readable-size-cap",
+      "ok": true,
+      "detail": "{\"beforeResize\":{\"focus\":2,\"index\":2,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0,\"position\":155,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]},\"afterResize\":{\"focus\":2,\"index\":2,\"raf\":false,\"follow\":true,\"width\":518,\"height\":731,\"residual\":0,\"position\":125,\"font\":16.5,\"centers\":[384.5,437.5,490.5,544.5,596.5,635.5,673.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]},\"centerError\":0.40625}"
+    },
+    {
+      "name": "lyrics-readable-and-wave-fits-820x700",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0.5,\"position\":86.5,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"layout\":\"wide\",\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"bodyFontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"peakFont\":18.974999999999998,\"actualHeight\":491,\"centerError\":0.546875,\"overlaps\":false,\"overflow\":false,\"wrapped\":true,\"titleHeight\":28,\"titleFont\":22,\"queueTitleFont\":15,\"titleFull\":true}"
+    },
+    {
+      "name": "lyrics-peak-stays-three-pixels-below-title-820x700",
+      "ok": true,
+      "detail": "{\"peakFont\":18.974999999999998,\"titleFont\":22,\"queueTitleFont\":15,\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"layout\":\"wide\"}"
+    },
+    {
+      "name": "lyrics-readable-and-wave-fits-465x930",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":268,\"height\":410,\"residual\":0,\"position\":71,\"font\":13,\"centers\":[221,276,332,387,442,474,506],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"layout\":\"long\",\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"bodyFontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"peakFont\":14.95,\"actualHeight\":410,\"centerError\":0.3515625,\"overlaps\":false,\"overflow\":false,\"wrapped\":true,\"titleHeight\":23,\"titleFont\":18,\"queueTitleFont\":15,\"titleFull\":true}"
+    },
+    {
+      "name": "lyrics-peak-stays-three-pixels-below-title-465x930",
+      "ok": true,
+      "detail": "{\"peakFont\":14.95,\"titleFont\":18,\"queueTitleFont\":15,\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"layout\":\"long\"}"
+    },
+    {
+      "name": "lyrics-readable-and-wave-fits-380x430",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":216,\"height\":218,\"residual\":0,\"position\":83,\"font\":13,\"centers\":[125,192,259,326,393,425,457],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"layout\":\"compact\",\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"bodyFontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"peakFont\":14.95,\"actualHeight\":218,\"centerError\":0.015625,\"overlaps\":false,\"overflow\":false,\"wrapped\":true,\"titleHeight\":23,\"titleFont\":18,\"queueTitleFont\":15,\"titleFull\":true}"
+    },
+    {
+      "name": "lyrics-peak-stays-three-pixels-below-title-380x430",
+      "ok": true,
+      "detail": "{\"peakFont\":14.95,\"titleFont\":18,\"queueTitleFont\":15,\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"layout\":\"compact\"}"
+    },
+    {
+      "name": "lyrics-readable-and-wave-fits-312x494",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":173,\"height\":281,\"residual\":0.5,\"position\":72.5,\"font\":11,\"centers\":[155,213,271,329,387,415,444],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"layout\":\"compact\",\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"bodyFontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"peakFont\":12.649999999999999,\"actualHeight\":281,\"centerError\":0.234375,\"overlaps\":false,\"overflow\":false,\"wrapped\":true,\"titleHeight\":23,\"titleFont\":18,\"queueTitleFont\":15,\"titleFull\":true}"
+    },
+    {
+      "name": "lyrics-peak-stays-three-pixels-below-title-312x494",
+      "ok": true,
+      "detail": "{\"peakFont\":12.649999999999999,\"titleFont\":18,\"queueTitleFont\":15,\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"layout\":\"compact\"}"
+    },
+    {
+      "name": "lyrics-readable-and-wave-fits-719x559",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":426,\"height\":354,\"residual\":0.5,\"position\":59.5,\"font\":13,\"centers\":[193,236.5,280,324.5,368,400,432],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"layout\":\"compact\",\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"bodyFontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"peakFont\":14.95,\"actualHeight\":354,\"centerError\":0.28125,\"overlaps\":false,\"overflow\":false,\"wrapped\":true,\"titleHeight\":23,\"titleFont\":18,\"queueTitleFont\":15,\"titleFull\":true}"
+    },
+    {
+      "name": "lyrics-peak-stays-three-pixels-below-title-719x559",
+      "ok": true,
+      "detail": "{\"peakFont\":14.95,\"titleFont\":18,\"queueTitleFont\":15,\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"layout\":\"compact\"}"
+    },
+    {
+      "name": "lyrics-readable-and-wave-fits-720x560",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":326,\"height\":351,\"residual\":0.5,\"position\":68.5,\"font\":12.4,\"centers\":[191,244,297,350,404,435,466],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"layout\":\"wide\",\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"bodyFontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"peakFont\":14.26,\"actualHeight\":351,\"centerError\":0.234375,\"overlaps\":false,\"overflow\":false,\"wrapped\":true,\"titleHeight\":28,\"titleFont\":22,\"queueTitleFont\":15,\"titleFull\":true}"
+    },
+    {
+      "name": "lyrics-peak-stays-three-pixels-below-title-720x560",
+      "ok": true,
+      "detail": "{\"peakFont\":14.26,\"titleFont\":22,\"queueTitleFont\":15,\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"layout\":\"wide\"}"
+    },
+    {
+      "name": "lyrics-split-keeps-reading-area-and-remeasures",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":268,\"height\":128,\"residual\":0,\"position\":63,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-flow-does-not-steal-browsing",
+      "ok": true,
+      "detail": "{\"browsed\":{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":false,\"width\":268,\"height\":128,\"residual\":0,\"position\":143,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]},\"stayed\":{\"focus\":1.0606434655312948,\"index\":1,\"raf\":false,\"follow\":false,\"width\":268,\"height\":128,\"residual\":0,\"position\":143,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}}"
+    },
+    {
+      "name": "lyrics-flow-resumes-after-browsing",
+      "ok": true,
+      "detail": "{\"focus\":3.0434964016719603,\"index\":2,\"raf\":true,\"follow\":true,\"width\":268,\"height\":128,\"residual\":-0.13309494582998127,\"position\":161.13309494582998,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-bounce-back-is-animated",
+      "ok": true,
+      "detail": "{\"awayFromLine\":{\"follow\":false,\"position\":0},\"backStart\":169,\"backEnd\":{\"t\":4209,\"pos\":201.18,\"follow\":true},\"backMid\":{\"t\":2993,\"pos\":39.78,\"follow\":true},\"ramp\":[[2827,0],[2843,0.37],[2859,1.6],[2876,3.78],[2893,6.82],[2910,11.28],[2926,15.3],[2943,20.65],[2960,26.42],[2976,32.99],[2993,39.78],[3010,47.09],[3026,55.33],[3043,62.77],[3059,71.15],[3076,79.37],[3093,87.78],[3109,96.53],[3126,104.57],[3143,112.91],[3159,120.79],[3176,129.87],[3193,136.01],[3210,142.95],[3226,149.27]]}"
+    },
+    {
+      "name": "lyrics-click-line-jumps-with-animation",
+      "ok": true,
+      "detail": "{\"beforeJump\":235.5,\"jumpEnd\":{\"t\":912,\"pos\":19.13,\"index\":0,\"raf\":true,\"follow\":true},\"jumpMid\":{\"t\":162,\"pos\":190.25,\"index\":0,\"raf\":true,\"follow\":true},\"ramp\":[[12,235.49],[29,235.12],[45,233.43],[62,230.43],[79,226.21],[95,220.87],[112,214.47],[129,207.25],[146,199.11],[162,190.25],[179,180.99],[195,171.11],[212,160.75],[229,150.13],[245,139.09],[262,121.69],[279,117.12],[295,106.26],[312,95.43],[329,84.87],[345,74.74],[362,65.02],[379,55.86],[395,47.36]]}"
+    },
+    {
+      "name": "lyrics-lost-pointerup-self-heals",
+      "ok": true,
+      "detail": "{\"pressedNoUp\":{\"follow\":false,\"position\":73},\"healed\":{\"follow\":true,\"raf\":true,\"position\":181.87759542815274,\"target\":180.45902389709386,\"focus\":3.4424541009710072}}"
+    },
+    {
+      "name": "lyrics-reduced-motion-stops-flow-and-scaling",
+      "ok": true,
+      "detail": "{\"focus\":2,\"index\":2,\"raf\":false,\"follow\":true,\"width\":268,\"height\":128,\"residual\":0.5,\"position\":110.5,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"transforms\":[\"matrix(1, 0, 0, 1, 0, 0)\",\"matrix(1, 0, 0, 1, 0, 0)\",\"matrix(1, 0, 0, 1, 0, 0)\",\"matrix(1, 0, 0, 1, 0, 0)\",\"matrix(1, 0, 0, 1, 0, 0)\",\"matrix(1, 0, 0, 1, 0, 0)\",\"matrix(1, 0, 0, 1, 0, 0)\"]}"
+    },
+    {
+      "name": "lyrics-offscreen-stops-flow",
+      "ok": true,
+      "detail": "{\"focus\":3.5147515324105325,\"index\":2,\"raf\":false,\"follow\":true,\"width\":268,\"height\":128,\"residual\":0.36348456105213245,\"position\":185.63651543894787,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-same-timestamp-lines-have-one-semantic-current",
+      "ok": true,
+      "detail": "{\"focus\":4.069749285716625,\"index\":4,\"raf\":true,\"follow\":true,\"width\":268,\"height\":128,\"residual\":0.09635571071584081,\"position\":209.90364428928416,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-covered-by-drawer-stops-frames",
+      "ok": true,
+      "detail": "{\"focus\":2.6599610499395205,\"index\":2,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0.41475518773120257,\"position\":199.5852448122688,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-covered-by-search-stops-frames",
+      "ok": true,
+      "detail": "{\"focus\":2.934495745376995,\"index\":2,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":-0.08045294186888441,\"position\":218.08045294186888,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-returning-from-overlay-resumes-frames",
+      "ok": true,
+      "detail": "{\"focus\":3.256768860545113,\"index\":2,\"raf\":true,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0.28297075301821906,\"position\":240.71702924698178,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-long-instrumental-holds-until-upcoming-phrase",
+      "ok": true,
+      "detail": "{\"focus\":5,\"index\":5,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0,\"position\":329,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-last-phrase-has-finite-position-and-stops-frames",
+      "ok": true,
+      "detail": "{\"focus\":6,\"index\":6,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0,\"position\":367,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    }
+  ],
+  "refine": [],
+  "narrowSelfCheck": [],
+  "theme": {},
+  "ambient": {}
+}

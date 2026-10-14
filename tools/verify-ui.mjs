@@ -26,7 +26,7 @@ const puppeteer = require(process.env.PUPPETEER_CORE || '/Volumes/SSD/hanadesk/�
 const CHROME = process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const uiDir = path.join(repo, 'ui');
+const uiDir = process.env.VERIFY_UI_DIR ? path.resolve(process.env.VERIFY_UI_DIR) : path.join(repo, 'ui');
 const outDir = process.env.OUT_DIR || '/tmp/hap-verify';
 const API = '/api/apps/hanako-simple-player/routes';
 const COVER_FILE = path.join(repo, 'docs/player-ui/assets/demo-cover.png');
@@ -370,6 +370,11 @@ const server = http.createServer((req, res) => {
     if (id === '900099') return text(res, 200, '', 'text/plain; charset=utf-8');  // 无词纯音乐
     if (id === '900098') return text(res, 200, '[00:00.00]这似乎是一首纯音乐呢，请尽情欣赏它吧！', 'text/plain; charset=utf-8');  // 占位词纯音乐
     if (fixtureMode === 'align') return text(res, 200, '[offset:250]\n' + Array.from({ length: 12 }, (_, i) => `[00:${String(1 + i * 2).padStart(2, '0')}.00]校准试听 第 ${i + 1} 句`).join('\n'), 'text/plain; charset=utf-8');
+    if (fixtureMode === 'lyric-slow') return text(res, 200, process.env.LYRIC_PERF_LRC ? fs.readFileSync(process.env.LYRIC_PERF_LRC, 'utf8') : [
+      '[00:00.00]作词信息', '[00:01.00]作曲信息', '[00:02.00]编曲信息',
+      '[00:12.55]ゆっくりと夜道を歩いて遠くの灯りを見つめている（这是一句日文与中文合并显示的长句，验证缓慢流动时仍然连续）',
+      '[00:24.81]続く言葉を待っている（等待下一句）', '[00:30.48]この先も歩いていく（继续向前走）'
+    ].join('\n'), 'text/plain; charset=utf-8');
     if (fixtureMode === 'lyric-flow') return text(res, 200, [
       '[00:01.00]风慢慢经过窗前',
       '[00:03.00]这是一句很长的中文歌词，让它自然换行之后仍然能够看清，每一个字都不会被波浪挤到旁边的句子上',
@@ -1020,7 +1025,8 @@ async function verifyLyricFlow() {
   await seekTo(6);
   await page.evaluate(() => document.querySelector('#queueBtn').click());
   await sleep(100);
-  assert('lyrics-covered-by-drawer-stops-frames', !(await info()).raf, JSON.stringify(await info()));
+  // 宽窗抽屉只盖住阅读列的一部分，露出的歌词必须继续逐帧流动。
+  assert('lyrics-visible-behind-drawer-keeps-frames', (await info()).raf, JSON.stringify(await info()));
   await page.evaluate(() => document.querySelector('#queueBtn').click());
   await sleep(350);
   await page.evaluate(() => window.__playerDebug.openSearch());
@@ -1036,6 +1042,138 @@ async function verifyLyricFlow() {
   await seekTo(27.2);
   const last = await info();
   assert('lyrics-last-phrase-has-finite-position-and-stops-frames', last.index === 6 && last.focus === 6 && !last.raf && Number.isFinite(last.position), JSON.stringify(last));
+  await page.close();
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+}
+
+/* 同一段真媒体时钟对照：rAF 采样只读行内样式，不读布局，避免探针自己迫使重排。
+ * CDP 时间仅作为本机诊断记录，不拿机器相关的毫秒数作回归门槛。 */
+async function verifyLyricPerformance() {
+  await fetch(`${BASE}${API}/__fixture/reset?mode=lyric-flow&appSurfaceSession=fake-ticket`);
+  const page = await newPage();
+  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
+  await page.goto(`${UI_BASE}/standalone.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await sleep(700);
+  await clickTab(page, 'imp:1');
+  await page.evaluate(() => document.querySelector('#queueList .q-hit').click());
+  await page.waitForFunction(() => document.querySelectorAll('.lyric-line').length === 7);
+  const cdp = await page.target().createCDPSession();
+  await cdp.send('Performance.enable');
+  if (process.env.LYRIC_PERF_DISABLE_EQ === '1') await page.addStyleTag({ content: '.q-eq path, .q-eq > span { animation: none !important; }' });
+  const metrics = async () => Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map(m => [m.name, m.value]));
+  async function sample(open, name) {
+    await page.evaluate(async open => {
+      const a = document.querySelector('audio'), p = document.getElementById('player');
+      a.pause(); a.currentTime = 3.4;
+      await new Promise(resolve => a.addEventListener('seeked', resolve, { once: true }));
+      if ((p.getAttribute('data-drawer') === '1') !== open) document.getElementById('queueBtn').click();
+    }, open);
+    await sleep(400); // 表面入/退场不混入稳态测量
+    await page.evaluate(() => window.__playerDebug.requestPlay('fixture'));
+    if (process.env.LYRIC_PERF_TRACE === '1') await page.tracing.start({ path: path.join(outDir, 'trace-' + name + '.json'), categories: ['devtools.timeline'] });
+    const before = await metrics();
+    const frames = await page.evaluate(() => new Promise(resolve => {
+      const line = document.querySelector('.lyric-line[data-i="2"]'), a = document.querySelector('audio');
+      const frames = [], start = performance.now();
+      function tick(now) {
+        frames.push({ at: now, scale: line.style.getPropertyValue('--lyric-scale'), media: a.currentTime });
+        if (now - start < 1800) requestAnimationFrame(tick); else resolve(frames);
+      }
+      requestAnimationFrame(tick);
+    }));
+    const after = await metrics();
+    const trace = process.env.LYRIC_PERF_TRACE === '1' ? JSON.parse(Buffer.from(await page.tracing.stop()).toString('utf8')).traceEvents : null;
+    const paint = trace ? trace.filter(e => e.name === 'Paint' && e.ph === 'X') : null;
+    const geometry = await page.evaluate(() => {
+      const d = window.__playerDebug.lyricFlowState();
+      return { raf: d.raf, width: d.width, height: d.height, position: d.position, focus: d.focus };
+    });
+    await page.evaluate(() => document.querySelector('audio').pause());
+    const intervals = frames.slice(1).map((f, i) => f.at - frames[i].at).sort((a, b) => a - b);
+    const changed = frames.slice(1).filter((f, i) => f.scale !== frames[i].scale).length;
+    return {
+      frames: frames.length, changed, movingRatio: changed / Math.max(1, frames.length - 1),
+      medianFrameMs: intervals[Math.floor(intervals.length / 2)], p95FrameMs: intervals[Math.floor(intervals.length * .95)],
+      mediaAdvance: frames.at(-1).media - frames[0].media, geometry,
+      paint: paint ? { count: paint.length, durationMs: paint.reduce((sum, e) => sum + (e.dur || 0), 0) / 1000 } : null,
+      metrics: Object.fromEntries(['LayoutCount', 'RecalcStyleCount', 'LayoutDuration', 'RecalcStyleDuration', 'ScriptDuration', 'TaskDuration']
+        .map(key => [key, +(after[key] - before[key]).toFixed(6)]))
+    };
+  }
+  const closed = await sample(false, 'closed'), opened = await sample(true, 'opened'), reclosed = await sample(false, 'reclosed');
+  for (const [name, s] of Object.entries({ closed, opened, reclosed })) {
+    assert('lyrics-perf-' + name + '-updates-each-frame', s.frames > 30 && s.mediaAdvance > 1.5 && s.movingRatio > .9,
+      JSON.stringify(s));
+  }
+  assert('lyrics-drawer-preserves-reading-geometry', closed.geometry.width === opened.geometry.width && closed.geometry.height === opened.geometry.height,
+    JSON.stringify({ closed: closed.geometry, opened: opened.geometry }));
+  assert('lyrics-drawer-has-no-per-frame-layout', opened.metrics.LayoutCount < opened.frames / 4, JSON.stringify(opened.metrics));
+  await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
+  await sleep(150);
+  const long = await sample(false, 'long-line');
+  const wrapped = await page.$eval('.lyric-line[data-i="1"] .lyric-text', el => el.offsetHeight > parseFloat(getComputedStyle(el).lineHeight) * 2);
+  assert('lyrics-long-wrapped-line-updates-each-frame', wrapped && long.frames > 30 && long.movingRatio > .9, JSON.stringify(long));
+  assert('lyrics-long-card-has-no-per-frame-layout', long.metrics.LayoutCount < long.frames / 4, JSON.stringify(long.metrics));
+  await page.evaluate(() => window.__playerDebug.requestPlay('fixture'));
+  await sleep(100);
+  const layersOn = await page.$$eval('.lyric-line.is-flowing', els => els.length);
+  await page.evaluate(() => document.querySelector('audio').pause());
+  const layersOff = await page.$$eval('.lyric-line.is-flowing', els => els.length);
+  assert('lyrics-compositor-hints-are-bounded-and-release-on-pause', layersOn > 0 && layersOn <= 10 && layersOff === 0, JSON.stringify({ layersOn, layersOff }));
+  const eq = await page.evaluate(() => {
+    const eq = document.querySelector('.q-row.is-current .q-eq');
+    return { paths: eq.querySelectorAll('path').length, svgTransforms: [...eq.querySelectorAll('path')].map(el => getComputedStyle(el).transform), animations: eq.getAnimations({ subtree: true }).length };
+  });
+  assert('queue-equalizer-retains-three-svg-strokes-without-path-animation', eq.paths === 3 && eq.svgTransforms.every(t => t === 'none') && eq.animations === 3, JSON.stringify(eq));
+  await page.setViewport({ width: 312, height: 494, deviceScaleFactor: 1 });
+  await sleep(150);
+  await page.evaluate(() => { window.__playerDebug.requestPlay('fixture'); document.getElementById('queueBtn').click(); });
+  await sleep(100);
+  const covered = await page.evaluate(() => ({ page: document.getElementById('player').getAttribute('data-page'), raf: window.__playerDebug.lyricFlowState().raf }));
+  assert('lyrics-compact-queue-replaces-scene-and-stops-frames', covered.page === 'queue' && !covered.raf, JSON.stringify(covered));
+  report.lyricPerformance = { closed, opened, reclosed, long, compact: covered, eqDisabled: process.env.LYRIC_PERF_DISABLE_EQ === '1', probe: 'headless Chrome, synthetic silent media, CSS scale sample without layout reads; CDP renderer metrics' };
+  await cdp.detach();
+  await page.close();
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+}
+
+/* 慢歌：时间来自用户反馈的 12.55→24.81s 句间距；外部 LRC 仅由本地环境变量读取，
+ * 不进入生产 ui/ 或发布包。几何采样用于检查亚像素连续性，不能充当无扰动性能测量。 */
+async function verifySlowLyricFlow() {
+  await fetch(`${BASE}${API}/__fixture/reset?mode=lyric-slow&appSurfaceSession=fake-ticket`);
+  const page = await newPage();
+  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
+  await page.goto(`${UI_BASE}/standalone.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await sleep(700);
+  await clickTab(page, 'imp:1');
+  await page.evaluate(() => document.querySelector('#queueList .q-hit').click());
+  await page.waitForFunction(() => document.querySelectorAll('.lyric-line').length >= 6);
+  await page.evaluate(async () => {
+    const a = document.querySelector('audio'); a.pause(); a.currentTime = 21.5;
+    await new Promise(resolve => a.addEventListener('seeked', resolve, { once: true }));
+    await window.__playerDebug.requestPlay('fixture');
+  });
+  const curve = await page.evaluate(() => new Promise(resolve => {
+    const frames = [], line = document.querySelector('.lyric-line[data-i="3"]'), a = document.querySelector('audio');
+    const start = performance.now();
+    function tick(now) {
+      const r = line.getBoundingClientRect();
+      frames.push({ at: now, media: a.currentTime, center: (r.top + r.bottom) / 2 });
+      if (now - start < 2400) requestAnimationFrame(tick); else resolve(frames);
+    }
+    requestAnimationFrame(tick);
+  }));
+  const steps = curve.slice(1).map((f, i) => f.center - curve[i].center);
+  const fit = await page.$eval('.lyric-line[data-i="3"] .lyric-text', el => ({ height: el.offsetHeight, lineHeight: parseFloat(getComputedStyle(el).lineHeight) }));
+  const summary = { frames: curve.length, moving: steps.filter(s => Math.abs(s) > .00001).length,
+    maxStepPx: Math.max(...steps.map(Math.abs)), travelPx: curve[0].center - curve.at(-1).center,
+    firstMedia: curve[0].media, lastMedia: curve.at(-1).media, fit, externalLrc: !!process.env.LYRIC_PERF_LRC };
+  assert('lyrics-slow-bilingual-long-line-is-wrapped', fit.height > fit.lineHeight * 1.5, JSON.stringify(summary));
+  assert('lyrics-slow-bilingual-line-moves-at-subpixel-steps', curve.length > 60 && summary.moving > steps.length * .9 && summary.travelPx > 2 && summary.maxStepPx < 2
+    && steps.every(s => s < .01) && steps.some(s => Math.abs(s) > .01 && Math.abs(s - Math.round(s)) > .01), JSON.stringify(summary));
+  fs.writeFileSync(path.join(outDir, 'slow-lyric-curve.json'), JSON.stringify({ summary, curve }, null, 2));
+  await page.screenshot({ path: path.join(outDir, 'slow-bilingual-1040x780.png') });
+  report.slowLyricFlow = summary;
   await page.close();
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
 }
@@ -1181,6 +1319,14 @@ async function verifyMoodLists() {
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
 }
 if (!process.argv.includes('--ripple-only') && !process.argv.includes('--song-only')) {
+if (process.argv.includes('--lyric-perf-only')) {
+  await verifyLyricPerformance();
+  await verifySlowLyricFlow();
+  fs.writeFileSync(path.join(outDir, 'verify-lyric-perf.json'), JSON.stringify(report, null, 2));
+  console.log(JSON.stringify({ assertions: `${report.assertions.filter(a => a.ok).length}/${report.assertions.length}`, failed: report.assertions.filter(a => !a.ok), lyricPerformance: report.lyricPerformance, runtimeErrors: report.runtimeErrors, outDir }, null, 2));
+  await browser.close(); server.closeAllConnections(); server.close();
+  process.exit(report.assertions.some(a => !a.ok) || report.runtimeErrors.length ? 1 : 0);
+}
 await verifyMoodLists();
 if (process.argv.includes('--lists-only')) {
   console.log(JSON.stringify({ assertions: `${report.assertions.filter(a => a.ok).length}/${report.assertions.length}`, failed: report.assertions.filter(a => !a.ok), runtimeErrors: report.runtimeErrors }, null, 2));
@@ -1201,6 +1347,8 @@ if (process.argv.includes('--surface-motion-only')) {
   process.exit(report.assertions.some((a) => !a.ok) || report.runtimeErrors.length ? 1 : 0);
 }
 await verifyLyricFlow();
+await verifyLyricPerformance();
+await verifySlowLyricFlow();
 if (process.argv.includes('--lyrics-only')) {
   fs.writeFileSync(path.join(outDir, 'verify-lyrics.json'), JSON.stringify(report, null, 2));
   console.log(JSON.stringify({ assertions: `${report.assertions.filter((a) => a.ok).length}/${report.assertions.length}`, failed: report.assertions.filter((a) => !a.ok), runtimeErrors: report.runtimeErrors, outDir }, null, 2));

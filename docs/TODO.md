@@ -4,6 +4,10 @@
 
 ## 待真机验收
 
+- **歌单展开与慢歌长句流畅度**（build 1003131699）：全量 UI 394/394、歌词专项 85/85、
+  指定歌曲本地 LRC 亚像素检查 12/12；待 Hana 整包同步、reload 后复验独立窗与长卡，
+  尤其《決意の唄》21–25s 的两行长句。官方 UI smoke 缺独立 Electron runtime，不能算通过。
+  见 [性能交接](player-ui/handoffs/PLAYLIST-PERF-DONE.md)。
 - **歌词跟随自愈 + 跳句动画**（1.1.5，build 1003131698）：合成指针复现与无头回归已过（含反向验证），
   但「在卡片外松手」在真宿主的真实手感需重开卡片确认。见 [交接](player-ui/handoffs/LYRIC-FOLLOW-FIX.md)。
 - **本地文件夹选择**：需真机点一次确认（`<input type=file webkitdirectory>` 在宿主 webview 的行为）。

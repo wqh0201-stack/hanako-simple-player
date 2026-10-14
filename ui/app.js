@@ -2237,10 +2237,12 @@
             /* 队列第二行：有歌手显歌手，没有就留空（不让 group 再冒充） */
             '<span class="q-artist">' + esc(t.author || '') + '</span>' +
           '</span>' +
-          /* 正在播放指示：行内 SVG（不走 <use>，否则选择器进不了 shadow tree，条形动画不会生效） */
-          '<span class="q-eq"><svg viewBox="0 0 24 24" aria-hidden="true">' +
-            '<path d="M6.5 9.5v9"/><path d="M12 5.5v13"/><path d="M17.5 11.5v7"/>' +
-          '</svg></span>' +
+          /* SVG 描边保持原样；缩放交给 HTML 外层，避免 SVG path 动画每帧触发布局。 */
+          '<span class="q-eq" aria-hidden="true">' +
+            '<span><svg viewBox="0 0 24 24"><path d="M6.5 9.5v9"/></svg></span>' +
+            '<span><svg viewBox="0 0 24 24"><path d="M12 5.5v13"/></svg></span>' +
+            '<span><svg viewBox="0 0 24 24"><path d="M17.5 11.5v7"/></svg></span>' +
+          '</span>' +
           '<span class="q-dur">' + (t.dur ? fmtTime(t.dur) : '--:--') + '</span>' +
         '</button>' +
         '<button class="q-fav' + (isFav(t.id) ? ' is-on' : '') + '" id="qFav' + i + '" type="button" aria-pressed="' + (isFav(t.id) ? 'true' : 'false') + '" aria-label="' + (isFav(t.id) ? '取消喜欢' : '加入我的喜欢') + '" title="' + (isFav(t.id) ? '取消喜欢' : '加入我的喜欢') + '">' + icon('i-heart') + '</button>' +
@@ -3241,7 +3243,7 @@
     }
     stopLyricFrames();
     lyrics.innerHTML = has ? '<div class="lyric-flow">' + html + '</div>' : '';
-    lyricGeometry = { nodes: Array.from(lyrics.querySelectorAll('.lyric-line')), centers: [], slopes: [], clock: [], content: lyrics.firstElementChild, height: 0, residual: 0, painted: [] };
+    lyricGeometry = { nodes: Array.from(lyrics.querySelectorAll('.lyric-line')), centers: [], slopes: [], clock: [], content: lyrics.firstElementChild, height: 0, maxScroll: 0, residual: 0, painted: [] };
     buildLyricClock();
   }
 
@@ -3293,7 +3295,7 @@
    * 行数是软约束，空间不足时守住11px；宽高增加也不把字推大。 */
   var LYRIC_VIEW = { wide: { rows: 10, preference: .85 }, long: { rows: 6, preference: 1.10 }, compact: { rows: 5, preference: .90 } };
   var LYRIC_WAVE_PEAK = .15;
-  var lyricGeometry = { nodes: [], centers: [], slopes: [], clock: [], content: null, height: 0, residual: 0, painted: [] };
+  var lyricGeometry = { nodes: [], centers: [], slopes: [], clock: [], content: null, height: 0, maxScroll: 0, residual: 0, painted: [] };
   var lyricFlowRaf = 0, lyricInView = true, lyricFocus = 0;
   var lyricReturn = null;
 
@@ -3343,7 +3345,7 @@
   }
   function scrollLyricPosition(target) {
     var g = lyricGeometry;
-    target = Math.max(0, Math.min(lyrics.scrollHeight - g.height, target));
+    target = Math.max(0, Math.min(g.maxScroll, target));
     lyrics.scrollTop = target;
     // Chromium 的 scrollTop 可能舍入到整像素，用内容层补回慢流动的亚像素。
     g.residual = lyrics.scrollTop - target;
@@ -3354,22 +3356,7 @@
     if (!g.nodes.length || !g.centers.length || lyricAlign) return;
     var still = reducedMotion() || SHOT;
     lyricFocus = still ? Math.max(0, lyricIndex) : lyricFocusAt(lyricTimeAt(liveProgress()));
-    var first = Math.max(0, Math.floor(lyricFocus) - 4), last = Math.min(g.nodes.length - 1, Math.ceil(lyricFocus) + 4);
-    var active = [];
-    for (var i = first; i <= last; i++) active.push(i);
-    g.painted.forEach(function (i) {
-      if (i >= first && i <= last) return;
-      g.nodes[i].style.removeProperty('--lyric-scale');
-      g.nodes[i].style.removeProperty('--lyric-opacity');
-      g.nodes[i].style.removeProperty('--lyric-strength');
-    });
-    active.forEach(function (i) {
-      var strength = Math.exp(-.5 * Math.pow(i - lyricFocus, 2));
-      g.nodes[i].style.setProperty('--lyric-scale', String(still ? 1 : 1 + g.wavePeak * strength));
-      g.nodes[i].style.setProperty('--lyric-opacity', String(.65 + .35 * strength));
-      g.nodes[i].style.setProperty('--lyric-strength', (Math.pow(strength, 3) * 100).toFixed(2) + '%');
-    });
-    g.painted = active;
+    // 先读回 scrollTop，再写波峰样式；写完样式才读几何会强迫每帧再算一次样式。
     if (state.follow) {
       var target = lyricCenterAt(lyricFocus) - g.height / 2;
       if (lyricReturn) {
@@ -3379,15 +3366,42 @@
       }
       scrollLyricPosition(target);
     }
+    var first = Math.max(0, Math.floor(lyricFocus) - 4), last = Math.min(g.nodes.length - 1, Math.ceil(lyricFocus) + 4);
+    var flowing = canFlowLyrics();
+    var active = [];
+    for (var i = first; i <= last; i++) active.push(i);
+    g.painted.forEach(function (i) {
+      if (i >= first && i <= last) return;
+      g.nodes[i].style.removeProperty('--lyric-scale');
+      g.nodes[i].style.removeProperty('--lyric-opacity');
+      g.nodes[i].style.removeProperty('--lyric-strength');
+      g.nodes[i].classList.remove('is-flowing');
+    });
+    active.forEach(function (i) {
+      var strength = Math.exp(-.5 * Math.pow(i - lyricFocus, 2));
+      var node = g.nodes[i];
+      // 位移/缩放逐帧保留精度；肉眼不可分的色阶合并，免得长句每帧反复栅格化。
+      setLyricStyle(node, '--lyric-scale', (still ? 1 : 1 + g.wavePeak * strength).toFixed(5));
+      setLyricStyle(node, '--lyric-opacity', (.65 + .35 * strength).toFixed(3));
+      setLyricStyle(node, '--lyric-strength', (Math.pow(strength, 3) * 100).toFixed(0) + '%');
+      if (node.classList.contains('is-flowing') !== flowing) node.classList.toggle('is-flowing', flowing);
+    });
+    g.painted = active;
+  }
+  function setLyricStyle(node, key, value) {
+    if (node.style.getPropertyValue(key) !== value) node.style.setProperty(key, value);
   }
   function stopLyricFrames() {
     if (lyricFlowRaf) cancelAnimationFrame(lyricFlowRaf);
     lyricFlowRaf = 0;
+    // 只为波峰附近最多十行留合成层；暂停/浏览/离屏时释放，长歌词不会堆满 GPU 层。
+    if (lyricGeometry) lyricGeometry.painted.forEach(function (i) { lyricGeometry.nodes[i].classList.remove('is-flowing'); });
   }
   function canFlowLyrics() {
     var g = lyricGeometry;
     var base = !SHOT && !reducedMotion() && !document.hidden && lyricInView && !lyricAlign && state.follow
-      && g.nodes.length > 0 && g.height > 0 && state.page === 'play' && !state.drawer
+      // 宽窗歌单是局部浮层，露出的歌词继续流动；窄卡队列/搜索整面替换才暂停。
+      && g.nodes.length > 0 && g.height > 0 && state.page === 'play'
       && player.getAttribute('data-search') !== '1';
     if (!base) return false;
     /* 回位动画在跑的时候不看时钟、也不看 seeking：
@@ -3460,6 +3474,8 @@
     });
     g.centers = g.nodes.map(function (node) { return pad + node.offsetTop + node.offsetHeight / 2; });
     g.slopes = lyricSlopes(g.centers.map(function (y, i) { return { x: i, y: y }; }), 'x', 'y');
+    // 行高在波峰动效中稳定，滚动范围只需在歌词/字号/容器尺寸重测后更新。
+    g.maxScroll = Math.max(0, lyrics.scrollHeight - h);
     if (anchor >= 0 && g.centers[anchor] != null) lyrics.scrollTop = Math.max(0, g.centers[anchor] - anchorY);
     if (lyricAlign) { measureAlignLines(); paintLyricAlign(); }
     else { paintLyricFlow(); startLyricFrames(); }

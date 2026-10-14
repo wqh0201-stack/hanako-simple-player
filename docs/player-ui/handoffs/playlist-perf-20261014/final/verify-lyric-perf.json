@@ -1,0 +1,163 @@
+{
+  "selfCheck": [],
+  "wiring": {},
+  "four": {},
+  "darkFallback": {},
+  "runtimeErrors": [],
+  "expectedProbes": [
+    "http 404 http://127.0.0.1:65525/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:65525/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED"
+  ],
+  "assertions": [
+    {
+      "name": "lyrics-perf-closed-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":109,\"changed\":102,\"movingRatio\":0.9444444444444444,\"medianFrameMs\":16.699999999999818,\"p95FrameMs\":16.799999999999727,\"mediaAdvance\":1.6753110000000002,\"geometry\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":128.95089825660057,\"focus\":2.0736606824283745},\"paint\":{\"count\":285,\"durationMs\":7.417},\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":129,\"LayoutDuration\":0.000874,\"RecalcStyleDuration\":0.024435,\"ScriptDuration\":0.030163,\"TaskDuration\":0.12531}}"
+    },
+    {
+      "name": "lyrics-perf-opened-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":109,\"changed\":101,\"movingRatio\":0.9351851851851852,\"medianFrameMs\":16.699999999999818,\"p95FrameMs\":16.700000000000728,\"mediaAdvance\":1.6557879999999998,\"geometry\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":128.26850475296504,\"focus\":2.060964423567356},\"paint\":{\"count\":297,\"durationMs\":20.379},\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":217,\"LayoutDuration\":0.001276,\"RecalcStyleDuration\":0.041561,\"ScriptDuration\":0.036651,\"TaskDuration\":0.217315}}"
+    },
+    {
+      "name": "lyrics-perf-reclosed-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":109,\"changed\":102,\"movingRatio\":0.9444444444444444,\"medianFrameMs\":16.699999999999818,\"p95FrameMs\":16.700000000000728,\"mediaAdvance\":1.6593430000000002,\"geometry\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":127.98605803234943,\"focus\":2.0557063135234315},\"paint\":{\"count\":283,\"durationMs\":5.58},\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":132,\"LayoutDuration\":0.001001,\"RecalcStyleDuration\":0.022408,\"ScriptDuration\":0.02499,\"TaskDuration\":0.107951}}"
+    },
+    {
+      "name": "lyrics-drawer-preserves-reading-geometry",
+      "ok": true,
+      "detail": "{\"closed\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":128.95089825660057,\"focus\":2.0736606824283745},\"opened\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":128.26850475296504,\"focus\":2.060964423567356}}"
+    },
+    {
+      "name": "lyrics-long-wrapped-line-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":109,\"changed\":100,\"movingRatio\":0.9259259259259259,\"medianFrameMs\":16.69999999999891,\"p95FrameMs\":16.799999999999272,\"mediaAdvance\":1.658934,\"geometry\":{\"raf\":true,\"width\":268,\"height\":410,\"position\":130.15113358215518,\"focus\":2.056837838974441},\"paint\":{\"count\":300,\"durationMs\":29.709},\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":216,\"LayoutDuration\":0.001983,\"RecalcStyleDuration\":0.062353,\"ScriptDuration\":0.047179,\"TaskDuration\":0.292413}}"
+    },
+    {
+      "name": "lyrics-compact-queue-replaces-scene-and-stops-frames",
+      "ok": true,
+      "detail": "{\"page\":\"queue\",\"raf\":false}"
+    }
+  ],
+  "refine": [],
+  "narrowSelfCheck": [],
+  "theme": {},
+  "ambient": {},
+  "lyricPerformance": {
+    "closed": {
+      "frames": 109,
+      "changed": 102,
+      "movingRatio": 0.9444444444444444,
+      "medianFrameMs": 16.699999999999818,
+      "p95FrameMs": 16.799999999999727,
+      "mediaAdvance": 1.6753110000000002,
+      "geometry": {
+        "raf": true,
+        "width": 479,
+        "height": 571,
+        "position": 128.95089825660057,
+        "focus": 2.0736606824283745
+      },
+      "paint": {
+        "count": 285,
+        "durationMs": 7.417
+      },
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 129,
+        "LayoutDuration": 0.000874,
+        "RecalcStyleDuration": 0.024435,
+        "ScriptDuration": 0.030163,
+        "TaskDuration": 0.12531
+      }
+    },
+    "opened": {
+      "frames": 109,
+      "changed": 101,
+      "movingRatio": 0.9351851851851852,
+      "medianFrameMs": 16.699999999999818,
+      "p95FrameMs": 16.700000000000728,
+      "mediaAdvance": 1.6557879999999998,
+      "geometry": {
+        "raf": true,
+        "width": 479,
+        "height": 571,
+        "position": 128.26850475296504,
+        "focus": 2.060964423567356
+      },
+      "paint": {
+        "count": 297,
+        "durationMs": 20.379
+      },
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 217,
+        "LayoutDuration": 0.001276,
+        "RecalcStyleDuration": 0.041561,
+        "ScriptDuration": 0.036651,
+        "TaskDuration": 0.217315
+      }
+    },
+    "reclosed": {
+      "frames": 109,
+      "changed": 102,
+      "movingRatio": 0.9444444444444444,
+      "medianFrameMs": 16.699999999999818,
+      "p95FrameMs": 16.700000000000728,
+      "mediaAdvance": 1.6593430000000002,
+      "geometry": {
+        "raf": true,
+        "width": 479,
+        "height": 571,
+        "position": 127.98605803234943,
+        "focus": 2.0557063135234315
+      },
+      "paint": {
+        "count": 283,
+        "durationMs": 5.58
+      },
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 132,
+        "LayoutDuration": 0.001001,
+        "RecalcStyleDuration": 0.022408,
+        "ScriptDuration": 0.02499,
+        "TaskDuration": 0.107951
+      }
+    },
+    "long": {
+      "frames": 109,
+      "changed": 100,
+      "movingRatio": 0.9259259259259259,
+      "medianFrameMs": 16.69999999999891,
+      "p95FrameMs": 16.799999999999272,
+      "mediaAdvance": 1.658934,
+      "geometry": {
+        "raf": true,
+        "width": 268,
+        "height": 410,
+        "position": 130.15113358215518,
+        "focus": 2.056837838974441
+      },
+      "paint": {
+        "count": 300,
+        "durationMs": 29.709
+      },
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 216,
+        "LayoutDuration": 0.001983,
+        "RecalcStyleDuration": 0.062353,
+        "ScriptDuration": 0.047179,
+        "TaskDuration": 0.292413
+      }
+    },
+    "compact": {
+      "page": "queue",
+      "raf": false
+    },
+    "eqDisabled": false,
+    "probe": "headless Chrome, synthetic silent media, CSS scale sample without layout reads; CDP renderer metrics"
+  }
+}

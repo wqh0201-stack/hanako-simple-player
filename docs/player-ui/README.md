@@ -59,6 +59,8 @@
 | [LYRIC-PICK-DONE.md](handoffs/LYRIC-PICK-DONE.md) | 歌词「挑 / 换」——匹配错了能自选 |
 | [LYRIC-FLOW-DONE.md](handoffs/LYRIC-FLOW-DONE.md) | 响应式歌词与连续波浪 |
 | [LYRIC-FOLLOW-FIX.md](handoffs/LYRIC-FOLLOW-FIX.md) | 跟随不再卡死（丢松手事件自愈）+ 点歌词跳句也走 0.5s 回位动画 |
+| [PLAYLIST-PERF-DONE.md](handoffs/PLAYLIST-PERF-DONE.md) | 歌单展开继续逐帧流动、播放指示不再每帧布局、长句与慢歌性能自验 |
+| [PLAYLIST-PERF-ACCEPT-1003131699.md](handoffs/PLAYLIST-PERF-ACCEPT-1003131699.md) | 独立验收：真机手感流畅、无头 12/12 + 87/87 + 后端 132/132；全量 UI 与真机长卡/窄卡待验 |
 
 ### 沉浸播放页（ETE）
 | 文件 | 一句话 |

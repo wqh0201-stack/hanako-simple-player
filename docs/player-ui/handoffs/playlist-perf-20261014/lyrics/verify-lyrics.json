@@ -1,0 +1,563 @@
+{
+  "selfCheck": [],
+  "wiring": {},
+  "four": {},
+  "darkFallback": {},
+  "runtimeErrors": [],
+  "expectedProbes": [
+    "http 404 http://127.0.0.1:49908/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:49908/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:49908/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:49908/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:49908/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:49908/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:49908/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%91%A8%E6%9D%B0%E4%BC%A6%20-%20%E7%A8%BB%E9%A6%99",
+    "reqfail: http://127.0.0.1:49908/api/apps/hanako-simple-player/routes/_fixture/audio.wav?appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:49908/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%91%A8%E6%9D%B0%E4%BC%A6%20-%20%E7%A8%BB%E9%A6%99",
+    "reqfail: http://127.0.0.1:49908/api/apps/hanako-simple-player/routes/_fixture/audio.wav?appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:49908/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog?kind=artist&name=%E5%91%A8%E6%9D%B0%E4%BC%A6 net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:49908/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:49908/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:49908/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%202",
+    "reqfail: http://127.0.0.1:49908/api/apps/hanako-simple-player/routes/widget/api/music/go/900001?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:49908/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:49908/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:49908/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:49908/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED"
+  ],
+  "assertions": [
+    {
+      "name": "mood-lists-backend-priority-and-order",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-rename-backend-persistence",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-rename-survives-reload",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-own-echo-no-rerender",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-external-create-shows-tracks-immediately",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-broadcast-does-not-write-back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-same-name-replacement-refreshes-tracks",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-no-direct-storage-write",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-backend-unavailable-legacy-fallback",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-clean-keeps-single-character-songs",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-clean-preserves-multiple-artists",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-clean-aimer-dates-translations-and-instrumental-heading",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-clean-skips-live-versions",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-match-selects-original-before-covers-live-compilation-reissue",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-menu-opens-prefilled-current-list",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-panel-fits-312",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-panel-fits-465",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-panel-fits-1040",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-fill-syncs-source-favorite-and-recent-copies",
+      "ok": true,
+      "detail": "[{\"uid\":\"imp:1|bilibili:BV16XpM6EEtF_1\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"match\":{\"originalPic\":\"\",\"source\":\"netease\",\"artistId\":6452,\"artist\":\"周杰伦\",\"songId\":185709,\"albumId\":18877,\"album\":\"魔杰座\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"at\":1791983498535}},{\"uid\":\"fav|bilibili:BV16XpM6EEtF_1\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"match\":{\"originalPic\":\"\",\"source\":\"netease\",\"artistId\":6452,\"artist\":\"周杰伦\",\"songId\":185709,\"albumId\":18877,\"album\":\"魔杰座\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"at\":1791983498535}},{\"uid\":\"recent|bilibili:BV16XpM6EEtF_1\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"match\":{\"originalPic\":\"\",\"source\":\"netease\",\"artistId\":6452,\"artist\":\"周杰伦\",\"songId\":185709,\"albumId\":18877,\"album\":\"魔杰座\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"at\":1791983498535}}]"
+    },
+    {
+      "name": "cover-fill-preserves-live-custom-and-other-platform-covers",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-fill-saves-match-provenance",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-repeat-preserves-original-backup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-restore-after-reload-syncs-copies-and-removes-binding",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-stop-prevents-commit-and-further-catalog-requests",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-metadata-failure-preserves-original",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-undecodable-image-is-not-written",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-save-failure-rolls-back-pics-and-backups",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "search-cover-home-has-no-slot-or-focus",
+      "ok": true,
+      "detail": "{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true}"
+    },
+    {
+      "name": "surface-motion-unified-clock-and-easing",
+      "ok": true,
+      "detail": "[{\"start\":775.5,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"},{\"start\":775.5,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"},{\"start\":775.5,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"}]"
+    },
+    {
+      "name": "search-cover-grows-and-moves-title",
+      "ok": true,
+      "detail": "{\"width\":30.359375,\"titleX\":111.875,\"inert\":false,\"disabled\":false,\"opacity\":0.690029,\"searchHidden\":false,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true}"
+    },
+    {
+      "name": "search-cover-keeps-play-centered",
+      "ok": true,
+      "detail": "{\"home\":{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"mid\":{\"width\":30.359375,\"titleX\":111.875,\"inert\":false,\"disabled\":false,\"opacity\":0.690029,\"searchHidden\":false,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"before\":\"matrix(1, 0, 0, 1, -322.37, 0)\",\"reverse\":\"matrix(1, 0, 0, 1, -322.37, 0)\",\"closed\":{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"opened\":{\"width\":44,\"titleX\":128,\"inert\":false,\"disabled\":false,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true},\"cover\":{\"shown\":true,\"crop\":\"cover\",\"position\":\"50% 50%\",\"width\":32,\"height\":32,\"between\":true},\"changed\":{\"previousSrc\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png?appSurfaceSession=fake-ticket\",\"currentSrc\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png?appSurfaceSession=fake-ticket\",\"expected\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\",\"naturalWidth\":1536,\"naturalHeight\":1024},\"leaving\":{\"width\":44,\"titleX\":128,\"inert\":true,\"disabled\":true,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true},\"byCover\":{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"reopened\":{\"width\":44,\"titleX\":128,\"inert\":false,\"disabled\":false,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true},\"fallback\":true,\"brokenFallback\":true,\"timing\":[{\"start\":775.5,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"},{\"start\":775.5,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"},{\"start\":775.5,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"}],\"queueTiming\":{\"delay\":0,\"direction\":\"normal\",\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\",\"endDelay\":0,\"fill\":\"both\",\"iterationStart\":0,\"iterations\":1},\"queueBefore\":\"matrix(1, 0, 0, 1, 109.604, 0)\",\"queueReverse\":\"matrix(1, 0, 0, 1, 109.604, 0)\",\"scrimShown\":true,\"queueClosed\":true}"
+    },
+    {
+      "name": "search-motion-reverses-from-visible-frame",
+      "ok": true,
+      "detail": "{\"before\":\"matrix(1, 0, 0, 1, -322.37, 0)\",\"reverse\":\"matrix(1, 0, 0, 1, -322.37, 0)\"}"
+    },
+    {
+      "name": "search-cover-exit-finishes-with-page",
+      "ok": true,
+      "detail": "{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true}"
+    },
+    {
+      "name": "search-cover-is-centered-square-between-search-and-title",
+      "ok": true,
+      "detail": "{\"shown\":true,\"crop\":\"cover\",\"position\":\"50% 50%\",\"width\":32,\"height\":32,\"between\":true}"
+    },
+    {
+      "name": "search-cover-follows-track-and-crops-landscape",
+      "ok": true,
+      "detail": "{\"previousSrc\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png?appSurfaceSession=fake-ticket\",\"currentSrc\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png?appSurfaceSession=fake-ticket\",\"expected\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\",\"naturalWidth\":1536,\"naturalHeight\":1024}"
+    },
+    {
+      "name": "search-exit-keeps-solid-controls-through-real-animation",
+      "ok": true,
+      "detail": "{\"width\":44,\"titleX\":128,\"inert\":true,\"disabled\":true,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true}"
+    },
+    {
+      "name": "search-cover-click-closes-with-immediate-focus-removal",
+      "ok": true,
+      "detail": "{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true}"
+    },
+    {
+      "name": "search-cover-reopen-cancels-stale-unmount",
+      "ok": true,
+      "detail": "{\"width\":44,\"titleX\":128,\"inert\":false,\"disabled\":false,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true}"
+    },
+    {
+      "name": "search-cover-missing-and-broken-image-fallback",
+      "ok": true,
+      "detail": "{\"missing\":true,\"broken\":true}"
+    },
+    {
+      "name": "queue-motion-reverses-and-finishes-with-scrim",
+      "ok": true,
+      "detail": "{\"home\":{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"mid\":{\"width\":30.359375,\"titleX\":111.875,\"inert\":false,\"disabled\":false,\"opacity\":0.690029,\"searchHidden\":false,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"before\":\"matrix(1, 0, 0, 1, -322.37, 0)\",\"reverse\":\"matrix(1, 0, 0, 1, -322.37, 0)\",\"closed\":{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"opened\":{\"width\":44,\"titleX\":128,\"inert\":false,\"disabled\":false,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true},\"cover\":{\"shown\":true,\"crop\":\"cover\",\"position\":\"50% 50%\",\"width\":32,\"height\":32,\"between\":true},\"changed\":{\"previousSrc\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png?appSurfaceSession=fake-ticket\",\"currentSrc\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png?appSurfaceSession=fake-ticket\",\"expected\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\",\"naturalWidth\":1536,\"naturalHeight\":1024},\"leaving\":{\"width\":44,\"titleX\":128,\"inert\":true,\"disabled\":true,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true},\"byCover\":{\"width\":0,\"titleX\":76,\"inert\":true,\"disabled\":true,\"opacity\":0,\"searchHidden\":true,\"immersive\":\"1\",\"glass\":\"blur(20px) saturate(1.12)\",\"controlsHidden\":\"0\",\"centered\":true},\"reopened\":{\"width\":44,\"titleX\":128,\"inert\":false,\"disabled\":false,\"opacity\":1,\"searchHidden\":false,\"immersive\":\"0\",\"glass\":\"none\",\"controlsHidden\":\"0\",\"centered\":true},\"fallback\":true,\"brokenFallback\":true,\"timing\":[{\"start\":775.5,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"},{\"start\":775.5,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"},{\"start\":775.5,\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\"}],\"queueTiming\":{\"delay\":0,\"direction\":\"normal\",\"duration\":320,\"easing\":\"cubic-bezier(0.22, 0.61, 0.36, 1)\",\"endDelay\":0,\"fill\":\"both\",\"iterationStart\":0,\"iterations\":1},\"queueBefore\":\"matrix(1, 0, 0, 1, 109.604, 0)\",\"queueReverse\":\"matrix(1, 0, 0, 1, 109.604, 0)\",\"scrimShown\":true,\"queueClosed\":true}"
+    },
+    {
+      "name": "search-cover-fits-small-wide-window",
+      "ok": true,
+      "detail": "{\"gap\":16,\"copyWidth\":34}"
+    },
+    {
+      "name": "surface-motion-reduced-is-opacity-only",
+      "ok": true,
+      "detail": "{\"keys\":[\"offset\",\"easing\",\"composite\",\"opacity\",\"computedOffset\",\"offset\",\"easing\",\"composite\",\"opacity\",\"computedOffset\",\"offset\",\"easing\",\"composite\",\"opacity\",\"computedOffset\",\"offset\",\"easing\",\"composite\",\"opacity\",\"computedOffset\"],\"hidden\":true}"
+    },
+    {
+      "name": "search-cover-hidden-in-card",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "surface-motion-layout-switch-cleans-obsolete-scene",
+      "ok": true,
+      "detail": "{\"opacity\":1,\"transform\":\"none\",\"animations\":0}"
+    },
+    {
+      "name": "lyrics-flow-through-phrase-and-boundary",
+      "ok": true,
+      "detail": "{\"frames\":127,\"first\":{\"focus\":1.5919376442703694,\"position\":127.07009922686149,\"index\":1,\"height\":38},\"last\":{\"focus\":2.80604775790653,\"position\":209.4232729222323,\"index\":2,\"height\":38},\"stalled\":5,\"maxStep\":0.01240073041206946}"
+    },
+    {
+      "name": "lyrics-wave-keeps-row-geometry-stable",
+      "ok": true,
+      "detail": "[38]"
+    },
+    {
+      "name": "lyrics-flow-preserves-subpixel-motion",
+      "ok": true,
+      "detail": "[{\"focus\":0,\"pos\":0},{\"focus\":0,\"pos\":0},{\"focus\":0,\"pos\":0},{\"focus\":0,\"pos\":0},{\"focus\":0,\"pos\":0},{\"focus\":0.0033086499593850682,\"pos\":0.2273881724266289}]"
+    },
+    {
+      "name": "lyrics-pause-resume-keeps-phase",
+      "ok": true,
+      "detail": "{\"paused\":{\"focus\":2.807274672905698,\"index\":2,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0.4940774940731103,\"position\":209.5059225059269,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]},\"frozen\":{\"focus\":2.807274672905698,\"index\":2,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0.4940774940731103,\"position\":209.5059225059269,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]},\"resumed\":{\"focus\":2.9596164497883133,\"index\":2,\"raf\":true,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0.22511290667529238,\"position\":219.7748870933247,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}}"
+    },
+    {
+      "name": "lyrics-same-phrase-resize-recenters-with-readable-size-cap",
+      "ok": true,
+      "detail": "{\"beforeResize\":{\"focus\":2,\"index\":2,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0,\"position\":155,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]},\"afterResize\":{\"focus\":2,\"index\":2,\"raf\":false,\"follow\":true,\"width\":518,\"height\":731,\"residual\":0,\"position\":125,\"font\":16.5,\"centers\":[384.5,437.5,490.5,544.5,596.5,635.5,673.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]},\"centerError\":0.40625}"
+    },
+    {
+      "name": "lyrics-readable-and-wave-fits-820x700",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0.5,\"position\":86.5,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"layout\":\"wide\",\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"bodyFontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"peakFont\":18.974999999999998,\"actualHeight\":491,\"centerError\":0.546875,\"overlaps\":false,\"overflow\":false,\"wrapped\":true,\"titleHeight\":28,\"titleFont\":22,\"queueTitleFont\":15,\"titleFull\":true}"
+    },
+    {
+      "name": "lyrics-peak-stays-three-pixels-below-title-820x700",
+      "ok": true,
+      "detail": "{\"peakFont\":18.974999999999998,\"titleFont\":22,\"queueTitleFont\":15,\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"layout\":\"wide\"}"
+    },
+    {
+      "name": "lyrics-readable-and-wave-fits-465x930",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":268,\"height\":410,\"residual\":0,\"position\":71,\"font\":13,\"centers\":[221,276,332,387,442,474,506],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"layout\":\"long\",\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"bodyFontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"peakFont\":14.95,\"actualHeight\":410,\"centerError\":0.3515625,\"overlaps\":false,\"overflow\":false,\"wrapped\":true,\"titleHeight\":23,\"titleFont\":18,\"queueTitleFont\":15,\"titleFull\":true}"
+    },
+    {
+      "name": "lyrics-peak-stays-three-pixels-below-title-465x930",
+      "ok": true,
+      "detail": "{\"peakFont\":14.95,\"titleFont\":18,\"queueTitleFont\":15,\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"layout\":\"long\"}"
+    },
+    {
+      "name": "lyrics-readable-and-wave-fits-380x430",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":216,\"height\":218,\"residual\":0,\"position\":83,\"font\":13,\"centers\":[125,192,259,326,393,425,457],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"layout\":\"compact\",\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"bodyFontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"peakFont\":14.95,\"actualHeight\":218,\"centerError\":0.015625,\"overlaps\":false,\"overflow\":false,\"wrapped\":true,\"titleHeight\":23,\"titleFont\":18,\"queueTitleFont\":15,\"titleFull\":true}"
+    },
+    {
+      "name": "lyrics-peak-stays-three-pixels-below-title-380x430",
+      "ok": true,
+      "detail": "{\"peakFont\":14.95,\"titleFont\":18,\"queueTitleFont\":15,\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"layout\":\"compact\"}"
+    },
+    {
+      "name": "lyrics-readable-and-wave-fits-312x494",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":173,\"height\":281,\"residual\":0.5,\"position\":72.5,\"font\":11,\"centers\":[155,213,271,329,387,415,444],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"layout\":\"compact\",\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"bodyFontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"peakFont\":12.649999999999999,\"actualHeight\":281,\"centerError\":0.234375,\"overlaps\":false,\"overflow\":false,\"wrapped\":true,\"titleHeight\":23,\"titleFont\":18,\"queueTitleFont\":15,\"titleFull\":true}"
+    },
+    {
+      "name": "lyrics-peak-stays-three-pixels-below-title-312x494",
+      "ok": true,
+      "detail": "{\"peakFont\":12.649999999999999,\"titleFont\":18,\"queueTitleFont\":15,\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"layout\":\"compact\"}"
+    },
+    {
+      "name": "lyrics-readable-and-wave-fits-719x559",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":426,\"height\":354,\"residual\":0.5,\"position\":59.5,\"font\":13,\"centers\":[193,236.5,280,324.5,368,400,432],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"layout\":\"compact\",\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"bodyFontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"peakFont\":14.95,\"actualHeight\":354,\"centerError\":0.28125,\"overlaps\":false,\"overflow\":false,\"wrapped\":true,\"titleHeight\":23,\"titleFont\":18,\"queueTitleFont\":15,\"titleFull\":true}"
+    },
+    {
+      "name": "lyrics-peak-stays-three-pixels-below-title-719x559",
+      "ok": true,
+      "detail": "{\"peakFont\":14.95,\"titleFont\":18,\"queueTitleFont\":15,\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"layout\":\"compact\"}"
+    },
+    {
+      "name": "lyrics-readable-and-wave-fits-720x560",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":326,\"height\":351,\"residual\":0.5,\"position\":68.5,\"font\":12.4,\"centers\":[191,244,297,350,404,435,466],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"layout\":\"wide\",\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"bodyFontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"peakFont\":14.26,\"actualHeight\":351,\"centerError\":0.234375,\"overlaps\":false,\"overflow\":false,\"wrapped\":true,\"titleHeight\":28,\"titleFont\":22,\"queueTitleFont\":15,\"titleFull\":true}"
+    },
+    {
+      "name": "lyrics-peak-stays-three-pixels-below-title-720x560",
+      "ok": true,
+      "detail": "{\"peakFont\":14.26,\"titleFont\":22,\"queueTitleFont\":15,\"fontFamily\":\"-apple-system, \\\"system-ui\\\", \\\"PingFang SC\\\", \\\"Hiragino Sans GB\\\", \\\"Microsoft YaHei\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"layout\":\"wide\"}"
+    },
+    {
+      "name": "lyrics-split-keeps-reading-area-and-remeasures",
+      "ok": true,
+      "detail": "{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":true,\"width\":268,\"height\":128,\"residual\":0,\"position\":63,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-flow-does-not-steal-browsing",
+      "ok": true,
+      "detail": "{\"browsed\":{\"focus\":1,\"index\":1,\"raf\":false,\"follow\":false,\"width\":268,\"height\":128,\"residual\":0,\"position\":143,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]},\"stayed\":{\"focus\":1.0555670815584879,\"index\":1,\"raf\":false,\"follow\":false,\"width\":268,\"height\":128,\"residual\":0,\"position\":143,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}}"
+    },
+    {
+      "name": "lyrics-flow-resumes-after-browsing",
+      "ok": true,
+      "detail": "{\"focus\":3.034604013746166,\"index\":2,\"raf\":true,\"follow\":true,\"width\":268,\"height\":128,\"residual\":0.3066810901070198,\"position\":160.69331890989298,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-bounce-back-is-animated",
+      "ok": true,
+      "detail": "{\"awayFromLine\":{\"follow\":false,\"position\":0},\"backStart\":168,\"backEnd\":{\"t\":4214,\"pos\":201.67,\"follow\":true},\"backMid\":{\"t\":2964,\"pos\":34.06,\"follow\":true},\"ramp\":[[2814,0],[2830,0.52],[2848,1.92],[2864,4.36],[2880,7.5],[2897,12.27],[2914,16.24],[2930,21.53],[2947,27.53],[2964,34.06],[2980,41.03],[2997,48.39],[3014,56.2],[3030,64.13],[3047,72.41],[3064,80.78],[3080,89.21],[3097,97.58],[3114,105.92],[3131,114.29],[3147,122.09],[3164,130.17],[3181,137.14],[3197,143.71],[3214,149.9]]}"
+    },
+    {
+      "name": "lyrics-click-line-jumps-with-animation",
+      "ok": true,
+      "detail": "{\"beforeJump\":235.5,\"jumpEnd\":{\"t\":914,\"pos\":18.72,\"index\":0,\"raf\":true,\"follow\":true},\"jumpMid\":{\"t\":164,\"pos\":189.26,\"index\":0,\"raf\":true,\"follow\":true},\"ramp\":[[14,235.49],[31,234.98],[47,233.16],[64,229.96],[81,225.62],[97,220.19],[114,213.73],[131,206.27],[147,198.09],[164,189.26],[181,179.77],[198,169.77],[214,159.42],[231,148.64],[247,137.77],[265,121.09],[281,115.46],[297,104.82],[314,94.21],[331,83.57],[347,73.49],[364,63.88],[381,54.79],[397,46.33]]}"
+    },
+    {
+      "name": "lyrics-lost-pointerup-self-heals",
+      "ok": true,
+      "detail": "{\"pressedNoUp\":{\"follow\":false,\"position\":73},\"healed\":{\"follow\":true,\"raf\":true,\"position\":182.05002112424046,\"target\":180.61875715275144,\"focus\":3.4457475701598237}}"
+    },
+    {
+      "name": "lyrics-reduced-motion-stops-flow-and-scaling",
+      "ok": true,
+      "detail": "{\"focus\":2,\"index\":2,\"raf\":false,\"follow\":true,\"width\":268,\"height\":128,\"residual\":0.5,\"position\":110.5,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}],\"transforms\":[\"matrix(1, 0, 0, 1, 0, 0)\",\"matrix(1, 0, 0, 1, 0, 0)\",\"matrix(1, 0, 0, 1, 0, 0)\",\"matrix(1, 0, 0, 1, 0, 0)\",\"matrix(1, 0, 0, 1, 0, 0)\",\"matrix(1, 0, 0, 1, 0, 0)\",\"matrix(1, 0, 0, 1, 0, 0)\"]}"
+    },
+    {
+      "name": "lyrics-offscreen-stops-flow",
+      "ok": true,
+      "detail": "{\"focus\":3.526258941888563,\"index\":2,\"raf\":false,\"follow\":true,\"width\":268,\"height\":128,\"residual\":-0.2287541373262627,\"position\":186.22875413732626,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-same-timestamp-lines-have-one-semantic-current",
+      "ok": true,
+      "detail": "{\"focus\":4.069119433534044,\"index\":4,\"raf\":true,\"follow\":true,\"width\":268,\"height\":128,\"residual\":0.11743481098653774,\"position\":209.88256518901346,\"font\":11,\"centers\":[78.5,127,174.5,223,271.5,299.5,328.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-visible-behind-drawer-keeps-frames",
+      "ok": true,
+      "detail": "{\"focus\":2.661487343569294,\"index\":2,\"raf\":true,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0.3119827988416546,\"position\":199.68801720115835,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-covered-by-search-stops-frames",
+      "ok": true,
+      "detail": "{\"focus\":2.917634170587032,\"index\":2,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0.05660369800295939,\"position\":216.94339630199704,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-returning-from-overlay-resumes-frames",
+      "ok": true,
+      "detail": "{\"focus\":3.2441414181476786,\"index\":2,\"raf\":true,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0.2066452547766744,\"position\":239.79335474522333,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-long-instrumental-holds-until-upcoming-phrase",
+      "ok": true,
+      "detail": "{\"focus\":5,\"index\":5,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0,\"position\":329,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-last-phrase-has-finite-position-and-stops-frames",
+      "ok": true,
+      "detail": "{\"focus\":6,\"index\":6,\"raf\":false,\"follow\":true,\"width\":374,\"height\":491,\"residual\":0,\"position\":367,\"font\":16.5,\"centers\":[264.5,332,400.5,468,535.5,574.5,612.5],\"clock\":[{\"t\":1,\"f\":0},{\"t\":3,\"f\":1},{\"t\":5,\"f\":2},{\"t\":8,\"f\":4},{\"t\":10,\"f\":5},{\"t\":21,\"f\":5},{\"t\":27,\"f\":6}]}"
+    },
+    {
+      "name": "lyrics-perf-closed-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":109,\"changed\":100,\"movingRatio\":0.9259259259259259,\"medianFrameMs\":16.699999999999818,\"p95FrameMs\":16.799999999999955,\"mediaAdvance\":1.658915,\"geometry\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":126.8171068155545,\"focus\":2.033925056815119},\"paint\":null,\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":132,\"LayoutDuration\":0.000697,\"RecalcStyleDuration\":0.019905,\"ScriptDuration\":0.023428,\"TaskDuration\":0.096966}}"
+    },
+    {
+      "name": "lyrics-perf-opened-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":109,\"changed\":100,\"movingRatio\":0.9259259259259259,\"medianFrameMs\":16.699999999999818,\"p95FrameMs\":16.799999999999272,\"mediaAdvance\":1.6469970000000003,\"geometry\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":126.43196484943235,\"focus\":2.0267414683393685},\"paint\":null,\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":218,\"LayoutDuration\":0.001149,\"RecalcStyleDuration\":0.026855,\"ScriptDuration\":0.025852,\"TaskDuration\":0.132965}}"
+    },
+    {
+      "name": "lyrics-perf-reclosed-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":109,\"changed\":104,\"movingRatio\":0.9629629629629629,\"medianFrameMs\":16.699999999999818,\"p95FrameMs\":16.700000000000728,\"mediaAdvance\":1.6574050000000002,\"geometry\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":126.75531917559567,\"focus\":2.032772850946877},\"paint\":null,\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":133,\"LayoutDuration\":0.000717,\"RecalcStyleDuration\":0.020904,\"ScriptDuration\":0.023575,\"TaskDuration\":0.099646}}"
+    },
+    {
+      "name": "lyrics-drawer-preserves-reading-geometry",
+      "ok": true,
+      "detail": "{\"closed\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":126.8171068155545,\"focus\":2.033925056815119},\"opened\":{\"raf\":true,\"width\":479,\"height\":571,\"position\":126.43196484943235,\"focus\":2.0267414683393685}}"
+    },
+    {
+      "name": "lyrics-drawer-has-no-per-frame-layout",
+      "ok": true,
+      "detail": "{\"LayoutCount\":8,\"RecalcStyleCount\":218,\"LayoutDuration\":0.001149,\"RecalcStyleDuration\":0.026855,\"ScriptDuration\":0.025852,\"TaskDuration\":0.132965}"
+    },
+    {
+      "name": "lyrics-long-wrapped-line-updates-each-frame",
+      "ok": true,
+      "detail": "{\"frames\":109,\"changed\":100,\"movingRatio\":0.9259259259259259,\"medianFrameMs\":16.69999999999891,\"p95FrameMs\":16.799999999999272,\"mediaAdvance\":1.6601690000000002,\"geometry\":{\"raf\":true,\"width\":268,\"height\":410,\"position\":129.3185707172433,\"focus\":2.041810002958274},\"paint\":null,\"metrics\":{\"LayoutCount\":8,\"RecalcStyleCount\":217,\"LayoutDuration\":0.000919,\"RecalcStyleDuration\":0.062142,\"ScriptDuration\":0.058981,\"TaskDuration\":0.260588}}"
+    },
+    {
+      "name": "lyrics-long-card-has-no-per-frame-layout",
+      "ok": true,
+      "detail": "{\"LayoutCount\":8,\"RecalcStyleCount\":217,\"LayoutDuration\":0.000919,\"RecalcStyleDuration\":0.062142,\"ScriptDuration\":0.058981,\"TaskDuration\":0.260588}"
+    },
+    {
+      "name": "lyrics-compositor-hints-are-bounded-and-release-on-pause",
+      "ok": true,
+      "detail": "{\"layersOn\":7,\"layersOff\":0}"
+    },
+    {
+      "name": "queue-equalizer-retains-three-svg-strokes-without-path-animation",
+      "ok": true,
+      "detail": "{\"paths\":3,\"svgTransforms\":[\"none\",\"none\",\"none\"],\"animations\":3}"
+    },
+    {
+      "name": "lyrics-compact-queue-replaces-scene-and-stops-frames",
+      "ok": true,
+      "detail": "{\"page\":\"queue\",\"raf\":false}"
+    }
+  ],
+  "refine": [],
+  "narrowSelfCheck": [],
+  "theme": {},
+  "ambient": {},
+  "lyricPerformance": {
+    "closed": {
+      "frames": 109,
+      "changed": 100,
+      "movingRatio": 0.9259259259259259,
+      "medianFrameMs": 16.699999999999818,
+      "p95FrameMs": 16.799999999999955,
+      "mediaAdvance": 1.658915,
+      "geometry": {
+        "raf": true,
+        "width": 479,
+        "height": 571,
+        "position": 126.8171068155545,
+        "focus": 2.033925056815119
+      },
+      "paint": null,
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 132,
+        "LayoutDuration": 0.000697,
+        "RecalcStyleDuration": 0.019905,
+        "ScriptDuration": 0.023428,
+        "TaskDuration": 0.096966
+      }
+    },
+    "opened": {
+      "frames": 109,
+      "changed": 100,
+      "movingRatio": 0.9259259259259259,
+      "medianFrameMs": 16.699999999999818,
+      "p95FrameMs": 16.799999999999272,
+      "mediaAdvance": 1.6469970000000003,
+      "geometry": {
+        "raf": true,
+        "width": 479,
+        "height": 571,
+        "position": 126.43196484943235,
+        "focus": 2.0267414683393685
+      },
+      "paint": null,
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 218,
+        "LayoutDuration": 0.001149,
+        "RecalcStyleDuration": 0.026855,
+        "ScriptDuration": 0.025852,
+        "TaskDuration": 0.132965
+      }
+    },
+    "reclosed": {
+      "frames": 109,
+      "changed": 104,
+      "movingRatio": 0.9629629629629629,
+      "medianFrameMs": 16.699999999999818,
+      "p95FrameMs": 16.700000000000728,
+      "mediaAdvance": 1.6574050000000002,
+      "geometry": {
+        "raf": true,
+        "width": 479,
+        "height": 571,
+        "position": 126.75531917559567,
+        "focus": 2.032772850946877
+      },
+      "paint": null,
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 133,
+        "LayoutDuration": 0.000717,
+        "RecalcStyleDuration": 0.020904,
+        "ScriptDuration": 0.023575,
+        "TaskDuration": 0.099646
+      }
+    },
+    "long": {
+      "frames": 109,
+      "changed": 100,
+      "movingRatio": 0.9259259259259259,
+      "medianFrameMs": 16.69999999999891,
+      "p95FrameMs": 16.799999999999272,
+      "mediaAdvance": 1.6601690000000002,
+      "geometry": {
+        "raf": true,
+        "width": 268,
+        "height": 410,
+        "position": 129.3185707172433,
+        "focus": 2.041810002958274
+      },
+      "paint": null,
+      "metrics": {
+        "LayoutCount": 8,
+        "RecalcStyleCount": 217,
+        "LayoutDuration": 0.000919,
+        "RecalcStyleDuration": 0.062142,
+        "ScriptDuration": 0.058981,
+        "TaskDuration": 0.260588
+      }
+    },
+    "compact": {
+      "page": "queue",
+      "raf": false
+    },
+    "eqDisabled": false,
+    "probe": "headless Chrome, synthetic silent media, CSS scale sample without layout reads; CDP renderer metrics"
+  }
+}

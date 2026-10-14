@@ -748,6 +748,8 @@ button:disabled { cursor: default; }
   transform: scale(var(--lyric-scale, 1));
   transform-origin: left center;
 }
+.lyric-line.is-flowing { will-change: opacity; }
+.lyric-line.is-flowing .lyric-text { will-change: transform; }
 .lyric-line.is-current {
   /* 反差阴影垫底（保可读）+ accent 柔光（把当前句从纱上挑出来） */
   text-shadow: var(--lyric-shadow), var(--lyric-glow);
@@ -1151,8 +1153,15 @@ button:disabled { cursor: default; }
 }
 .q-row.is-current .q-title { color: var(--hk-accent); }
 
-.q-eq { display: none; flex: 0 0 auto; color: var(--hk-accent); }
+.q-eq { display: none; position: relative; width: 15px; height: 15px; flex: 0 0 auto; color: var(--hk-accent); }
 .q-row.is-current .q-eq { display: inline-flex; }
+.q-eq > span {
+  position: absolute;
+  inset: 0;
+  /* 三条线的底端均为 viewBox 的 y=18.5；原 fill-box 缩放轴保持不变。 */
+  transform-origin: 50% 77.083333%;
+  animation: eqb 1.05s ease-in-out infinite alternate;
+}
 .q-eq svg {
   width: 15px;
   height: 15px;
@@ -1162,13 +1171,8 @@ button:disabled { cursor: default; }
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.q-eq path {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
-  animation: eqb 1.05s ease-in-out infinite alternate;
-}
-.q-eq path:nth-child(2) { animation-delay: -0.35s; }
-.q-eq path:nth-child(3) { animation-delay: -0.7s; }
+.q-eq > span:nth-child(2) { animation-delay: -0.35s; }
+.q-eq > span:nth-child(3) { animation-delay: -0.7s; }
 @keyframes eqb {
   from { transform: scaleY(0.5); }
   to   { transform: scaleY(1.06); }

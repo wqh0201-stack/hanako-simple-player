@@ -84,6 +84,18 @@
 
 ## 歌词
 
+- **宽窗歌单只部分遮住歌词，不能用 `state.drawer` 停掉歌词 rAF**。
+  旧代码展开后退回约 4Hz 的 `timeupdate`，浏览器本身仍约 60Hz，造成低帧率观感。
+  真正替换整个舞台的窄卡队列、搜索页、离屏、暂停与减少动态偏好仍暂停。
+  断言 `lyrics-visible-behind-drawer-keeps-frames`、`lyrics-perf-opened-updates-each-frame`。
+- **SVG path 的 `transform-box: fill-box` 动画会触发持续布局**。
+  歌单当前曲三根播放指示线在 Chromium 中令 1.8s 的 `LayoutCount` 从 8 增至约 115，
+  长卡常驻队列也受影响。保持 SVG 描边，缩放放到 HTML 外层；不要改回 path 上动画。
+  断言 `lyrics-drawer-has-no-per-frame-layout`、`lyrics-long-card-has-no-per-frame-layout`。
+- **歌词先写波峰样式再读 `scrollHeight` / `scrollTop`，会额外强制样式计算**。
+  行高稳定，滚动范围在几何重测后缓存；每帧先完成滚动读回，再批量写波峰。
+  临时合成提示只给波峰附近最多十行，暂停、浏览、离屏时释放，不给整首歌常驻层。
+  构建号 1003131699，见 [性能交接](player-ui/handoffs/PLAYLIST-PERF-DONE.md)。
 - **回位（自动跟随的恢复）不能押在 `pointerup` 上**。`pointerdown` 一按下就会
   `pauseFollow()`，而旧代码紧接着 `clearFollowTimer()` —— 唯一能重新立起 3s 回位
   定时器的路径只剩松手事件。卡片是 iframe：在卡片/窗口外松手、宿主自己接管拖拽、
