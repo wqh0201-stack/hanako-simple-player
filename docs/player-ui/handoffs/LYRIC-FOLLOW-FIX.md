@@ -65,6 +65,27 @@
 - 顺带清掉仓库 `ui/` 里一个 gitignore 的临时备份 `sdk.js.bak-oldplugin-20261014-000637`
   （官方 SDK 迁移已提交，备份无回退价值）。
 
+## 发版记录（1.1.5）
+
+- commit：`cf11900 fix(lyric)` + `942551b chore(release): 1.1.4 → 1.1.5`（版本号跳动单独一个 commit，
+  按知识库发版清单的口径）。已推 `fork/hana-simple`。
+- 包：`tools/pack-release.mjs`（`HANA_APP_TOOLS_ROOT` 指向 1.1.0-beta server），
+  `dist-release/app-hanako-simple-player-1.1.5.zip`（682,459 B）+ `.entry.json`；
+  校验 errors 0 / warnings 1（既有的 `DYNAMIC_DEPENDENCIES_NOT_PROVEN`）。
+  **SHA-256 `f0abc5652761efde6287d2b05a16b78d964752137bea795b3d5ef94175d4c6a6`**
+  （本地重算 / entry.json / 从 Release 下载回来重算，三方一致）。
+- Release：[v1.1.5-simple](https://github.com/wqh0201-stack/hanako-simple-player/releases/tag/v1.1.5-simple)，
+  非草稿、非预发布，两个附件齐。
+- 市场登记：**PR [#91](https://github.com/liliMozi/hana-marketplace/pull/91)**
+  （分支 `wqh0201-stack:update-simple-player-1.1.3`，标题/正文已改到 v1.1.5）。
+  只动 `approvals.json` 里本 app 的 `tag` + `sha256` 两行，其余 96 条逐条未变、
+  条目数 97 不变；`registry.json` 未动。走 `gh api` Contents API（免克隆），
+  blob sha 用当前分支上的 `1c7926b8…`。
+- 市场校验器：挂代理 + `GITHUB_TOKEN` 跑 `extension-market-sync.mjs --check` **通过**，
+  `index would change (97 item(s))`，exit 0（不挂代理会撞 release 附件下载超时）。
+- 注意：`enroll-hanako-simple-player`（PR #65）已合并，之后的版本更新**另开分支**
+  `update-simple-player-1.1.x`，在同一 PR 上累积（1.1.4 → 1.1.5 就是这样叠上去的）。
+
 ## 没做 / 待确认
 
 - 宿主真机验收（Mac 上的 Hana 宿主目视 + 手感）留给罐头：**旧卡片要重开一次**才会吃到新快照。
