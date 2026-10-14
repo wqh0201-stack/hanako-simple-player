@@ -82,6 +82,24 @@
   写在极简版早期（当时列表封面还没用 `var(--cover-image)`），后来列表改按变量取图就成元凶。
   已删；`.q-cover` 自带 fallback。
 
+## 歌词
+
+- **回位（自动跟随的恢复）不能押在 `pointerup` 上**。`pointerdown` 一按下就会
+  `pauseFollow()`，而旧代码紧接着 `clearFollowTimer()` —— 唯一能重新立起 3s 回位
+  定时器的路径只剩松手事件。卡片是 iframe：在卡片/窗口外松手、宿主自己接管拖拽、
+  或任何一次 `pointerup` 没送到，`lyricPress` 就永久留着（非拖拽），
+  `scheduleResume()` 又被它挡住 → `state.follow` 永久为 false。
+  而 rAF 循环挂在 `canFlowLyrics()` 的 `state.follow` 上，于是**波浪、跟随一起死**：
+  高亮还在一句句跳（`timeupdate` 4Hz 驱动），视图却冻在原地，滚轮也救不回来。
+  现在：`scheduleResume` 不再因 `lyricPress` 放弃定时器，3s 到点先清掉僵死按压再回位；
+  `pointerdown` 不再清定时器。断言 `lyrics-lost-pointerup-self-heals`。构建号 1003131698。
+- **点歌词跳转必须保留回位动画**。`seekLyricLine` 里走 `updateLyricIndex(true)`
+  会立刻把刚立起来的 `lyricReturn` 抹掉（瞬移）；`seeked` 处理同样会抹。
+  另外 `canFlowLyrics()` 原本把 `!audio.seeking` 当硬条件，跳转必经 `seeking`，
+  那几帧就把动画掐了。现在三处一起改：跳句走 `updateLyricIndex(false)`、
+  `seeked` 用 `updateLyricIndex(!lyricReturn)`、`canFlowLyrics` 里 `lyricReturn` 直接放行。
+  断言 `lyrics-click-line-jumps-with-animation`、`lyrics-bounce-back-is-animated`。
+
 ## 部署 / 打包
 
 - **宿主快照 UI**：宿主加载 app 时把 `ui/` 拷进 `.cache/app-ui-snapshots/`，

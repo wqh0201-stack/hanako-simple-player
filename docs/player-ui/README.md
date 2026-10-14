@@ -58,6 +58,7 @@
 | [LYRICS-SYNC-DONE.md](handoffs/LYRICS-SYNC-DONE.md) | 歌词节奏手动对齐 |
 | [LYRIC-PICK-DONE.md](handoffs/LYRIC-PICK-DONE.md) | 歌词「挑 / 换」——匹配错了能自选 |
 | [LYRIC-FLOW-DONE.md](handoffs/LYRIC-FLOW-DONE.md) | 响应式歌词与连续波浪 |
+| [LYRIC-FOLLOW-FIX.md](handoffs/LYRIC-FOLLOW-FIX.md) | 跟随不再卡死（丢松手事件自愈）+ 点歌词跳句也走 0.5s 回位动画 |
 
 ### 沉浸播放页（ETE）
 | 文件 | 一句话 |
