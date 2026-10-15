@@ -1291,7 +1291,7 @@
   function immersiveCandidate() {
     // 长卡下方是常驻队列与主题底栏；只在没有上下分区的播放形态启用底部沉浸。
     return !player.classList.contains('nocover') && state.page === 'play' && !searchIsVisible() &&
-      immersiveFullPlayer && player.getAttribute('data-layout') !== 'long';
+      immersiveFullPlayer && player.getAttribute('data-layout') !== 'long' && player.getAttribute('data-layout') !== 'strip';
   }
   function immersiveIsBlocked() {
     var focused = document.activeElement;
@@ -1520,6 +1520,8 @@
   var coverAR = 0;             // 封面画幅比（只读自然尺寸，不碰 canvas）
   var coverProbeToken = 0;     // 切歌竞态：过期结果丢弃
   var ambientCache = {};       // pic → { color, polarity }（或 null=失败）
+  var ambientPending = {};     // 同一张封面只解码一次；resize 不重复采样
+  var stripSampleCount = 0;
   var stagePic = '';           // 当前舞台封面
 
   function lumOf(c) {
@@ -1790,6 +1792,22 @@
   }
 
   function applyAmbient(res) {
+    ['light', 'dark'].forEach(function (tone) {
+      if (res && res.stripField) player.style.setProperty('--strip-field-' + tone, res.stripField[tone]);
+      else player.style.removeProperty('--strip-field-' + tone);
+      ['glow'].forEach(function (layer) {
+        var value = res && res.stripField && res.stripField[layer];
+        if (value) player.style.setProperty('--strip-' + layer + '-' + tone, value[tone]);
+        else player.style.removeProperty('--strip-' + layer + '-' + tone);
+      });
+      for (var i = 0; i < 6; i++) {
+        var spark = res && res.stripField && res.stripField.spark;
+        if (spark) player.style.setProperty('--strip-star-' + i + '-' + tone, spark[tone][i]);
+        else player.style.removeProperty('--strip-star-' + i + '-' + tone);
+      }
+    });
+    player.setAttribute('data-strip-ambient', res && res.stripField ? '1' : '0');
+    syncStripAmbient();
     if (!res || !res.color) {
       /* 取色失败 / 无封面：撤掉主色底，退回主题纸面；字色跟主题。
          但涟漪三层色仍要算（用主题底色当背景）—— 否则交给 CSS 兑底
@@ -1820,6 +1838,13 @@
 
   /* 取色还没回来时的临时态：先按主题极性亮字，出结果再校正 */
   function applyAmbientPending() {
+    /* 换封面先撤下旧横条色场；异步取色完成前只用主题兜底，不能串到上一首。 */
+    ['light', 'dark'].forEach(function (tone) {
+      ['field', 'glow'].forEach(function (layer) { player.style.removeProperty('--strip-' + layer + '-' + tone); });
+      for (var i = 0; i < 6; i++) player.style.removeProperty('--strip-star-' + i + '-' + tone);
+    });
+    player.setAttribute('data-strip-ambient', '0');
+    syncStripAmbient();
     if (!player.classList.contains('nocover')) player.setAttribute('data-ambient', themePolarity());
   }
 
@@ -1840,13 +1865,17 @@
       applyAmbient(ambientCache[pic]);
       return;
     }
+    if (Object.prototype.hasOwnProperty.call(ambientPending, pic)) { ambientPending[pic] = token; return; }
+    ambientPending[pic] = token;
     var img = new Image();
     var settled = false;
     function done(res) {
       if (settled) return;
       settled = true;
       ambientCache[pic] = res || null;
-      if (token !== coverProbeToken) return;
+      var latest = ambientPending[pic];
+      delete ambientPending[pic];
+      if (latest !== coverProbeToken) return;
       applyAmbient(res);
     }
     img.crossOrigin = 'anonymous';
@@ -1859,7 +1888,8 @@
         ctx.drawImage(img, 0, 0, SW, SH);
         var data = ctx.getImageData(0, 0, SW, SH).data;
         var color = dominantColor(data, SW, SH);
-        done(color ? { color: color, polarity: polarityFor(color) } : null);
+        var field = stripColorField(data, SW, SH);
+        done(color ? { color: color, polarity: polarityFor(color), stripField: field } : null);
       } catch (e) {
         /* 非 CORS 封面 / 解码失败 / getImageData 抛 SecurityError → 静默退回 */
         done(null);
@@ -1869,12 +1899,60 @@
     img.src = ambientUrl(pic);
   }
 
+  /* 六个空间分区各自保留代表色。仅封面解码时生成，两套明度供宿主主题切换，
+   * 播放和 resize 只改变裁切/布局，不重新拉伸色场或再读像素。 */
+  function stripColorField(data, w, h) {
+    var colors = [], brightColors = [], x, y, col, row;
+    for (row = 0; row < 2; row++) for (col = 0; col < 3; col++) {
+      var pixels = [];
+      for (y = Math.floor(row * h / 2); y < Math.floor((row + 1) * h / 2); y++) {
+        for (x = Math.floor(col * w / 3); x < Math.floor((col + 1) * w / 3); x++) {
+          var at = (y * w + x) * 4;
+          pixels.push(data[at], data[at + 1], data[at + 2], data[at + 3]);
+        }
+      }
+      colors.push(toHsl(dominantColor(pixels, pixels.length / 4, 1) || [128, 128, 128]));
+      /* 同一份六区像素挑较亮的有色样本，再复用 dominantColor；不解码/采样第二次。
+       * 白字和灰高光不拿来替代封面色。暗封面仍保留它自己的色相。 */
+      var candidates = [], brightPixels = [], k;
+      for (k = 0; k < pixels.length; k += 4) {
+        var rgb = [pixels[k], pixels[k + 1], pixels[k + 2]], hsl = toHsl(rgb);
+        if (pixels[k + 3] > 128 && hsl[1] > .12 && hsl[2] < .94) {
+          candidates.push({ rgb: rgb, score: hsl[2] + hsl[1] * .12 });
+        }
+      }
+      candidates.sort(function (a, b) { return b.score - a.score; });
+      for (k = 0; k < Math.ceil(candidates.length * .3); k++) {
+        brightPixels.push(candidates[k].rgb[0], candidates[k].rgb[1], candidates[k].rgb[2], 255);
+      }
+      brightColors.push(brightPixels.length ? toHsl(dominantColor(brightPixels, brightPixels.length / 4, 1)) : colors[colors.length - 1]);
+    }
+    stripSampleCount++;
+    var fields = { glow: {}, spark: {} };
+    ['light', 'dark'].forEach(function (tone) {
+      var light = tone === 'light';
+      /* 底色逐字恢复 1003131718 的色场，满进度合成在 CSS 常驻呈现。 */
+      fields[tone] = colors.map(function (c, i) {
+        var color = rgbStr(fromHsl(c[0], c[1], light ? .79 : .24));
+        return 'radial-gradient(ellipse at ' + ((i % 3) * 50) + '% ' + (i < 3 ? '0' : '100') + '%, ' + color + ', transparent 68%)';
+      }).reverse().join(',') + ',linear-gradient(' + rgbStr(fromHsl(colors[0][0], colors[0][1], light ? .83 : .22)) + ', ' + rgbStr(fromHsl(colors[5][0], colors[5][1], light ? .83 : .22)) + ')';
+      fields.spark[tone] = brightColors.map(function (c) {
+        return rgbStr(fromHsl(c[0], Math.min(1, c[1] * 1.15), Math.max(light ? .48 : .62, Math.min(.78, c[2]))));
+      });
+      fields.glow[tone] = brightColors.map(function (c, i) {
+        return 'radial-gradient(ellipse 22% 90% at ' + (8 + i * 17) + '% ' + (i % 2 ? '88' : '12') + '%, ' + fields.spark[tone][i] + ', transparent 80%)';
+      }).join(',');
+    });
+    return fields;
+  }
+
   /* 舞台指标（纯呈现）：长卡背景只在上方播放区，其余形态贯通到底栏。
    * 封面宽度 = 背景高 × 画幅比；阅读列只跟窗口宽走，不依赖封面画幅。
    * 过渡：封面右缘用 --seam 羽化，薄纱在阅读列起点变满；共用 --band 带宽。 */
   function updateStageMetrics() {
     var sceneEl = $('scene');
     if (!sceneEl) return;
+    if (isStrip()) { if (stagePic) probeAmbient(stagePic, coverProbeToken); return; }
     var backdrop = $('playerBackdrop');
     // 共用同一份背景与封面，跟随所属容器裁切；拖分区时不需另算背景高度。
     var backdropHost = player.getAttribute('data-layout') === 'long' ? sceneEl : player;
@@ -1962,6 +2040,8 @@
     /* 呈现层标记：无封面时走「纸面留白」兜底（只切 CSS 变量，不动业务） */
     player.classList.toggle('nocover', !pic);
     $('cover').style.backgroundImage = coverStageImage(pic);
+    $('stripCover').style.backgroundImage = coverImage(pic);
+    $('layoutCoverGhost').style.backgroundImage = coverImage(pic);
     /* 晕开层：同一张封面的模糊放大副本（取色失败时的兜底） */
     $('coverHaze').style.backgroundImage = coverUrlOnly(pic);
     probeCover(pic);
@@ -2106,6 +2186,7 @@
       $('durTime').textContent = '--:--';
       applyCovers();
       syncMediaSession();
+      renderStrip();
       return;
     }
     $('trackTitle').textContent = t.title;
@@ -2124,6 +2205,7 @@
     applyCovers();
     measureLyricTop();
     syncMediaSession();
+    renderStrip();
   }
 
   /* 歌单切换条的溢出处理：原生横向滚 + 两侧按需渐隐 + 当前项跟随。
@@ -2359,6 +2441,7 @@
       seek.value = '0';
       $('curTime').textContent = '0:00';
       seek.style.setProperty('--fill', '0%');
+      renderStrip();
       return;
     }
     var d = trackDuration(t);
@@ -2366,6 +2449,7 @@
     seek.value = String(p);
     $('curTime').textContent = fmtTime(p);
     seek.style.setProperty('--fill', (d ? (p / d * 100) : 0).toFixed(2) + '%');
+    renderStrip();
   }
 
   function renderVolume() {
@@ -2380,6 +2464,7 @@
     $('muteBtn').innerHTML = icon(muted ? 'i-volume-mute' : ('i-volume-' + lvl));
     $('muteBtn').setAttribute('aria-label', muted ? '取消静音' : '静音');
     $('muteBtn').title = muted ? '取消静音' : '静音';
+    renderStrip();
   }
 
   function renderMode() {
@@ -2388,6 +2473,7 @@
     btn.innerHTML = icon(m.icon);
     btn.setAttribute('aria-label', '播放模式：' + m.label + '（点击切换）');
     btn.title = '播放模式：' + m.label;
+    renderStrip();
   }
 
   function renderPlayState() {
@@ -2397,6 +2483,7 @@
     btn.setAttribute('aria-label', state.playing ? '暂停' : '播放');
     btn.title = state.playing ? '暂停' : '播放';
     player.setAttribute('data-playing', state.playing ? '1' : '0');
+    renderStrip();
   }
 
   /* 歌词不再有用户开关：有词就显歌词，无词时只剩封面 + 涟漪。
@@ -3410,6 +3497,7 @@
     if (g.content) g.content.style.transform = 'translateY(' + g.residual.toFixed(4) + 'px)';
   }
   function paintLyricFlow() {
+    if (isStrip()) return;
     var g = lyricGeometry;
     if (!g.nodes.length || !g.centers.length || lyricAlign) return;
     var still = reducedMotion() || SHOT;
@@ -3461,7 +3549,7 @@
   }
   function canFlowLyrics() {
     var g = lyricGeometry;
-    var base = !SHOT && !reducedMotion() && lyricSurfaceVisible() && lyricInView && !lyricAlign && state.follow
+    var base = player.getAttribute('data-layout') !== 'strip' && !SHOT && !reducedMotion() && lyricSurfaceVisible() && lyricInView && !lyricAlign && state.follow
       // 宽窗歌单是局部浮层，露出的歌词继续流动；窄卡队列/搜索整面替换才暂停。
       && !lyricNeedsMeasure && g.nodes.length > 0 && g.height > 0 && g.width > 0 && g.centers.length === g.nodes.length && state.page === 'play'
       && player.getAttribute('data-search') !== '1';
@@ -3515,7 +3603,7 @@
   function refreshLyricLayout() {
     var w = frame.clientWidth, h = frame.clientHeight;
     if (!(w > 0 && h > 0)) return;
-    var next = w >= 720 ? 'wide' : (h < 560 ? 'compact' : 'long');
+    var next = choosePlayerLayout(w, h);
     // 首次挂载/迁窗可能连 frame 的 RO 也漏掉，正预算恢复后按真实形态补布局。
     if (next !== player.getAttribute('data-layout')) applyLayout();
   }
@@ -3556,6 +3644,7 @@
     if (!lyricLifecycleStop && hana.lifecycle && typeof hana.lifecycle.subscribe === 'function') {
       lyricLifecycleStop = hana.lifecycle.subscribe(function (s) {
         lyricHostVisible = !s || s.visible !== false;
+        syncStripAmbient();
         recoverLyricSurface();
       });
     }
@@ -3648,6 +3737,7 @@
       }
     }
     if (instant) lyricReturn = null;
+    renderStrip();
     paintLyricFlow(); startLyricFrames();
   }
 
@@ -7752,6 +7842,384 @@
   /* ============================================================
      布局：按容器尺寸切三种形态
      ============================================================ */
+  /* 横条呈现只调用既有控制器，媒体时钟、随机历史与音频所有权仍共用原实现。 */
+  var stripLayout = $('stripLayout'), stripBar = $('stripBar');
+  var stripHot = false, stripPointerInside = false, stripKeyboard = false;
+  var stripVolumeOpen = false, stripPointers = {};
+  var stripSmall = false, stripMotion = null, stripMotionRaf = 0, stripTransitions = 0;
+  var stripStopped = false, stripPointerAt = -1000;
+  var stripInView = true;
+  var stripSeekGesture = null, stripFlowAnimations = [], stripFlowRate = 1;
+  var stripFlowRaf = 0, stripFlowRamp = null;
+  var STRIP_IN = 192, STRIP_OUT = 224, STRIP_MOTION_MS = 300;
+  function isStrip() { return player.getAttribute('data-layout') === 'strip'; }
+  function choosePlayerLayout(w, h) {
+    // 192 = 旧窄控制面112 + 最少80舞台；退出多留32px，稳定容纳安全区与标题。
+    if (layout === 'strip' && h < STRIP_OUT) return 'strip';
+    if (h <= STRIP_IN && w >= h * 1.5) return 'strip';
+    return w >= 720 ? 'wide' : (h < 560 ? 'compact' : 'long');
+  }
+  function stripPinned() { return Object.keys(stripPointers).length > 0; }
+  function stripText(id, text) { var el = $(id); text = String(text || ''); if (el.textContent !== text) el.textContent = text; }
+  function stripIcon(id, markup, label) {
+    var el = $(id);
+    if (el._stripIcon !== markup) { el.innerHTML = markup; el._stripIcon = markup; }
+    el.setAttribute('aria-label', label); el.title = label;
+  }
+  function renderStrip() {
+    if (!stripLayout) return;
+    /* 横条只是呈现层。它被挂在 renderTrack/renderProgress/renderPlayState 末尾，
+     * 而那几个函数在 playTrack() 主链路里 —— 这里一旦抛异常就会打断 loadAudio，
+     * 表现为「切歌后接管播放 / 播放失败」。所以整块兜住：横条出错不许影响播放。 */
+    try { syncStripAmbient(); if (isStrip()) renderStripInner(); } catch (e) { if (!renderStrip._warned) { renderStrip._warned = true; if (window.console) console.warn('[player] strip render failed', e); } }
+  }
+  function syncStripAmbient() {
+    if (!stripLayout) return;
+    var visible = isStrip() && !stripStopped && stripInView && !document.hidden && lyricHostVisible
+      && player.getAttribute('data-strip-ambient') === '1';
+    var allowed = visible && !SHOT && !reducedMotion();
+    if (!allowed && (stripSeekGesture || stripFlowRamp || stripFlowRate !== 1)) resetStripSeekEffect();
+    /* 暂停时主动 seek 也给一次有界反馈；自然暂停/隐藏不会留下动画时钟。 */
+    var moving = allowed && ((!audio.paused && !audio.ended) || !!stripSeekGesture || !!stripFlowRamp);
+    var changed = stripLayout.getAttribute('data-ambient-motion') !== (moving ? '1' : '0');
+    setAttrIf(stripLayout, 'data-ambient-motion', moving ? '1' : '0');
+    if (changed) cacheStripFlowAnimations();
+  }
+  function setStripFlowRate(rate) {
+    stripFlowRate = rate;
+    stripFlowAnimations.forEach(function (a) {
+      if (a.playState === 'idle') return;
+      /* updatePlaybackRate 保留当前时间，不用重设 duration/动画类来加速。 */
+      if (typeof a.updatePlaybackRate === 'function') a.updatePlaybackRate(rate);
+      else a.playbackRate = rate;
+    });
+  }
+  function cacheStripFlowAnimations() {
+    if (!stripLayout || typeof stripLayout.getAnimations !== 'function') return;
+    stripFlowAnimations = stripLayout.getAnimations({ subtree: true }).filter(function (a) {
+      return a.animationName === 'strip-ambient-flow';
+    });
+    setStripFlowRate(stripFlowRate);
+  }
+  function resetStripSeekEffect() {
+    if (stripFlowRaf) cancelAnimationFrame(stripFlowRaf);
+    stripFlowRaf = 0; stripFlowRamp = null; stripSeekGesture = null;
+    setStripFlowRate(1);
+    if (stripLayout) setAttrIf(stripLayout, 'data-seek-effect', 'idle');
+  }
+  function setStripSeekEffect(mode) {
+    if (stripFlowRaf) cancelAnimationFrame(stripFlowRaf);
+    stripFlowRaf = 0; stripFlowRamp = null;
+    setAttrIf(stripLayout, 'data-seek-effect', mode);
+    syncStripAmbient(); cacheStripFlowAnimations();
+    setStripFlowRate(mode === 'drag' ? 3.8 : 1.25);
+  }
+  function settleStripFlow(now) {
+    stripFlowRaf = 0;
+    if (!stripFlowRamp) return;
+    var t = Math.min(1, Math.max(0, (now - stripFlowRamp.at) / 1400));
+    setStripFlowRate(1 + (stripFlowRamp.from - 1) * Math.pow(1 - t, 3));
+    if (t < 1) stripFlowRaf = requestAnimationFrame(settleStripFlow);
+    else {
+      stripFlowRamp = null; setStripFlowRate(1);
+      setAttrIf(stripLayout, 'data-seek-effect', 'idle'); syncStripAmbient();
+    }
+  }
+  function finishStripSeekEffect(e) {
+    if (!stripSeekGesture || stripSeekGesture.id !== e.pointerId) return;
+    var wasDragging = stripSeekGesture.dragging;
+    stripSeekGesture = null;
+    if (e.type === 'pointercancel' || document.hidden || reducedMotion()) {
+      resetStripSeekEffect(); syncStripAmbient(); return;
+    }
+    /* 唯一新增 rAF 是这段 1.4 秒的速率回落，结束即停；不画粒子、不读 DOM 几何。 */
+    setAttrIf(stripLayout, 'data-seek-kind', wasDragging ? 'drag' : 'press');
+    setAttrIf(stripLayout, 'data-seek-effect', 'settle');
+    stripFlowRamp = { from: stripFlowRate, at: performance.now() };
+    if (stripFlowRaf) cancelAnimationFrame(stripFlowRaf);
+    stripFlowRaf = requestAnimationFrame(settleStripFlow);
+  }
+  function renderStripInner() {
+    var t = currentTrack(), d = trackDuration(t), p = liveProgress();
+    d = isFinite(d) && d > 0 ? d : 0;
+    p = isFinite(p) ? Math.max(0, d ? Math.min(p, d) : p) : 0;
+    stripText('stripTitle', t ? t.title : '还没有曲目');
+    stripText('stripArtist', t ? t.author : '');
+    $('stripIdentity').title = t ? t.title + (t.author ? ' · ' + t.author : '') : '';
+    var line = state.lyricLines && state.lyricLines[lyricIndex];
+    stripText('stripLyric', line && line.text ? line.text : '');
+    $('stripLyric').title = $('stripLyric').textContent;
+    stripText('stripNow', fmtTime(p)); stripText('stripTotal', d ? fmtTime(d) : '--:--');
+    stripBar.style.setProperty('--strip-fill', (d ? p / d * 100 : 0).toFixed(3) + '%');
+    setAttrIf(stripBar, 'data-progress', !d || p <= 0 ? 'empty' : (p >= d ? 'full' : 'partial'));
+    var slider = $('stripSeek'); slider.max = String(d); slider.disabled = !t || !d;
+    /* 用户正在压着进度条（按下未松）时，绝不回写 value：播报时钟每 ~250ms 走一次
+     * renderStrip，回写会和原生 range 的拖动/点击抢同一个值 —— 正在播的曲子点下末端
+     * 就有概率被覆盖回旧位置。松手/失焦后由指针记录清空，下一帧自然对齐真实进度。 */
+    if (!stripPinned() && slider.value !== String(p)) slider.value = String(p);
+    slider.setAttribute('aria-valuetext', fmtTime(p) + ' / ' + (d ? fmtTime(d) : '时长未知'));
+    stripIcon('stripPlay', icon(state.playing ? 'i-pause' : 'i-play'), state.needsResume || needsTakeover ? '继续播放' : (state.playing ? '暂停' : '播放'));
+    $('stripPlay').disabled = !t;
+    stripIcon('stripMode', $('modeBtn').innerHTML, $('modeBtn').getAttribute('aria-label') || '播放模式');
+    (function () {
+      var b = $('stripFav'); b.setAttribute('aria-pressed', $('favBtn').getAttribute('aria-pressed') || 'false');
+      b.setAttribute('aria-label', $('favBtn').getAttribute('aria-label') || '加入我的喜欢'); b.title = b.getAttribute('aria-label'); b.disabled = !t;
+    })();
+    stripIcon('stripVolumeBtn', $('muteBtn').innerHTML, stripVolumeOpen ? '收起音量' : '展开音量');
+    var volume = state.muted ? 0 : Math.round(state.volume * 100);
+    var volEl = $('stripVol');
+    /* 拖动音量期间同样不回写：与进度条同一类抢值问题。 */
+    if (!stripPinned() && volEl.value !== String(volume)) volEl.value = String(volume);
+    volEl.style.setProperty('--fill', volume + '%');
+    stripText('stripVolValue', volume + '%');
+  }
+  /* 只同步「交互态」本身。**不再在这里调 renderStrip()** —— 悬停/指针移动会高频调用它，
+   * 而 renderStrip 要写十几个 DOM 属性并切换 inert（inert 是全子树标志，会强制重算样式），
+   * 每移动一像素跑一次会明显掉帧，还会让按钮瞬时不命中（表现为「悬停粘住、点旁边的没反应」）。
+   * 属性只在真的变化时才写。内容更新交给 renderStrip 自己的调用点（切歌/进度/音量/歌词）。 */
+  function setAttrIf(el, name, value) {
+    if (el.getAttribute(name) !== value) el.setAttribute(name, value);
+  }
+  function updateStripInteraction() {
+    if (!stripLayout) return;
+    stripHot = isStrip() && (stripPointerInside || stripKeyboard || stripPinned() || stripVolumeOpen);
+    setAttrIf(stripLayout, 'data-hot', stripHot ? '1' : '0');
+    setAttrIf(stripLayout, 'data-volume', stripVolumeOpen ? '1' : '0');
+    var ctl = $('stripControls'), wantInert = !stripHot;
+    if (ctl.inert !== wantInert) ctl.inert = wantInert;
+    setAttrIf(ctl, 'aria-hidden', stripHot ? 'false' : 'true');
+    var reveal = $('stripVolumeReveal'), wantRevealInert = !stripVolumeOpen || !stripHot;
+    if (reveal.inert !== wantRevealInert) reveal.inert = wantRevealInert;
+    setAttrIf($('stripVolumeBtn'), 'aria-expanded', stripVolumeOpen ? 'true' : 'false');
+  }
+  function closeStripInteraction() {
+    resetStripSeekEffect();
+    stripPointerInside = false; stripKeyboard = false; stripVolumeOpen = false;
+    if (stripVolCloseTimer) { clearTimeout(stripVolCloseTimer); stripVolCloseTimer = 0; }
+    stripVolDragging = false;
+    stripPointers = {}; updateStripInteraction();
+  }
+  /* 控件组当前可见项的真实占宽（含间距）。只在布局/尺寸变化时量，不进逐帧路径。
+   * 用子项 rect 求和而不是 scrollWidth：flex 不换行时 scrollWidth 不可靠。 */
+  function stripControlsWidth() {
+    var kids = Array.prototype.filter.call($('stripControls').children, function (el) {
+      return el.offsetParent !== null && !el.hidden && getComputedStyle(el).display !== 'none';
+    });
+    if (!kids.length) return 0;
+    var gap = parseFloat(getComputedStyle($('stripControls')).columnGap) || 0;
+    var total = 0;
+    kids.forEach(function (el) { total += el.getBoundingClientRect().width; });
+    return total + (kids.length - 1) * gap;
+  }
+  /* 掉队顺序：先丢最边缘的次要键（音量→喜欢→模式），transport 是**整体**——
+   * 三键要么都在要么都不在（丢半个 transport 会剩个孤零零的「上一首」，很怪）。
+   * 播放键永不丢。不折叠、不收进二级面板。按真实占宽逐级丢。 */
+  var STRIP_DROP_ORDER = [
+    ['stripVolumeGroup'],
+    ['stripFav'],
+    ['stripMode'],
+    ['stripPrev', 'stripNext']
+  ];
+  function setGroupHidden(ids, hidden) {
+    for (var i = 0; i < ids.length; i++) { var el = $(ids[i]); if (el) el.hidden = hidden; }
+  }
+  function arrangeStripControls(avail) {
+    var k;
+    for (k = 0; k < STRIP_DROP_ORDER.length; k++) setGroupHidden(STRIP_DROP_ORDER[k], false);
+    for (k = 0; k < STRIP_DROP_ORDER.length; k++) {
+      if (stripControlsWidth() <= avail + 0.5) break;
+      setGroupHidden(STRIP_DROP_ORDER[k], true);
+    }
+  }
+  function arrangeStrip(w) {
+    // 112px身份、64px封面和字号始终不变；小宽度把次要键放入明确的更多组。
+    stripSmall = w < 480;
+    stripLayout.setAttribute('data-small', stripSmall ? '1' : '0');
+    stripLayout.setAttribute('data-medium', w < 600 ? '1' : '0');
+    /* 控件疏松度按宽度分档：宽时透气（10px），中档 8px，宽度不足才压紧（4px，
+     * 由 data-small 那条规则接管）。只改间距，不缩按钮，避免窄时变小误导点击。 */
+    stripLayout.style.setProperty('--strip-gap', (w >= 600 ? 10 : 8) + 'px');
+    /* 轴线 = 条中线，按「内容优先」降级（用户拍板：居中，不要再偏右）：
+     *   盒左固定 136（身份区右缘+12），盒中心 = 88 + 136 + 盒宽/2。
+     *   → R = 136 时盒与条同轴（完美居中）；R 越小轴越偏右，R = 10 即回到「紧接身份区」。
+     * 只有当「居中所需的盒宽」装不下当前控件组时，才把 R 压到刚好够用的值（不低于 10）。 */
+    /* 宽度不够**不折叠、不收进「更多」**：按固定优先级逐个丢按钮，最后只剩播放键
+     * （用户拍板：宁可消失也不要二级面板）。可用宽取「贴左」上限（左 136 + 右 10）。 */
+    var barW = w - 100;
+    arrangeStripControls(barW - 136 - 10);
+    var need = stripControlsWidth();
+    var right = (barW - 272 >= need) ? 136 : Math.max(10, barW - 136 - need);
+    stripLayout.style.setProperty('--strip-right', right + 'px');
+    updateStripInteraction();
+    cacheStripFlowAnimations();
+  }
+  /* 指针移动**不逐像素**跑交互更新：只在「是否位于条内」真正翻转时才同步一次。
+   * 悬停高亮由 CSS :hover 负责（浏览器原生，无 JS 参与），不再靠 JS 每次移动重算。 */
+  function stripInsideFrom(target) {
+    return !!(target && (stripBar.contains(target) || $('stripCover').contains(target) || $('stripVolumeReveal').contains(target)));
+  }
+  stripLayout.addEventListener('pointermove', function (e) {
+    if (!isStrip() || stripMotion) return;
+    var inside = stripInsideFrom(e.target);
+    if (inside === stripPointerInside && !stripKeyboard) return;
+    stripKeyboard = false;
+    stripPointerInside = inside;
+    updateStripInteraction();
+  });
+  stripLayout.addEventListener('pointerleave', function () {
+    stripPointerInside = false;
+    updateStripInteraction();
+  });
+  stripLayout.addEventListener('pointerdown', function () { stripPointerAt = performance.now(); stripKeyboard = false; stripPointerInside = true; updateStripInteraction(); }, true);
+  stripLayout.addEventListener('focusin', function () { stripKeyboard = performance.now() - stripPointerAt > 100; updateStripInteraction(); });
+  stripLayout.addEventListener('focusout', function (e) {
+    if (stripLayout.contains(e.relatedTarget)) return;
+    stripKeyboard = false;
+    if (!stripPinned()) { stripVolumeOpen = false; }
+    updateStripInteraction();
+  });
+  stripLayout.addEventListener('click', function (e) {
+    var proxy = e.target.closest('[data-strip-proxy]');
+    if (proxy) { $(proxy.getAttribute('data-strip-proxy')).click(); renderStrip(); return; }
+    if (e.target.closest('#stripCover')) {
+      stripPointerInside = true; updateStripInteraction();
+      $('stripPlay').focus();
+    }
+  });
+  /* 音量：与大窗同一套 —— 悬停（或键盘聚焦）向右展开，移开 90ms 后收起；
+   * 点喇叭是「静音/取消静音」（沿用既有 muteBtn），不是开合。拖滑杆期间不收。 */
+  var stripVolCloseTimer = 0, stripVolDragging = false;
+  function openStripVolume() {
+    if (stripVolCloseTimer) { clearTimeout(stripVolCloseTimer); stripVolCloseTimer = 0; }
+    if (stripVolumeOpen) return;
+    stripVolumeOpen = true; updateStripInteraction();
+  }
+  function closeStripVolumeSoon() {
+    if (stripVolCloseTimer) clearTimeout(stripVolCloseTimer);
+    stripVolCloseTimer = setTimeout(function () {
+      stripVolCloseTimer = 0;
+      if (stripVolDragging) return;
+      stripVolumeOpen = false; updateStripInteraction();
+    }, 90);
+  }
+  (function bindStripVolume() {
+    var group = $('stripVolumeGroup');
+    if (!group) return;
+    group.addEventListener('pointerenter', openStripVolume);
+    group.addEventListener('pointerleave', function () { if (!stripVolDragging) closeStripVolumeSoon(); });
+    group.addEventListener('focusin', openStripVolume);
+    group.addEventListener('focusout', function (e) { if (!group.contains(e.relatedTarget)) { stripVolumeOpen = false; updateStripInteraction(); } });
+    $('stripVol').addEventListener('pointerdown', function () { stripVolDragging = true; openStripVolume(); });
+    document.addEventListener('pointerup', function () {
+      if (!stripVolDragging) return;
+      stripVolDragging = false;
+      if (!group.matches(':hover') && !group.contains(document.activeElement)) closeStripVolumeSoon();
+    });
+    $('stripVolumeBtn').addEventListener('click', function () { $('muteBtn').click(); renderStrip(); });
+  })();
+  $('stripSeek').addEventListener('input', function () {
+    seek.value = this.value; seek.dispatchEvent(new Event('input')); renderStrip();
+  });
+  $('stripVol').addEventListener('input', function () {
+    vol.value = this.value; vol.dispatchEvent(new Event('input')); renderStrip();
+  });
+  ['stripSeek', 'stripVol'].forEach(function (id) {
+    var el = $(id);
+    el.addEventListener('pointerdown', function (e) { stripPointers[e.pointerId] = true; updateStripInteraction(); });
+    el.addEventListener('lostpointercapture', finishStripPointer);
+  });
+  $('stripSeek').addEventListener('pointerdown', function (e) {
+    if (this.disabled || (e.pointerType === 'mouse' && e.button !== 0) || stripSeekGesture) return;
+    stripSeekGesture = { id: e.pointerId, x: e.clientX, y: e.clientY, dragging: false };
+    if (reducedMotion() || SHOT) { resetStripSeekEffect(); return; }
+    setStripSeekEffect('press');
+  });
+  document.addEventListener('pointermove', function (e) {
+    var gesture = stripSeekGesture;
+    if (!gesture || gesture.id !== e.pointerId || gesture.dragging) return;
+    var dx = e.clientX - gesture.x, dy = e.clientY - gesture.y;
+    if (dx * dx + dy * dy < 16) return;
+    gesture.dragging = true; setStripSeekEffect('drag');
+  });
+  function finishStripPointer(e) {
+    finishStripSeekEffect(e);
+    delete stripPointers[e.pointerId];
+    updateStripInteraction();
+  }
+  document.addEventListener('pointerup', finishStripPointer);
+  document.addEventListener('pointercancel', finishStripPointer);
+  document.addEventListener('pointerdown', function (e) {
+    if (isStrip() && !stripLayout.contains(e.target)) closeStripInteraction();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (!isStrip() || e.key !== 'Escape') return;
+    stripVolumeOpen = false;
+    /* 焦点不能退回音量按钮：它在音量组内，focusin 会立刻把浮层重新打开（Escape 就白按了）。
+     * 退到组外的播放键，键盘用户再 Tab 回滑杆时由 focusin 正常展开。 */
+    if ($('stripVolumeGroup').contains(document.activeElement)) $('stripPlay').focus();
+    updateStripInteraction();
+  }, true);
+  window.addEventListener('blur', closeStripInteraction);
+
+  function layoutCoverRect() {
+    var el = isStrip() ? $('stripCover') : $('cover'), r = el.getBoundingClientRect(), root = player.getBoundingClientRect();
+    return { x: r.left - root.left, y: r.top - root.top, w: r.width, h: r.height, radius: isStrip() ? 6 : 0 };
+  }
+  function stopStripMotion() {
+    if (stripMotionRaf) cancelAnimationFrame(stripMotionRaf);
+    stripMotionRaf = 0; stripMotion = null; $('layoutCoverGhost').hidden = true;
+    player.removeAttribute('data-morph');
+  }
+  function paintStripMotion(now) {
+    stripMotionRaf = 0;
+    if (!stripMotion) return;
+    if (document.hidden || stripStopped || !lyricHostVisible) { stopStripMotion(); return; }
+    var m = stripMotion, to = layoutCoverRect(), t = Math.min(1, (now - m.start) / STRIP_MOTION_MS), p = 1 - Math.pow(1 - t, 3), r = {};
+    Object.keys(to).forEach(function (k) { r[k] = m.from[k] + (to[k] - m.from[k]) * p; });
+    m.visual = r;
+    var ghost = $('layoutCoverGhost');
+    ghost.style.left = r.x + 'px'; ghost.style.top = r.y + 'px'; ghost.style.width = r.w + 'px'; ghost.style.height = r.h + 'px'; ghost.style.borderRadius = r.radius + 'px';
+    ghost.style.opacity = String(t > .8 ? (1 - t) / .2 : 1);
+    if (t < 1) stripMotionRaf = requestAnimationFrame(paintStripMotion); else stopStripMotion();
+  }
+  function startStripMotion(from) {
+    // 时钟只在跨形态时重建。同一形态的RO只更新目标，不能延长这300ms。
+    stopStripMotion(); stripTransitions++;
+    if (SHOT || reducedMotion() || stripStopped || document.hidden || !lyricHostVisible || !from.w || !from.h) return;
+    stripMotion = { from: from, visual: from, start: performance.now() };
+    $('layoutCoverGhost').hidden = false; player.setAttribute('data-morph', '1');
+    var target = isStrip() ? stripLayout : $('stage');
+    target.animate([{ opacity: .35 }, { opacity: 1 }], { duration: STRIP_MOTION_MS, easing: 'ease-out' });
+    paintStripMotion(performance.now());
+  }
+  function prepareStrip() {
+    closeVolPop(); closePops();
+    if (lyricAlign) closeLyricAlign();
+    if ($('lyricMatchPop') && !$('lyricMatchPop').hidden) closeLyricMatch();
+    // 小条没有编辑/列表面板，保留查询与草稿，离开横条后回播放页，不自动重开浮层。
+    player.querySelectorAll('[id]').forEach(function (el) {
+      if (el._surfaceAnim) { el._surfaceAnim.cancel(); el._surfaceAnim = null; }
+    });
+    if (searchPage) searchPage.hidden = true;
+    player.classList.remove('is-s-leaving', 'is-q-leaving', 'is-q-in');
+    syncSearchCoverAction(false);
+    if ($('firstRun')) $('firstRun').hidden = true;
+    state.page = 'play'; state.drawer = false;
+  }
+  ['play', 'pause', 'ended'].forEach(function (type) { audio.addEventListener(type, function () {
+    if (type !== 'play' && !stripSeekGesture) resetStripSeekEffect();
+    syncStripAmbient();
+  }); });
+  if (lyricMotionQuery.addEventListener) lyricMotionQuery.addEventListener('change', syncStripAmbient);
+  else if (lyricMotionQuery.addListener) lyricMotionQuery.addListener(syncStripAmbient);
+  if (window.IntersectionObserver) new IntersectionObserver(function (entries) {
+    stripInView = entries[entries.length - 1].isIntersecting;
+    syncStripAmbient();
+  }).observe(stripLayout);
+  document.addEventListener('visibilitychange', function () { if (document.hidden) { closeStripInteraction(); stopStripMotion(); } syncStripAmbient(); });
+  window.addEventListener('pagehide', function () { stripStopped = true; closeStripInteraction(); stopStripMotion(); syncStripAmbient(); });
+  window.addEventListener('pageshow', function () { stripStopped = false; applyLayout(); });
+
   /* ---------- 控制面连续换位（静听 · 连续布局）----------
    * 跨断点时，周边槽位（模式 / 音量 / 红心）从「当前可见位置」滑到新位置：
    * 先量旧矩形，提交新布局，再用 WAAPI 把差值反向位移回零。可打断 —— 新一轮
@@ -7800,15 +8268,24 @@
     var h = r.height;
     // 迁窗的零预算是挂载中间态，不能当作 compact 提交，丢 RO 时会留下错误形态。
     if (!(w > 0 && h > 0)) { lyricNeedsMeasure = true; stopLyricFrames(); return; }
-    var next = w >= 720 ? 'wide' : (h < 560 ? 'compact' : 'long');
+    var next = choosePlayerLayout(w, h);
     /* 窄容器（真机聊天卡实测 ~312px）控制条走紧凑排布（R6）：
      * 只收排布不藏控件，断言里 control-visible:* 仍然逐个校验。 */
     player.setAttribute('data-bar', w < 420 ? 'tight' : 'loose');
     /* 控制面自身的换行点（400）与全局 data-bar（420）分开 —— 后者还管舞台文字。 */
     var density = w < 400 ? 'narrow' : 'normal';
     var formChanged = next !== layout;
+    var stripCrossing = formChanged && (next === 'strip' || layout === 'strip');
+    var beforeCover = stripCrossing && ctlForm !== null ? (stripMotion ? stripMotion.visual : layoutCoverRect()) : null;
+    if (formChanged) {
+      if (next === 'strip') prepareStrip();
+      closeStripInteraction();
+      stripLayout.hidden = next !== 'strip';
+      $('stage').inert = next === 'strip';
+      if (next === 'strip') controls.inert = true;
+    }
     var ctlChanged = formChanged || density !== ctlDensity;
-    if (ctlChanged && ctlForm !== null) {
+    if (ctlChanged && ctlForm !== null && !stripCrossing && next !== 'strip') {
       arrangeControls(next, density);   // 量旧位置 → 提交新属性 → 位移回零
     } else if (ctlChanged) {
       player.setAttribute('data-layout', next);
@@ -7826,11 +8303,14 @@
       // 首次卡若还开着，里面那句「＋ 在哪」也跟着布局重写
       if ($('firstRun') && !$('firstRun').hidden) fillFirstRunAddHint();
     }
+    if (next === 'strip') arrangeStrip(w);
     updateStageMetrics();
     refreshLyricVisibility(); sizeLyricPad();
     updateLyricIndex(true);
     if (lyricAlign) { measureAlignLines(); paintLyricAlign(); }
     positionSplitHandle();
+    if (beforeCover) startStripMotion(beforeCover);
+    renderStrip();
   }
   if (window.ResizeObserver) {
     new ResizeObserver(applyLayout).observe(frame);
@@ -8453,6 +8933,8 @@
   window.__playerSelfCheck = runSelfCheck;
   /* 自检钩子：涟漪可观测状态 + 测试时手动喂波（测试用）。 */
   window.__playerDebug = {
+    stripFlowState: function () { return { rate: stripFlowRate, settling: !!stripFlowRamp, raf: !!stripFlowRaf, gesture: stripSeekGesture ? (stripSeekGesture.dragging ? 'drag' : 'press') : null }; },
+    stripState: function () { return { layout: layout, hot: stripHot, volume: stripVolumeOpen, small: stripSmall, motion: !!stripMotion, motionAge: stripMotion ? performance.now() - stripMotion.start : 0, transitions: stripTransitions, samples: stripSampleCount, inHeight: STRIP_IN, outHeight: STRIP_OUT, duration: STRIP_MOTION_MS, pending: Object.keys(ambientPending) }; },
     ownerId: ownerId,
     audioOwner: function () { return { ownerId: ownerId, generation: ownerGeneration, record: ownerRecord, docLockHeld: ownerDocLockHeld, docLockSupported: ownerDocLockSupported, takeover: needsTakeover, playing: state.playing, paused: audio.paused, progress: liveProgress(), pendingSeek: pendingSeek, pendingAutoplay: pendingAutoplay, snapshot: snapshot() }; },
     requestPlay: requestPlay,

@@ -2893,3 +2893,178 @@ body.is-shot *::after {
 @media (prefers-reduced-motion: reduce) {
   .cover-fetch-spinner { animation-duration: 2s; }
 }
+
+/* Touch Bar · 完整的第四态。只重排呈现，根尺寸始终由宿主裁决。 */
+.strip-layout { display: none; position: absolute; inset: 0; --strip-y: max(0px, calc((100% - 64px) / 2)); }
+.player[data-layout="strip"] { overflow: hidden; }
+.player[data-layout="strip"] > .stage,
+.player[data-layout="strip"] > .controls,
+.player[data-layout="strip"] .player-backdrop { display: none; }
+.player[data-layout="strip"] > .strip-layout { display: block; min-width: 312px; }
+.player[data-layout="strip"] .cover-fetch-status { top: calc(var(--strip-y) + 4px); left: 16px; }
+/* 封面是「显示控件 / 展开次级组」的触控入口，但视觉上只是一张封面：
+ * 不再画那颗 ✕ 角标（它没有任何功能，用户点名去掉）。 */
+.strip-cover { position: absolute; left: 12px; top: var(--strip-y); width: 64px; height: 64px; padding: 0; border: 0; border-radius: 6px; overflow: hidden; background: var(--cover-image), var(--cover-fallback); background-size: cover; background-position: center; color: var(--hk-text); cursor: pointer; }
+.strip-cover:focus-visible, .strip-btn:focus-visible { outline: 2px solid var(--hk-accent); outline-offset: -2px; }
+.strip-bar { position: absolute; left: 88px; right: 12px; top: var(--strip-y); height: 64px; border-radius: 6px; overflow: hidden; isolation: isolate; background: var(--hk-surface); color: var(--hk-text); --strip-fill: 0%; }
+/* 音量浮层要能溢出条右缘，所以展开期间放开裁切；色场/进度层自己带圆角，不会露方角。 */
+.strip-layout[data-volume="1"] .strip-bar { overflow: visible; }
+.strip-bar:focus-visible { outline: 2px solid var(--hk-accent); outline-offset: -2px; }
+/* 底层复现旧版 100%：同一色场 + 38% 主题面纱，先 .10 再 .88 叠合。 */
+.strip-field { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+.strip-field-quiet::before, .strip-field-quiet::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background-image: linear-gradient(color-mix(in srgb, var(--hk-surface) 38%, transparent), color-mix(in srgb, var(--hk-surface) 38%, transparent)), var(--strip-field, var(--cover-fallback)); }
+.strip-field-quiet::before { opacity: .10; }
+.strip-field-quiet::after { opacity: .88; }
+/* 100% 是本轮浓度样片；后续只改 --strip-intensity（.4 = 40%），不动底色。 */
+.strip-bar { --strip-intensity: 1; }
+.strip-field-played { overflow: hidden; opacity: var(--strip-intensity); clip-path: inset(0 calc(100% - var(--strip-fill)) 0 0); }
+@supports (mask-image: linear-gradient(to right, black, transparent)) or (-webkit-mask-image: linear-gradient(to right, black, transparent)) {
+  .strip-field-played {
+    -webkit-mask-image: linear-gradient(to right, black max(0px, calc(var(--strip-fill) - clamp(20px, 6%, 44px))), transparent var(--strip-fill));
+    mask-image: linear-gradient(to right, black max(0px, calc(var(--strip-fill) - clamp(20px, 6%, 44px))), transparent var(--strip-fill));
+  }
+  .strip-bar[data-progress="full"] .strip-field-played { -webkit-mask-image: none; mask-image: none; }
+}
+.strip-bar[data-progress="empty"] .strip-field-played { visibility: hidden; }
+.player[data-strip-ambient="0"] .strip-field-played { visibility: hidden; }
+/* 上层透明彩光局部起伏；封面亮色在两个相反相位中交织，底层始终透出。 */
+.strip-field-played::before, .strip-field-played::after { content: ''; position: absolute; inset: -8px -20px; pointer-events: none; background-image: var(--strip-glow, none); opacity: .50; animation: strip-ambient-glow 7.6s ease-in-out -2.4s infinite paused; }
+.strip-field-played::after { opacity: .30; transform: scaleX(-1); animation: strip-ambient-haze 10.3s ease-in-out -6.7s infinite paused; }
+.strip-sparkles { position: absolute; inset: 0; pointer-events: none; -webkit-mask-image: linear-gradient(to bottom, transparent, black 6px, black 19px, #0004 26px, #0004 39px, black 48px, black 59px, transparent); mask-image: linear-gradient(to bottom, transparent, black 6px, black 19px, #0004 26px, #0004 39px, black 48px, black 59px, transparent); }
+/* 飞行轨道只承载星点，宽为已播放区；translate 的百分比因此是从前沿到左端的真实路程。
+ * 色场仍为完整尺寸，不随进度压缩。位移由浏览器动画驱动，不逐帧读写位置。 */
+.strip-flight { position: absolute; left: 0; top: var(--spark-top); width: var(--strip-fill); height: 1px; pointer-events: none; animation: strip-ambient-flow var(--flow-period) linear var(--flow-delay) infinite paused; }
+.strip-spark { position: absolute; left: calc(100% - 2px); top: 0; width: var(--spark-size); height: var(--spark-size); border-radius: 50%; pointer-events: none; color: var(--spark-color); background: color-mix(in srgb, var(--on-veil-paper) 72%, currentColor); box-shadow: 0 0 4px 1px currentColor, 0 0 10px 2px color-mix(in srgb, currentColor 58%, transparent); opacity: .65; animation: strip-ambient-spark var(--spark-period) ease-in-out var(--spark-delay) infinite paused; }
+.strip-flight:nth-child(6n+2) .strip-spark::before, .strip-flight:nth-child(6n+2) .strip-spark::after { content: ''; position: absolute; left: -3px; top: calc(50% - .5px); width: calc(100% + 6px); height: 1px; background: linear-gradient(to right, transparent, var(--on-veil-paper), transparent); opacity: .9; pointer-events: none; }
+.strip-flight:nth-child(6n+2) .strip-spark::after { transform: rotate(90deg); }
+.strip-layout[data-ambient-motion="1"] .strip-flight,
+.strip-layout[data-ambient-motion="1"] .strip-spark,
+.strip-layout[data-ambient-motion="1"] .strip-field-played::before,
+.strip-layout[data-ambient-motion="1"] .strip-field-played::after { animation-play-state: running; }
+.strip-bar[data-progress="empty"] .strip-flight,
+.strip-bar[data-progress="empty"] .strip-spark,
+.strip-bar[data-progress="empty"] .strip-field-played::before,
+.strip-bar[data-progress="empty"] .strip-field-played::after { animation-play-state: paused; }
+@keyframes strip-ambient-spark {
+  0%, 100% { opacity: .18; transform: scale(.65); }
+  28% { opacity: .68; }
+  55% { opacity: 1; transform: scale(1.25); }
+  78% { opacity: .38; }
+}
+@keyframes strip-ambient-flow {
+  0% { opacity: 0; transform: translate(0, 0); }
+  6% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-100%, var(--spark-y)); }
+}
+@keyframes strip-ambient-glow { 0%, 100% { opacity: .36; transform: translate(-10px, -2px) scale(1.02); } 50% { opacity: .76; transform: translate(10px, 3px) scale(1.08); } }
+@keyframes strip-ambient-haze { 0%, 100% { opacity: .24; transform: scaleX(-1) translateX(-8px); } 50% { opacity: .48; transform: scaleX(-1) translateX(12px); } }
+@media (max-width: 719px) { .strip-flight:nth-child(n+25) { display: none; } }
+.strip-layout[data-small="1"] .strip-flight:nth-child(n+13) { display: none; }
+/* 玻璃光片覆盖已播放区，右沿精确对齐真实进度；圆角继承底条，向左渐透。
+ * 小面积 backdrop 只折射下方色场/星光，身份、歌词与控件仍在其上，保持清晰。 */
+.strip-front { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; pointer-events: none; opacity: var(--strip-intensity); --strip-front-tint: color-mix(in srgb, var(--strip-star-1) 68%, var(--strip-star-4)); --strip-front-core: color-mix(in srgb, var(--strip-front-tint) 15%, var(--on-veil-paper)); }
+.strip-front-band, .strip-front-glow { position: absolute; left: var(--strip-fill); top: 0; height: 100%; border-radius: inherit; pointer-events: none; transform: translateX(-100%); transform-origin: right center; }
+.strip-front-band {
+  width: clamp(64px, 15%, 112px);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--on-veil-paper) 26%, transparent), transparent 22%, transparent 76%, color-mix(in srgb, var(--strip-front-core) 16%, transparent)), linear-gradient(to right, transparent, color-mix(in srgb, var(--strip-front-core) 18%, transparent) 30%, color-mix(in srgb, var(--strip-front-core) 44%, transparent) 78%, color-mix(in srgb, var(--strip-front-core) 68%, transparent));
+  box-shadow: inset -1.5px 0 0 color-mix(in srgb, var(--on-veil-paper) 92%, transparent), inset -8px 0 16px -8px color-mix(in srgb, var(--on-veil-paper) 48%, transparent), inset 0 1px 0 color-mix(in srgb, var(--on-veil-paper) 55%, transparent), inset 0 -1px 0 color-mix(in srgb, var(--on-veil-paper) 26%, transparent);
+  -webkit-backdrop-filter: blur(2px) saturate(1.12); backdrop-filter: blur(2px) saturate(1.12);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 32%); mask-image: linear-gradient(to right, transparent, black 32%);
+  opacity: .98; transition: opacity 1.4s ease-out;
+}
+.strip-front-glow { width: clamp(140px, 26%, 220px); background: radial-gradient(ellipse at right center, color-mix(in srgb, var(--strip-front-core) 48%, transparent), color-mix(in srgb, var(--strip-star-4) 20%, transparent) 38%, transparent 76%); opacity: 0; transform: translateX(-100%) scaleX(.8); transition: opacity 1.4s ease-out, transform 1.4s ease-out; }
+.strip-layout[data-seek-effect="press"] .strip-front-band, .strip-layout[data-seek-effect="drag"] .strip-front-band { opacity: 1; transition-duration: .12s; }
+.strip-layout[data-seek-effect="press"] .strip-front-glow { opacity: .68; transform: translateX(-100%) scaleX(1); transition-duration: .12s; }
+.strip-layout[data-seek-effect="drag"] .strip-front-glow { opacity: 1; transform: translateX(-100%) scaleX(1.3); transition-duration: .12s; }
+/* 快速点击可能同帧按下/松手：独立的释放辉光确保不会被合并成一次不可见的 0→0。 */
+.strip-layout[data-seek-effect="settle"][data-seek-kind="press"] .strip-front-glow { animation: strip-seek-tap-glow 1.4s ease-out both; }
+.strip-layout[data-seek-effect="settle"][data-seek-kind="drag"] .strip-front-glow { animation: strip-seek-drag-glow 1.4s ease-out both; }
+@keyframes strip-seek-tap-glow { 0% { opacity: .12; transform: translateX(-100%) scaleX(.8); } 10% { opacity: .68; transform: translateX(-100%) scaleX(1); } 100% { opacity: 0; transform: translateX(-100%) scaleX(.8); } }
+@keyframes strip-seek-drag-glow { from { opacity: 1; transform: translateX(-100%) scaleX(1.3); } to { opacity: 0; transform: translateX(-100%) scaleX(.8); } }
+.strip-bar[data-progress="empty"] .strip-front, .player[data-strip-ambient="0"] .strip-front { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) {
+  .strip-front-glow { animation: none !important; }
+  .strip-flight, .strip-spark, .strip-field-played::before, .strip-field-played::after { animation: none; transform: none; }
+  .strip-flight { transform: translateX(calc(0% - var(--spark-left))); }
+}
+.strip-seek { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; margin: 0; padding: 0; opacity: 0; cursor: ew-resize; touch-action: none; -webkit-appearance: none; appearance: none; }
+.strip-seek::-webkit-slider-thumb { -webkit-appearance: none; width: 0; height: 0; }
+.strip-seek:disabled { cursor: default; }
+/* 身份区在条内垂直居中的是「歌名+歌手」整块文字，而不是固定 34px 的盒：
+ * 歌手行为空（常见）时，歌名不能吊在盒顶。用 content 居中的 flex 栈。 */
+.strip-identity { position: absolute; z-index: 2; left: 12px; top: 0; height: 100%; display: flex; flex-direction: column; justify-content: center; width: 112px; pointer-events: none; text-align: left; }
+.strip-identity strong, .strip-identity span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 400; }
+.strip-identity strong { font-size: 13px; font-weight: 500; line-height: 18px; }
+.strip-identity span { font-size: 11px; line-height: 16px; color: var(--hk-text); opacity: .82; }
+/* 歌词与控件共用同一根轴线：**条中线**（用户拍板，允许极小偏右）。
+ * 左边界恒为 136px（身份区右缘+12），所以长句撑满也绝不会压住歌名/歌手；
+ * 右留白 --strip-right 由 arrangeStrip() 按可用宽度算：宽容器=136（盒对称 → 轴=条中线），
+ * 越窄留白收得越多（轴随之右偏），窄到极限才回落 10px 并改左对齐 —— 保证可读宽度。 */
+.strip-context { position: absolute; z-index: 2; left: 136px; right: var(--strip-right, 136px); top: 0; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.strip-lyric { max-width: 100%; min-width: 0; font-size: 13px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: opacity 130ms ease, transform 180ms ease; }
+/* 横条只显示正在唱的这一句，所以它本身就是「当前句」：给它和竖卡当前句同一套强调色 +
+ * 高光描边（只动颜色/阴影，不动字号字距，不会重排也不抖）。没词时空字符串不发光。 */
+.strip-lyric:not(:empty) { color: color-mix(in srgb, var(--hl-accent) 52%, var(--hk-text)); text-shadow: var(--strip-lyric-glow); }
+.strip-controls { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: var(--strip-gap, 10px); opacity: 0; visibility: hidden; pointer-events: none; }
+.strip-controls .strip-btn, .strip-controls input { pointer-events: none; }
+.strip-layout[data-hot="1"] .strip-lyric { opacity: 0; transform: translateY(-4px); }
+.strip-layout[data-hot="1"] .strip-controls { opacity: 1; visibility: visible; }
+.strip-layout[data-hot="1"] .strip-controls .strip-btn,
+.strip-layout[data-hot="1"] .strip-controls input { pointer-events: auto; }
+/* 控件按钮沿用仓库既有那套（.icon-btn / .controls .transport > .icon-btn / .play-btn）：
+ * 默认透明底 + 次级字色，悬停才起底 + 一圈光，按下缩一点。条有 overflow:hidden，
+ * 所以光用内透为主的 --hv-ring-icon（外扩收一档），不会被容器切掉。
+ * 不再给 transport / volume 分组加灰底方块 —— 那套不是本 App 的风格。 */
+.strip-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; flex: 0 0 32px; margin: 0; padding: 0; border: 0; border-radius: var(--radius-s); color: var(--hk-muted); background: transparent; cursor: pointer; }
+.strip-btn .icon { width: 18px; height: 18px; }
+.strip-btn, .strip-cover { transition: background-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease, transform 0.14s cubic-bezier(0.22, 0.61, 0.36, 1); }
+.strip-btn:hover { background: var(--hv-surface-strong); color: var(--hk-text); box-shadow: var(--hv-ring-icon); }
+.strip-btn:active { transform: scale(0.96); }
+.strip-btn:disabled { opacity: .45; cursor: default; }
+.strip-btn[aria-pressed="true"] { color: var(--hl-accent); }
+.strip-btn[aria-pressed="true"] .icon { fill: currentColor; }
+.strip-btn.strip-play { border-radius: 50%; background: var(--hk-accent); color: var(--hk-on-accent); }
+.strip-btn.strip-play .icon { fill: currentColor; stroke-width: 1.5; }
+.strip-btn.strip-play:hover { filter: brightness(1.04); box-shadow: var(--hv-ring-strong); }
+.strip-btn.strip-play:active { transform: scale(0.96); filter: brightness(0.95); }
+.strip-cover:active { transform: scale(0.97); }
+.strip-transport { display: flex; align-items: center; gap: 2px; }
+.strip-volume { position: relative; display: flex; align-items: center; flex: 0 0 auto; gap: 0; }
+/* 音量条是**向右展开的浮层**：绝对定位 → 不参与 flex 排布，展开时不会挤压/推动左侧控件；
+ * 只动 transform/opacity → 不再逐帧改 width（那会重排兄弟节点，是「卡卡的」和「挤左边」的根因）。 */
+.strip-volume-reveal { position: absolute; left: calc(100% + 4px); top: 50%; z-index: 5; display: flex; align-items: center; gap: 6px; width: 120px; height: 32px; padding: 0 6px; border-radius: var(--radius-s); background: var(--hk-surface); border: 1px solid var(--hk-hairline); box-shadow: var(--hk-pop-shadow); opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-50%) translateX(-6px) scaleX(.84); transform-origin: left center; transition: opacity .14s ease, transform .2s cubic-bezier(.22,.61,.36,1), visibility 0s linear .2s; }
+.strip-layout[data-volume="1"] .strip-volume-reveal { opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(-50%) translateX(0) scaleX(1); transition: opacity .14s ease, transform .2s cubic-bezier(.22,.61,.36,1), visibility 0s; }
+.strip-volume-reveal .range { flex: 1 1 auto; width: auto; min-width: 0; height: 28px; margin: 0; }
+.strip-volume-reveal output { flex: 0 0 30px; font-size: 11px; font-variant-numeric: tabular-nums; }
+.strip-time { position: absolute; z-index: 2; bottom: 2px; height: 14px; line-height: 14px; font-size: 11px; font-variant-numeric: tabular-nums; pointer-events: none; opacity: 0; }
+.strip-now { left: 12px; }
+.strip-total { right: 10px; }
+.strip-layout[data-hot="1"] .strip-time { opacity: .85; }
+/* 宽度不足**不折叠、不做二级面板**：由 JS 按优先级逐个丢按钮（最后只剩播放键）。
+ * 被丢的按钮用 hidden 属性隐藏；条内控件仍居中，装不下时轴自动右偏。 */
+/* 被丢的按钮要真的消失：用后代选择器（prev/next 嵌在 .strip-transport 里），
+ * 且要压过 .strip-btn 的 display —— 否则 hidden 只改 property、画面还在。 */
+.strip-controls [hidden] { display: none !important; }
+/* 最窄档（<480）：靠左紧接身份区，间距回落 4px。 */
+.strip-layout[data-small="1"] .strip-controls { gap: 4px; }
+.strip-layout[data-small="1"] .strip-context { right: 10px; }
+.strip-layout[data-small="1"] .strip-controls .strip-btn { width: 30px; height: 32px; flex-basis: 30px; }
+.layout-cover-ghost { position: absolute; z-index: 40; pointer-events: none; background: var(--cover-image), var(--cover-fallback); background-size: cover; background-position: left center; }
+.player[data-layout="strip"] > .toast { top: 0; bottom: auto; right: 112px; max-width: calc(100% - 124px); font-size: 11px; padding: 5px 8px; }
+@media (prefers-reduced-motion: reduce) {
+  .strip-layout *, .strip-layout *::after { transition: none !important; }
+  .strip-btn:active, .strip-cover:active, .strip-btn.strip-play:active { transform: none !important; }
+}
+.strip-layout { --strip-field: var(--strip-field-dark, var(--cover-fallback)); --strip-glow: var(--strip-glow-dark, none); --strip-star-0: var(--strip-star-0-dark, var(--hk-muted)); --strip-star-1: var(--strip-star-1-dark, var(--hk-muted)); --strip-star-2: var(--strip-star-2-dark, var(--hk-muted)); --strip-star-3: var(--strip-star-3-dark, var(--hk-muted)); --strip-star-4: var(--strip-star-4-dark, var(--hk-muted)); --strip-star-5: var(--strip-star-5-dark, var(--hk-muted)); }
+.player[data-tone="light"] .strip-layout { --strip-field: var(--strip-field-light, var(--cover-fallback)); --strip-glow: var(--strip-glow-light, none); --strip-star-0: var(--strip-star-0-light, var(--hk-muted)); --strip-star-1: var(--strip-star-1-light, var(--hk-muted)); --strip-star-2: var(--strip-star-2-light, var(--hk-muted)); --strip-star-3: var(--strip-star-3-light, var(--hk-muted)); --strip-star-4: var(--strip-star-4-light, var(--hk-muted)); --strip-star-5: var(--strip-star-5-light, var(--hk-muted)); }
+/* 条内当前句高光：深底用亮芯，浅底用墨芯，与竖卡 --lyric-glow 同一套语义。 */
+.strip-layout { --strip-lyric-glow:
+    0 0 1px color-mix(in srgb, var(--hl-accent) 74%, var(--on-veil-paper)),
+    0 0 6px color-mix(in srgb, var(--hl-accent) 56%, transparent),
+    0 0 14px color-mix(in srgb, var(--hl-accent) 30%, transparent); }
+.player[data-tone="light"] .strip-layout { --strip-lyric-glow:
+    0 0 1px color-mix(in srgb, var(--hl-accent) 60%, var(--on-veil-ink)),
+    0 0 5px color-mix(in srgb, var(--hl-accent) 38%, transparent),
+    0 0 11px color-mix(in srgb, var(--hl-accent) 20%, transparent); }
+.player[data-morph="1"] .strip-cover, .player[data-morph="1"] #cover { opacity: 0; }

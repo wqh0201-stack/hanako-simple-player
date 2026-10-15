@@ -20,6 +20,9 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { mergeLibrarySnapshot } from '../lib/library.js';
 import { createAudioOwner } from '../lib/audio-owner.js';
+import { verifyTouchbar } from './verify-touchbar.mjs';
+import { verifyAlbumAmbient } from './verify-album-ambient.mjs';
+import { verifyStripFlow } from './verify-strip-flow.mjs';
 
 const require = createRequire(import.meta.url);
 const puppeteer = require(process.env.PUPPETEER_CORE || '/Volumes/SSD/hanadesk/鹈鹕/motion-reel/node_modules/puppeteer-core');
@@ -263,6 +266,19 @@ const server = http.createServer((req, res) => {
   }
 
   // 假后端
+  if (p === API + '/_fixture/touchbar-color.svg') {
+    const palette = u.searchParams.get('palette');
+    const ambientPalettes = {
+      pink: ['#e85991','#f6c3ba','#f08677','#d84083','#ed8f9d','#e9b090'],
+      green: ['#239d76','#c8d96f','#4fbd9d','#147b65','#8cc363','#3baab2'],
+      blue: ['#3184cf','#8568cd','#6bc8d0','#255eaa','#ba7fb9','#407eab'],
+      dark: ['#151a27','#39283a','#222c48','#18373c','#413229','#242136']
+    };
+    const colors = ambientPalettes[palette] || (palette === 'gray' ? ['#333','#777','#aaa','#ccc','#999','#555'] : palette === 'other' ? ['#302050','#803090','#e05090','#301080','#5040a0','#b060d0'] : ['#00b8bd','#ffe36c','#ff704f','#236fa9','#f0af52','#af62be']);
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80">' + colors.map((c,i)=>`<rect x="${i%3*40}" y="${i<3?0:40}" width="40" height="40" fill="${c}"/>`).join('') + '</svg>';
+    setTimeout(()=>{res.writeHead(200,{'Content-Type':'image/svg+xml'});res.end(palette==='fail'?'invalid image':svg);},Number(u.searchParams.get('delay'))||0);
+    return;
+  }
   if (p === API + '/api/lists/allocate') {
     let body = '';
     req.on('data', (c) => (body += c));
@@ -1763,6 +1779,29 @@ async function verifyMoodLists() {
   await page.close();
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
 }
+const runTouchbar = () => verifyTouchbar({ newPage, BASE, API, UI_BASE, outDir, assert, sleep, clickTab, report });
+if (process.argv.includes('--strip-flow-only')) {
+  await verifyStripFlow({ newPage, BASE, API, UI_BASE, outDir, assert, sleep, clickTab, report });
+  fs.writeFileSync(path.join(outDir, 'verify-strip-flow.json'), JSON.stringify(report, null, 2));
+  console.log(JSON.stringify({ assertions: `${report.assertions.filter(a => a.ok).length}/${report.assertions.length}`, failed: report.assertions.filter(a => !a.ok), runtimeErrors: report.runtimeErrors, outDir }, null, 2));
+  await browser.close(); server.closeAllConnections(); server.close();
+  process.exit(report.assertions.some(a => !a.ok) || report.runtimeErrors.length ? 1 : 0);
+}
+if (process.argv.includes('--album-ambient-only')) {
+  await verifyAlbumAmbient({ newPage, BASE, API, UI_BASE, outDir, assert, sleep, clickTab, report });
+  await verifyStripFlow({ newPage, BASE, API, UI_BASE, outDir, assert, sleep, clickTab, report });
+  fs.writeFileSync(path.join(outDir, 'verify-album-ambient.json'), JSON.stringify(report, null, 2));
+  console.log(JSON.stringify({ assertions: `${report.assertions.filter(a => a.ok).length}/${report.assertions.length}`, failed: report.assertions.filter(a => !a.ok), runtimeErrors: report.runtimeErrors, outDir }, null, 2));
+  await browser.close(); server.closeAllConnections(); server.close();
+  process.exit(report.assertions.some(a => !a.ok) || report.runtimeErrors.length ? 1 : 0);
+}
+if (process.argv.includes('--touchbar-only')) {
+  await runTouchbar();
+  fs.writeFileSync(path.join(outDir, 'verify-touchbar.json'), JSON.stringify(report, null, 2));
+  console.log(JSON.stringify({ assertions: `${report.assertions.filter(a => a.ok).length}/${report.assertions.length}`, failed: report.assertions.filter(a => !a.ok), runtimeErrors: report.runtimeErrors, outDir }, null, 2));
+  await browser.close(); server.closeAllConnections(); server.close();
+  process.exit(report.assertions.some(a => !a.ok) || report.runtimeErrors.length ? 1 : 0);
+}
 if (process.argv.includes('--queue-management-only')) {
   await verifySongEntryCover();
   await verifyQueueManagement();
@@ -1817,6 +1856,8 @@ if (process.argv.includes('--lyrics-only')) {
   await browser.close(); server.close();
   process.exit(report.assertions.some((a) => !a.ok) || report.runtimeErrors.length ? 1 : 0);
 }
+
+await runTouchbar();
 
 /* ============ 1) 六尺寸 × 浅深：自检 + 截图 ============ */
 const CASES = [

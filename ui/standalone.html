@@ -25,6 +25,75 @@
       <span class="cover-fetch-spinner" aria-hidden="true"></span>
     </div>
 
+    <!-- 横条是同一播放器的第四种呈现；按钮调用已有控制器，不创建音频实例。 -->
+    <section class="strip-layout" id="stripLayout" aria-label="横条播放器" hidden>
+      <button class="strip-cover" id="stripCover" type="button" aria-label="显示播放控件" title="显示播放控件"></button>
+      <div class="strip-bar" id="stripBar" tabindex="0" role="group" aria-label="歌曲进度与播放控制">
+        <div class="strip-field strip-field-quiet" aria-hidden="true"></div>
+        <div class="strip-field strip-field-played" id="stripPlayed" aria-hidden="true">
+          <div class="strip-sparkles">
+            <span class="strip-flight" style="--spark-left:3.00%;--spark-top:15%;--spark-size:1.4px;--spark-period:2.400s;--spark-delay:-0.000s;--spark-x:4px;--spark-y:-2px;--spark-color:var(--strip-star-0);--flow-period:5.200s;--flow-delay:-0.182s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:64.80%;--spark-top:79%;--spark-size:2.3px;--spark-period:2.771s;--spark-delay:-0.839s;--spark-x:-3px;--spark-y:3px;--spark-color:var(--strip-star-1);--flow-period:5.365s;--flow-delay:-3.504s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:32.61%;--spark-top:28%;--spark-size:1.1px;--spark-period:3.142s;--spark-delay:-1.678s;--spark-x:6px;--spark-y:2px;--spark-color:var(--strip-star-2);--flow-period:5.530s;--flow-delay:-1.499s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:94.41%;--spark-top:84%;--spark-size:1.8px;--spark-period:3.513s;--spark-delay:-2.517s;--spark-x:-5px;--spark-y:-3px;--spark-color:var(--strip-star-3);--flow-period:5.696s;--flow-delay:-5.064s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:62.21%;--spark-top:14%;--spark-size:2.8px;--spark-period:3.884s;--spark-delay:-3.356s;--spark-x:3px;--spark-y:4px;--spark-color:var(--strip-star-4);--flow-period:5.861s;--flow-delay:-2.972s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:30.02%;--spark-top:76%;--spark-size:1.5px;--spark-period:4.255s;--spark-delay:-4.195s;--spark-x:-4px;--spark-y:-2px;--spark-color:var(--strip-star-5);--flow-period:6.026s;--flow-delay:-0.754s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:91.82%;--spark-top:15%;--spark-size:1.4px;--spark-period:4.626s;--spark-delay:-5.034s;--spark-x:4px;--spark-y:-2px;--spark-color:var(--strip-star-0);--flow-period:6.191s;--flow-delay:-4.601s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:59.62%;--spark-top:79%;--spark-size:2.3px;--spark-period:4.997s;--spark-delay:-5.873s;--spark-x:-3px;--spark-y:3px;--spark-color:var(--strip-star-1);--flow-period:6.356s;--flow-delay:-2.296s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:27.43%;--spark-top:28%;--spark-size:1.1px;--spark-period:5.368s;--spark-delay:-0.812s;--spark-x:6px;--spark-y:2px;--spark-color:var(--strip-star-2);--flow-period:6.522s;--flow-delay:-6.386s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:89.23%;--spark-top:84%;--spark-size:1.8px;--spark-period:5.739s;--spark-delay:-1.651s;--spark-x:-5px;--spark-y:-3px;--spark-color:var(--strip-star-3);--flow-period:6.687s;--flow-delay:-3.994s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:57.03%;--spark-top:14%;--spark-size:2.8px;--spark-period:2.610s;--spark-delay:-2.490s;--spark-x:3px;--spark-y:4px;--spark-color:var(--strip-star-4);--flow-period:6.852s;--flow-delay:-1.476s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:24.84%;--spark-top:76%;--spark-size:1.5px;--spark-period:2.981s;--spark-delay:-3.329s;--spark-x:-4px;--spark-y:-2px;--spark-color:var(--strip-star-5);--flow-period:7.017s;--flow-delay:-5.848s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:86.64%;--spark-top:15%;--spark-size:1.4px;--spark-period:3.352s;--spark-delay:-4.168s;--spark-x:4px;--spark-y:-2px;--spark-color:var(--strip-star-0);--flow-period:7.182s;--flow-delay:-3.242s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:54.44%;--spark-top:79%;--spark-size:2.3px;--spark-period:3.723s;--spark-delay:-5.007s;--spark-x:-3px;--spark-y:3px;--spark-color:var(--strip-star-1);--flow-period:7.348s;--flow-delay:-0.510s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:22.25%;--spark-top:28%;--spark-size:1.1px;--spark-period:4.094s;--spark-delay:-5.846s;--spark-x:6px;--spark-y:2px;--spark-color:var(--strip-star-2);--flow-period:7.513s;--flow-delay:-5.165s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:84.05%;--spark-top:84%;--spark-size:1.8px;--spark-period:4.465s;--spark-delay:-0.785s;--spark-x:-5px;--spark-y:-3px;--spark-color:var(--strip-star-3);--flow-period:7.678s;--flow-delay:-2.346s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:51.85%;--spark-top:14%;--spark-size:2.8px;--spark-period:4.836s;--spark-delay:-1.624s;--spark-x:3px;--spark-y:4px;--spark-color:var(--strip-star-4);--flow-period:7.843s;--flow-delay:-7.244s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:19.66%;--spark-top:76%;--spark-size:1.5px;--spark-period:5.207s;--spark-delay:-2.463s;--spark-x:-4px;--spark-y:-2px;--spark-color:var(--strip-star-5);--flow-period:8.008s;--flow-delay:-4.337s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:81.46%;--spark-top:15%;--spark-size:1.4px;--spark-period:5.578s;--spark-delay:-3.302s;--spark-x:4px;--spark-y:-2px;--spark-color:var(--strip-star-0);--flow-period:8.174s;--flow-delay:-1.305s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:49.26%;--spark-top:79%;--spark-size:2.3px;--spark-period:2.449s;--spark-delay:-4.141s;--spark-x:-3px;--spark-y:3px;--spark-color:var(--strip-star-1);--flow-period:8.339s;--flow-delay:-6.485s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:17.07%;--spark-top:28%;--spark-size:1.1px;--spark-period:2.820s;--spark-delay:-4.980s;--spark-x:6px;--spark-y:2px;--spark-color:var(--strip-star-2);--flow-period:5.304s;--flow-delay:-2.099s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:78.87%;--spark-top:84%;--spark-size:1.8px;--spark-period:3.191s;--spark-delay:-5.819s;--spark-x:-5px;--spark-y:-3px;--spark-color:var(--strip-star-3);--flow-period:5.469s;--flow-delay:-0.075s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:46.67%;--spark-top:14%;--spark-size:2.8px;--spark-period:3.562s;--spark-delay:-0.758s;--spark-x:3px;--spark-y:4px;--spark-color:var(--strip-star-4);--flow-period:5.634s;--flow-delay:-3.560s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:14.48%;--spark-top:76%;--spark-size:1.5px;--spark-period:3.933s;--spark-delay:-1.597s;--spark-x:-4px;--spark-y:-2px;--spark-color:var(--strip-star-5);--flow-period:5.800s;--flow-delay:-1.449s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:76.28%;--spark-top:15%;--spark-size:1.4px;--spark-period:4.304s;--spark-delay:-2.436s;--spark-x:4px;--spark-y:-2px;--spark-color:var(--strip-star-0);--flow-period:5.965s;--flow-delay:-5.176s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:44.08%;--spark-top:79%;--spark-size:2.3px;--spark-period:4.675s;--spark-delay:-3.275s;--spark-x:-3px;--spark-y:3px;--spark-color:var(--strip-star-1);--flow-period:6.130s;--flow-delay:-2.978s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:11.89%;--spark-top:28%;--spark-size:1.1px;--spark-period:5.046s;--spark-delay:-4.114s;--spark-x:6px;--spark-y:2px;--spark-color:var(--strip-star-2);--flow-period:6.295s;--flow-delay:-0.654s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:73.69%;--spark-top:84%;--spark-size:1.8px;--spark-period:5.417s;--spark-delay:-4.953s;--spark-x:-5px;--spark-y:-3px;--spark-color:var(--strip-star-3);--flow-period:6.460s;--flow-delay:-4.664s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:41.50%;--spark-top:14%;--spark-size:2.8px;--spark-period:5.788s;--spark-delay:-5.792s;--spark-x:3px;--spark-y:4px;--spark-color:var(--strip-star-4);--flow-period:6.626s;--flow-delay:-2.252s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:9.30%;--spark-top:76%;--spark-size:1.5px;--spark-period:2.659s;--spark-delay:-0.731s;--spark-x:-4px;--spark-y:-2px;--spark-color:var(--strip-star-5);--flow-period:6.791s;--flow-delay:-6.506s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:71.10%;--spark-top:15%;--spark-size:1.4px;--spark-period:3.030s;--spark-delay:-1.570s;--spark-x:4px;--spark-y:-2px;--spark-color:var(--strip-star-0);--flow-period:6.956s;--flow-delay:-4.007s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:38.91%;--spark-top:79%;--spark-size:2.3px;--spark-period:3.401s;--spark-delay:-2.409s;--spark-x:-3px;--spark-y:3px;--spark-color:var(--strip-star-1);--flow-period:7.121s;--flow-delay:-1.382s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:6.71%;--spark-top:28%;--spark-size:1.1px;--spark-period:3.772s;--spark-delay:-3.248s;--spark-x:6px;--spark-y:2px;--spark-color:var(--strip-star-2);--flow-period:7.286s;--flow-delay:-5.917s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:68.51%;--spark-top:84%;--spark-size:1.8px;--spark-period:4.143s;--spark-delay:-4.087s;--spark-x:-5px;--spark-y:-3px;--spark-color:var(--strip-star-3);--flow-period:7.452s;--flow-delay:-3.205s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:36.32%;--spark-top:14%;--spark-size:2.8px;--spark-period:4.514s;--spark-delay:-4.926s;--spark-x:3px;--spark-y:4px;--spark-color:var(--strip-star-4);--flow-period:7.617s;--flow-delay:-0.367s"><span class="strip-spark"></span></span>
+            <span class="strip-flight" style="--spark-left:4.12%;--spark-top:76%;--spark-size:1.5px;--spark-period:4.885s;--spark-delay:-5.765s;--spark-x:-4px;--spark-y:-2px;--spark-color:var(--strip-star-5);--flow-period:7.782s;--flow-delay:-5.184s"><span class="strip-spark"></span></span>
+          </div>
+        </div>
+        <div class="strip-front" id="stripFront" aria-hidden="true"><span class="strip-front-glow"></span><span class="strip-front-band"></span></div>
+        <input class="strip-seek" id="stripSeek" type="range" min="0" max="0" step="0.1" value="0" aria-label="播放进度" disabled>
+        <div class="strip-identity" id="stripIdentity"><strong id="stripTitle"></strong><span id="stripArtist"></span></div>
+        <div class="strip-context">
+          <span class="strip-lyric" id="stripLyric"></span>
+          <div class="strip-controls" id="stripControls" inert aria-hidden="true">
+            <button class="strip-btn strip-aux" id="stripMode" type="button" data-strip-proxy="modeBtn" aria-label="播放模式"></button>
+            <div class="strip-transport">
+              <button class="strip-btn strip-aux" id="stripPrev" type="button" data-strip-proxy="prevBtn" aria-label="上一首"><svg class="icon" aria-hidden="true"><use href="#i-prev"></use></svg></button>
+              <button class="strip-btn strip-play" id="stripPlay" type="button" data-strip-proxy="playBtn" aria-label="播放"><svg class="icon" aria-hidden="true"><use href="#i-play"></use></svg></button>
+              <button class="strip-btn strip-aux" id="stripNext" type="button" data-strip-proxy="nextBtn" aria-label="下一首"><svg class="icon" aria-hidden="true"><use href="#i-next"></use></svg></button>
+            </div>
+            <button class="strip-btn strip-aux" id="stripFav" type="button" data-strip-proxy="favBtn" aria-label="加入我的喜欢" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg></button>
+            <div class="strip-volume" id="stripVolumeGroup">
+              <button class="strip-btn" id="stripVolumeBtn" type="button" aria-label="展开音量" aria-expanded="false" aria-controls="stripVolumeReveal"></button>
+              <div class="strip-volume-reveal" id="stripVolumeReveal" inert><input class="range" id="stripVol" type="range" min="0" max="100" value="72" aria-label="音量"><output id="stripVolValue">72%</output></div>
+            </div>
+          </div>
+        </div>
+        <span class="strip-time strip-now" id="stripNow"></span><span class="strip-time strip-total" id="stripTotal"></span>
+      </div>
+    </section>
+    <div class="layout-cover-ghost" id="layoutCoverGhost" aria-hidden="true" hidden></div>
+
     <section class="stage" id="stage">
       <!-- 前景：标题、歌词与涟漪。队列/搜索以主题表面盖在连续背景上。 -->
       <div class="scene" id="scene">
@@ -507,7 +576,7 @@
 </defs></svg>
 
 <script src="app.js" defer></script>
-<script>window.__HANA_BUILD = "1003131710";</script>
+<script>window.__HANA_BUILD = "1003131726";</script>
 <script type="module">
   import { hana } from "./sdk.js";
   window.hana = hana;

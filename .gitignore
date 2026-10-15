@@ -11,6 +11,16 @@ dist/
 # release 包（由 tools/pack-release.mjs 生成）
 dist-release/
 
+# 交接稿里的大体积证据（截图 / 录像 / 帧），只留 .md 交接稿
+# （本轮横条/氛围验收产出上百张 PNG，上百 MB，不入库）
+docs/player-ui/handoffs/album-ambient/
+docs/player-ui/handoffs/album-ambient-flow/
+docs/player-ui/handoffs/album-ambient-flow-fast/
+docs/player-ui/handoffs/album-ambient-glass/
+docs/player-ui/handoffs/album-ambient-glass-bright/
+docs/player-ui/handoffs/album-ambient-strong/
+docs/player-ui/handoffs/touchbar/
+
 # 本地工具状态（impeccable 评审产物等，不入库）
 .impeccable/
 
