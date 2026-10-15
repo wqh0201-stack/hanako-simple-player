@@ -50,6 +50,18 @@
 <br><sub><b>沉浸式大卡</b> · 歌词全屏</sub>
 </td>
 </tr>
+<tr>
+<td colspan="2" align="center">
+<a href="docs/showcase/07-touchbar-dark.png"><img src="docs/showcase/thumb/07-touchbar-dark.png" width="100%" alt="横条形态 · 深色"></a>
+<br><sub><b>横条形态</b> · 深色主题 · 歌词态（把窗拉扁后的第四种呈现）</sub>
+</td>
+</tr>
+<tr>
+<td colspan="2" align="center">
+<a href="docs/showcase/08-touchbar-light.png"><img src="docs/showcase/thumb/08-touchbar-light.png" width="100%" alt="横条形态 · 浅色"></a>
+<br><sub><b>横条形态</b> · 浅色主题 · 控件态</sub>
+</td>
+</tr>
 </table>
 
 ## 特色
