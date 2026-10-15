@@ -38,9 +38,18 @@
 - **`boot()` 早于 `sdk.js` 执行** → `window.hana` 未就绪、读存储永远 null，
   回写默认值会把已存的真数据冲掉（踩过：歌单改名不持久化）。
   读存储前先等 SDK 就绪。
-- **卡片 iframe 的顶部两角要自己补圆**（`border-radius: 14px 14px 0 0`）——
-  宿主只在独立窗裁圆，卡片里不裁；角上露出的颜色必须给卡面色 `--hk-surface`，
-  用页面色 `--hk-bg` 会露出一块深一号的补丁。
+- **应用不画圆角，圆角全交宿主**（2026-10-15 起，`ui/style.css` 已把
+  `border-radius: 14px 14px 0 0` 与 `body[data-shell="window"] .player { border-radius: 0 }` 全删）。
+  根因：自画 14px 顶角时，切掉的三角由 `.frame { background: var(--hk-surface) }` 垫住，
+  而浅色主题（warm-paper）下 `--hk-surface` 近白（#FCFAF5），压在深色封面上就从四角漏出
+  一小块白牙 —— **卡片形态与独立窗形态都中招**（Windows 实机验证：去掉后白边完全消失）。
+  宿主本身会裁卡面，应用再画一道是多余的，反而把垫层从角上露出来。别把自画圆角加回来。
+  断言守卫：`top-corners-rounded`（verify-ui.mjs，两壳 tl / bl 全 === 0）
+  与页面内自检 `root-corners-and-no-shadow`（ui/app.js，四角 0 + 无外阴影/描边）。
+- **（已推翻）「卡片 iframe 的顶部两角要自己补圆」** —— 2026-10-15 前的老口径，
+  当时判「宿主只在独立窗裁圆，卡片里不裁」，所以自画 14px 并用 `--hk-surface` 垫角。
+  Windows 实机证明卡片形态同样漏白牙，这条连同「跟随 `--corner-radius-scale`」的说法
+  一起作废，以「圆角全交宿主」为准。
 - **沙箱禁用**：`position:fixed`、直接 `localStorage`、`window.open`、表单提交、
   重复文档外壳、字号 < 11px。细节以 `hana-app-creator` 技能为准。
 

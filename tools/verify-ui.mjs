@@ -1606,15 +1606,6 @@ async function verifyMoodLists() {
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
 }
 if (!process.argv.includes('--ripple-only') && !process.argv.includes('--song-only')) {
-if (process.argv.includes('--audio-handoff-timing-only')) {
-  try {
-    const { probeAudioHandoff } = await import('./probe-audio-handoff.mjs');
-    const timing = await probeAudioHandoff({ newPage, BASE, API, UI_BASE, sleep, clickTab });
-    fs.writeFileSync(path.join(outDir, 'audio-handoff-timing.json'), JSON.stringify({ ...timing, runtimeErrors: report.runtimeErrors }, null, 2));
-    console.log(JSON.stringify({ summary: timing.summary, runtimeErrors: report.runtimeErrors, outDir }, null, 2));
-  } finally { await browser.close(); server.closeAllConnections(); server.close(); }
-  process.exit(report.runtimeErrors.length ? 1 : 0);
-}
 if (process.argv.includes('--lyric-lifecycle-only')) {
   await verifyLyricLifecycle();
   fs.writeFileSync(path.join(outDir, 'verify-lyric-lifecycle.json'), JSON.stringify(report, null, 2));
@@ -4928,14 +4919,14 @@ const AMBIENT_PROBE = async () => {
       return { content: cs.content, bg: (cs.backgroundImage || 'none').slice(0, 60) };
     })(),
     surfaceRGB: hex(rs.getPropertyValue('--hk-surface')),
-    /* .frame 的背景色 = 圆角处露出来的颜色（.player 满铺盖住其余部分）——
-     * 必须是卡面色 --hk-surface，不能是页面色 --hk-bg。 */
+    /* .frame 的 computed 背景色：垫底色，现不从任何角露出，但仍是「若露出必须给卡面色」的守卫 */
     frameBg: (() => {
       const m = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/.exec(getComputedStyle(document.querySelector('.frame')).backgroundColor || '');
       return m ? [+m[1], +m[2], +m[3]] : null;
     })(),
-    /* 顶部圆角：卡片壳自己补（宿主只在独立窗里裁）。顺手把 data-shell 切成 window 再读一次，
-     * 不用额外开页（开页会写 playback-state，撞后面的生命周期用例）。 */
+    /* 顶部圆角：一律 0，App 不画（2026-10-15 起，圆角全交宿主）。
+     * 顺手把 data-shell 切成 window 再读一次，不用额外开页（开页会写 playback-state，
+     * 撞后面的生命周期用例）。 */
     corners: (() => {
       const read = () => {
         const cs = getComputedStyle(player);
@@ -5035,14 +5026,18 @@ let ambient = {};
     ambient.dark.bottomFade.content === 'none' && ambient.dark.bottomFade.bg === 'none',
     JSON.stringify(ambient.dark.bottomFade));
 
-  /* 顶部圆角（2026-10-09）：宿主只在独立窗/浏览器视图里把 App 面裁圆，聊天卡片里不裁 ——
-   * App 自己补上，固定 14px（宿主不转发 --radius-chat-surface；只转发 8/6px 那两个，
-   * 比卡片容器那道弧小一半，真机上判为粗糙）。断言：两壳上两角都是这一档、下两角仍直角。
-   * 另断言角上露出的颜色 = 卡面色（--hk-surface），不是页面色。 */
+  /* 顶部圆角：App 一律不画（2026-10-15，罐头拍板：宿主会裁）。
+   * 曾自画 14px 顶角、用 .frame 的 --hk-surface 垫住切掉的三角 —— 浅色主题下 --hk-surface
+   * 近白（#FCFAF5），压在深色封面上就从四角漏出白牙，卡片与独立窗都中招
+   * （Windows 实机验证：去掉后白边完全消失）。宿主自己会裁卡面，应用再画一道是多余的。
+   * 两壳的 tl / bl 都必须是 0。别把自画圆角加回来。 */
   assert('top-corners-rounded',
-    ambient.dark.corners.card.tl >= 14 && ambient.dark.corners.card.bl === 0 &&
-    ambient.dark.corners.win.tl >= 14,
+    ambient.dark.corners.card.tl === 0 && ambient.dark.corners.card.bl === 0 &&
+    ambient.dark.corners.win.tl === 0 && ambient.dark.corners.win.bl === 0,
     JSON.stringify(ambient.dark.corners));
+  /* .frame 不再从任何地方露出（.player 满铺 + 不画圆角）。保留这条：锁住的是「若露出，
+   * 露出的必须是卡面色 --hk-surface 而不是页面色 --hk-bg」这个不变量，防的是以后有人
+   * 把 .frame 底色改回 --hk-bg（或给 .player 加圆角）时静默漏出一块深一号的补丁。 */
   assert('corner-reveals-card-surface',
     Array.isArray(ambient.dark.frameBg) && Array.isArray(ambient.dark.surfaceRGB) &&
     ambient.dark.frameBg.every((v, i) => Math.abs(v - ambient.dark.surfaceRGB[i]) <= 2),

@@ -123,9 +123,9 @@ SDK 默认把宿主主题样式表注入页面（`ui/sdk.js` 的 `followHostThem
 - **Hana App 界面（本 App 活在这里）**：深板岩 `#34424B` / 面 `#414D56` /
   强调藕荷粉 `#C99AAF` / 文字 `#E1EAF0`·`#9FB1BC`（近似色，权威以 `hana.theme` 为准）。
 
-顶部圆角自己补：`.player` 写 `border-radius: 14px 14px 0 0`（只上两角）——
-宿主只在独立窗裁圆，卡片里不裁；`.frame` 底色给 `--hk-surface`，
-角上露出卡面色而不是页面色。想跟随圆角偏好写 `calc(14px * var(--corner-radius-scale, 1))`。
+圆角交给宿主，应用一个角都不画：`.player` 四角一律直角 —— 聊天卡片由宿主裁卡面，
+独立窗由窗口/系统裁（macOS 原生圆角窗 / Windows frame:false 方角窗）。
+`.frame` 底色仍给 `--hk-surface`（垫底，防万一露出时是卡面色而非页面色）。
 
 通用：小圆角约 5px；只 SVG 线描图标（禁 emoji）；字号 ≥ 11px；禁左竖线当区块装饰。
 

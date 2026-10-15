@@ -8310,14 +8310,14 @@
     var emoji = /\p{Extended_Pictographic}/u.test(player.textContent);
     add('no-emoji', !emoji, '');
 
-    /* 12. 根容器：无外描边/外阴影；顶部两角圆、下两角直角。
-     *     宿主在独立窗里会把 App 面裁圆，卡片里不裁 —— 所以卡片壳自己补上顶部圆角，
-     *     值跟宿主 token 走（body[data-shell] 两条，见 style.css）。 */
+    /* 12. 根容器：无外描边/外阴影，四角一律直角 —— 圆角全部交给宿主
+   *     （聊天卡片宿主裁卡面，独立窗窗口/系统裁）。
+   *     曾自画 14px 顶部圆角 + .frame 垫 --hk-surface，浅色主题下近白，从四角漏白牙。 */
     var cs = getComputedStyle(player);
     var topR = parseFloat(cs.borderTopLeftRadius) || 0;
     var botR = parseFloat(cs.borderBottomLeftRadius) || 0;
     add('root-corners-and-no-shadow',
-      topR >= 12 && botR === 0 && cs.boxShadow === 'none' &&
+      topR === 0 && botR === 0 && cs.boxShadow === 'none' &&
       cs.borderTopWidth === '0px' && cs.borderLeftWidth === '0px',
       cs.borderRadius + ' / ' + cs.boxShadow);
 
