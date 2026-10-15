@@ -3,13 +3,13 @@
 **四源开箱即用的本地与在线音乐播放器，为 Hana 而生。**
 网易云 / B站 / QQ / 酷狗直接能搜能听，B站还能抽视频音轨直接播；歌词自动匹配、当前行推上会话横幅；
 唱片封面会随音乐荡开涟漪——低音是向上涌动的水面光波，鼓点是等高线圈，镲片是轻细的小环，
-独立窗左下角可分别调三组触发门槛与颜色浓淡，默认克制、随你调；三种承载形态（窄长卡 / 矮卡 / 独立窗）各自重排，
-主题只跟随宿主 `hana.theme`（含夜间）。
+独立窗左下角可分别调三组触发门槛与颜色浓淡，默认克制、随你调；四种承载形态（窄长卡 / 矮卡 / 独立窗 / 横条）各自重排，
+主题只跟随宿主 `hana.theme`（含夜间）。把窗拉扁就成一条**横条**：封面氛围取色的长条进度 + 进度前沿的玻璃光片与流动星光。
 
 **递给 Hana 的那部分**：敲 `/mood` 让它按心情选歌建单，也能让它把 B站歌单整理成带网易云歌词与封面的歌单。
 
 > 基于 [openhanako-labs/openhanako-audio-player](https://github.com/openhanako-labs/openhanako-audio-player)（作者 **Yuexiye**）的**极简重构衍生版**：
-> 后端沿用上游，前端整个重写、按 Hana 的三种承载形态重新设计。
+> 后端沿用上游，前端整个重写、按 Hana 的承载形态重新设计。
 > 上游以 **AGPL-3.0** 发布（另提供[商业授权](https://github.com/openhanako-labs/openhanako-audio-player/blob/master/COMMERCIAL-LICENSE.md)），
 > 本衍生同样以 **AGPL-3.0** 发布，见 [`LICENSE`](LICENSE)。
 
@@ -17,7 +17,7 @@
 
 ## 截图
 
-> 点任意缩略图看原图。这里展示的是它在 Hana 三种承载形态下的实际样子（浅色 / 深色主题都跟随宿主）。
+> 点任意缩略图看原图。这里展示的是它在 Hana 承载形态下的实际样子（浅色 / 深色主题都跟随宿主）。
 
 <table>
 <tr>
@@ -132,6 +132,8 @@ B 站是别的音乐播放器少有的源：搜到视频、抽它的音轨直接
 
 **适配 Hana 的多种承载**
 - 聊天卡片（窄长卡 / 矮卡）与独立窗口各自重排；控制面按宽度自适应（窄到 400px 模式与音量上移一行，**播放键恒居中**）
+- **横条形态**：窗口/卡片被压到宽而矮时自动切换——左侧小封面，右侧一条用封面主色氛围取色的长条进度，
+  条内显示歌名/歌手与正在唱的歌词；指针靠近切控件与时间，悬停音量向右展开。进度前沿有玻璃光片与向左流动的星光。
 
 ## 安装
 
@@ -177,7 +179,7 @@ TENCENT_COOKIE=uin=xxx; qqmusic_key=xxx; ...
 ui/index.html            卡片页
 ui/standalone.html       独立窗页（内容与 index.html 相同，仅 data-shell 不同）
 ui/app.js                全部逻辑（ES5，无构建）
-ui/style.css             全部样式（三态布局 + 动效）
+ui/style.css             全部样式（多态布局 + 动效）
 tools/bump-build.mjs     构建号三处同步（_build.json + index.html + standalone.html）
 tools/pack-release.mjs   出 release 包：白名单复制运行时文件 → 官方 extension-pack
 tools/verify-ui.mjs      无头验收：布局自检 + 断言 + 截图
