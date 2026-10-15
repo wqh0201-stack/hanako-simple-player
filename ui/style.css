@@ -2857,3 +2857,39 @@ body.is-shot *::after {
 .repo-link:focus-visible { color: var(--hk-accent); }
 .search-footer .search-note { flex: 1 1 160px; min-height: 0; padding: 0; }
 .player:not([data-layout="wide"]) .search-footer { padding-bottom: 4px; }
+
+/* 舞台文字入口保留原字号与排布，只在悬停时轻微降低不透明度。 */
+.track-title[role="button"], .track-meta[role="button"] { cursor: pointer; transition: opacity 120ms ease; }
+.track-title[role="button"]:hover, .track-meta[role="button"]:hover { opacity: .82; }
+.track-title[role="button"]:focus-visible, .track-meta[role="button"]:focus-visible {
+  outline: 2px solid var(--hl-accent); outline-offset: 2px;
+}
+
+/* 单曲封面请求的常驻指示：不依赖 toast 的 2.6 秒寿命，也不随队列翻页隐藏。 */
+.cover-fetch-status {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 31;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--hk-text);
+  background: var(--hk-surface);
+  pointer-events: none;
+}
+.cover-fetch-status[hidden] { display: none; }
+.cover-fetch-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: coverFetchSpin .8s linear infinite;
+}
+@keyframes coverFetchSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .cover-fetch-spinner { animation-duration: 2s; }
+}

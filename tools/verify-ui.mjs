@@ -1464,6 +1464,164 @@ async function verifySlowLyricFlow() {
   await page.close();
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
 }
+async function verifySongEntryCover() {
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+  persistedPlaylist = Array.from({ length: 35 }, (_, i) => ({ id: 'netease:entry' + i, name: i === 18 ? '稻香' : '曲目' + i, author: '周杰伦', list: 'imp:1', pic: i === 34 ? COVER_SQUARE : COVER, mode: i === 34 ? '本地' : '在线', url: WAV_URL, ...(i === 34 ? { coverMatch: { originalPic: '', pic: COVER_SQUARE } } : {}) }));
+  coverFail = coverImageBad = false; coverDelay = 0; coverRequests = [];
+  const page = await newPage();
+  await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
+  await page.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__playerDebug && document.querySelector('[data-list="imp:1"]'));
+  await clickTab(page, 'imp:1');
+  await page.evaluate(() => document.querySelectorAll('#queueList .q-hit')[18].click());
+  await page.waitForFunction(() => window.__playerDebug.currentTrack().title === '稻香');
+  await page.evaluate(() => { window.__playerDebug.setScope('artist'); document.getElementById('trackTitle').click(); });
+  await sleep(450);
+  assert('song-entry-title-search-song-scope', await page.evaluate(() => !document.getElementById('searchPage').hidden && document.getElementById('searchInput').value === '稻香' && document.querySelector('.search-scope-btn.is-active').getAttribute('data-scope') === 'song'));
+  await page.evaluate(() => window.__playerDebug.closeSearch()); await sleep(450);
+  for (const key of ['Enter', 'Space']) {
+    await page.focus('#trackTitle'); await page.keyboard.press(key); await sleep(450);
+    assert('song-entry-title-keyboard-' + key, await page.$eval('#searchPage', el => !el.hidden));
+    await page.evaluate(() => window.__playerDebug.closeSearch()); await sleep(450);
+    await clickTab(page, 'local');
+    await page.focus('#trackMeta'); await page.keyboard.press(key); await sleep(450);
+    assert('song-entry-source-keyboard-' + key, await page.evaluate(() => window.__playerDebug.activeList() === 'imp:1'));
+  }
+  for (const [width, height, layout] of [[465, 930, 'long'], [312, 494, 'compact'], [1040, 780, 'wide']]) {
+    await page.setViewport({ width, height, deviceScaleFactor: 1 }); await sleep(450);
+    await clickTab(page, 'local');
+    await page.evaluate(() => document.getElementById('trackMeta').click()); await sleep(450);
+    const result = await page.evaluate(() => {
+      const p = document.querySelector('.player'), q = document.getElementById('queueList'), row = q.querySelector('.is-current');
+      return { list: window.__playerDebug.activeList(), layout: p.dataset.layout, page: p.dataset.page, drawer: p.dataset.drawer,
+        error: row ? Math.abs(q.scrollTop - Math.max(0, Math.min(row.offsetTop - q.clientHeight / 2 + row.offsetHeight / 2, q.scrollHeight - q.clientHeight))) : Infinity };
+    });
+    assert('song-entry-source-centers-' + layout, result.list === 'imp:1' && result.layout === layout && result.error < 2 && (layout !== 'compact' || result.page === 'queue') && (layout !== 'wide' || result.drawer === '1'), JSON.stringify(result));
+  }
+  // 真菜单点击：关闭菜单清空 moreTargetUid 后仍必须保留已捕获的目标。
+  await page.evaluate(() => document.querySelectorAll('#queueList .q-more')[18].click());
+  assert('song-entry-cover-menu-after-copy', await page.$eval('#getCoverBtn', el => el.previousElementSibling.id === 'copyNameBtn' && el.textContent.includes('获取此曲封面') && !!el.querySelector('use')));
+  // 把目录与保存分别挂起：超过 toast 的 2.6 秒寿命后仍须可见，直到整个任务落盘结束。
+  await page.evaluate(() => {
+    window.__coverFeedbackAt = performance.now();
+    window.__coverFeedbackSamples = [];
+    window.__coverFeedbackFetch = window.fetch;
+    window.__coverFeedbackPhase = '';
+    window.fetch = async function (url, opts) {
+      const text = String(url);
+      if (text.includes('/cover-catalog') && text.includes('kind=album&')) {
+        window.__coverFeedbackPhase = 'album';
+        await new Promise(resolve => { window.__releaseCoverAlbum = resolve; });
+      }
+      if (text.includes('/widget/api/playlist') && opts && opts.method === 'POST' && String(opts.body).includes('"songId":185709')) {
+        window.__coverFeedbackPhase = 'save';
+        await new Promise(resolve => { window.__releaseCoverSave = resolve; });
+      }
+      return window.__coverFeedbackFetch.apply(this, arguments);
+    };
+    window.__coverFeedbackTimer = setInterval(() => {
+      if (document.getElementById('getCoverBtn').disabled) window.__coverFeedbackSamples.push(document.getElementById('coverFetchStatus').checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }));
+    }, 50);
+  });
+  await page.click('#getCoverBtn');
+  assert('song-entry-cover-busy-disabled', await page.$eval('#getCoverBtn', el => el.disabled));
+  assert('song-entry-cover-spinner-immediate', await page.$eval('#coverFetchStatus', el => !el.hidden && el.checkVisibility() && getComputedStyle(el.querySelector('span')).animationName === 'coverFetchSpin'));
+  await page.waitForFunction(() => window.__coverFeedbackPhase === 'album');
+  const rotation = await page.$eval('.cover-fetch-spinner', el => getComputedStyle(el).transform);
+  await sleep(150);
+  assert('song-entry-cover-spinner-rotates', await page.$eval('.cover-fetch-spinner', el => getComputedStyle(el).transform) !== rotation);
+  for (const [width, height, layout] of [[465, 930, 'long'], [312, 494, 'compact'], [1040, 780, 'wide']]) {
+    await page.setViewport({ width, height, deviceScaleFactor: 1 });
+    await page.waitForFunction(l => document.getElementById('player').dataset.layout === l, {}, layout);
+    if (layout === 'compact') {
+      await page.evaluate(() => { if (document.getElementById('player').dataset.page !== 'queue') document.getElementById('queueBtn').click(); });
+      await sleep(400);
+      assert('song-entry-cover-spinner-visible-on-compact-queue', await page.evaluate(() => document.getElementById('player').dataset.page === 'queue' && document.getElementById('coverFetchStatus').checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })));
+      assert('song-entry-cover-spinner-clears-queue-back-icon', await page.evaluate(() => { const a = document.querySelector('.queue-topline .back-btn svg').getBoundingClientRect(), b = document.getElementById('coverFetchStatus').getBoundingClientRect(); return a.left >= b.right || a.right <= b.left || a.top >= b.bottom || a.bottom <= b.top; }));
+    }
+    for (const tone of ['light', 'dark']) {
+      await page.evaluate(t => window.__fixtureTheme(t), tone);
+      const status = await page.$eval('#coverFetchStatus', el => {
+        const r = el.getBoundingClientRect(), p = document.getElementById('player').getBoundingClientRect();
+        return { visible: el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }), left: r.left - p.left, top: r.top - p.top, width: r.width, safe: r.right <= p.right - 100, position: getComputedStyle(el).position };
+      });
+      assert('song-entry-cover-spinner-position-' + layout + '-' + tone, status.visible && status.left === 12 && status.top === 12 && status.width === 26 && status.safe && status.position === 'absolute', JSON.stringify(status));
+      if (tone === 'dark' || layout === 'long') await page.screenshot({ path: path.join(outDir, 'cover-spinner-' + layout + '-' + tone + '.png') });
+    }
+  }
+  await page.waitForFunction(() => performance.now() - window.__coverFeedbackAt > 2900);
+  assert('song-entry-cover-spinner-outlives-toast', await page.evaluate(() => document.getElementById('toast').hidden && !document.getElementById('coverFetchStatus').hidden && document.getElementById('getCoverBtn').disabled));
+  await page.evaluate(() => window.__releaseCoverAlbum());
+  await page.waitForFunction(() => window.__coverFeedbackPhase === 'save');
+  assert('song-entry-cover-spinner-through-save', await page.$eval('#coverFetchStatus', el => !el.hidden && el.checkVisibility()));
+  report.coverFetchFeedback = await page.evaluate(() => ({ controlledWaitMs: performance.now() - window.__coverFeedbackAt, visibleSamples: window.__coverFeedbackSamples.length, hiddenSamples: window.__coverFeedbackSamples.filter(v => !v).length, phase: window.__coverFeedbackPhase }));
+  assert('song-entry-cover-spinner-never-hidden-before-result', report.coverFetchFeedback.visibleSamples > 40 && report.coverFetchFeedback.hiddenSamples === 0, JSON.stringify(report.coverFetchFeedback));
+  await page.evaluate(() => { clearInterval(window.__coverFeedbackTimer); window.__releaseCoverSave(); });
+  await page.waitForFunction(() => !document.getElementById('getCoverBtn').disabled);
+  await page.evaluate(() => { window.fetch = window.__coverFeedbackFetch; delete window.__coverFeedbackFetch; });
+  assert('song-entry-cover-spinner-success-cleanup', await page.evaluate(() => document.getElementById('coverFetchStatus').hidden && document.getElementById('toast').textContent === '已获取此曲封面' && !document.getElementById('toast').hidden));
+  await page.setViewport({ width: 1040, height: 780, deviceScaleFactor: 1 });
+  await sleep(150);
+  coverDelay = 0;
+  const copies = await page.evaluate(() => window.__playerDebug.coverInfo('netease:entry18'));
+  assert('song-entry-cover-any-platform-replaces-and-backs-up', copies.length > 0 && copies.every(t => t.pic === COVER_SQUARE && t.match.originalPic === COVER), JSON.stringify(copies));
+  assert('song-entry-cover-persisted', persistedPlaylist.filter(t => t.id === 'netease:entry18').every(t => t.pic === COVER_SQUARE && t.coverMatch.originalPic === COVER));
+  async function getAgain() {
+    await page.evaluate(() => { document.querySelectorAll('#queueList .q-more')[18].click(); document.getElementById('getCoverBtn').click(); });
+    await page.waitForFunction(() => !document.getElementById('getCoverBtn').disabled);
+  }
+  await getAgain();
+  assert('song-entry-cover-repeat-keeps-first-backup', (await page.evaluate(() => window.__playerDebug.coverInfo('netease:entry18'))).every(t => t.match.originalPic === COVER));
+  for (const kind of ['no-artist', 'no-match', 'request', 'image', 'save']) {
+    await page.evaluate(kind => {
+      const t = window.__playerDebug.currentTrack(); t.author = kind === 'no-artist' ? '' : '周杰伦'; t.title = kind === 'no-match' ? '绝无此曲' : '稻香';
+      if (kind === 'save') { window.__entryFetch = window.fetch; window.fetch = function (url, opts) { return String(url).includes('/widget/api/playlist') && opts && opts.method === 'POST' ? Promise.resolve(new Response('{}', { status: 500 })) : window.__entryFetch.apply(this, arguments); }; }
+    }, kind);
+    coverFail = kind === 'request'; coverImageBad = kind === 'image';
+    const before = await page.evaluate(() => JSON.stringify(window.__playerDebug.coverInfo('netease:entry18')));
+    const requestsBefore = coverRequests.length;
+    await getAgain();
+    const outcome = await page.evaluate(() => ({ info: JSON.stringify(window.__playerDebug.coverInfo('netease:entry18')), toast: document.getElementById('toast').textContent }));
+    assert('song-entry-cover-preserves-on-' + kind, outcome.info === before && /没有歌手|没有找到|失败/.test(outcome.toast), JSON.stringify(outcome));
+    assert('song-entry-cover-spinner-cleanup-' + kind, await page.$eval('#coverFetchStatus', el => el.hidden));
+    if (kind === 'no-artist') assert('song-entry-cover-no-artist-no-request', coverRequests.length === requestsBefore);
+    await page.evaluate(() => { if (window.__entryFetch) { window.fetch = window.__entryFetch; delete window.__entryFetch; } });
+    coverFail = coverImageBad = false;
+  }
+  await page.evaluate(() => { const t = window.__playerDebug.currentTrack(); t.author = ''; t.title = '周杰伦 - 稻香'; });
+  await getAgain();
+  assert('song-entry-cover-artist-from-title', await page.$eval('#toast', el => el.textContent === '已获取此曲封面'));
+  await page.evaluate(() => window.__playerDebug.openCoverPanel('imp:1'));
+  assert('song-entry-restore-panel-all-platforms-copy', await page.$eval('#coverNote', el => el.textContent.includes('恢复原封面支持所有平台')));
+  const restoreBefore = await page.evaluate(() => JSON.stringify(window.__playerDebug.coverInfo('netease:entry18')));
+  await page.evaluate(async () => {
+    const original = window.fetch;
+    window.fetch = function (url, opts) { return String(url).includes('/widget/api/playlist') && opts && opts.method === 'POST' ? Promise.resolve(new Response('{}', { status: 500 })) : original.apply(this, arguments); };
+    try { await window.__playerDebug.restoreCovers('imp:1'); } finally { window.fetch = original; }
+  });
+  assert('song-entry-restore-save-failure-rolls-back', await page.evaluate(() => JSON.stringify(window.__playerDebug.coverInfo('netease:entry18'))) === restoreBefore && await page.$eval('#coverNote', el => el.textContent.includes('恢复失败')));
+  await page.evaluate(() => window.__playerDebug.restoreCovers('imp:1'));
+  assert('song-entry-restore-local-empty-original', (await page.evaluate(() => window.__playerDebug.coverInfo('netease:entry34'))).every(t => t.pic === '' && !t.match));
+  assert('song-entry-restore-leaves-unmatched-untouched', (await page.evaluate(() => window.__playerDebug.coverInfo('netease:entry17'))).every(t => t.pic === COVER && !t.match));
+  assert('song-entry-restore-any-platform-and-copies', (await page.evaluate(() => window.__playerDebug.coverInfo('netease:entry18'))).every(t => t.pic === COVER && !t.match) && persistedPlaylist.filter(t => t.id === 'netease:entry18').every(t => t.pic === COVER && !t.coverMatch));
+  await page.evaluate(() => window.__playerDebug.startCoverFill());
+  assert('song-entry-batch-fill-still-bilibili-only', await page.$eval('#coverNote', el => el.textContent.includes('没有待补全的 B站曲目')) && (await page.evaluate(() => window.__playerDebug.coverInfo('netease:entry18'))).every(t => t.pic === COVER && !t.match));
+  await page.evaluate(() => document.getElementById('coverCloseBtn').click());
+  // 已删列表且无任何同曲副本：显示临时当前项，不改变持久化结构。
+  await page.evaluate(() => { const t = window.__playerDebug.currentTrack(); t.id = 'netease:removed'; t.list = 'missing'; t.detached = true; document.getElementById('trackMeta').click(); });
+  assert('song-entry-source-deleted-list-not-empty', await page.evaluate(() => window.__playerDebug.activeList() === 'recent' && !!document.querySelector('#queueList .is-current')));
+  await page.close();
+  await fetch(`${BASE}${API}/__fixture/reset?mode=empty&appSurfaceSession=fake-ticket`);
+  const empty = await newPage();
+  await empty.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil: 'domcontentloaded' });
+  await empty.waitForFunction(() => window.__playerDebug && document.getElementById('trackTitle').textContent === '还没有曲目');
+  assert('song-entry-empty-has-no-button-semantics', await empty.evaluate(() => ['trackTitle', 'trackMeta'].every(id => { const el = document.getElementById(id); return !el.hasAttribute('role') && !el.hasAttribute('tabindex') && !el.hasAttribute('aria-label'); })));
+  await empty.evaluate(() => { document.getElementById('trackTitle').click(); document.getElementById('trackMeta').click(); });
+  assert('song-entry-empty-click-inert', await empty.$eval('#searchPage', el => el.hidden));
+  await empty.close();
+  await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
+}
+
 async function verifyCoverFill() {
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
   const bili = (id, title, list = 'imp:1') => ({ id: 'bilibili:' + id, name: title, pic: '', list, mode: '在线', url: WAV_URL });
@@ -1605,6 +1763,14 @@ async function verifyMoodLists() {
   await page.close();
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
 }
+if (process.argv.includes('--queue-management-only')) {
+  await verifySongEntryCover();
+  await verifyQueueManagement();
+  fs.writeFileSync(path.join(outDir, 'verify-entry-menu.json'), JSON.stringify(report, null, 2));
+  console.log(JSON.stringify({ assertions: `${report.assertions.filter(a => a.ok).length}/${report.assertions.length}`, failed: report.assertions.filter(a => !a.ok), runtimeErrors: report.runtimeErrors }, null, 2));
+  await browser.close(); server.closeAllConnections(); server.close();
+  process.exit(report.assertions.some(a => !a.ok) || report.runtimeErrors.length ? 1 : 0);
+}
 if (!process.argv.includes('--ripple-only') && !process.argv.includes('--song-only')) {
 if (process.argv.includes('--lyric-lifecycle-only')) {
   await verifyLyricLifecycle();
@@ -1628,6 +1794,7 @@ if (process.argv.includes('--lists-only')) {
   process.exit(report.assertions.some(a => !a.ok) || report.runtimeErrors.length ? 1 : 0);
 }
 await verifyCoverFill();
+await verifySongEntryCover();
 if (process.argv.includes('--covers-only')) {
   fs.writeFileSync(path.join(outDir, 'verify-covers.json'), JSON.stringify(report, null, 2));
   console.log(JSON.stringify({ assertions: `${report.assertions.filter(a => a.ok).length}/${report.assertions.length}`, failed: report.assertions.filter(a => !a.ok), runtimeErrors: report.runtimeErrors }, null, 2));
@@ -5904,7 +6071,7 @@ let lifecycle = {};
 
 /* ============ 8) 歌单管理改造（2026-10-11）
    导入落 fav / 队列行「移动到…·复制歌名」/ 「最近播放」倒序 ============ */
-{
+async function verifyQueueManagement() {
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
   const page = await newPage();
   /* 假宿主：桩 clipboard.writeText 记录调用；同时桩 document.execCommand('copy')
@@ -5992,8 +6159,8 @@ let lifecycle = {};
     items: [...document.querySelectorAll('#morePop .pop-item')].map((b) => b.textContent.trim()),
     moveHidden: document.getElementById('moveBtn').hidden
   }));
-  assert('queue-menu-three-actions',
-    g.menu.hidden === false && g.menu.items.join('|') === '从队列移除|移动到…|复制歌名' && g.menu.moveHidden === false,
+  assert('queue-menu-four-actions',
+    g.menu.hidden === false && g.menu.items.join('|') === '从队列移除|移动到…|复制歌名|获取此曲封面' && g.menu.moveHidden === false,
     JSON.stringify(g.menu));
 
   /* ---- (c) 移动目标：只含真歌单（fav + imp:），排除 local/recent/源列表 ---- */
@@ -6173,6 +6340,8 @@ let lifecycle = {};
   await page.close();
 }
 
+
+await verifyQueueManagement();
 
 /* 当前歌单搜索 + 新增置顶：通过真实行按钮、导入入口和持久化验业务行为。 */
 {

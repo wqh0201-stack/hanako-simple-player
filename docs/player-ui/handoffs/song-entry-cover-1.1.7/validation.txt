@@ -1,0 +1,5 @@
+(node:69730) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+warning: DYNAMIC_DEPENDENCIES_NOT_PROVEN: Static checking follows declared UI HTML and CSS resources only; dynamic imports, runtime-generated URLs, and network responses are not proven.
+  Run the isolated --smoke check for runtime loading evidence.
+validate-app: 0 error(s), 1 warning(s)

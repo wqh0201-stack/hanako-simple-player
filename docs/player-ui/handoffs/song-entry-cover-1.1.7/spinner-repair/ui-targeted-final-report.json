@@ -1,0 +1,451 @@
+{
+  "selfCheck": [],
+  "wiring": {},
+  "four": {},
+  "darkFallback": {},
+  "runtimeErrors": [],
+  "expectedProbes": [
+    "http 404 http://127.0.0.1:60717/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E6%9B%B2%E7%9B%AE0",
+    "reqfail: http://127.0.0.1:60717/api/apps/hanako-simple-player/routes/_fixture/audio.wav?appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:60717/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E7%A8%BB%E9%A6%99",
+    "http 404 http://127.0.0.1:60717/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:60717/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:60717/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%8D%A0%E4%BD%8D%E8%AF%8D%E7%BA%AF%E9%9F%B3%E4%B9%90",
+    "reqfail: http://127.0.0.1:60717/api/apps/hanako-simple-player/routes/widget/api/music/go/900098?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED"
+  ],
+  "assertions": [
+    {
+      "name": "song-entry-title-search-song-scope",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-title-keyboard-Enter",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-source-keyboard-Enter",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-title-keyboard-Space",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-source-keyboard-Space",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-source-centers-long",
+      "ok": true,
+      "detail": "{\"list\":\"imp:1\",\"layout\":\"long\",\"page\":\"play\",\"drawer\":\"0\",\"error\":0.5}"
+    },
+    {
+      "name": "song-entry-source-centers-compact",
+      "ok": true,
+      "detail": "{\"list\":\"imp:1\",\"layout\":\"compact\",\"page\":\"queue\",\"drawer\":\"0\",\"error\":0}"
+    },
+    {
+      "name": "song-entry-source-centers-wide",
+      "ok": true,
+      "detail": "{\"list\":\"imp:1\",\"layout\":\"wide\",\"page\":\"play\",\"drawer\":\"1\",\"error\":0}"
+    },
+    {
+      "name": "song-entry-cover-menu-after-copy",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-busy-disabled",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-spinner-immediate",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-spinner-rotates",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-spinner-position-long-light",
+      "ok": true,
+      "detail": "{\"visible\":true,\"left\":12,\"top\":12,\"width\":26,\"safe\":true,\"position\":\"absolute\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-position-long-dark",
+      "ok": true,
+      "detail": "{\"visible\":true,\"left\":12,\"top\":12,\"width\":26,\"safe\":true,\"position\":\"absolute\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-visible-on-compact-queue",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-spinner-clears-queue-back-icon",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-spinner-position-compact-light",
+      "ok": true,
+      "detail": "{\"visible\":true,\"left\":12,\"top\":12,\"width\":26,\"safe\":true,\"position\":\"absolute\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-position-compact-dark",
+      "ok": true,
+      "detail": "{\"visible\":true,\"left\":12,\"top\":12,\"width\":26,\"safe\":true,\"position\":\"absolute\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-position-wide-light",
+      "ok": true,
+      "detail": "{\"visible\":true,\"left\":12,\"top\":12,\"width\":26,\"safe\":true,\"position\":\"absolute\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-position-wide-dark",
+      "ok": true,
+      "detail": "{\"visible\":true,\"left\":12,\"top\":12,\"width\":26,\"safe\":true,\"position\":\"absolute\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-outlives-toast",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-spinner-through-save",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-spinner-never-hidden-before-result",
+      "ok": true,
+      "detail": "{\"controlledWaitMs\":2927.7999999523163,\"visibleSamples\":58,\"hiddenSamples\":0,\"phase\":\"save\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-success-cleanup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-any-platform-replaces-and-backs-up",
+      "ok": true,
+      "detail": "[{\"uid\":\"recent|netease:entry18\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"match\":{\"originalPic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\",\"source\":\"netease\",\"artistId\":6452,\"artist\":\"周杰伦\",\"songId\":185709,\"albumId\":18877,\"album\":\"魔杰座\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"at\":1792045414277}},{\"uid\":\"imp:1|netease:entry18\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"match\":{\"originalPic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\",\"source\":\"netease\",\"artistId\":6452,\"artist\":\"周杰伦\",\"songId\":185709,\"albumId\":18877,\"album\":\"魔杰座\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"at\":1792045414277}}]"
+    },
+    {
+      "name": "song-entry-cover-persisted",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-repeat-keeps-first-backup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-preserves-on-no-artist",
+      "ok": true,
+      "detail": "{\"info\":\"[{\\\"uid\\\":\\\"recent|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792045414465}},{\\\"uid\\\":\\\"imp:1|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792045414465}}]\",\"toast\":\"这首没有歌手信息，先补全歌手或用歌单级「补全封面」\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-cleanup-no-artist",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-no-artist-no-request",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-preserves-on-no-match",
+      "ok": true,
+      "detail": "{\"info\":\"[{\\\"uid\\\":\\\"recent|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792045414465}},{\\\"uid\\\":\\\"imp:1|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792045414465}}]\",\"toast\":\"没有找到匹配的封面，原封面保留\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-cleanup-no-match",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-preserves-on-request",
+      "ok": true,
+      "detail": "{\"info\":\"[{\\\"uid\\\":\\\"recent|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792045414465}},{\\\"uid\\\":\\\"imp:1|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792045414465}}]\",\"toast\":\"获取封面失败：上游返回 -462，原封面保留\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-cleanup-request",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-preserves-on-image",
+      "ok": true,
+      "detail": "{\"info\":\"[{\\\"uid\\\":\\\"recent|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792045414465}},{\\\"uid\\\":\\\"imp:1|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792045414465}}]\",\"toast\":\"封面图片加载失败，原封面保留\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-cleanup-image",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-preserves-on-save",
+      "ok": true,
+      "detail": "{\"info\":\"[{\\\"uid\\\":\\\"recent|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792045414465}},{\\\"uid\\\":\\\"imp:1|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792045414465}}]\",\"toast\":\"获取封面失败：保存失败，原封面保留\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-cleanup-save",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-artist-from-title",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-restore-panel-all-platforms-copy",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-restore-save-failure-rolls-back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-restore-local-empty-original",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-restore-leaves-unmatched-untouched",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-restore-any-platform-and-copies",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-batch-fill-still-bilibili-only",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-source-deleted-list-not-empty",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-empty-has-no-button-semantics",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-empty-click-inert",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "import-link-lands-in-fav",
+      "ok": true,
+      "detail": "{\"favRows\":1,\"tabs\":5,\"active\":\"imp:1\",\"lists\":[\"fav\",\"recent\",\"local\",\"imp:1\",\"imp:2\"],\"hasUnitList\":false,\"favBefore\":0,\"tabsBefore\":5,\"activeBefore\":\"imp:1\",\"listsBefore\":[\"fav\",\"recent\",\"local\",\"imp:1\",\"imp:2\"]}"
+    },
+    {
+      "name": "import-bili-lands-in-fav",
+      "ok": true,
+      "detail": "{\"favRows\":2,\"active\":\"imp:1\",\"hasUnitList\":false,\"favBeforeBili\":1}"
+    },
+    {
+      "name": "queue-menu-four-actions",
+      "ok": true,
+      "detail": "{\"hidden\":false,\"items\":[\"从队列移除\",\"移动到…\",\"复制歌名\",\"获取此曲封面\"],\"moveHidden\":false}"
+    },
+    {
+      "name": "move-targets-exclude-local-recent",
+      "ok": true,
+      "detail": "{\"popHidden\":false,\"targets\":[\"fav\",\"imp:2\"]}"
+    },
+    {
+      "name": "move-between-lists",
+      "ok": true,
+      "detail": "{\"imp1\":19,\"imp2\":7,\"movedInB\":true,\"goneFromA\":true,\"imp1Before\":20,\"imp2Before\":6,\"pickUid\":\"imp:1|netease:900003\"}"
+    },
+    {
+      "name": "move-dedupes-target",
+      "ok": true,
+      "detail": "{\"imp1\":18,\"imp2\":7,\"dup\":[],\"imp1BeforeDup\":19,\"imp2BeforeDup\":7,\"dupUid\":\"imp:1|netease:900000\"}"
+    },
+    {
+      "name": "move-playing-keeps-playback",
+      "ok": true,
+      "detail": "{\"playing\":\"1\",\"paused\":false,\"currentUid\":\"fav|netease:900098\",\"oldGone\":true,\"favRows\":3,\"currentRow\":\"fav|netease:900098\",\"playUid\":\"imp:1|netease:900098\",\"favBeforePlay\":2}"
+    },
+    {
+      "name": "copy-song-name-writes-clipboard",
+      "ok": true,
+      "detail": "{\"exec\":[{\"cmd\":\"copy\",\"text\":\"在线曲目 2\"}],\"calls\":[],\"toast\":\"已复制歌名\",\"toastHidden\":false,\"copyTitle\":\"在线曲目 2\"}"
+    },
+    {
+      "name": "copy-song-name-sync-fallback",
+      "ok": true,
+      "detail": "{\"exec\":[{\"cmd\":\"copy\",\"text\":\"在线曲目 3\"}],\"calls\":[\"在线曲目 3\"],\"toast\":\"已复制歌名\",\"toastHidden\":false,\"copyTitle2\":\"在线曲目 3\"}"
+    },
+    {
+      "name": "cover-src-proxies-hdslb",
+      "ok": true,
+      "detail": "{\"hdslb\":\"/api/apps/hanako-simple-player/routes/widget/api/music/cover?url=https%3A%2F%2Fi1.hdslb.com%2Fbfs%2Farchive%2Frain.jpg\",\"hdslbSub\":\"/api/apps/hanako-simple-player/routes/widget/api/music/cover?url=https%3A%2F%2Fi2.hdslb.com%2Fa.jpg\",\"netease\":\"https://p1.music.126.net/abc/x.jpg?param=200y200\",\"selfRoute\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\",\"relative\":\"docs/x.png\",\"empty\":\"\"}"
+    },
+    {
+      "name": "recent-order-newest-first",
+      "ok": true,
+      "detail": "[\"C\",\"B\",\"A\",\"占位词纯音乐\"]"
+    },
+    {
+      "name": "recent-replay-moves-to-front",
+      "ok": true,
+      "detail": "[\"A\",\"C\",\"B\",\"占位词纯音乐\"]"
+    },
+    {
+      "name": "recent-overflow-drops-oldest",
+      "ok": true,
+      "detail": "{\"len\":100,\"first\":\"O119\",\"last\":\"O20\",\"hasO0\":false,\"hasO20\":true}"
+    },
+    {
+      "name": "recent-row-hides-move-keeps-remove-copy",
+      "ok": true,
+      "detail": "{\"rows\":100,\"moveHidden\":true,\"removeExists\":true,\"copyExists\":true}"
+    }
+  ],
+  "refine": [],
+  "narrowSelfCheck": [],
+  "theme": {},
+  "ambient": {},
+  "coverFetchFeedback": {
+    "controlledWaitMs": 2927.7999999523163,
+    "visibleSamples": 58,
+    "hiddenSamples": 0,
+    "phase": "save"
+  },
+  "lists": {
+    "importFav": {
+      "favRows": 1,
+      "tabs": 5,
+      "active": "imp:1",
+      "lists": [
+        "fav",
+        "recent",
+        "local",
+        "imp:1",
+        "imp:2"
+      ],
+      "hasUnitList": false
+    },
+    "importFavBili": {
+      "favRows": 2,
+      "active": "imp:1",
+      "hasUnitList": false
+    },
+    "menu": {
+      "hidden": false,
+      "items": [
+        "从队列移除",
+        "移动到…",
+        "复制歌名",
+        "获取此曲封面"
+      ],
+      "moveHidden": false
+    },
+    "moveTargets": {
+      "popHidden": false,
+      "targets": [
+        "fav",
+        "imp:2"
+      ]
+    },
+    "moveBetween": {
+      "imp1": 19,
+      "imp2": 7,
+      "movedInB": true,
+      "goneFromA": true
+    },
+    "moveDedup": {
+      "imp1": 18,
+      "imp2": 7,
+      "dup": []
+    },
+    "movePlaying": {
+      "playing": "1",
+      "paused": false,
+      "currentUid": "fav|netease:900098",
+      "oldGone": true,
+      "favRows": 3,
+      "currentRow": "fav|netease:900098"
+    },
+    "copyName": {
+      "exec": [
+        {
+          "cmd": "copy",
+          "text": "在线曲目 2"
+        }
+      ],
+      "calls": [],
+      "toast": "已复制歌名",
+      "toastHidden": false
+    },
+    "copyFallback": {
+      "exec": [
+        {
+          "cmd": "copy",
+          "text": "在线曲目 3"
+        }
+      ],
+      "calls": [
+        "在线曲目 3"
+      ],
+      "toast": "已复制歌名",
+      "toastHidden": false
+    },
+    "coverSrc": {
+      "hdslb": "/api/apps/hanako-simple-player/routes/widget/api/music/cover?url=https%3A%2F%2Fi1.hdslb.com%2Fbfs%2Farchive%2Frain.jpg",
+      "hdslbSub": "/api/apps/hanako-simple-player/routes/widget/api/music/cover?url=https%3A%2F%2Fi2.hdslb.com%2Fa.jpg",
+      "netease": "https://p1.music.126.net/abc/x.jpg?param=200y200",
+      "selfRoute": "/api/apps/hanako-simple-player/routes/_fixture/cover.png",
+      "relative": "docs/x.png",
+      "empty": ""
+    },
+    "recentOrder": [
+      "C",
+      "B",
+      "A",
+      "占位词纯音乐"
+    ],
+    "recentReplay": [
+      "A",
+      "C",
+      "B",
+      "占位词纯音乐"
+    ],
+    "recentOverflow": {
+      "len": 100,
+      "first": "O119",
+      "last": "O20",
+      "hasO0": false,
+      "hasO20": true
+    },
+    "recentMenu": {
+      "rows": 100,
+      "moveHidden": true,
+      "removeExists": true,
+      "copyExists": true
+    }
+  }
+}

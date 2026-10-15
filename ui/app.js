@@ -1429,11 +1429,16 @@
     s = Math.max(0, Math.round(s));
     return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
   }
+  var sourceQueueUid = ''; // 已删列表的当前曲仅在来源入口临时展示，不写入歌单。
   function visibleTracks() {
     var out = [];
     for (var i = 0; i < state.tracks.length; i++) {
       if (state.tracks[i].list === state.activeList) out.push(state.tracks[i]);
     }
+    var sourceTrack = trackByUid(sourceQueueUid);
+    if (sourceTrack && sourceTrack.uid === state.currentUid &&
+        (sourceTrack.detached || !findList(sourceTrack.list)) &&
+        state.activeList === (sourceTrack.mode === '在线' ? 'recent' : 'local') && out.indexOf(sourceTrack) < 0) out.push(sourceTrack);
     return out;
   }
   function trackByUid(uid) {
@@ -2032,12 +2037,61 @@
     setArtistLine(emptyImportHint(), false);
   }
 
+  function setTrackEntry(el, label) {
+    if (label) {
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('aria-label', label);
+    } else {
+      el.removeAttribute('role'); el.removeAttribute('tabindex'); el.removeAttribute('aria-label');
+    }
+  }
+  function openSongSearch() {
+    var t = currentTrack();
+    if (!t) return;
+    searchInput.value = t.title;
+    searchScope = 'song'; renderSearchScope();
+    openSearch(); doSearch();
+  }
+  function openTrackSource() {
+    var t = currentTrack();
+    if (!t) return;
+    var list = listOf(t), target = t;
+    if (!findList(list) || t.detached) {
+      // 列表已删：优先使用仍在库里的同曲副本（在线曲通常在最近播放）。
+      target = state.tracks.filter(function (x) { return x.id === t.id && !x.detached && findList(x.list); })[0];
+      list = target ? target.list : (t.mode === '在线' ? 'recent' : 'local');
+    }
+    sourceQueueUid = target ? '' : t.uid;
+    state.activeList = list;
+    queueSearchQuery = ''; queueSearchOpen = false;
+    renderQueue();
+    var layout = player.getAttribute('data-layout');
+    if (layout === 'compact') setCompactPage('queue');
+    else if (layout === 'wide') setDrawer(true);
+    centerCurrentInQueue(target ? target.uid : t.uid);
+    persistState();
+  }
+  function bindTrackEntry(id, action) {
+    var el = $(id);
+    el.addEventListener('click', function (e) { e.stopPropagation(); if (currentTrack()) action(); });
+    el.addEventListener('keydown', function (e) {
+      if (currentTrack() && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault(); e.stopPropagation(); action();
+      }
+    });
+  }
+  bindTrackEntry('trackTitle', openSongSearch);
+  bindTrackEntry('trackMeta', openTrackSource);
+
   function renderTrack() {
     var t = currentTrack();
     var favBtn = $('stageFavBtn');
     var favTextBtn = $('favBtn');
     /* 播放页红心是空标签（只有外壳），图标得自己塞（只塞一次）。 */
     if (favBtn && !favBtn.querySelector('use')) favBtn.innerHTML = icon('i-heart');
+    setTrackEntry($('trackTitle'), t ? '搜索这首歌：' + t.title : '');
+    setTrackEntry($('trackMeta'), t ? '打开来源歌单：' + sourceName(t) : '');
     if (!t) {
       $('trackTitle').textContent = '还没有曲目';
       $('trackTitle').removeAttribute('title');
@@ -2276,10 +2330,10 @@
   /* 把正在播的那首滚进队列可视区中部。切列表 / 切歌时调（罐头拍板）。
    * 为什么不在 renderQueue 里无条件重建后就居中：点心/移出等操作也会重渲染，
    * 那时不该抢用户的滚动位置。所以只在两个明确时机调。 */
-  function centerCurrentInQueue() {
+  function centerCurrentInQueue(uid) {
     if (reorderGesture && reorderGesture.armed) return;
     if (!queueList) return;
-    var row = queueList.querySelector('.q-row.is-current');
+    var row = uid ? Array.prototype.find.call(queueList.querySelectorAll('.q-row'), function (el) { return el.getAttribute('data-uid') === uid; }) : queueList.querySelector('.q-row.is-current');
     if (!row) return;
     var rTop = row.offsetTop;
     var rH = row.offsetHeight;
@@ -6479,7 +6533,7 @@
     var names = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; });
     var guess = names.length === 1 ? names[0] : guessCoverArtist(list && list.name);
     var input = $('coverArtist'); input.value = guess; coverPanelBusy(false);
-    coverStatus(ts.length ? '只处理本歌单的 B站曲目；同曲的喜欢和历史副本会同步。' : '本歌单没有 B站曲目。');
+    coverStatus((ts.length ? '在线补全仅处理本歌单的 B站曲目。' : '本歌单没有待补全的 B站曲目。') + '恢复原封面支持所有平台；同曲副本会同步。');
     placePop(coverPanel, $('importBtn'));
     input.focus();
     if (!guess && ts.length) {
@@ -6537,6 +6591,59 @@
     });
     renderQueue(); renderTrack();
   }
+  var singleCoverBusy = false;
+  function setSingleCoverBusy(busy) {
+    singleCoverBusy = busy;
+    $('getCoverBtn').disabled = busy;
+    $('coverFetchStatus').hidden = !busy;
+  }
+  async function getTrackCover(t) {
+    if (!t || singleCoverBusy) return;
+    var clues = cleanCoverQuery(t.title).artists;
+    var name = String(t.author || (clues.length === 1 ? clues[0] : '')).trim();
+    if (!name) { toast('这首没有歌手信息，先补全歌手或用歌单级「补全封面」'); return; }
+    if (coverJob) { toast('歌单封面任务进行中，请完成后再试'); return; }
+    setSingleCoverBusy(true);
+    var uid = t.uid, id = t.id, title = t.title, snapshots = [];
+    var signal = new AbortController().signal;
+    toast('正在获取此曲封面…');
+    try {
+      var found = await coverData({ kind: 'artist', name: name }, signal), artist = found.artist;
+      var albums = [], offset = 0, dictionary = [], page;
+      do {
+        page = await coverData({ kind: 'albums', id: artist.id, offset: offset }, signal);
+        albums = albums.concat(page.albums); offset += page.albums.length;
+        if (page.more && (!page.albums.length || offset > 2000)) throw new Error('专辑列表不完整，请稍后重试');
+      } while (page.more);
+      for (var i = 0; i < albums.length; i++) {
+        var album = await coverData({ kind: 'album', id: albums[i].id }, signal);
+        dictionary = dictionary.concat(album.tracks);
+      }
+      var match = pickCoverMatch(title, artist, dictionary);
+      if (!match) { toast('没有找到匹配的封面，原封面保留'); return; }
+      if (!await probeCoverImage(match.pic, signal)) { toast('封面图片加载失败，原封面保留'); return; }
+      var current = trackByUid(uid);
+      if (!current || current.detached) { toast('这首已移出歌单，未更换封面'); return; }
+      if (coverJob) { toast('歌单封面任务进行中，请完成后再试'); return; }
+      snapshots = applyCoverMatch(id, match, artist, Date.now());
+      var saved = await savePlaylist();
+      if (!saved || !saved.ok) throw new Error('保存失败');
+      snapshots = [];
+      renderQueue(); renderTrack(); toast('已获取此曲封面');
+    } catch (e) {
+      if (snapshots.length) rollbackCovers(snapshots);
+      toast('获取封面失败：' + e.message + '，原封面保留');
+    } finally {
+      setSingleCoverBusy(false);
+    }
+  }
+  $('getCoverBtn').addEventListener('click', function (e) {
+    e.stopPropagation();
+    var t = trackByUid(moreTargetUid);
+    closePops();
+    getTrackCover(t);
+  });
+
   async function startCoverFill() {
     if (coverJob) return;
     var listId = coverListId, targets = coverTargets(listId, false);
@@ -6591,10 +6698,19 @@
       coverStatus(signal.aborted ? '已停止；原封面保留，已读取的专辑下次可复用。' : '补全未完成：' + e.message + '。原封面保留。');
     } finally { if (coverJob === job) coverJob = null; coverPanelBusy(false); }
   }
+  function coverRestoreTargets(listId) {
+    var seen = Object.create(null);
+    return state.tracks.filter(function (t) {
+      var m = t.raw.coverMatch;
+      if (t.list !== listId || t.detached || seen[t.id] || !m || typeof m.originalPic !== 'string') return false;
+      seen[t.id] = true;
+      return true;
+    });
+  }
   async function restoreCovers(listId) {
     if (coverJob) return;
     listId = listId || coverListId || state.activeList;
-    var ids = coverTargets(listId, true).filter(function (t) { return t.raw.coverMatch && typeof t.raw.coverMatch.originalPic === 'string'; }).map(function (t) { return t.id; });
+    var ids = coverRestoreTargets(listId).map(function (t) { return t.id; });
     if (!ids.length) { coverStatus('没有可恢复的原封面。'); return; }
     var snapshots = [], job = { saving: true }; coverJob = job; coverPanelBusy(true); $('coverCloseBtn').disabled = true;
     state.tracks.forEach(function (t) {
