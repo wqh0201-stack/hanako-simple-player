@@ -1,0 +1,78 @@
+{
+  "created": "2026-10-15",
+  "generator": "OpenAI built-in image generation, generated in this conversation",
+  "kind": "design-concepts-not-runtime-screenshots",
+  "selection": "Three final visual references; no single variant explicitly selected by user.",
+  "files": [
+    {
+      "file": "01-final-clear.png",
+      "original_filename": "exec-4425f311-cf14-4b2f-a3f2-89d3827fc306.png",
+      "role": "final-reference",
+      "note": "通透多色进度背景；时间在条内下角",
+      "width": 1774,
+      "height": 887,
+      "bytes": 1628289,
+      "sha256": "a67ea44d16d95146f3238d20c275ceba8f2c5536d0262e206c75abcc56630091"
+    },
+    {
+      "file": "02-final-segmented.png",
+      "original_filename": "exec-9a89c00a-1d7a-47d4-b14f-b7a2d41f3e3a.png",
+      "role": "final-reference",
+      "note": "Touch Bar 控件分组；时间在条内下角",
+      "width": 1774,
+      "height": 887,
+      "bytes": 1651065,
+      "sha256": "3ce249e20da0fb8ac5dfe716594fd6e9fcd135bb614c2dea98c04be2c2cc1d8d"
+    },
+    {
+      "file": "03-final-dark.png",
+      "original_filename": "exec-e043f4e0-de36-438a-ba06-c7187748776b.png",
+      "role": "final-reference",
+      "note": "深色宿主主题观感；时间在条内下角",
+      "width": 1774,
+      "height": 887,
+      "bytes": 1525469,
+      "sha256": "6f9295900d1736379f2bafe576833ed5758cfaf75231bbc7a02f1c06decb3024"
+    },
+    {
+      "file": "archive/04-fixed-cover-times-outside.png",
+      "original_filename": "exec-0b5ce2dc-c615-4f51-ba83-f103c1c0657b.png",
+      "role": "superseded",
+      "note": "早期固定独立封面稿；时间放外面已被否定",
+      "width": 1774,
+      "height": 887,
+      "bytes": 1589557,
+      "sha256": "c27729f0ae677859871b534c8edcf8ffe6f859bc178cea1da1e89197b81948a5"
+    },
+    {
+      "file": "archive/05-early-lyric.png",
+      "original_filename": "exec-c5ede280-b23c-4470-ad47-ef59dc70c027.png",
+      "role": "exploration",
+      "note": "早期歌词陪伴方向；后续用户修正优先",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1079620,
+      "sha256": "aad617474d118d0eb28fc3caf4d61201036ff2e85155f26777190200183b1b18"
+    },
+    {
+      "file": "archive/06-early-segmented.png",
+      "original_filename": "exec-4af6141d-af75-4b8c-a171-06d4449388a0.png",
+      "role": "exploration",
+      "note": "早期分段控制方向；后续用户修正优先",
+      "width": 1983,
+      "height": 793,
+      "bytes": 1174912,
+      "sha256": "deb3874da97c49090d13bf6d660d653878b6250352e4a27c3134f58a9fbc5c7f"
+    },
+    {
+      "file": "archive/07-early-minimal.png",
+      "original_filename": "exec-5925d946-09a1-415b-8cb9-a81f10e6c56a.png",
+      "role": "exploration",
+      "note": "早期极简方向；后续用户修正优先",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1065173,
+      "sha256": "c50346d5d349575d07f2d2e3771411817c76ca8db08beeff438a804781db33b7"
+    }
+  ]
+}

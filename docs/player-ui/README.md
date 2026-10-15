@@ -4,12 +4,19 @@
 [`AGENTS.md`](../../AGENTS.md)，版本流水在 [`docs/CHANGELOG.md`](../CHANGELOG.md)，
 本文只负责**指路**。
 
+## 当前待实现：Touch Bar 横条
+
+- [接力任务书](../TASK-touchbar-responsive-player.md)：2026-10-15 用户确认的新浅横条视觉、交互、离散断点动画与验收清单；尚未实现。
+- [视觉参考](refs/touchbar-2026-10-15/README.md)：三张最终参考 + 四张早期稿，原始 PNG 与校验清单已落盘。
+
+该任务只在新增横条范围内补充/覆盖旧 UI 契约，其他布局继续以现有契约为准。
+
 ## 这个目录怎么分的
 
 | 位置 | 装什么 | 性质 |
 |---|---|---|
 | `README.md` | 本索引 | 导航 |
-| `CONTRACT.md` | 极简版 UI 定稿执行契约（**唯一权威的规格**） | 在役 |
+| `CONTRACT.md` | 既有极简版 UI 执行契约；新增横条范围见上方用户任务书 | 在役 |
 | `REFACTOR-BRIEF.md` | 前端重构的需求原文（重构起点，历史背景） | 参考 |
 | `FRONTEND-CRITIQUE-2026-10-12.md` | `/impeccable critique` 评审问题清单（含证据） | 参考 |
 | `FRONTEND-TODO-2026-10-12.md` | 上条评审的用户取舍与排序（实施前先读原文） | 待办 |
@@ -18,7 +25,7 @@
 | `archive/prototype/` | 淘汰的 UI 原型（`app.js`/`index.html`/`style.css`、`alt-mine/`、`dev/`） | 历史 |
 | `ripple-lab*.html` | 涟漪实验台（`tools/` 里 4 个脚本会引用，**别删**） | 在役工具 |
 | `assets/` | 夹具封面（`verify-ui.mjs` 依赖，**别删**）+ ETE 验收截图 | 在役夹具 |
-| `refs/` | 设计参考（`quiet-controls/` 定稿源） | 参考 |
+| `refs/` | 设计参考（`quiet-controls/`、`touchbar-2026-10-15/` 等） | 参考 |
 | `screenshots/` | 历次验收截图 | 历史 |
 
 > 交接稿命名约定：`*-DONE` 是完成记录，`*-FIX` 是修复记录，`*-HANDOFF` 是定稿+接线说明。
