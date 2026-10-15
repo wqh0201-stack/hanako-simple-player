@@ -2437,18 +2437,27 @@
 
   function renderProgress() {
     var t = currentTrack();
+    var row = $('progressAmbient').parentNode;
     if (!t) {
       seek.value = '0';
       $('curTime').textContent = '0:00';
       seek.style.setProperty('--fill', '0%');
+      row.style.setProperty('--progress-fill', '0%');
+      setAttrIf(row, 'data-progress', 'empty');
+      seek.setAttribute('aria-valuetext', '0:00 / 时长未知');
       renderStrip();
       return;
     }
     var d = trackDuration(t);
     var p = d ? Math.min(state.progress, d) : state.progress;
+    p = Math.max(0, isFinite(p) ? p : 0);
     seek.value = String(p);
     $('curTime').textContent = fmtTime(p);
-    seek.style.setProperty('--fill', (d ? (p / d * 100) : 0).toFixed(2) + '%');
+    var fill = d ? (p / d * 100) : 0;
+    seek.style.setProperty('--fill', fill.toFixed(2) + '%');
+    row.style.setProperty('--progress-fill', fill.toFixed(2) + '%');
+    setAttrIf(row, 'data-progress', !d || p <= 0 ? 'empty' : (p >= d ? 'full' : 'partial'));
+    seek.setAttribute('aria-valuetext', fmtTime(p) + ' / ' + (d ? fmtTime(d) : '时长未知'));
     renderStrip();
   }
 
@@ -7844,6 +7853,12 @@
      ============================================================ */
   /* 横条呈现只调用既有控制器，媒体时钟、随机历史与音频所有权仍共用原实现。 */
   var stripLayout = $('stripLayout'), stripBar = $('stripBar');
+  var progressPlayed = $('progressPlayed'), stripStars = stripLayout && stripLayout.querySelector('.strip-sparkles');
+  if (progressPlayed && stripStars) {
+    var progressStars = stripStars.cloneNode(true);
+    progressStars.classList.add('progress-sparkles');
+    progressPlayed.appendChild(progressStars);
+  }
   var stripHot = false, stripPointerInside = false, stripKeyboard = false;
   var stripVolumeOpen = false, stripPointers = {};
   var stripSmall = false, stripMotion = null, stripMotionRaf = 0, stripTransitions = 0;
@@ -7875,7 +7890,7 @@
   }
   function syncStripAmbient() {
     if (!stripLayout) return;
-    var visible = isStrip() && !stripStopped && stripInView && !document.hidden && lyricHostVisible
+    var visible = !stripStopped && stripInView && !document.hidden && lyricHostVisible
       && player.getAttribute('data-strip-ambient') === '1';
     var allowed = visible && !SHOT && !reducedMotion();
     if (!allowed && (stripSeekGesture || stripFlowRamp || stripFlowRate !== 1)) resetStripSeekEffect();
@@ -7883,6 +7898,7 @@
     var moving = allowed && ((!audio.paused && !audio.ended) || !!stripSeekGesture || !!stripFlowRamp);
     var changed = stripLayout.getAttribute('data-ambient-motion') !== (moving ? '1' : '0');
     setAttrIf(stripLayout, 'data-ambient-motion', moving ? '1' : '0');
+    setAttrIf(player, 'data-progress-motion', moving ? '1' : '0');
     if (changed) cacheStripFlowAnimations();
   }
   function setStripFlowRate(rate) {
@@ -7895,8 +7911,8 @@
     });
   }
   function cacheStripFlowAnimations() {
-    if (!stripLayout || typeof stripLayout.getAnimations !== 'function') return;
-    stripFlowAnimations = stripLayout.getAnimations({ subtree: true }).filter(function (a) {
+    if (!player || typeof player.getAnimations !== 'function') return;
+    stripFlowAnimations = player.getAnimations({ subtree: true }).filter(function (a) {
       return a.animationName === 'strip-ambient-flow';
     });
     setStripFlowRate(stripFlowRate);
@@ -7906,11 +7922,13 @@
     stripFlowRaf = 0; stripFlowRamp = null; stripSeekGesture = null;
     setStripFlowRate(1);
     if (stripLayout) setAttrIf(stripLayout, 'data-seek-effect', 'idle');
+    if (player) setAttrIf(player, 'data-seek-effect', 'idle');
   }
   function setStripSeekEffect(mode) {
     if (stripFlowRaf) cancelAnimationFrame(stripFlowRaf);
     stripFlowRaf = 0; stripFlowRamp = null;
     setAttrIf(stripLayout, 'data-seek-effect', mode);
+    setAttrIf(player, 'data-seek-effect', mode);
     syncStripAmbient(); cacheStripFlowAnimations();
     setStripFlowRate(mode === 'drag' ? 3.8 : 1.25);
   }
@@ -7923,6 +7941,7 @@
     else {
       stripFlowRamp = null; setStripFlowRate(1);
       setAttrIf(stripLayout, 'data-seek-effect', 'idle'); syncStripAmbient();
+      setAttrIf(player, 'data-seek-effect', 'idle');
     }
   }
   function finishStripSeekEffect(e) {
@@ -7935,6 +7954,8 @@
     /* 唯一新增 rAF 是这段 1.4 秒的速率回落，结束即停；不画粒子、不读 DOM 几何。 */
     setAttrIf(stripLayout, 'data-seek-kind', wasDragging ? 'drag' : 'press');
     setAttrIf(stripLayout, 'data-seek-effect', 'settle');
+    setAttrIf(player, 'data-seek-kind', wasDragging ? 'drag' : 'press');
+    setAttrIf(player, 'data-seek-effect', 'settle');
     stripFlowRamp = { from: stripFlowRate, at: performance.now() };
     if (stripFlowRaf) cancelAnimationFrame(stripFlowRaf);
     stripFlowRaf = requestAnimationFrame(settleStripFlow);
@@ -8129,7 +8150,13 @@
     el.addEventListener('lostpointercapture', finishStripPointer);
   });
   $('stripSeek').addEventListener('pointerdown', function (e) {
-    if (this.disabled || (e.pointerType === 'mouse' && e.button !== 0) || stripSeekGesture) return;
+    if (this.disabled || player.getAttribute('data-strip-ambient') !== '1' || (e.pointerType === 'mouse' && e.button !== 0) || stripSeekGesture) return;
+    stripSeekGesture = { id: e.pointerId, x: e.clientX, y: e.clientY, dragging: false };
+    if (reducedMotion() || SHOT) { resetStripSeekEffect(); return; }
+    setStripSeekEffect('press');
+  });
+  seek.addEventListener('pointerdown', function (e) {
+    if (this.disabled || player.getAttribute('data-strip-ambient') !== '1' || (e.pointerType === 'mouse' && e.button !== 0) || stripSeekGesture) return;
     stripSeekGesture = { id: e.pointerId, x: e.clientX, y: e.clientY, dragging: false };
     if (reducedMotion() || SHOT) { resetStripSeekEffect(); return; }
     setStripSeekEffect('press');
@@ -8215,7 +8242,7 @@
   if (window.IntersectionObserver) new IntersectionObserver(function (entries) {
     stripInView = entries[entries.length - 1].isIntersecting;
     syncStripAmbient();
-  }).observe(stripLayout);
+  }).observe(player);
   document.addEventListener('visibilitychange', function () { if (document.hidden) { closeStripInteraction(); stopStripMotion(); } syncStripAmbient(); });
   window.addEventListener('pagehide', function () { stripStopped = true; closeStripInteraction(); stopStripMotion(); syncStripAmbient(); });
   window.addEventListener('pageshow', function () { stripStopped = false; applyLayout(); });
@@ -8311,6 +8338,7 @@
     positionSplitHandle();
     if (beforeCover) startStripMotion(beforeCover);
     renderStrip();
+    if (formChanged) cacheStripFlowAnimations();
   }
   if (window.ResizeObserver) {
     new ResizeObserver(applyLayout).observe(frame);

@@ -1576,7 +1576,10 @@ body.is-shot .ripple-tip { display: none; }
   height: 28px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  --progress-fill: 0%;
+  --strip-fill: var(--progress-fill);
+  --strip-intensity: 1;
+  gap: 0;
   transition: left 340ms cubic-bezier(0.22, 0.61, 0.36, 1),
               right 340ms cubic-bezier(0.22, 0.61, 0.36, 1),
               top 340ms cubic-bezier(0.22, 0.61, 0.36, 1);
@@ -1585,7 +1588,98 @@ body.is-shot .ripple-tip { display: none; }
   left: calc(var(--ctl-pad) + 48px);
   right: calc(var(--ctl-pad) + 48px);
   top: 10px;
-  gap: 7px;
+  gap: 0;
+}
+.progress-ambient {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 14px;
+  transform: translateY(-50%);
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 999px;
+  background: var(--hk-track);
+  pointer-events: none;
+}
+.progress-track-base,
+.progress-played {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.progress-track-base {
+  background: transparent;
+}
+.progress-track-base::before,
+.progress-track-base::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: linear-gradient(color-mix(in srgb, var(--hk-surface) 38%, transparent), color-mix(in srgb, var(--hk-surface) 38%, transparent)), var(--strip-field, var(--cover-fallback));
+  pointer-events: none;
+}
+.progress-track-base::before { opacity: .10; }
+.progress-track-base::after { opacity: .88; }
+.progress-played {
+  background-image: var(--strip-glow, none);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: var(--strip-intensity);
+  clip-path: inset(0 calc(100% - var(--progress-fill)) 0 0 round 999px);
+}
+.progress-played::before,
+.progress-played::after {
+  content: "";
+  position: absolute;
+  inset: -8px -20px;
+  background-image: var(--strip-glow, none);
+  opacity: .50;
+  pointer-events: none;
+  animation: strip-ambient-glow 7.6s ease-in-out -2.4s infinite paused;
+}
+.progress-played::after { opacity: .30; transform: scaleX(-1); animation-name: strip-ambient-haze; animation-duration: 10.3s; animation-delay: -6.7s; }
+.progress-sparkles { -webkit-mask-image: linear-gradient(to bottom, transparent, black 3px, black 8px, #0007 13px, #0007 17px, black 23px, black 27px, transparent); mask-image: linear-gradient(to bottom, transparent, black 3px, black 8px, #0007 13px, #0007 17px, black 23px, black 27px, transparent); }
+.progress-row[data-progress="empty"] .progress-played { visibility: hidden; }
+.player[data-strip-ambient="0"] .progress-played { visibility: hidden; }
+.progress-row .progress-front {
+  z-index: 1;
+  top: 50%;
+  height: 14px;
+  border-radius: 999px;
+  transform: translateY(-50%);
+}
+.progress-row .strip-front-band { width: clamp(24px, 7%, 64px); }
+.progress-row .strip-front-glow { width: clamp(50px, 26%, 140px); }
+.progress-row[data-progress="empty"] .progress-front,
+.player[data-strip-ambient="0"] .progress-front { visibility: hidden; }
+.progress-row .time {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  line-height: 14px;
+  color: var(--hk-text);
+  text-shadow: 0 1px 3px color-mix(in srgb, var(--hk-surface) 76%, transparent);
+  font-weight: 500;
+}
+.progress-row #curTime { left: 9px; }
+.progress-row #durTime { right: 9px; color: var(--hk-text); }
+.progress-row .range-seek {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
 }
 .time {
   flex: 0 0 auto;
@@ -2941,6 +3035,14 @@ body.is-shot *::after {
 .strip-layout[data-ambient-motion="1"] .strip-spark,
 .strip-layout[data-ambient-motion="1"] .strip-field-played::before,
 .strip-layout[data-ambient-motion="1"] .strip-field-played::after { animation-play-state: running; }
+.player[data-progress-motion="1"] .progress-sparkles .strip-flight,
+.player[data-progress-motion="1"] .progress-sparkles .strip-spark,
+.player[data-progress-motion="1"] .progress-played::before,
+.player[data-progress-motion="1"] .progress-played::after { animation-play-state: running; }
+.progress-row[data-progress="empty"] .progress-sparkles .strip-flight,
+.progress-row[data-progress="empty"] .progress-sparkles .strip-spark,
+.progress-row[data-progress="empty"] .progress-played::before,
+.progress-row[data-progress="empty"] .progress-played::after { animation-play-state: paused; }
 .strip-bar[data-progress="empty"] .strip-flight,
 .strip-bar[data-progress="empty"] .strip-spark,
 .strip-bar[data-progress="empty"] .strip-field-played::before,
@@ -2960,6 +3062,7 @@ body.is-shot *::after {
 @keyframes strip-ambient-glow { 0%, 100% { opacity: .36; transform: translate(-10px, -2px) scale(1.02); } 50% { opacity: .76; transform: translate(10px, 3px) scale(1.08); } }
 @keyframes strip-ambient-haze { 0%, 100% { opacity: .24; transform: scaleX(-1) translateX(-8px); } 50% { opacity: .48; transform: scaleX(-1) translateX(12px); } }
 @media (max-width: 719px) { .strip-flight:nth-child(n+25) { display: none; } }
+.player[data-bar="tight"] .progress-sparkles .strip-flight:nth-child(n+13) { display: none; }
 .strip-layout[data-small="1"] .strip-flight:nth-child(n+13) { display: none; }
 /* 玻璃光片覆盖已播放区，右沿精确对齐真实进度；圆角继承底条，向左渐透。
  * 小面积 backdrop 只折射下方色场/星光，身份、歌词与控件仍在其上，保持清晰。 */
@@ -2977,9 +3080,15 @@ body.is-shot *::after {
 .strip-layout[data-seek-effect="press"] .strip-front-band, .strip-layout[data-seek-effect="drag"] .strip-front-band { opacity: 1; transition-duration: .12s; }
 .strip-layout[data-seek-effect="press"] .strip-front-glow { opacity: .68; transform: translateX(-100%) scaleX(1); transition-duration: .12s; }
 .strip-layout[data-seek-effect="drag"] .strip-front-glow { opacity: 1; transform: translateX(-100%) scaleX(1.3); transition-duration: .12s; }
+.player:not([data-layout="strip"])[data-seek-effect="press"] .progress-front-band,
+.player:not([data-layout="strip"])[data-seek-effect="drag"] .progress-front-band { opacity: 1; transition-duration: .12s; }
+.player:not([data-layout="strip"])[data-seek-effect="press"] .progress-front-glow { opacity: .68; transform: translateX(-100%) scaleX(1); transition-duration: .12s; }
+.player:not([data-layout="strip"])[data-seek-effect="drag"] .progress-front-glow { opacity: 1; transform: translateX(-100%) scaleX(1.3); transition-duration: .12s; }
 /* 快速点击可能同帧按下/松手：独立的释放辉光确保不会被合并成一次不可见的 0→0。 */
 .strip-layout[data-seek-effect="settle"][data-seek-kind="press"] .strip-front-glow { animation: strip-seek-tap-glow 1.4s ease-out both; }
 .strip-layout[data-seek-effect="settle"][data-seek-kind="drag"] .strip-front-glow { animation: strip-seek-drag-glow 1.4s ease-out both; }
+.player:not([data-layout="strip"])[data-seek-effect="settle"][data-seek-kind="press"] .progress-front-glow { animation: strip-seek-tap-glow 1.4s ease-out both; }
+.player:not([data-layout="strip"])[data-seek-effect="settle"][data-seek-kind="drag"] .progress-front-glow { animation: strip-seek-drag-glow 1.4s ease-out both; }
 @keyframes strip-seek-tap-glow { 0% { opacity: .12; transform: translateX(-100%) scaleX(.8); } 10% { opacity: .68; transform: translateX(-100%) scaleX(1); } 100% { opacity: 0; transform: translateX(-100%) scaleX(.8); } }
 @keyframes strip-seek-drag-glow { from { opacity: 1; transform: translateX(-100%) scaleX(1.3); } to { opacity: 0; transform: translateX(-100%) scaleX(.8); } }
 .strip-bar[data-progress="empty"] .strip-front, .player[data-strip-ambient="0"] .strip-front { visibility: hidden; }
@@ -3056,8 +3165,8 @@ body.is-shot *::after {
   .strip-layout *, .strip-layout *::after { transition: none !important; }
   .strip-btn:active, .strip-cover:active, .strip-btn.strip-play:active { transform: none !important; }
 }
-.strip-layout { --strip-field: var(--strip-field-dark, var(--cover-fallback)); --strip-glow: var(--strip-glow-dark, none); --strip-star-0: var(--strip-star-0-dark, var(--hk-muted)); --strip-star-1: var(--strip-star-1-dark, var(--hk-muted)); --strip-star-2: var(--strip-star-2-dark, var(--hk-muted)); --strip-star-3: var(--strip-star-3-dark, var(--hk-muted)); --strip-star-4: var(--strip-star-4-dark, var(--hk-muted)); --strip-star-5: var(--strip-star-5-dark, var(--hk-muted)); }
-.player[data-tone="light"] .strip-layout { --strip-field: var(--strip-field-light, var(--cover-fallback)); --strip-glow: var(--strip-glow-light, none); --strip-star-0: var(--strip-star-0-light, var(--hk-muted)); --strip-star-1: var(--strip-star-1-light, var(--hk-muted)); --strip-star-2: var(--strip-star-2-light, var(--hk-muted)); --strip-star-3: var(--strip-star-3-light, var(--hk-muted)); --strip-star-4: var(--strip-star-4-light, var(--hk-muted)); --strip-star-5: var(--strip-star-5-light, var(--hk-muted)); }
+.strip-layout, .controls { --strip-field: var(--strip-field-dark, var(--cover-fallback)); --strip-glow: var(--strip-glow-dark, none); --strip-star-0: var(--strip-star-0-dark, var(--hk-muted)); --strip-star-1: var(--strip-star-1-dark, var(--hk-muted)); --strip-star-2: var(--strip-star-2-dark, var(--hk-muted)); --strip-star-3: var(--strip-star-3-dark, var(--hk-muted)); --strip-star-4: var(--strip-star-4-dark, var(--hk-muted)); --strip-star-5: var(--strip-star-5-dark, var(--hk-muted)); }
+.player[data-tone="light"] .strip-layout, .player[data-tone="light"] .controls { --strip-field: var(--strip-field-light, var(--cover-fallback)); --strip-glow: var(--strip-glow-light, none); --strip-star-0: var(--strip-star-0-light, var(--hk-muted)); --strip-star-1: var(--strip-star-1-light, var(--hk-muted)); --strip-star-2: var(--strip-star-2-light, var(--hk-muted)); --strip-star-3: var(--strip-star-3-light, var(--hk-muted)); --strip-star-4: var(--strip-star-4-light, var(--hk-muted)); --strip-star-5: var(--strip-star-5-light, var(--hk-muted)); }
 /* 条内当前句高光：深底用亮芯，浅底用墨芯，与竖卡 --lyric-glow 同一套语义。 */
 .strip-layout { --strip-lyric-glow:
     0 0 1px color-mix(in srgb, var(--hl-accent) 74%, var(--on-veil-paper)),
