@@ -72,8 +72,8 @@ export async function verifyStripFlow({ newPage, BASE, API, UI_BASE, outDir, ass
   await page.screenshot({ path: path.join(dir, '02b-quick-click.png') }); await sleep(1450);
   // 音量不触发进度加速。
   await page.setViewport({ width: 1040, height: 128, deviceScaleFactor: 1 }); await sleep(100);
-  await page.mouse.move(700, 64); await sleep(80); await page.hover('#stripVolumeBtn'); await sleep(220);
-  const vol = await page.$eval('#stripVol', e => { const r = e.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+  await page.mouse.move(700, 64); await sleep(80); await page.hover('#muteBtn'); await sleep(220);
+  const vol = await page.$eval('#vol', e => { const r = e.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
   await page.mouse.move(vol.x, vol.y); await page.mouse.down(); await sleep(80);
   check('volume-keeps-normal-rate', rates(await sample(), 1) && (await sample()).effect === 'idle');
   await page.mouse.up(); await page.mouse.move(1, 127); await page.evaluate(() => document.activeElement?.blur()); await sleep(150);

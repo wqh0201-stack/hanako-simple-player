@@ -265,6 +265,9 @@
   var ownerSequence = 0, audioRequestGen = 0, ownerWaiting = null;
   var needsTakeover = false, restoreAwaitHandoff = false, ownerTearingDown = false;
   var activePlayIntent = false, teardownResumeIntent = false;
+  var playRequestPending = false;
+  // 用户意图先反馈；所有权操作串行，避免旧的 stop 回执取消后一次播放。
+  var transportIntent = null, transportRevision = 0, transportTail = Promise.resolve();
   var ownerDocLockName = 'hana-simple-player-audio-doc';
   var ownerDocLockHeld = false, ownerDocLockSupported = false;
   var ownerDocLockReady = null, ownerDocLockQueued = false, ownerDocLockEpoch = 0;
@@ -293,6 +296,7 @@
     ++audioRequestGen; ++resolveGen;
     pendingAutoplay = false;
     activePlayIntent = false;
+    playRequestPending = false;
     clearInterval(seekRetryTimer); seekRetryTimer = 0;
     lastPlayingAt = 0;
     state.playing = false;
@@ -497,6 +501,8 @@
     if (/^(user|resume|media|track)$/.test(reason || 'user')) pendingAutoplay = false;
     var token = ++audioRequestGen;
     restoreAwaitHandoff = false;
+    playRequestPending = true;
+    renderPlayState();
     return claimAudio(reason || 'user', token).then(function (allowed) {
       if (!allowed || token !== audioRequestGen || !ownerGeneration || ownerTearingDown
         || (ownerDocLockSupported && !ownerDocLockHeld)) return false;
@@ -517,12 +523,16 @@
     }).catch(function () {
       if (token === audioRequestGen) { state.playing = false; needsTakeover = true; renderPlayState(); renderResume(); }
       return false;
+    }).then(function (result) {
+      if (token === audioRequestGen) { playRequestPending = false; renderPlayState(); }
+      return result;
     });
   }
   function pauseAll() {
     var generation = ownerGeneration;
     restoreAwaitHandoff = false;
     pauseForOwner(false);
+    finishOwnerWait(false);
     return ownerDocLockReady.then(function () { return refreshAudioOwner(); }).then(function () {
       return ownerReapProof('stop');
     }).then(function (proof) {
@@ -531,6 +541,24 @@
       if (proof) { input.reap = true; input.reapOwnerId = proof.reapOwnerId; input.reapGeneration = proof.reapGeneration; }
       return ownerCommand(input);
     }).catch(function () {});
+  }
+  function playbackWanted() {
+    return transportIntent !== null ? transportIntent :
+      (playRequestPending || pendingAutoplay || activePlayIntent || !audio.paused);
+  }
+  function setPlaybackIntent(wanted, reason) {
+    var revision = ++transportRevision;
+    transportIntent = !!wanted;
+    // 取消无需等网络，也不能等尚未完成的 play()；先失效旧请求，再排 stop。
+    if (!wanted) { pauseForOwner(false); finishOwnerWait(false); }
+    renderPlayState();
+    transportTail = transportTail.catch(function () {}).then(function () {
+      if (revision !== transportRevision || ownerTearingDown) return;
+      return wanted ? requestPlay(reason || 'user') : pauseAll();
+    }).then(function () {
+      if (revision === transportRevision) { transportIntent = null; renderPlayState(); }
+    });
+    return transportTail;
   }
 
   /* ---------- 记忆：播放状态与歌单元数据走后端路由 ----------
@@ -1263,6 +1291,10 @@
   var drawerScrim = $('drawerScrim');
   var seek = $('seek');
   var vol = $('vol');
+  var rangePointers = {};
+  function rangeHeld(el) {
+    return Object.keys(rangePointers).some(function (id) { return rangePointers[id] === el; });
+  }
   var toastEl = $('toast');
   var audio = $('audio');
 
@@ -2041,7 +2073,6 @@
     player.classList.toggle('nocover', !pic);
     $('cover').style.backgroundImage = coverStageImage(pic);
     $('stripCover').style.backgroundImage = coverImage(pic);
-    $('layoutCoverGhost').style.backgroundImage = coverImage(pic);
     /* 晕开层：同一张封面的模糊放大副本（取色失败时的兜底） */
     $('coverHaze').style.backgroundImage = coverUrlOnly(pic);
     probeCover(pic);
@@ -2438,6 +2469,8 @@
   function renderProgress() {
     var t = currentTrack();
     var row = $('progressAmbient').parentNode;
+    var d = trackDuration(t);
+    seek.max = String(d > 0 ? d : 0); seek.disabled = !t || !(d > 0);
     if (!t) {
       seek.value = '0';
       $('curTime').textContent = '0:00';
@@ -2448,10 +2481,9 @@
       renderStrip();
       return;
     }
-    var d = trackDuration(t);
     var p = d ? Math.min(state.progress, d) : state.progress;
     p = Math.max(0, isFinite(p) ? p : 0);
-    seek.value = String(p);
+    if (!rangeHeld(seek)) seek.value = String(p);
     $('curTime').textContent = fmtTime(p);
     var fill = d ? (p / d * 100) : 0;
     seek.style.setProperty('--fill', fill.toFixed(2) + '%');
@@ -2465,7 +2497,7 @@
     var v = Math.round(state.volume * 100);
     /* 静音时滑条归零（轨道也空），但 state.volume 原样保留 —— 取消静音直接回来，不用另存“上次音量”。 */
     var shown = state.muted ? 0 : v;
-    vol.value = String(shown);
+    if (!rangeHeld(vol)) vol.value = String(shown);
     vol.style.setProperty('--fill', shown + '%');
     var muted = state.muted || v === 0;
     /* 音量档：弧线 1/2/3 条随音量递增（静音走 X）。三档弧线同心，越响越宽。 */
@@ -2489,9 +2521,10 @@
     /* 播放/暂停两枚字形都在 DOM 里（.glyph-play / .glyph-pause），交叉淡入淡出由
        #player[data-playing] 切换 —— 不重写 innerHTML，圆与位置不跳。 */
     var btn = $('playBtn');
-    btn.setAttribute('aria-label', state.playing ? '暂停' : '播放');
-    btn.title = state.playing ? '暂停' : '播放';
-    player.setAttribute('data-playing', state.playing ? '1' : '0');
+    var wanted = playbackWanted();
+    btn.setAttribute('aria-label', wanted ? '暂停' : '播放');
+    btn.title = wanted ? '暂停' : '播放';
+    player.setAttribute('data-playing', wanted ? '1' : '0');
     renderStrip();
   }
 
@@ -4694,6 +4727,7 @@
       audio.removeAttribute('src');
       try { audio.load(); } catch (e) {}
       pendingAutoplay = false;
+      renderPlayState();
       return;
     }
     var srcUrl = withSession(t.url);
@@ -4708,9 +4742,10 @@
     scheduleSeekRetry();
     if (same && pendingAutoplay && audio.paused) {
       // 同一首（恢复场景）：直接播
-      requestPlay(pendingPlayReason);
       pendingAutoplay = false;
+      setPlaybackIntent(true, pendingPlayReason);
     }
+    renderPlayState();
   }
 
   /* 卸载期：拖进/拖出 = 整份文档被换掉，audio 销毁可能补发一次 pause。
@@ -4795,7 +4830,7 @@
     if (!pendingAutoplay || pendingSeek > 0) return;
     if (audio.paused) {
       pendingAutoplay = false;
-      requestPlay(pendingPlayReason);
+      setPlaybackIntent(true, pendingPlayReason);
     } else {
       pendingAutoplay = false;
     }
@@ -4976,8 +5011,8 @@
   (function bindMediaSessionActions() {
     if (!mediaSessionApi || typeof mediaSessionApi.setActionHandler !== 'function') return;
     function on(name, fn) { try { mediaSessionApi.setActionHandler(name, fn); } catch (e) {} }
-    on('play', function () { if (currentTrack()) requestPlay('media'); });
-    on('pause', pauseAll);
+    on('play', function () { if (currentTrack()) setPlaybackIntent(true, 'media'); });
+    on('pause', function () { setPlaybackIntent(false, 'media'); });
     on('previoustrack', function () { msStep(-1); });
     on('nexttrack', function () { msStep(1); });
     on('stop', function () {
@@ -4987,7 +5022,7 @@
       renderPlayState();
       renderProgress();
       syncPositionState(true);
-      pauseAll();
+      setPlaybackIntent(false, 'media');
     });
     on('seekbackward', function (d) { msSeekBy(-((d && d.seekOffset) || 10)); });
     on('seekforward', function (d) { msSeekBy((d && d.seekOffset) || 10); });
@@ -5063,7 +5098,7 @@
     if (!ownerGeneration || needsTakeover || ownerTearingDown) return;
     if (state.mode === 'one') {
       audio.currentTime = 0;
-      requestPlay('repeat');
+      setPlaybackIntent(true, 'repeat');
       return;
     }
     var i = stepIndex(1);
@@ -5116,6 +5151,11 @@
     var t = trackByUid(uid);
     if (!t) return;
     var changed = uid !== state.currentUid;
+    if (changed) {
+      ++transportRevision; transportIntent = null;
+      ++audioRequestGen; playRequestPending = false; activePlayIntent = false;
+      finishOwnerWait(false);
+    }
     if (changed && lyricAlign) closeLyricAlign();
     state.currentUid = uid;
     /* 记入「最近播放」（任何来源播的歌都记，最近在前）。
@@ -5137,6 +5177,7 @@
     }
     state.playing = !changed && !!ownerGeneration && !audio.paused && !needsTakeover;
     state.needsResume = false;
+    pendingAutoplay = true;
     renderTrack();
     renderQueue();
     if (changed) centerCurrentInQueue();   // 切歌时把新曲滚进视野中部（罐头拍板）
@@ -5150,7 +5191,8 @@
     } else {
       // 无 url：可能是旧版 searchKey 曲目，异步解析后再播
       ensurePlayable(t).then(function (ok) {
-        if (!ok || state.currentUid !== t.uid) return;
+        if (state.currentUid !== t.uid) return;
+        if (!ok) { pendingAutoplay = false; renderPlayState(); return; }
         renderTrack();
         renderQueue();
         loadLyrics(t);
@@ -5166,15 +5208,14 @@
      ============================================================ */
   $('playBtn').addEventListener('click', function () {
     if (!currentTrack()) return;
-    if (audio.paused) requestPlay('user');
-    else pauseAll();
+    setPlaybackIntent(!playbackWanted(), 'user');
   });
 
   /* 「继续播放」引导：自动播放被拦时点一下恢复 */
   if ($('resumeBtn')) {
     $('resumeBtn').addEventListener('click', function () {
       if (!currentTrack()) return;
-      requestPlay('resume');
+      setPlaybackIntent(true, 'resume');
     });
   }
 
@@ -5243,6 +5284,7 @@
     volPopShown = true;
     volGroup.classList.add('is-open');
     muteBtn.setAttribute('aria-expanded', 'true');
+    if (typeof syncInteractiveRegions === 'function') syncInteractiveRegions();
   }
   function closeVolPop() {
     if (volCloseTimer) { clearTimeout(volCloseTimer); volCloseTimer = 0; }
@@ -5250,6 +5292,7 @@
     volPopShown = false;
     volGroup.classList.remove('is-open');
     muteBtn.setAttribute('aria-expanded', 'false');
+    if (typeof syncInteractiveRegions === 'function') syncInteractiveRegions();
   }
   function closeVolPopSoon() {
     if (volCloseTimer) clearTimeout(volCloseTimer);
@@ -7859,14 +7902,14 @@
     progressStars.classList.add('progress-sparkles');
     progressPlayed.appendChild(progressStars);
   }
-  var stripHot = false, stripPointerInside = false, stripKeyboard = false;
-  var stripVolumeOpen = false, stripPointers = {};
+  var stripLyricAnimation = null;
   var stripSmall = false, stripMotion = null, stripMotionRaf = 0, stripTransitions = 0;
-  var stripStopped = false, stripPointerAt = -1000;
+  var layoutBackdropSize = null;
+  var stripStopped = false;
   var stripInView = true;
   var stripSeekGesture = null, stripFlowAnimations = [], stripFlowRate = 1;
   var stripFlowRaf = 0, stripFlowRamp = null;
-  var STRIP_IN = 192, STRIP_OUT = 224, STRIP_MOTION_MS = 300;
+  var STRIP_IN = 192, STRIP_OUT = 224, STRIP_MOTION_MS = 220;
   function isStrip() { return player.getAttribute('data-layout') === 'strip'; }
   function choosePlayerLayout(w, h) {
     // 192 = 旧窄控制面112 + 最少80舞台；退出多留32px，稳定容纳安全区与标题。
@@ -7874,12 +7917,60 @@
     if (h <= STRIP_IN && w >= h * 1.5) return 'strip';
     return w >= 720 ? 'wide' : (h < 560 ? 'compact' : 'long');
   }
-  function stripPinned() { return Object.keys(stripPointers).length > 0; }
+  /* 只在形态切换时移动真实节点；事件监听、媒体控制器与普通卡片完全共用。 */
+  var stripTransport = controls.querySelector('.transport');
+  var stripSharedButtons = ['modeBtn', 'prevBtn', 'playBtn', 'nextBtn', 'favBtn', 'muteBtn'];
+  var stripMounts = [$('modeBtn'), stripTransport, $('favBtn'), volGroup, seek].map(function (el) {
+    var marker = document.createComment('shared-control:' + (el.id || 'transport'));
+    el.parentNode.insertBefore(marker, el);
+    return { el: el, marker: marker };
+  });
+  function mountStripControls(enabled) {
+    stripSharedButtons.forEach(function (id) { $(id).classList.toggle('strip-btn', enabled); $(id).hidden = false; });
+    $('playBtn').classList.toggle('strip-play', enabled);
+    stripTransport.classList.toggle('strip-transport', enabled);
+    volGroup.classList.toggle('strip-volume', enabled); volGroup.hidden = false;
+    $('volPop').classList.toggle('strip-volume-reveal', enabled);
+    seek.classList.toggle('strip-seek', enabled);
+    stripMounts.forEach(function (entry) {
+      if (enabled) {
+        if (entry.el === seek) stripBar.insertBefore(seek, $('stripIdentity'));
+        else $('stripControls').appendChild(entry.el);
+      } else entry.marker.parentNode.insertBefore(entry.el, entry.marker.nextSibling);
+    });
+  }
+  function stripControlsVisible() {
+    return isStrip() && stripLayout.matches(':has(.strip-bar:hover, .strip-cover:hover, :focus-visible, :active), [data-open="1"]');
+  }
   function stripText(id, text) { var el = $(id); text = String(text || ''); if (el.textContent !== text) el.textContent = text; }
-  function stripIcon(id, markup, label) {
-    var el = $(id);
-    if (el._stripIcon !== markup) { el.innerHTML = markup; el._stripIcon = markup; }
-    el.setAttribute('aria-label', label); el.title = label;
+  function clearStripLyricAnimation() {
+    if (!stripLyricAnimation) return;
+    var previous = stripLyricAnimation;
+    stripLyricAnimation = null;
+    previous.animations.forEach(function (anim) { anim.cancel(); });
+    previous.outgoing.remove();
+  }
+  function renderStripLyric(text) {
+    var el = $('stripLyric');
+    text = String(text || '');
+    if (el.textContent === text) return;
+    clearStripLyricAnimation();
+    var old = el.textContent;
+    el.textContent = text; el.title = text;
+    if (!old || !text || stripControlsVisible() || stripMotion || SHOT || reducedMotion() || !el.animate) return;
+    var outgoing = document.createElement('span');
+    outgoing.className = 'strip-lyric strip-lyric-previous';
+    outgoing.setAttribute('aria-hidden', 'true'); outgoing.textContent = old;
+    el.parentNode.appendChild(outgoing);
+    var options = { duration: 120, easing: 'ease-out' };
+    var motion = { outgoing: outgoing, animations: [
+      outgoing.animate([{ opacity: 1 }, { opacity: 0 }], options),
+      el.animate([{ opacity: 0 }, { opacity: 1 }], options)
+    ] };
+    stripLyricAnimation = motion;
+    motion.animations[1].onfinish = function () {
+      if (stripLyricAnimation === motion) clearStripLyricAnimation();
+    };
   }
   function renderStrip() {
     if (!stripLayout) return;
@@ -7968,57 +8059,105 @@
     stripText('stripArtist', t ? t.author : '');
     $('stripIdentity').title = t ? t.title + (t.author ? ' · ' + t.author : '') : '';
     var line = state.lyricLines && state.lyricLines[lyricIndex];
-    stripText('stripLyric', line && line.text ? line.text : '');
-    $('stripLyric').title = $('stripLyric').textContent;
+    renderStripLyric(line && line.text ? line.text : '');
     stripText('stripNow', fmtTime(p)); stripText('stripTotal', d ? fmtTime(d) : '--:--');
     stripBar.style.setProperty('--strip-fill', (d ? p / d * 100 : 0).toFixed(3) + '%');
     setAttrIf(stripBar, 'data-progress', !d || p <= 0 ? 'empty' : (p >= d ? 'full' : 'partial'));
-    var slider = $('stripSeek'); slider.max = String(d); slider.disabled = !t || !d;
-    /* 用户正在压着进度条（按下未松）时，绝不回写 value：播报时钟每 ~250ms 走一次
-     * renderStrip，回写会和原生 range 的拖动/点击抢同一个值 —— 正在播的曲子点下末端
-     * 就有概率被覆盖回旧位置。松手/失焦后由指针记录清空，下一帧自然对齐真实进度。 */
-    if (!stripPinned() && slider.value !== String(p)) slider.value = String(p);
-    slider.setAttribute('aria-valuetext', fmtTime(p) + ' / ' + (d ? fmtTime(d) : '时长未知'));
-    stripIcon('stripPlay', icon(state.playing ? 'i-pause' : 'i-play'), state.needsResume || needsTakeover ? '继续播放' : (state.playing ? '暂停' : '播放'));
-    $('stripPlay').disabled = !t;
-    stripIcon('stripMode', $('modeBtn').innerHTML, $('modeBtn').getAttribute('aria-label') || '播放模式');
-    (function () {
-      var b = $('stripFav'); b.setAttribute('aria-pressed', $('favBtn').getAttribute('aria-pressed') || 'false');
-      b.setAttribute('aria-label', $('favBtn').getAttribute('aria-label') || '加入我的喜欢'); b.title = b.getAttribute('aria-label'); b.disabled = !t;
-    })();
-    stripIcon('stripVolumeBtn', $('muteBtn').innerHTML, stripVolumeOpen ? '收起音量' : '展开音量');
-    var volume = state.muted ? 0 : Math.round(state.volume * 100);
-    var volEl = $('stripVol');
-    /* 拖动音量期间同样不回写：与进度条同一类抢值问题。 */
-    if (!stripPinned() && volEl.value !== String(volume)) volEl.value = String(volume);
-    volEl.style.setProperty('--fill', volume + '%');
-    stripText('stripVolValue', volume + '%');
+    stripText('stripVolValue', (state.muted ? 0 : Math.round(state.volume * 100)) + '%');
   }
-  /* 只同步「交互态」本身。**不再在这里调 renderStrip()** —— 悬停/指针移动会高频调用它，
-   * 而 renderStrip 要写十几个 DOM 属性并切换 inert（inert 是全子树标志，会强制重算样式），
-   * 每移动一像素跑一次会明显掉帧，还会让按钮瞬时不命中（表现为「悬停粘住、点旁边的没反应」）。
-   * 属性只在真的变化时才写。内容更新交给 renderStrip 自己的调用点（切歌/进度/音量/歌词）。 */
   function setAttrIf(el, name, value) {
     if (el.getAttribute(name) !== value) el.setAttribute(name, value);
   }
-  function updateStripInteraction() {
-    if (!stripLayout) return;
-    stripHot = isStrip() && (stripPointerInside || stripKeyboard || stripPinned() || stripVolumeOpen);
-    setAttrIf(stripLayout, 'data-hot', stripHot ? '1' : '0');
-    setAttrIf(stripLayout, 'data-volume', stripVolumeOpen ? '1' : '0');
-    var ctl = $('stripControls'), wantInert = !stripHot;
-    if (ctl.inert !== wantInert) ctl.inert = wantInert;
-    setAttrIf(ctl, 'aria-hidden', stripHot ? 'false' : 'true');
-    var reveal = $('stripVolumeReveal'), wantRevealInert = !stripVolumeOpen || !stripHot;
-    if (reveal.inert !== wantRevealInert) reveal.inert = wantRevealInert;
-    setAttrIf($('stripVolumeBtn'), 'aria-expanded', stripVolumeOpen ? 'true' : 'false');
+  /* ============================================================
+     宿主标题带交互区：横条在矮高度下会整条落进宿主的 44px 顶部原生拖动带
+     （宿主 CSS: ._tileTop_19ca0 { top:0; left:0; right:0; height:var(--titlebar-h, 44px);
+       pointer-events:none; -webkit-app-region:drag } ）。那条 -webkit-app-region:drag
+     由 Electron 原生层命中，DOM 层的 pointer-events:none 压不住，指针会被宿主
+     当成「拖窗口」吃掉，于是 iframe 内的点击/拖拽迟到或丢失 —— 这就是「越矮越卡」。
+
+     解法（宿主官方通道）：上报这些控件的矩形给宿主，宿主在其上方盖一层
+     ._appTitlebarInteractiveRegion（宿主 CSS 明确写 -webkit-app-region:no-drag），
+     从而在这几个矩形里保留原生事件。
+
+     宿主侧实测依据（host 1.1.7-beta）：
+       ChatTranscript 中 setInteractiveRegions 能力声明
+         { name:'hana.surface.set-interactive-regions', allowedSlots:['card'],
+           requiresGrant:false, handle(){ …; return { applied:true } } }
+       → 聊天流卡（surfaceKind=home）在支持范围内；APPS.md「只限黑板/拆窗主卡」是过时口径。
+       → requiresGrant:false ⇒ **不需要任何 manifest 权限**；本项目 minAppVersion
+         已是 0.1017.0（≥ 要求的 0.950.0），无需扩权。
+
+     契约要点（APPS.md「标题栏内的交互区域」）：
+       · 坐标是 iframe 视口 CSS px（= getBoundingClientRect 的值），不含 DPR；
+       · 每次调用替换完整集合，最多 64 个矩形；隐藏控件要从集合移除；
+       · 布局/滚动/尺寸变化后重新测量上报，合并同一帧的变化并跳过未改变的集合；
+       · 不支持（旧宿主/未握手/unready）时会明确失败 ⇒ 必须静默降级。
+     ============================================================ */
+  var interactiveRegionsRaf = 0, interactiveRegionKey = '';
+  var interactiveRegionsState = { applied: false, lastError: '', count: 0 };
+  /* 每次现查，不缓存「支持与否」：宿主可能晚挂载能力，回放/reload 后也要能重新识别。 */
+  function hostInteractiveRegions() {
+    var hana = window.hana;
+    var fn = hana && hana.surface && hana.surface.setInteractiveRegions;
+    if (typeof fn !== 'function') return null;
+    return function (regions) { return window.hana.surface.setInteractiveRegions(regions); };
+  }
+  /* 集合内容：横条里真正可交互的东西。seek 铺满整条（它就是拖进度的命中区），
+   * 其余逐个上报共享控件；音量浮层展开时才把它的矩形算进来。 */
+  function stripInteractiveRectangles() {
+    if (!isStrip() || document.hidden) return [];
+    var list = [seek];
+    ['playBtn', 'prevBtn', 'nextBtn', 'modeBtn', 'favBtn', 'muteBtn'].forEach(function (id) {
+      var el = $(id);
+      if (el) list.push(el);
+    });
+    if (volPopShown && volGroup) list.push(volGroup);
+    var out = [];
+    list.forEach(function (el) {
+      if (!el || el.hidden || el.offsetParent === null) return;
+      var r = el.getBoundingClientRect();
+      if (!(r.width > 0 && r.height > 0)) return;
+      out.push({ x: r.left, y: r.top, width: r.width, height: r.height });
+    });
+    /* 上限保护：契约硬限制 64 个，超了整次调用失败。 */
+    if (out.length > 64) out.length = 64;
+    return out;
+  }
+  function pushInteractiveRegions() {
+    interactiveRegionsRaf = 0;
+    var set = hostInteractiveRegions();
+    if (!set) return;                       // 不支持 → 降级为现状，什么都不做
+    var rects = stripInteractiveRectangles();
+    /* 跳过未改变的集合（契约要求），也避免悬停/拖动时反复 IPC。 */
+    var key = rects.map(function (r) {
+      return [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)].join(',');
+    }).join(';');
+    if (key === interactiveRegionKey) return;
+    interactiveRegionKey = key;
+    interactiveRegionsState.count = rects.length;
+    try {
+      var res = set(rects);
+      Promise.resolve(res).then(function (v) {
+        interactiveRegionsState.applied = !!(v && v.applied);
+        interactiveRegionsState.lastError = '';
+      })['catch'](fail);
+    } catch (e) { fail(e); }
+    function fail(e) {
+      /* 宿主不支持／未握手／unready 会明确失败：静默降级，绝不影响现有交互。 */
+      interactiveRegionsState.applied = false;
+      interactiveRegionsState.lastError = (e && (e.code || e.message)) || String(e);
+      if (window.console && console.warn) console.warn('[player] setInteractiveRegions 降级', interactiveRegionsState.lastError);
+    }
+  }
+  /* 随布局更新（合并同一帧）——挂在既有 ResizeObserver / 布局变化节奏上，不进逐帧路径。 */
+  function syncInteractiveRegions() {
+    if (interactiveRegionsRaf) return;
+    interactiveRegionsRaf = requestAnimationFrame(pushInteractiveRegions);
   }
   function closeStripInteraction() {
-    resetStripSeekEffect();
-    stripPointerInside = false; stripKeyboard = false; stripVolumeOpen = false;
-    if (stripVolCloseTimer) { clearTimeout(stripVolCloseTimer); stripVolCloseTimer = 0; }
-    stripVolDragging = false;
-    stripPointers = {}; updateStripInteraction();
+    resetStripSeekEffect(); clearStripLyricAnimation();
+    stripLayout.removeAttribute('data-open');
+    closeVolPop(); volDragging = false; rangePointers = {};
   }
   /* 控件组当前可见项的真实占宽（含间距）。只在布局/尺寸变化时量，不进逐帧路径。
    * 用子项 rect 求和而不是 scrollWidth：flex 不换行时 scrollWidth 不可靠。 */
@@ -8036,13 +8175,18 @@
    * 三键要么都在要么都不在（丢半个 transport 会剩个孤零零的「上一首」，很怪）。
    * 播放键永不丢。不折叠、不收进二级面板。按真实占宽逐级丢。 */
   var STRIP_DROP_ORDER = [
-    ['stripVolumeGroup'],
-    ['stripFav'],
-    ['stripMode'],
-    ['stripPrev', 'stripNext']
+    ['volGroup'],
+    ['favBtn'],
+    ['modeBtn'],
+    ['prevBtn', 'nextBtn']
   ];
   function setGroupHidden(ids, hidden) {
-    for (var i = 0; i < ids.length; i++) { var el = $(ids[i]); if (el) el.hidden = hidden; }
+    for (var i = 0; i < ids.length; i++) {
+      var el = $(ids[i]);
+      if (!el) continue;
+      if (hidden && !el.hidden && el.id === 'volGroup') closeStripVolumeForLayout();
+      el.hidden = hidden;
+    }
   }
   function arrangeStripControls(avail) {
     var k;
@@ -8052,108 +8196,62 @@
       setGroupHidden(STRIP_DROP_ORDER[k], true);
     }
   }
-  function arrangeStrip(w) {
-    // 112px身份、64px封面和字号始终不变；小宽度把次要键放入明确的更多组。
+  function arrangeStrip(w, h) {
+    // 高度随容器收放，上下正常各留 12px；上下限防止横条过薄或变成大卡。
+    player.style.setProperty('--strip-height', Math.max(56, Math.min(96, h - 24)) + 'px');
+    // 按钮与身份文字尺寸固定；封面增大后按剩余真实宽度退让。
     stripSmall = w < 480;
     stripLayout.setAttribute('data-small', stripSmall ? '1' : '0');
     stripLayout.setAttribute('data-medium', w < 600 ? '1' : '0');
-    /* 控件疏松度按宽度分档：宽时透气（10px），中档 8px，宽度不足才压紧（4px，
-     * 由 data-small 那条规则接管）。只改间距，不缩按钮，避免窄时变小误导点击。 */
-    stripLayout.style.setProperty('--strip-gap', (w >= 600 ? 10 : 8) + 'px');
+    var gap = Math.max(8, Math.min(16, 8 + (w - 400) / 50));
+    stripLayout.style.setProperty('--strip-gap', gap.toFixed(2) + 'px');
+    stripLayout.style.setProperty('--strip-transport-gap', Math.max(6, Math.min(10, gap - 4)).toFixed(2) + 'px');
     /* 轴线 = 条中线，按「内容优先」降级（用户拍板：居中，不要再偏右）：
-     *   盒左固定 136（身份区右缘+12），盒中心 = 88 + 136 + 盒宽/2。
+     *   盒左固定 136（身份区右缘+12），盒中心 = 条左缘 + 136 + 盒宽/2。
      *   → R = 136 时盒与条同轴（完美居中）；R 越小轴越偏右，R = 10 即回到「紧接身份区」。
      * 只有当「居中所需的盒宽」装不下当前控件组时，才把 R 压到刚好够用的值（不低于 10）。 */
     /* 宽度不够**不折叠、不收进「更多」**：按固定优先级逐个丢按钮，最后只剩播放键
      * （用户拍板：宁可消失也不要二级面板）。可用宽取「贴左」上限（左 136 + 右 10）。 */
-    var barW = w - 100;
+    var barW = stripBar.getBoundingClientRect().width;
     arrangeStripControls(barW - 136 - 10);
-    var need = stripControlsWidth();
-    var right = (barW - 272 >= need) ? 136 : Math.max(10, barW - 136 - need);
-    stripLayout.style.setProperty('--strip-right', right + 'px');
-    updateStripInteraction();
-    cacheStripFlowAnimations();
-  }
-  /* 指针移动**不逐像素**跑交互更新：只在「是否位于条内」真正翻转时才同步一次。
-   * 悬停高亮由 CSS :hover 负责（浏览器原生，无 JS 参与），不再靠 JS 每次移动重算。 */
-  function stripInsideFrom(target) {
-    return !!(target && (stripBar.contains(target) || $('stripCover').contains(target) || $('stripVolumeReveal').contains(target)));
-  }
-  stripLayout.addEventListener('pointermove', function (e) {
-    if (!isStrip() || stripMotion) return;
-    var inside = stripInsideFrom(e.target);
-    if (inside === stripPointerInside && !stripKeyboard) return;
-    stripKeyboard = false;
-    stripPointerInside = inside;
-    updateStripInteraction();
-  });
-  stripLayout.addEventListener('pointerleave', function () {
-    stripPointerInside = false;
-    updateStripInteraction();
-  });
-  stripLayout.addEventListener('pointerdown', function () { stripPointerAt = performance.now(); stripKeyboard = false; stripPointerInside = true; updateStripInteraction(); }, true);
-  stripLayout.addEventListener('focusin', function () { stripKeyboard = performance.now() - stripPointerAt > 100; updateStripInteraction(); });
-  stripLayout.addEventListener('focusout', function (e) {
-    if (stripLayout.contains(e.relatedTarget)) return;
-    stripKeyboard = false;
-    if (!stripPinned()) { stripVolumeOpen = false; }
-    updateStripInteraction();
-  });
-  stripLayout.addEventListener('click', function (e) {
-    var proxy = e.target.closest('[data-strip-proxy]');
-    if (proxy) { $(proxy.getAttribute('data-strip-proxy')).click(); renderStrip(); return; }
-    if (e.target.closest('#stripCover')) {
-      stripPointerInside = true; updateStripInteraction();
-      $('stripPlay').focus();
+    function positionControls() {
+      var need = stripControlsWidth();
+      var right = (barW - 272 >= need) ? 136 : Math.max(10, barW - 136 - need);
+      stripLayout.style.setProperty('--strip-right', right + 'px');
     }
+    positionControls();
+    // 喇叭能放下还不够：完整滑杆及边缘余量也必须留在条内，提前整组移除。
+    var volume = volGroup, reveal = $('volPop');
+    if (!volume.hidden) {
+      var popupRight = volume.getBoundingClientRect().left + parseFloat(getComputedStyle(reveal).left) + reveal.offsetWidth;
+      if (popupRight > stripBar.getBoundingClientRect().right - 8) {
+        setGroupHidden(['volGroup'], true);
+        positionControls();
+      }
+    }
+    cacheStripFlowAnimations();
+    syncInteractiveRegions();
+  }
+  /* 显隐仅由 CSS :hover / :focus-visible / :active 决定，没有移入计时或 inert 门闩。 */
+  $('stripCover').addEventListener('click', function () {
+    var open = stripLayout.getAttribute('data-open') !== '1';
+    if (open) stripLayout.setAttribute('data-open', '1');
+    else stripLayout.removeAttribute('data-open');
   });
-  /* 音量：与大窗同一套 —— 悬停（或键盘聚焦）向右展开，移开 90ms 后收起；
-   * 点喇叭是「静音/取消静音」（沿用既有 muteBtn），不是开合。拖滑杆期间不收。 */
-  var stripVolCloseTimer = 0, stripVolDragging = false;
-  function openStripVolume() {
-    if (stripVolCloseTimer) { clearTimeout(stripVolCloseTimer); stripVolCloseTimer = 0; }
-    if (stripVolumeOpen) return;
-    stripVolumeOpen = true; updateStripInteraction();
-  }
-  function closeStripVolumeSoon() {
-    if (stripVolCloseTimer) clearTimeout(stripVolCloseTimer);
-    stripVolCloseTimer = setTimeout(function () {
-      stripVolCloseTimer = 0;
-      if (stripVolDragging) return;
-      stripVolumeOpen = false; updateStripInteraction();
-    }, 90);
-  }
-  (function bindStripVolume() {
-    var group = $('stripVolumeGroup');
-    if (!group) return;
-    group.addEventListener('pointerenter', openStripVolume);
-    group.addEventListener('pointerleave', function () { if (!stripVolDragging) closeStripVolumeSoon(); });
-    group.addEventListener('focusin', openStripVolume);
-    group.addEventListener('focusout', function (e) { if (!group.contains(e.relatedTarget)) { stripVolumeOpen = false; updateStripInteraction(); } });
-    $('stripVol').addEventListener('pointerdown', function () { stripVolDragging = true; openStripVolume(); });
-    document.addEventListener('pointerup', function () {
-      if (!stripVolDragging) return;
-      stripVolDragging = false;
-      if (!group.matches(':hover') && !group.contains(document.activeElement)) closeStripVolumeSoon();
+  function closeStripVolumeForLayout() {
+    closeVolPop(); volDragging = false;
+    Object.keys(rangePointers).forEach(function (id) {
+      if (rangePointers[id] !== vol) return;
+      delete rangePointers[id];
+      try { vol.releasePointerCapture(Number(id)); } catch (e) {}
     });
-    $('stripVolumeBtn').addEventListener('click', function () { $('muteBtn').click(); renderStrip(); });
-  })();
-  $('stripSeek').addEventListener('input', function () {
-    seek.value = this.value; seek.dispatchEvent(new Event('input')); renderStrip();
-  });
-  $('stripVol').addEventListener('input', function () {
-    vol.value = this.value; vol.dispatchEvent(new Event('input')); renderStrip();
-  });
-  ['stripSeek', 'stripVol'].forEach(function (id) {
-    var el = $(id);
-    el.addEventListener('pointerdown', function (e) { stripPointers[e.pointerId] = true; updateStripInteraction(); });
-    el.addEventListener('lostpointercapture', finishStripPointer);
-  });
-  $('stripSeek').addEventListener('pointerdown', function (e) {
-    if (this.disabled || player.getAttribute('data-strip-ambient') !== '1' || (e.pointerType === 'mouse' && e.button !== 0) || stripSeekGesture) return;
-    stripSeekGesture = { id: e.pointerId, x: e.clientX, y: e.clientY, dragging: false };
-    if (reducedMotion() || SHOT) { resetStripSeekEffect(); return; }
-    setStripSeekEffect('press');
+    if (volGroup.contains(document.activeElement)) $('playBtn').focus({ preventScroll: true });
+  }
+  [seek, vol].forEach(function (el) {
+    el.addEventListener('pointerdown', function (e) {
+      if (!el.disabled && e.button === 0) rangePointers[e.pointerId] = el;
+    });
+    el.addEventListener('lostpointercapture', finishRangePointer);
   });
   seek.addEventListener('pointerdown', function (e) {
     if (this.disabled || player.getAttribute('data-strip-ambient') !== '1' || (e.pointerType === 'mouse' && e.button !== 0) || stripSeekGesture) return;
@@ -8168,55 +8266,70 @@
     if (dx * dx + dy * dy < 16) return;
     gesture.dragging = true; setStripSeekEffect('drag');
   });
-  function finishStripPointer(e) {
+  function finishRangePointer(e) {
     finishStripSeekEffect(e);
-    delete stripPointers[e.pointerId];
-    updateStripInteraction();
+    if (e.type === 'pointercancel' && rangePointers[e.pointerId] === vol) { volDragging = false; closeVolPop(); }
+    delete rangePointers[e.pointerId];
   }
-  document.addEventListener('pointerup', finishStripPointer);
-  document.addEventListener('pointercancel', finishStripPointer);
+  document.addEventListener('pointerup', finishRangePointer);
+  document.addEventListener('pointercancel', finishRangePointer);
+  window.addEventListener('blur', function () {
+    rangePointers = {}; volDragging = false; closeVolPop(); resetStripSeekEffect();
+  });
   document.addEventListener('pointerdown', function (e) {
-    if (isStrip() && !stripLayout.contains(e.target)) closeStripInteraction();
+    if (isStrip() && !stripLayout.contains(e.target)) stripLayout.removeAttribute('data-open');
   });
   document.addEventListener('keydown', function (e) {
     if (!isStrip() || e.key !== 'Escape') return;
-    stripVolumeOpen = false;
-    /* 焦点不能退回音量按钮：它在音量组内，focusin 会立刻把浮层重新打开（Escape 就白按了）。
-     * 退到组外的播放键，键盘用户再 Tab 回滑杆时由 focusin 正常展开。 */
-    if ($('stripVolumeGroup').contains(document.activeElement)) $('stripPlay').focus();
-    updateStripInteraction();
+    closeVolPop(); stripLayout.removeAttribute('data-open');
+    if (volGroup.contains(document.activeElement)) $('playBtn').focus();
   }, true);
-  window.addEventListener('blur', closeStripInteraction);
 
-  function layoutCoverRect() {
-    var el = isStrip() ? $('stripCover') : $('cover'), r = el.getBoundingClientRect(), root = player.getBoundingClientRect();
-    return { x: r.left - root.left, y: r.top - root.top, w: r.width, h: r.height, radius: isStrip() ? 6 : 0 };
+  function captureLayoutBackdrop() {
+    var holder = $('layoutBackdropGhost'), source = isStrip() ? stripLayout : $('playerBackdrop');
+    var opacity = holder.hidden ? 0 : (parseFloat(holder.style.opacity) || 0);
+    // 反向时保留当前已合成的层，不能从另一张满亮度的背景重新起播。
+    Array.prototype.slice.call(holder.children).forEach(function (child) {
+      var alpha = (parseFloat(child.style.opacity) || 0) * opacity;
+      if (alpha < .01) child.remove(); else child.style.opacity = String(alpha);
+    });
+    var clone = source.cloneNode(true), css = getComputedStyle(source);
+    if (isStrip() && stripControlsVisible()) clone.setAttribute('data-open', '1');
+    clone.hidden = false; clone.classList.add('layout-snapshot'); clone.style.opacity = css.opacity;
+    if (layoutBackdropSize) {
+      clone.style.width = layoutBackdropSize.w + 'px'; clone.style.height = layoutBackdropSize.h + 'px';
+    }
+    ['--cover-w', '--seam', '--band', '--content-x', '--strip-height', '--strip-y', '--strip-right', '--strip-gap'].forEach(function (key) {
+      clone.style.setProperty(key, css.getPropertyValue(key));
+    });
+    [clone].concat(Array.prototype.slice.call(clone.querySelectorAll('[id]'))).forEach(function (el) { el.removeAttribute('id'); });
+    // 原来的淡出层仍在当前真背景之上，反向时保持同一合成顺序。
+    holder.insertBefore(clone, holder.firstChild);
+    while (holder.children.length > 4) holder.lastElementChild.remove();
+    holder.hidden = false; holder.style.opacity = '1';
   }
-  function stopStripMotion() {
+  function stopStripMotion(keepBackdrop) {
     if (stripMotionRaf) cancelAnimationFrame(stripMotionRaf);
-    stripMotionRaf = 0; stripMotion = null; $('layoutCoverGhost').hidden = true;
+    stripMotionRaf = 0; stripMotion = null;
+    if (!keepBackdrop) { $('layoutBackdropGhost').hidden = true; $('layoutBackdropGhost').textContent = ''; }
     player.removeAttribute('data-morph');
   }
   function paintStripMotion(now) {
     stripMotionRaf = 0;
     if (!stripMotion) return;
     if (document.hidden || stripStopped || !lyricHostVisible) { stopStripMotion(); return; }
-    var m = stripMotion, to = layoutCoverRect(), t = Math.min(1, (now - m.start) / STRIP_MOTION_MS), p = 1 - Math.pow(1 - t, 3), r = {};
-    Object.keys(to).forEach(function (k) { r[k] = m.from[k] + (to[k] - m.from[k]) * p; });
-    m.visual = r;
-    var ghost = $('layoutCoverGhost');
-    ghost.style.left = r.x + 'px'; ghost.style.top = r.y + 'px'; ghost.style.width = r.w + 'px'; ghost.style.height = r.h + 'px'; ghost.style.borderRadius = r.radius + 'px';
-    ghost.style.opacity = String(t > .8 ? (1 - t) / .2 : 1);
+    var t = Math.min(1, (now - stripMotion.start) / STRIP_MOTION_MS);
+    var background = 1 - Math.pow(1 - t, 3);
+    // 真背景始终完整铺底，只淡出其上的旧快照。两层同时降低 alpha 会漏出裸底。
+    $('layoutBackdropGhost').style.opacity = String(1 - background);
     if (t < 1) stripMotionRaf = requestAnimationFrame(paintStripMotion); else stopStripMotion();
   }
-  function startStripMotion(from) {
-    // 时钟只在跨形态时重建。同一形态的RO只更新目标，不能延长这300ms。
-    stopStripMotion(); stripTransitions++;
-    if (SHOT || reducedMotion() || stripStopped || document.hidden || !lyricHostVisible || !from.w || !from.h) return;
-    stripMotion = { from: from, visual: from, start: performance.now() };
-    $('layoutCoverGhost').hidden = false; player.setAttribute('data-morph', '1');
-    var target = isStrip() ? stripLayout : $('stage');
-    target.animate([{ opacity: .35 }, { opacity: 1 }], { duration: STRIP_MOTION_MS, easing: 'ease-out' });
+  function startStripMotion() {
+    // 时钟只在跨形态时重建，同一形态的 RO 不能延长这 220ms。
+    stopStripMotion(true); stripTransitions++;
+    if (SHOT || reducedMotion() || stripStopped || document.hidden || !lyricHostVisible) { stopStripMotion(); return; }
+    stripMotion = { start: performance.now() };
+    player.setAttribute('data-morph', '1');
     paintStripMotion(performance.now());
   }
   function prepareStrip() {
@@ -8237,13 +8350,17 @@
     if (type !== 'play' && !stripSeekGesture) resetStripSeekEffect();
     syncStripAmbient();
   }); });
-  if (lyricMotionQuery.addEventListener) lyricMotionQuery.addEventListener('change', syncStripAmbient);
-  else if (lyricMotionQuery.addListener) lyricMotionQuery.addListener(syncStripAmbient);
+  function refreshStripMotionPreference() {
+    if (reducedMotion()) { stopStripMotion(); clearStripLyricAnimation(); }
+    syncStripAmbient();
+  }
+  if (lyricMotionQuery.addEventListener) lyricMotionQuery.addEventListener('change', refreshStripMotionPreference);
+  else if (lyricMotionQuery.addListener) lyricMotionQuery.addListener(refreshStripMotionPreference);
   if (window.IntersectionObserver) new IntersectionObserver(function (entries) {
     stripInView = entries[entries.length - 1].isIntersecting;
     syncStripAmbient();
   }).observe(player);
-  document.addEventListener('visibilitychange', function () { if (document.hidden) { closeStripInteraction(); stopStripMotion(); } syncStripAmbient(); });
+  document.addEventListener('visibilitychange', function () { if (document.hidden) { closeStripInteraction(); stopStripMotion(); } syncStripAmbient(); syncInteractiveRegions(); });
   window.addEventListener('pagehide', function () { stripStopped = true; closeStripInteraction(); stopStripMotion(); syncStripAmbient(); });
   window.addEventListener('pageshow', function () { stripStopped = false; applyLayout(); });
 
@@ -8303,13 +8420,16 @@
     var density = w < 400 ? 'narrow' : 'normal';
     var formChanged = next !== layout;
     var stripCrossing = formChanged && (next === 'strip' || layout === 'strip');
-    var beforeCover = stripCrossing && ctlForm !== null ? (stripMotion ? stripMotion.visual : layoutCoverRect()) : null;
+    var animateCrossing = stripCrossing && ctlForm !== null;
+    if (animateCrossing && !SHOT && !reducedMotion()) captureLayoutBackdrop();
     if (formChanged) {
       if (next === 'strip') prepareStrip();
+      else syncInteractiveRegions();   // 退出横条：下一帧重算 → 空集合，清掉宿主侧打洞
       closeStripInteraction();
+      mountStripControls(next === 'strip');
       stripLayout.hidden = next !== 'strip';
       $('stage').inert = next === 'strip';
-      if (next === 'strip') controls.inert = true;
+      controls.inert = next === 'strip';
     }
     var ctlChanged = formChanged || density !== ctlDensity;
     if (ctlChanged && ctlForm !== null && !stripCrossing && next !== 'strip') {
@@ -8330,13 +8450,15 @@
       // 首次卡若还开着，里面那句「＋ 在哪」也跟着布局重写
       if ($('firstRun') && !$('firstRun').hidden) fillFirstRunAddHint();
     }
-    if (next === 'strip') arrangeStrip(w);
+    if (next === 'strip') arrangeStrip(w, h);
     updateStageMetrics();
     refreshLyricVisibility(); sizeLyricPad();
     updateLyricIndex(true);
     if (lyricAlign) { measureAlignLines(); paintLyricAlign(); }
     positionSplitHandle();
-    if (beforeCover) startStripMotion(beforeCover);
+    if (animateCrossing) startStripMotion();
+    var backdropRect = (isStrip() ? stripLayout : $('playerBackdrop')).getBoundingClientRect();
+    layoutBackdropSize = { w: backdropRect.width, h: backdropRect.height };
     renderStrip();
     if (formChanged) cacheStripFlowAnimations();
   }
@@ -8962,9 +9084,23 @@
   /* 自检钩子：涟漪可观测状态 + 测试时手动喂波（测试用）。 */
   window.__playerDebug = {
     stripFlowState: function () { return { rate: stripFlowRate, settling: !!stripFlowRamp, raf: !!stripFlowRaf, gesture: stripSeekGesture ? (stripSeekGesture.dragging ? 'drag' : 'press') : null }; },
-    stripState: function () { return { layout: layout, hot: stripHot, volume: stripVolumeOpen, small: stripSmall, motion: !!stripMotion, motionAge: stripMotion ? performance.now() - stripMotion.start : 0, transitions: stripTransitions, samples: stripSampleCount, inHeight: STRIP_IN, outHeight: STRIP_OUT, duration: STRIP_MOTION_MS, pending: Object.keys(ambientPending) }; },
+    stripState: function () { return { layout: layout, hot: stripControlsVisible(), volume: isStrip() && volPopShown, small: stripSmall, motion: !!stripMotion, motionAge: stripMotion ? performance.now() - stripMotion.start : 0, transitions: stripTransitions, samples: stripSampleCount, inHeight: STRIP_IN, outHeight: STRIP_OUT, duration: STRIP_MOTION_MS, pending: Object.keys(ambientPending) }; },
+    /* 宿主交互区（真机验收这轮 added）：supported=宿主有没有这个 API，
+     * applied=最近一次上报是不是生效了，lastError=降级原因，rects=当前集合。 */
+    interactiveRegions: function () {
+      return {
+        supported: !!hostInteractiveRegions(),
+        applied: interactiveRegionsState.applied,
+        lastError: interactiveRegionsState.lastError,
+        count: interactiveRegionsState.count,
+        rects: stripInteractiveRectangles(),
+        cardHeight: frame ? Math.round(frame.getBoundingClientRect().height) : 0,
+        stripTop: stripBar ? Math.round(stripBar.getBoundingClientRect().top) : 0,
+        stripBottom: stripBar ? Math.round(stripBar.getBoundingClientRect().bottom) : 0
+      };
+    },
     ownerId: ownerId,
-    audioOwner: function () { return { ownerId: ownerId, generation: ownerGeneration, record: ownerRecord, docLockHeld: ownerDocLockHeld, docLockSupported: ownerDocLockSupported, takeover: needsTakeover, playing: state.playing, paused: audio.paused, progress: liveProgress(), pendingSeek: pendingSeek, pendingAutoplay: pendingAutoplay, snapshot: snapshot() }; },
+    audioOwner: function () { return { ownerId: ownerId, generation: ownerGeneration, record: ownerRecord, docLockHeld: ownerDocLockHeld, docLockSupported: ownerDocLockSupported, takeover: needsTakeover, playing: state.playing, paused: audio.paused, wanted: playbackWanted(), requesting: playRequestPending, intent: transportIntent, progress: liveProgress(), pendingSeek: pendingSeek, pendingAutoplay: pendingAutoplay, snapshot: snapshot() }; },
     requestPlay: requestPlay,
     pauseAll: pauseAll,
     persistNow: persistNow,

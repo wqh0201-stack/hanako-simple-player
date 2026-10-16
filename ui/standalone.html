@@ -25,7 +25,7 @@
       <span class="cover-fetch-spinner" aria-hidden="true"></span>
     </div>
 
-    <!-- 横条是同一播放器的第四种呈现；按钮调用已有控制器，不创建音频实例。 -->
+    <!-- 横条是同一播放器的第四种呈现；控件只在切换形态时移入，同一节点、同一事件。 -->
     <section class="strip-layout" id="stripLayout" aria-label="横条播放器" hidden>
       <button class="strip-cover" id="stripCover" type="button" aria-label="显示播放控件" title="显示播放控件"></button>
       <div class="strip-bar" id="stripBar" tabindex="0" role="group" aria-label="歌曲进度与播放控制">
@@ -71,28 +71,15 @@
           </div>
         </div>
         <div class="strip-front" id="stripFront" aria-hidden="true"><span class="strip-front-glow"></span><span class="strip-front-band"></span></div>
-        <input class="strip-seek" id="stripSeek" type="range" min="0" max="0" step="0.1" value="0" aria-label="播放进度" disabled>
         <div class="strip-identity" id="stripIdentity"><strong id="stripTitle"></strong><span id="stripArtist"></span></div>
         <div class="strip-context">
-          <span class="strip-lyric" id="stripLyric"></span>
-          <div class="strip-controls" id="stripControls" inert aria-hidden="true">
-            <button class="strip-btn strip-aux" id="stripMode" type="button" data-strip-proxy="modeBtn" aria-label="播放模式"></button>
-            <div class="strip-transport">
-              <button class="strip-btn strip-aux" id="stripPrev" type="button" data-strip-proxy="prevBtn" aria-label="上一首"><svg class="icon" aria-hidden="true"><use href="#i-prev"></use></svg></button>
-              <button class="strip-btn strip-play" id="stripPlay" type="button" data-strip-proxy="playBtn" aria-label="播放"><svg class="icon" aria-hidden="true"><use href="#i-play"></use></svg></button>
-              <button class="strip-btn strip-aux" id="stripNext" type="button" data-strip-proxy="nextBtn" aria-label="下一首"><svg class="icon" aria-hidden="true"><use href="#i-next"></use></svg></button>
-            </div>
-            <button class="strip-btn strip-aux" id="stripFav" type="button" data-strip-proxy="favBtn" aria-label="加入我的喜欢" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg></button>
-            <div class="strip-volume" id="stripVolumeGroup">
-              <button class="strip-btn" id="stripVolumeBtn" type="button" aria-label="展开音量" aria-expanded="false" aria-controls="stripVolumeReveal"></button>
-              <div class="strip-volume-reveal" id="stripVolumeReveal" inert><input class="range" id="stripVol" type="range" min="0" max="100" value="72" aria-label="音量"><output id="stripVolValue">72%</output></div>
-            </div>
-          </div>
+          <span class="strip-lyric-line"><span class="strip-lyric" id="stripLyric"></span></span>
+          <div class="strip-controls" id="stripControls"></div>
         </div>
         <span class="strip-time strip-now" id="stripNow"></span><span class="strip-time strip-total" id="stripTotal"></span>
       </div>
     </section>
-    <div class="layout-cover-ghost" id="layoutCoverGhost" aria-hidden="true" hidden></div>
+    <div class="layout-backdrop-ghost" id="layoutBackdropGhost" aria-hidden="true" inert hidden></div>
 
     <section class="stage" id="stage">
       <!-- 前景：标题、歌词与涟漪。队列/搜索以主题表面盖在连续背景上。 -->
@@ -446,6 +433,7 @@
           <button class="icon-btn" id="muteBtn" type="button" aria-label="静音" title="静音" aria-haspopup="true" aria-expanded="false"></button>
           <div class="vol-pop" id="volPop">
             <input class="range range-vol" id="vol" type="range" min="0" max="100" step="1" value="72" aria-label="音量">
+            <output class="strip-vol-value" id="stripVolValue">72%</output>
           </div>
         </div>
 
@@ -581,7 +569,7 @@
 </defs></svg>
 
 <script src="app.js" defer></script>
-<script>window.__HANA_BUILD = "1003131729";</script>
+<script>window.__HANA_BUILD = "1003131739";</script>
 <script type="module">
   import { hana } from "./sdk.js";
   window.hana = hana;

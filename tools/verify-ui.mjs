@@ -23,6 +23,7 @@ import { createAudioOwner } from '../lib/audio-owner.js';
 import { verifyTouchbar } from './verify-touchbar.mjs';
 import { verifyAlbumAmbient } from './verify-album-ambient.mjs';
 import { verifyStripFlow } from './verify-strip-flow.mjs';
+import { verifyPlayerInteraction } from './verify-player-interaction.mjs';
 
 const require = createRequire(import.meta.url);
 const puppeteer = require(process.env.PUPPETEER_CORE || '/Volumes/SSD/hanadesk/鹈鹕/motion-reel/node_modules/puppeteer-core');
@@ -1780,6 +1781,16 @@ async function verifyMoodLists() {
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
 }
 const runTouchbar = () => verifyTouchbar({ newPage, BASE, API, UI_BASE, outDir, assert, sleep, clickTab, report });
+if (process.argv.includes('--interaction-only')) {
+  try {
+    await verifyPlayerInteraction({ newPage, BASE, API, UI_BASE, outDir, assert, sleep, clickTab, report });
+  } finally {
+    fs.writeFileSync(path.join(outDir, 'verify-player-interaction.json'), JSON.stringify(report, null, 2));
+    console.log(JSON.stringify({ assertions: `${report.assertions.filter(a => a.ok).length}/${report.assertions.length}`, failed: report.assertions.filter(a => !a.ok), runtimeErrors: report.runtimeErrors, outDir }, null, 2));
+    await browser.close(); server.closeAllConnections(); server.close();
+  }
+  process.exit(report.assertions.some(a => !a.ok) || report.runtimeErrors.length ? 1 : 0);
+}
 if (process.argv.includes('--strip-flow-only')) {
   await verifyStripFlow({ newPage, BASE, API, UI_BASE, outDir, assert, sleep, clickTab, report });
   fs.writeFileSync(path.join(outDir, 'verify-strip-flow.json'), JSON.stringify(report, null, 2));

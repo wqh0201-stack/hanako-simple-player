@@ -27,7 +27,7 @@ export async function verifyTouchbar({ newPage, BASE, API, UI_BASE, outDir, asse
       seekHit:(()=>{const r=$('stripBar').getBoundingClientRect();return document.elementFromPoint(r.x+r.width*.75,r.bottom-12)?.id;})(),
       field:getComputedStyle($('stripPlayed')).backgroundImage, fill:$('stripBar').style.getPropertyValue('--strip-fill'),
       stageHidden:getComputedStyle($('stage')).display==='none',footerHidden:getComputedStyle($('controls')).display==='none',
-      lyric:$('stripLyric').textContent,hot:$('stripLayout').dataset.hot,volume:(()=>{const r=$('stripVolumeReveal').getBoundingClientRect();const cs=getComputedStyle($('stripVolumeReveal'));return {w:r.width,x:r.x,right:r.right,op:+cs.opacity,vis:cs.visibility};})(),
+      lyric:$('stripLyric').textContent,hot:(window.__playerDebug.stripState().hot?'1':'0'),volume:(()=>{const r=$('volPop').getBoundingClientRect();const cs=getComputedStyle($('volPop'));return {w:r.width,x:r.x,right:r.right,op:+cs.opacity,vis:cs.visibility};})(),
       audio:{time:$('audio').currentTime,paused:$('audio').paused,src:$('audio').currentSrc,owner:window.__playerDebug.audioOwner().generation},
       overflow:document.documentElement.scrollWidth>innerWidth,rootHeight:$('player').getBoundingClientRect().height };
   });
@@ -53,19 +53,19 @@ export async function verifyTouchbar({ newPage, BASE, API, UI_BASE, outDir, asse
     await page.setViewport({width,height:128,deviceScaleFactor:1}); await sleep(70);
     await page.evaluate(()=>document.activeElement?.blur()); await page.mouse.move(1,127);
     const calm=await geo();
-    check(`02-fixed-${width}`,calm.cover.w===64&&calm.cover.h===64&&calm.identity.w===112&&calm.titleFont==='13px'&&calm.artistFont==='11px',calm);
+    check(`02-responsive-${width}`,Math.abs(calm.bar.h-96)<.02&&Math.abs(calm.cover.w-93.12)<.02&&Math.abs(calm.cover.h-93.12)<.02&&calm.identity.w===112&&calm.titleFont==='13px'&&calm.artistFont==='11px',calm);
     /* 用户否决了「为避让宿主控件把内容压低」：条必须在容器里垂直居中，
-     * 封面与条同轴（各自 64 高、同 top），不再强制 y>=40 的避让余量。 */
+     * 封面与条同轴（128 高容器中，封面 93.12 高、条 96 高），不再强制 y>=40 的避让余量。 */
     check(`01-shape-${width}`,calm.bar.x>=calm.cover.right+12&&calm.bar.bottom<=128&&calm.stageHidden&&calm.footerHidden
-      &&Math.abs(calm.bar.y-calm.cover.y)<.5
+      &&Math.abs(calm.cover.y-calm.bar.y-1.44)<.02
       &&Math.abs((calm.bar.y+calm.bar.bottom)/2-128/2)<=1.5
       &&Math.abs((calm.cover.y+calm.cover.bottom)/2-128/2)<=1.5,calm);
     await page.mouse.move(calm.bar.x+calm.bar.w-20,calm.bar.y+22); await sleep(35);
     const hot=await geo();
-    check(`03-controls-hit-${width}`,hot.hot==='1'&&hot.controls.filter(c=>c.id!=='stripCover'&&c.id!=='stripSeek').every(c=>c.hit&&c.right<=width&&c.bottom<=128&&!(c.right>width-100&&c.y<40)),hot.controls);
+    check(`03-controls-hit-${width}`,hot.hot==='1'&&hot.controls.filter(c=>c.id!=='stripCover'&&c.id!=='seek').every(c=>c.hit&&c.right<=width&&c.bottom<=128&&!(c.right>width-100&&c.y<40)),hot.controls);
     check(`06-times-inside-${width}`,hot.now.x>=hot.bar.x&&hot.total.right<=hot.bar.right&&hot.now.bottom<=hot.bar.bottom&&hot.total.y>=hot.artist.bottom,hot);
     /* 控件组在条内垂直居中（用户点名「播放控件在歌词区域偏上」）。 */
-    const ctr=hot.controls.filter(c=>c.id!=='stripCover'&&c.id!=='stripSeek');
+    const ctr=hot.controls.filter(c=>c.id!=='stripCover'&&c.id!=='seek');
     check(`03-controls-centered-${width}`,ctr.length>0&&ctr.every(c=>Math.abs((c.y+c.bottom)/2-(hot.bar.y+hot.bar.bottom)/2)<=1.5),ctr.map(c=>({id:c.id,mid:(c.y+c.bottom)/2})).concat([{id:'barMid',mid:(hot.bar.y+hot.bar.bottom)/2}]));
     /* 身份区与条同轴居中。 */
     check(`02-identity-centered-${width}`,Math.abs((calm.identity.y+calm.identity.bottom)/2-(calm.bar.y+calm.bar.bottom)/2)<=1.5,calm.identity);
@@ -93,20 +93,20 @@ export async function verifyTouchbar({ newPage, BASE, API, UI_BASE, outDir, asse
   /* 用真实可见性（有没有布局盒），不是 hidden property —— 属性写了但 CSS 没生效这种
    * 「假隐藏」必须被这条抓住（本轮就踩了：prev/next 嵌在 .strip-transport 里）。 */
   const seen=()=>page.evaluate(()=>{const on=id=>{const el=document.getElementById(id);return !!el&&el.getClientRects().length>0&&getComputedStyle(el).visibility!=='hidden';};
-    return {play:on('stripPlay'),mode:on('stripMode'),prev:on('stripPrev'),next:on('stripNext'),fav:on('stripFav'),vol:on('stripVolumeGroup')};});
+    return {play:on('playBtn'),mode:on('modeBtn'),prev:on('prevBtn'),next:on('nextBtn'),fav:on('favBtn'),vol:on('volGroup')};});
   const narrow=await seen();
   check('04-narrow-keeps-play-only',narrow.play&&!narrow.mode&&!narrow.prev&&!narrow.next&&!narrow.fav&&!narrow.vol,narrow);
   const narrowHot=(await visible()).filter(c=>c.id);
   check('04-narrow-play-still-hittable',
-    narrowHot.some(c=>c.id==='stripPlay'&&c.hit&&c.inBar)&&
-    narrowHot.filter(c=>c.id!=='stripSeek').every(c=>c.hit&&c.inBar),narrowHot);
+    narrowHot.some(c=>c.id==='playBtn'&&c.hit&&c.inBar)&&
+    narrowHot.filter(c=>c.id!=='seek').every(c=>c.hit&&c.inBar),narrowHot);
   await page.screenshot({path:path.join(dir,'strip-312-play-only.png')});
   /* 中等宽度：边缘键先丢，核心三键保留（顺序稳定、可预期）。 */
   await page.setViewport({width:420,height:128,deviceScaleFactor:1}); await sleep(120);
   const mid420=await page.evaluate(()=>{
     const bar=document.getElementById('stripBar').getBoundingClientRect();
     const box=document.getElementById('stripControls').getBoundingClientRect();
-    const ids={play:'stripPlay',prev:'stripPrev',next:'stripNext',fav:'stripFav',mode:'stripMode',vol:'stripVolumeGroup'};
+    const ids={play:'playBtn',prev:'prevBtn',next:'nextBtn',fav:'favBtn',mode:'modeBtn',vol:'volGroup'};
     const vis={}; Object.keys(ids).forEach(k=>{const el=document.getElementById(ids[k]);vis[k]=!!el&&el.getClientRects().length>0;});
     return {vis, fits:box.right<=bar.right+0.5&&box.left>=bar.left-0.5};
   });
@@ -115,16 +115,16 @@ export async function verifyTouchbar({ newPage, BASE, API, UI_BASE, outDir, asse
   const dropped=Object.keys(mid420.vis).filter(k=>!mid420.vis[k]);
   const droppedEdgesOnly=dropped.every(k=>['vol','fav','mode'].indexOf(k)>=0);
   check('04-mid-drops-edges-not-transport',mid420.vis.play&&mid420.vis.prev&&mid420.vis.next&&droppedEdgesOnly&&dropped.length>0&&mid420.fits,mid420);
-  /* 音量：悬停向右展开（与大窗一致），不挤压左边控件；点喇叭=静音。 */
-  await page.setViewport({width:640,height:128,deviceScaleFactor:1}); await sleep(120);
+  /* 音量：留足变高后的封面与浮层预算；点喇叭仍为静音。 */
+  await page.setViewport({width:720,height:128,deviceScaleFactor:1}); await sleep(120);
   await page.mouse.move(200,64); await sleep(140);
   const menu=await geo();
-  const vb=menu.controls.find(c=>c.id==='stripVolumeBtn');
+  const vb=menu.controls.find(c=>c.id==='muteBtn');
   await page.mouse.move(vb.x+vb.w/2,vb.y+vb.h/2); await sleep(260);
   const smallVolume=await geo();
-  check('05-volume-right-reveal',(await state()).volume===true&&smallVolume.volume.op>.9&&smallVolume.volume.w>100&&smallVolume.controls.find(c=>c.id==='stripVol')?.hit,{state:await state(),vol:smallVolume.volume});
-  await page.focus('#stripVol'); await page.keyboard.press('ArrowLeft');
-  check('05-volume-keyboard',await page.evaluate(()=>Math.round(document.querySelector('audio').volume*100)===+document.getElementById('stripVol').value));
+  check('05-volume-right-reveal',(await state()).volume===true&&smallVolume.volume.op>.9&&smallVolume.volume.w>100&&smallVolume.controls.find(c=>c.id==='vol')?.hit,{state:await state(),vol:smallVolume.volume});
+  await page.focus('#vol'); await page.keyboard.press('ArrowLeft');
+  check('05-volume-keyboard',await page.evaluate(()=>Math.round(document.querySelector('audio').volume*100)===+document.getElementById('vol').value));
   await page.keyboard.press('Escape'); await sleep(180);
   check('05-escape-collapses',!(await state()).volume,{state:await state(),hover:await page.evaluate(()=>!!document.querySelector('.strip-volume:hover'))});
 
@@ -144,7 +144,7 @@ export async function verifyTouchbar({ newPage, BASE, API, UI_BASE, outDir, asse
       stageDisplay: getComputedStyle(stage).display, stageInert: stage.inert === true,
       lyricDisplay: getComputedStyle(lyr).display, wrapDisplay: getComputedStyle(wrap).display,
       lyricLines: lyr.querySelectorAll('.lyric-line').length,
-      hot: document.getElementById('stripLayout').dataset.hot,
+      hot: (window.__playerDebug.stripState().hot?'1':'0'),
       lyricTarget: atLyric && (atLyric.id || atLyric.className || atLyric.tagName), lyricChain: chain(atLyric),
       wrapTarget: atWrap && (atWrap.id || atWrap.className || atWrap.tagName),
       stripLyricPointer: getComputedStyle(document.getElementById('stripLyric')).pointerEvents,
@@ -156,7 +156,7 @@ export async function verifyTouchbar({ newPage, BASE, API, UI_BASE, outDir, asse
   trace('lyric-inert ' + JSON.stringify(lyricHit));
   check('15-strip-lyric-readonly',
     lyricHit.layout === 'strip' && lyricHit.stageDisplay === 'none' && lyricHit.stageInert && lyricHit.lyricLines > 0 &&
-    (lyricHit.lyricTarget === 'strip-lyric' || lyricHit.lyricTarget === 'stripBar' || lyricHit.lyricTarget === 'stripSeek') &&
+    (lyricHit.lyricTarget === 'strip-lyric' || lyricHit.lyricTarget === 'stripBar' || lyricHit.lyricTarget === 'seek') &&
     !lyricHit.lyricChain.includes('lyrics') && !lyricHit.lyricChain.includes('lyricWrap') &&
     lyricHit.stripLyricPointer === 'none' && lyricHit.tabbable === 0,
     lyricHit);
@@ -208,39 +208,40 @@ export async function verifyTouchbar({ newPage, BASE, API, UI_BASE, outDir, asse
   }
   await page.setViewport({ width: 480, height: 128, deviceScaleFactor: 1 }); await sleep(70);
 
-  // 正常宽度控件不会误seek；音量为点击向右，而不是悬停弹层或点击静音。
-  await page.setViewport({width:640,height:128,deviceScaleFactor:1}); await sleep(80);
+  // 控件不会误 seek；音量悬停向右展开、点击切静音。
+  await page.setViewport({width:720,height:128,deviceScaleFactor:1}); await sleep(80);
   let g=await geo(); await page.mouse.move(g.bar.x+150,g.bar.y+20); await sleep(30);
   const beforeAction=(await geo()).audio.time;
   const oldMode=await page.$eval('#modeBtn',e=>e.getAttribute('aria-label'));
-  await page.click('#stripMode');
+  await page.click('#modeBtn');
   check('04-mode-real-state',await page.$eval('#modeBtn',e=>e.getAttribute('aria-label'))!==oldMode);
-  await page.click('#stripFav');
-  check('04-favorite-real-state',await page.evaluate(()=>document.getElementById('stripFav').getAttribute('aria-pressed')===document.getElementById('favBtn').getAttribute('aria-pressed')));
+  const oldFavorite=await page.$eval('#favBtn',e=>e.getAttribute('aria-pressed'));
+  await page.click('#favBtn');
+  check('04-favorite-real-state',await page.$eval('#favBtn',e=>e.getAttribute('aria-pressed'))!==oldFavorite);
   check('06-buttons-do-not-seek',Math.abs((await geo()).audio.time-beforeAction)<2);
   const volumeBefore=await page.evaluate(()=>({muted:document.querySelector('audio').muted,volume:document.querySelector('audio').volume}));
   /* 悬停喇叭 → 向右展开（与大窗同一套：悬停开、移开收）。 */
-  const ctlBefore=(await geo()).controls.filter(c=>c.id!=='stripVol');
-  await page.hover('#stripVolumeBtn'); await sleep(280);
+  const ctlBefore=(await geo()).controls.filter(c=>c.id!=='vol');
+  await page.hover('#muteBtn'); await sleep(280);
   check('05-hover-opens',(await state()).volume===true,await state());
   g=await geo();
-  const volumeRect=g.controls.find(c=>c.id==='stripVol'), buttonRect=g.controls.find(c=>c.id==='stripVolumeBtn');
-  check('05-volume-extends-right',volumeRect&&volumeRect.x>=buttonRect.right&&volumeRect.hit&&volumeRect.right<=640,g.controls);
+  const volumeRect=g.controls.find(c=>c.id==='vol'), buttonRect=g.controls.find(c=>c.id==='muteBtn');
+  check('05-volume-extends-right',volumeRect&&volumeRect.x>=buttonRect.right&&volumeRect.hit&&volumeRect.right<=720,g.controls);
   /* 浮层是绝对定位：展开期间左侧控件一个都不许移动（不挤压）。 */
-  const ctlAfter=g.controls.filter(c=>c.id!=='stripVol');
+  const ctlAfter=g.controls.filter(c=>c.id!=='vol');
   const moved=ctlBefore.filter(b=>{const a=ctlAfter.find(x=>x.id===b.id);return a&&Math.abs(a.x-b.x)>0.5;});
   check('05-volume-does-not-squeeze-controls',moved.length===0,{moved});
   /* 点喇叭 = 静音/取消静音（沿用既有 muteBtn），不是开合。 */
-  await page.click('#stripVolumeBtn'); await sleep(120);
+  await page.click('#muteBtn'); await sleep(120);
   check('05-button-toggles-mute',await page.evaluate(()=>document.querySelector('audio').muted)!==volumeBefore.muted,{volumeBefore,now:await page.evaluate(()=>({muted:document.querySelector('audio').muted}))});
-  await page.click('#stripVolumeBtn'); await sleep(120);
-  await page.screenshot({path:path.join(dir,'strip-640-volume-open.png')});
+  await page.click('#muteBtn'); await sleep(120);
+  await page.screenshot({path:path.join(dir,'strip-720-volume-open.png')});
   await page.mouse.move(1,127); await sleep(200);
   check('05-leave-collapses',(await state()).volume===false,await state());
   await page.mouse.move(volumeRect.x+volumeRect.w*.7,volumeRect.y+10); await page.mouse.down(); await page.mouse.move(volumeRect.x+volumeRect.w*.3,volumeRect.y+10,{steps:5});
   await page.setViewport({width:600,height:128,deviceScaleFactor:1}); await page.mouse.up();
-  check('05-drag-resize-finishes',await page.evaluate(()=>Math.abs(document.querySelector('audio').volume-Number(document.getElementById('stripVol').value)/100)<.011));
-  await page.mouse.move(1,127); await page.evaluate(()=>document.activeElement?.blur()); await sleep(50);
+  check('05-drag-resize-finishes',await page.evaluate(()=>Math.abs(document.querySelector('audio').volume-Number(document.getElementById('vol').value)/100)<.011));
+  await page.mouse.move(1,127); await page.evaluate(()=>document.activeElement?.blur()); await sleep(280);
   check('03-leave-restores-lyrics',!(await state()).hot,await state());
   // 原生 range 真实拖动背景，完整色场不随比例改变。
   /* 前置条件显式化：先落一次真正的暂停再点进度。裸 audio.pause() 只暂停元素，
@@ -257,7 +258,7 @@ export async function verifyTouchbar({ newPage, BASE, API, UI_BASE, outDir, asse
     await sleep(50);
     const at=await geo();
     trace(`seek f=${fraction} hit=${hit} slider=${at.fill} time=${at.audio.time}`);
-    check('06-seek-'+fraction,hit==='stripSeek'&&Math.abs(at.audio.time-30*fraction)<1.2,{hit,...at.audio});
+    check('06-seek-'+fraction,hit==='seek'&&Math.abs(at.audio.time-30*fraction)<1.2,{hit,...at.audio});
     check('07-field-stable-'+fraction,at.field===field);
   }
   /* 正在播放时点按进度条，绝不能被播报时钟（timeupdate≈250ms 一次 → renderStrip）
@@ -266,9 +267,9 @@ export async function verifyTouchbar({ newPage, BASE, API, UI_BASE, outDir, asse
   await page.waitForFunction(()=>!document.querySelector('audio').paused,{timeout:5000});
   g=await geo();
   await page.mouse.move(g.bar.x+g.bar.w*.9,g.bar.bottom-10); await page.mouse.down();
-  const held=await page.evaluate(()=>Number(document.getElementById('stripSeek').value));
+  const held=await page.evaluate(()=>Number(document.getElementById('seek').value));
   await sleep(600);   // 跨过至少两个 timeupdate 周期
-  const heldLater=await page.evaluate(()=>Number(document.getElementById('stripSeek').value));
+  const heldLater=await page.evaluate(()=>Number(document.getElementById('seek').value));
   await page.mouse.up(); await sleep(80);
   const settled=(await geo()).audio.time;
   check('06-seek-not-clobbered-while-playing',held===heldLater&&held>=25&&Math.abs(settled-30)<3,{held,heldLater,settled});
@@ -276,9 +277,9 @@ export async function verifyTouchbar({ newPage, BASE, API, UI_BASE, outDir, asse
   await page.waitForFunction(()=>document.querySelector('audio').paused,{timeout:3000});
   await page.evaluate(()=>document.querySelector('audio').pause()); await sleep(60);
   // 键盘可从安静态bar主动进入，隐藏按钮不截获背景命中。
-  await page.mouse.move(1,127); await page.evaluate(()=>document.activeElement?.blur()); await page.focus('#stripBar');
+  await page.mouse.move(1,127); await page.evaluate(()=>document.activeElement?.blur()); await page.keyboard.press('Tab'); await page.focus('#stripBar');
   check('13-keyboard-entry',(await state()).hot);
-  await page.keyboard.press('Tab'); check('13-keyboard-range',await page.evaluate(()=>document.activeElement.id==='stripSeek'));
+  await page.keyboard.press('Tab'); check('13-keyboard-range',await page.evaluate(()=>document.activeElement.id==='seek'));
   // 超长文案保持固定矩形、原生完整title，无字号缩小。
   await page.evaluate(()=>{const t=window.__playerDebug.currentTrack(); t.title='这是非常长的中文歌曲名称 Long Song Name '.repeat(8);t.author='非常长的歌手名字 '.repeat(8);window.__playerDebug.renderTrack?.();document.getElementById('modeBtn').click();});
   check('02-long-copy-ellipsis',await page.evaluate(()=>{const e=document.getElementById('stripTitle');return e.scrollWidth>e.clientWidth&&getComputedStyle(e).textOverflow==='ellipsis'&&document.getElementById('stripIdentity').title.includes('Long Song');}));
@@ -351,8 +352,8 @@ export async function verifyTouchbar({ newPage, BASE, API, UI_BASE, outDir, asse
   // （默认透明底 + 次级字色，悬停才起底/光环，按下缩放），不是自造的灰块。
   const styleCheck=await page.evaluate(()=>{
     const cover=document.getElementById('stripCover');
-    const btn=document.getElementById('stripPlay');
-    const aux=document.getElementById('stripMode');
+    const btn=document.getElementById('playBtn');
+    const aux=document.getElementById('modeBtn');
     const cs=getComputedStyle(aux);
     const tr=document.getElementById('stripTransport')||aux.parentElement;
     return {
@@ -378,7 +379,7 @@ export async function verifyTouchbar({ newPage, BASE, API, UI_BASE, outDir, asse
     const st=await geo();
     const pick=id=>st.controls.find(c=>c.id===id);
     const chain=()=>page.evaluate(()=>[...document.querySelectorAll(':hover')].map(e=>e.id).filter(Boolean));
-    const pairs=[['stripMode','stripPrev'],['stripPrev','stripFav'],['stripFav','stripVolumeBtn'],['stripVolumeBtn','stripNext']];
+    const pairs=[['modeBtn','prevBtn'],['prevBtn','favBtn'],['favBtn','muteBtn'],['muteBtn','nextBtn']];
     let ok=true, detail=[];
     for (const [A,B] of pairs) {
       const a=pick(A), b=pick(B);
@@ -414,42 +415,42 @@ export async function verifyTouchbar({ newPage, BASE, API, UI_BASE, outDir, asse
     check(`01-axis-on-bar-center-${width}`,centered||(m.ctlL<=m.idRight+13&&m.ctlR<=m.barRight+1),{...m,ctlMid,centered});
     check(`01-controls-clear-of-identity-${width}`,m.ctlL>=m.idRight+12,{...m,ctlMid});
   }
-  // 疏密分档：宽→10px，中→8px，窄（<480）→4px 且靠左不居中。
+  // 组间距连续收为 16→8px；中央三键保留独立的 10→6px 间隔，不缩按钮。
   const readGap=()=>page.evaluate(()=>{const cs=getComputedStyle(document.getElementById('stripControls'));const r=document.getElementById('stripControls').getBoundingClientRect();
     const bar=document.getElementById('stripBar').getBoundingClientRect();
     return {gap:cs.gap,justify:cs.justifyContent,small:document.getElementById('stripLayout').dataset.small,fits:r.right<=bar.right+0.5&&r.left>=bar.left-0.5};});
   await page.setViewport({width:312,height:128,deviceScaleFactor:1}); await sleep(80);
   const gapNarrow=await readGap();
-  check('03-gap-narrow-compact',gapNarrow.small==='1'&&gapNarrow.gap==='4px'&&gapNarrow.fits,gapNarrow);
+  check('03-gap-narrow-compact',gapNarrow.small==='1'&&gapNarrow.gap==='8px'&&gapNarrow.fits,gapNarrow);
   await page.setViewport({width:520,height:128,deviceScaleFactor:1}); await sleep(80);
   const gapMid=await readGap();
-  check('03-gap-mid-8',gapMid.small==='0'&&gapMid.gap==='8px'&&gapMid.justify==='center',gapMid);
+  check('03-gap-mid-spacious',gapMid.small==='0'&&gapMid.gap==='10.4px'&&gapMid.justify==='center',gapMid);
   await page.setViewport({width:1040,height:128,deviceScaleFactor:1}); await sleep(80);
   const gapWide=await readGap();
-  check('03-gap-wide-10',gapWide.gap==='10px'&&gapWide.justify==='center',gapWide);
+  check('03-gap-wide-16',gapWide.gap==='16px'&&gapWide.justify==='center',gapWide);
   // 按压反馈：:active 必须是缩放/换底之一，不是「点了毫无反应」。
   const press=await page.evaluate(()=>{
     const cs=[...document.styleSheets].flatMap(sh=>{try{return [...sh.cssRules]}catch(e){return []}}).filter(r=>r.selectorText&&/strip-(btn|cover)/.test(r.selectorText)&&/:active/.test(r.selectorText));
     return cs.map(r=>r.selectorText+' {'+r.style.cssText+'}');
   });
   check('03-press-feedback-defined',press.length>=2&&press.some(r=>/scale\(/.test(r)),press);
-  // 真实按下：几何要变（用 CDP 按住不放地量）。
+  // 真实按下：只缩图标，按钮命中盒保持原尺寸（避免按压与布局位移争用 transform）。
   await page.setViewport({width:640,height:128,deviceScaleFactor:1}); await sleep(70);
   await page.mouse.move(1,127); await page.evaluate(()=>document.activeElement?.blur()); await sleep(30);
   await page.mouse.move(300,64); await sleep(40);
   const hot=await geo();
-  const target=hot.controls.find(c=>c.id==='stripPlay');
+  const target=hot.controls.find(c=>c.id==='playBtn');
   // 按压反馈测试前必须退出 reduced-motion（那档按约定把 scale 关掉，测不到会假红）。
   await page.emulateMediaFeatures([{name:'prefers-reduced-motion',value:'no-preference'}]);
   await page.setViewport({width:640,height:128,deviceScaleFactor:1}); await sleep(80);
-  const btnTf=()=>page.evaluate((x,y)=>{const b=document.getElementById('stripPlay');const hit=document.elementFromPoint(x,y);return {tf:getComputedStyle(b).transform,hit:hit&&(hit.id||hit.className),hot:document.getElementById('stripLayout').dataset.hot};},target.x+target.w/2,target.y+target.h/2);
+  const btnTf=()=>page.evaluate((x,y)=>{const b=document.getElementById('playBtn'),r=b.getBoundingClientRect();const hit=document.elementFromPoint(x,y);return {tf:getComputedStyle(b.querySelector('.icon')).transform,w:r.width,h:r.height,hit:hit&&(hit.id||hit.className),hot:(window.__playerDebug.stripState().hot?'1':'0')};},target.x+target.w/2,target.y+target.h/2);
   const before=await btnTf();
   await page.mouse.move(target.x+target.w/2,target.y+target.h/2); await page.mouse.down(); await sleep(120);
   const during=await btnTf();
   await page.mouse.up(); await sleep(220);
   const after=await btnTf();
   const scaleOf=t=>{const m=/\(([\d.]+)/.exec(String(t));return m?+m[1]:1;};
-  check('03-press-feedback-visible',scaleOf(before.tf)===1&&scaleOf(during.tf)<0.97&&scaleOf(after.tf)>0.99,{before:before.tf,during:during.tf,after:after.tf});
+  check('03-press-feedback-visible',scaleOf(before.tf)===1&&scaleOf(during.tf)<0.97&&scaleOf(after.tf)>0.99&&before.w===during.w&&before.h===during.h,{before,during,after});
   await page.mouse.move(1,127); await page.evaluate(()=>document.activeElement?.blur()); await sleep(40);
 
   fs.writeFileSync(path.join(dir,'geometry.json'),JSON.stringify({geometry,frames},null,2));
@@ -459,7 +460,7 @@ export async function verifyTouchbar({ newPage, BASE, API, UI_BASE, outDir, asse
   const empty=await newPage();await empty.setViewport({width:360,height:104,deviceScaleFactor:1});
   await empty.goto(`${UI_BASE}/standalone.html?appSurfaceSession=fake-ticket`,{waitUntil:'domcontentloaded'});
   await empty.waitForFunction(()=>window.__playerDebug);await sleep(250);
-  check('06-empty-stable',await empty.evaluate(()=>{const s=document.getElementById('stripSeek');return s.disabled&&document.getElementById('stripLyric').textContent===''&&document.getElementById('stripBar').style.getPropertyValue('--strip-fill')==='0.000%'&&document.getElementById('stripTotal').textContent==='--:--';}));
+  check('06-empty-stable',await empty.evaluate(()=>{const s=document.getElementById('seek');return s.disabled&&document.getElementById('stripLyric').textContent===''&&document.getElementById('stripBar').style.getPropertyValue('--strip-fill')==='0.000%'&&document.getElementById('stripTotal').textContent==='--:--';}));
   await empty.screenshot({path:path.join(dir,'empty-360x104.png')});await empty.close();
   await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);
 }
