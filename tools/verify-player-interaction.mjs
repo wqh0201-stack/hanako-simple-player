@@ -111,10 +111,15 @@ export async function verifyPlayerInteraction({ newPage, BASE, API, UI_BASE, out
   await page.evaluate(() => { document.querySelector('audio').currentTime = 3; }); await sleep(180);
   await page.evaluate(() => { document.querySelector('audio').currentTime = 7; }); await sleep(30);
   const lyric = await page.evaluate(() => ({ current: document.getElementById('stripLyric').textContent,
-    previous: document.querySelector('.strip-lyric-previous')?.textContent, hot: window.__playerDebug.stripState().hot }));
+    previous: document.querySelector('.strip-lyric-previous')?.textContent,
+    dust: document.querySelectorAll('.strip-lyric-dust').length,
+    hot: window.__playerDebug.stripState().hot }));
   await sleep(150);
-  check('lyric-change-short-crossfade', !lyric.hot && !!lyric.current && !!lyric.previous && lyric.current !== lyric.previous &&
-    await page.evaluate(() => !document.querySelector('.strip-lyric-previous')), lyric);
+  check('lyric-seek-updates-without-crossfade-gap', lyric.current === '再向前一点' && !lyric.hot
+    && !lyric.previous && lyric.dust === 0
+    && await page.evaluate(() => !!document.getElementById('stripLyric').textContent
+      && !document.querySelector('.strip-lyric-previous, .strip-lyric-dust')),
+    lyric);
   // 按钮优先命中；下沿及身份区中间空白都能操作同一根原生进度条。
   const seek = await rect('seek'); await page.mouse.click(seek.x + seek.w * .6, seek.y + seek.h - 4); await sleep(120);
   check('blank-seek-area-works', Math.abs((await status()).progress - 18) < 1, await status());

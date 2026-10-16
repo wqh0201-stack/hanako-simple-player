@@ -447,6 +447,23 @@
 
     <div class="toast" id="toast" hidden></div>
 
+    <section class="pop unavailable-pop" id="unavailablePop" hidden role="dialog" aria-labelledby="unavailableTitle">
+      <p class="pop-title" id="unavailableTitle">网易云音源不可用</p>
+      <p class="unavailable-copy" id="unavailableCopy"></p>
+      <button class="pop-item" id="unavailableBiliBtn" type="button">
+        <svg class="icon icon-sm" aria-hidden="true"><use href="#i-search"></use></svg>
+        <span>B站找替代</span>
+      </button>
+      <button class="pop-item" id="unavailableRemoveBtn" type="button">
+        <svg class="icon icon-sm" aria-hidden="true"><use href="#i-trash"></use></svg>
+        <span>从当前歌单删除</span>
+      </button>
+      <button class="pop-item" id="unavailableCloseBtn" type="button">
+        <svg class="icon icon-sm" aria-hidden="true"><use href="#i-close"></use></svg>
+        <span>关闭</span>
+      </button>
+    </section>
+
     <!-- 手动匹配歌词：预填精简后的关键词，可手改、点了重搜（罐头拍板单入口）。
          绑定写回曲目 raw.lyricMatch，随 playlist.json 落盘。 -->
     <div class="lyric-match" id="lyricMatchPop" hidden>
@@ -569,7 +586,7 @@
 </defs></svg>
 
 <script src="app.js" defer></script>
-<script>window.__HANA_BUILD = "1003131739";</script>
+<script>window.__HANA_BUILD = "1003131768";</script>
 <script type="module">
   import { hana } from "./sdk.js";
   window.hana = hana;

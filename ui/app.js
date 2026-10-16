@@ -92,6 +92,7 @@
     ttml: API + '/widget/api/music/ttml',
     song: API + '/widget/api/music/song',
     musicPlaylist: API + '/widget/api/music/playlist',
+    diagnoseNetease: API + '/widget/api/music/diagnose',
     search: API + '/widget/api/music/search',
     hot: API + '/widget/api/music/hot',
     charts: API + '/widget/api/music/charts',
@@ -1555,6 +1556,7 @@
   var ambientPending = {};     // 同一张封面只解码一次；resize 不重复采样
   var stripSampleCount = 0;
   var stagePic = '';           // 当前舞台封面
+  var lyricAccentSource = null, lyricAccentState = null;
 
   function lumOf(c) {
     function ch(v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }
@@ -1682,6 +1684,67 @@
     return null;
   }
 
+  function hueDistance(a, b) {
+    var d = Math.abs(a - b) % 360;
+    return Math.min(d, 360 - d);
+  }
+  /* 六区面积相同：24° 内同色的区数最多者为主力，亮度加权破同数平局。
+   * 不只转主力色 180°（可能撞到另一支星光）：在整组色相圆的空隙中做 maximin，
+   * 最大化与最近星光的距离；同分时优先主力的互补方向。六色最差仍有 30° 空隙。
+   * 灰星光没有有效色相；退回主题互补档。明度复用 solveByContrast，不牺牲彩度换灰字。 */
+  function lyricAccentFromStars(stars, bg, polarity, theme) {
+    var colors = stars && stars.length ? stars : [theme], hues = [], main = 0, bestWeight = -1;
+    for (var i = 0; i < colors.length; i++) {
+      var hsl = toHsl(colors[i]), weight = lumOf(colors[i]) * 0.1;
+      if (hsl[1] > 0.12) hues.push(hsl[0]);
+      for (var j = 0; j < colors.length; j++) {
+        if (hueDistance(hsl[0], toHsl(colors[j])[0]) < 24) weight += 1 + lumOf(colors[j]) * 0.2;
+      }
+      if (weight > bestWeight) { main = i; bestWeight = weight; }
+    }
+    var themeHue = toHsl(theme)[0], preferred = ((hues.length ? toHsl(colors[main])[0] : themeHue) + 180) % 360;
+    function nearest(h) {
+      var d = 180;
+      for (var k = 0; k < hues.length; k++) d = Math.min(d, hueDistance(h, hues[k]));
+      return d;
+    }
+    var choices = [preferred];
+    hues.sort(function (a, b) { return a - b; });
+    for (i = 0; i < hues.length; i++) choices.push((hues[i] + ((hues[(i + 1) % hues.length] - hues[i] + 360) % 360) / 2) % 360);
+    /* 全同色时上面的环隙为零，但 preferred 已是互补色。 */
+    choices.sort(function (a, b) { return nearest(b) - nearest(a) || hueDistance(a, preferred) - hueDistance(b, preferred); });
+    var hue = choices[0], color = solveByContrast(hue, 0.72, bg, polarity === 'dark' ? 0.72 : 0.36, 4.5);
+    var chroma = (Math.max.apply(Math, color) - Math.min.apply(Math, color)) / 255, fallback = !(stars && stars.length) || !hues.length;
+    if (chroma < 0.18 || toHsl(color)[1] < 0.4) {
+      /* 彩度不足时用主题互补档的偏好重选，但仍守住整组最大色距，不倒退撞色。 */
+      preferred = (themeHue + 180) % 360;
+      choices.sort(function (a, b) { return nearest(b) - nearest(a) || hueDistance(a, preferred) - hueDistance(b, preferred); });
+      hue = choices[0];
+      color = solveByContrast(hue, 0.9, bg, polarity === 'dark' ? 0.68 : 0.32, 4.5);
+      fallback = true;
+    }
+    return { color: color, dominant: main, minHueDistance: nearest(toHsl(color)[0]),
+      contrast: contrastOf(color, bg), saturation: toHsl(color)[1], fallback: fallback, background: bg };
+  }
+  function refreshLyricAccent() {
+    var cs = getComputedStyle(player), root = getComputedStyle(document.documentElement);
+    var theme = rgbStr2arr(cs.getPropertyValue('--hk-accent').trim());
+    var themeBg = rgbStr2arr(cs.getPropertyValue('--hk-bg').trim());
+    if (!theme || !themeBg) return;
+    var res = lyricAccentSource, pol = res && res.color ? res.polarity : themePolarity();
+    var bg = themeBg, stars = [], tone = resolveTone();
+    if (res && res.color) {
+      var veil = rgbStr2arr(root.getPropertyValue(pol === 'dark' ? '--veil-ink' : '--veil-paper').trim());
+      var alpha = parseFloat(root.getPropertyValue(pol === 'dark' ? '--veil-ink-a' : '--veil-paper-a'));
+      bg = res.color.map(function (v, i) { return veil ? veil[i] * alpha + v * (1 - alpha) : v; });
+      var spark = res.stripField && res.stripField.spark;
+      if (spark) stars = spark[tone].map(rgbStr2arr);
+    }
+    lyricAccentState = lyricAccentFromStars(stars, bg, pol, theme);
+    player.style.setProperty('--ambient-accent', rgbStr(lyricAccentState.color));
+    player.style.setProperty('--lyric-current', rgbStr(lyricAccentState.color));
+  }
+
   /* 占比最多的色（4bit/通道量化）。近中性色（灰/黑/白）降权，优先取有彩的：
    * 纯灰底当背景平淡，封面里的彩才是「主色调」的观感来源。 */
   function dominantColor(data, w, h) {
@@ -1796,6 +1859,7 @@
     syncAppearance();   // 先把当前主题深浅落到 data-appearance（--hk-on-accent 等要用）
     var tone = resolveTone();
     if (player.getAttribute('data-tone') !== tone) player.setAttribute('data-tone', tone);
+    refreshLyricAccent();
   }
   /* 无宿主主题时（走 CSS 的 prefers-color-scheme 兜底），macOS 切深浅不会派主题事件，
    * 得自己听 —— 否则 data-tone 停在启动那一刻，悬停光在浅底上用了深底那套。 */
@@ -1824,6 +1888,7 @@
   }
 
   function applyAmbient(res) {
+    lyricAccentSource = res || null;
     ['light', 'dark'].forEach(function (tone) {
       if (res && res.stripField) player.style.setProperty('--strip-field-' + tone, res.stripField[tone]);
       else player.style.removeProperty('--strip-field-' + tone);
@@ -1845,17 +1910,17 @@
          但涟漪三层色仍要算（用主题底色当背景）—— 否则交给 CSS 兑底
          （--hk-accent 混 --hk-surface）会把四层混成一堆低饱和灰，分不出来。 */
       player.style.removeProperty('--ambient-color');
-      player.style.removeProperty('--ambient-accent');
       player.classList.remove('ambient-ok');
+      refreshLyricAccent();
       player.setAttribute('data-ambient', player.classList.contains('nocover') ? 'none' : themePolarity());
       applyRipplePaletteFallback();
       if (rippleHandle) rippleHandle.refreshPalette();
       return;
     }
     player.style.setProperty('--ambient-color', rgbStr(res.color));
-    /* 当前句高亮：用背景撞色（互补色相 + 按极性定亮度），不跟随主题强调色 */
-    var accent = accentFrom(res.color, res.polarity);
-    player.style.setProperty('--ambient-accent', rgbStr(accent));
+    /* 横条与竖卡共用：从星光六区的主力/整组色相空隙求撞色，再按纱上对比解明度。 */
+    refreshLyricAccent();
+    var accent = lyricAccentState.color;
     /* 涟漪三层色：以歌词色为基逐层偏色相 + 降饱和（弱一档），明度解算保证不被背景吃掉。 */
     var pal = ripplePalette(accent, res.color, res.polarity);
     player.style.setProperty('--rl-bass', rgbStr(pal.bass));
@@ -1870,6 +1935,8 @@
 
   /* 取色还没回来时的临时态：先按主题极性亮字，出结果再校正 */
   function applyAmbientPending() {
+    lyricAccentSource = null;
+    refreshLyricAccent();
     /* 换封面先撤下旧横条色场；异步取色完成前只用主题兜底，不能串到上一首。 */
     ['light', 'dark'].forEach(function (tone) {
       ['field', 'glow'].forEach(function (layer) { player.style.removeProperty('--strip-' + layer + '-' + tone); });
@@ -3429,6 +3496,7 @@
     lyricGeometry = { nodes: Array.from(lyrics.querySelectorAll('.lyric-line')), centers: [], slopes: [], clock: [], content: lyrics.firstElementChild, height: 0, width: 0, maxScroll: 0, residual: 0, painted: [] };
     lyricNeedsMeasure = true;
     buildLyricClock();
+    syncStripLyricFont();
   }
 
   function renderChrome() {
@@ -3767,7 +3835,11 @@
     for (var i = 0; i < state.lyricLines.length; i++) {
       if (state.lyricLines[i].t <= time + 0.001) idx = i; else break;
     }
+    var previousIndex = lyricIndex, stripTransition = null;
+    var stripTrackUid = state.currentUid || '';
+    var stripSample = stripLyricSample;
     if (idx !== lyricIndex) {
+      stripTransition = buildStripLyricTransition(previousIndex, idx, time, !!instant, stripSample, stripTrackUid);
       lyricIndex = idx;
       var nodes = lyricGeometry.nodes;
       for (var j = 0; j < nodes.length; j++) {
@@ -3778,8 +3850,10 @@
         else nodes[j].removeAttribute('aria-current');
       }
     }
+    stripLyricSample = { uid: stripTrackUid, generation: lyricGen, index: idx, time: time };
     if (instant) lyricReturn = null;
-    renderStrip();
+    renderStrip(stripTransition);
+    syncStripLyricLead();
     paintLyricFlow(); startLyricFrames();
   }
 
@@ -4021,6 +4095,7 @@
     if (!line || !t) return;
     var time = Math.max(0, line.t - (lyricBaseOffset + savedLyricOffset(t)) / 1000);
     if (isFinite(audio.duration) && audio.duration > 0) time = Math.min(time, audio.duration);
+    markStripLyricDiscontinuity();
     try { audio.currentTime = time; } catch (e) { return; }
     state.progress = time;
     resumeFollow();
@@ -4334,6 +4409,7 @@
   function loadLyrics(t) {
     if (lyricAlign) closeLyricAlign();
     clearLyricPress(false); hideLyricHint();
+    clearStripLyricAnimation(); resetStripLyricSample();
     var gen = ++lyricGen;
     lyricBaseOffset = 0;
     state.lyricLines = [];
@@ -4921,12 +4997,100 @@
     if (rippleHandle) rippleHandle.pause();
   });
   audio.addEventListener('ended', function () { onTrackEnd(); });
+  var diagnoseSeq = 0;
+  var unavailableTrack = null;
+  var unavailablePop = $('unavailablePop');
+
+  function advanceAfterUnavailable(track) {
+    if (!track || state.currentUid !== track.uid) return;
+    var vis = visibleTracks();
+    if (vis.length < 2) {
+      pendingAutoplay = false;
+      activePlayIntent = false;
+      state.playing = false;
+      state.progress = 0;
+      audio.pause();
+      audio.removeAttribute('src');
+      try { audio.load(); } catch (e) {}
+      renderPlayState();
+      renderProgress();
+      persistNow();
+      return;
+    }
+    var nextIndex = stepIndex(1);
+    var next = nextIndex >= 0 ? vis[nextIndex] : null;
+    if (!next || next.uid === track.uid) {
+      next = null;
+      for (var i = 0; i < vis.length; i++) if (vis[i].uid !== track.uid) { next = vis[i]; break; }
+    }
+    if (next) playTrack(next.uid);
+  }
+
+  function showNeteaseUnavailable(track) {
+    unavailableTrack = track;
+    var copy = $('unavailableCopy');
+    if (copy) copy.textContent = '《' + (track.title || '未命名') + '》已在网易云下架或无版权，网易云拿不到音源。可以去 B站找替代，或从当前歌单删除这首。';
+    if (unavailablePop) unavailablePop.hidden = false;
+  }
+
+  function diagnoseNeteaseFailure(track, token) {
+    var match = track && /^netease:(\d+)$/.exec(String(track.id || ''));
+    if (!match) { toast('播放失败：' + (track ? track.title : '')); return; }
+    apiGetJson(withSession(ENDPOINT.diagnoseNetease + '?id=' + encodeURIComponent(match[1]))).then(function (res) {
+      if (token !== diagnoseSeq || state.currentUid !== track.uid) return;
+      var verdict = res.body && res.body.status;
+      if (verdict === 'unavailable') {
+        showNeteaseUnavailable(track);
+        window.setTimeout(function () { advanceAfterUnavailable(track); }, 250);
+      } else if (verdict === 'available') {
+        toast('网易云有可用音源，但当前播放链路失败，请检查网络或稍后重试');
+      } else {
+        toast('无法确认歌曲版权状态，可能是网络或音源节点故障，请稍后重试');
+      }
+    }).catch(function () {
+      if (token !== diagnoseSeq || state.currentUid !== track.uid) return;
+      toast('无法确认歌曲版权状态，可能是网络或音源节点故障，请稍后重试');
+    });
+  }
+
+  if (unavailablePop) {
+    $('unavailableBiliBtn').addEventListener('click', function () {
+      var track = unavailableTrack;
+      unavailablePop.hidden = true;
+      if (!track || !searchInput) return;
+      if (searchPage && !searchPage.hidden) clearSearch();
+      searchSeq++;
+      searchBusy = false;
+      searchLoadingMore = false;
+      searchPaginated = true;
+      searchServer = 'bilibili';
+      searchScope = 'song';
+      searchInput.value = String(track.title || '') + (track.author ? ' ' + track.author : '');
+      renderSearchServers();
+      renderSearchScope();
+      openSearch();
+      doSearch();
+    });
+    $('unavailableRemoveBtn').addEventListener('click', function () {
+      var track = unavailableTrack;
+      unavailablePop.hidden = true;
+      if (!track || !trackByUid(track.uid)) return;
+      moreTargetUid = track.uid;
+      $('removeBtn').click();
+    });
+    $('unavailableCloseBtn').addEventListener('click', function () { unavailablePop.hidden = true; });
+  }
+
   audio.addEventListener('error', function () {
     var t = currentTrack();
     if (!t || !t.url) return;
     state.playing = false;
     activePlayIntent = false;
     renderPlayState();
+    if (/^netease:\d+$/.test(String(t.id || ''))) {
+      diagnoseNeteaseFailure(t, ++diagnoseSeq);
+      return;
+    }
     toast('播放失败：' + t.title);
   });
 
@@ -4994,6 +5158,7 @@
     var dur = isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 0;
     var to = Math.max(0, (audio.currentTime || 0) + delta);
     if (dur) to = Math.min(to, dur);
+    markStripLyricDiscontinuity();
     try { audio.currentTime = to; } catch (e) { return; }
     state.progress = to;
     renderProgress();
@@ -5152,6 +5317,7 @@
     if (!t) return;
     var changed = uid !== state.currentUid;
     if (changed) {
+      clearStripLyricAnimation(); resetStripLyricSample();
       ++transportRevision; transportIntent = null;
       ++audioRequestGen; playRequestPending = false; activePlayIntent = false;
       finishOwnerWait(false);
@@ -5241,6 +5407,7 @@
   seek.addEventListener('input', function () {
     var v = parseFloat(seek.value) || 0;
     state.progress = v;
+    markStripLyricDiscontinuity();
     if (currentTrack()) { try { audio.currentTime = v; } catch (e) {} }
     renderProgress();
     updateLyricIndex(false);
@@ -5560,6 +5727,7 @@
   function closePops() {
     morePop.hidden = true;
     importPop.hidden = true;
+    if (unavailablePop) unavailablePop.hidden = true;
     if (listPop) listPop.hidden = true;
     if (movePop) movePop.hidden = true;
     if (rippleToolPop) closeRippleTool();
@@ -7880,6 +8048,7 @@
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
     if (coverPanel && !coverPanel.hidden) { e.preventDefault(); closeCoverPanel(); return; }
+    if (unavailablePop && !unavailablePop.hidden) { e.preventDefault(); unavailablePop.hidden = true; return; }
     if (lyricAlign && !lyricAlign.saving) { e.preventDefault(); closeLyricAlign(); return; }
     var lm = $('lyricMatchPop');
     if (lm && !lm.hidden) { closeLyricMatch(); return; }   // 手动匹配面板最上层
@@ -7887,7 +8056,7 @@
     if (rippleToolPop && !rippleToolPop.hidden) { closeRippleTool(); return; }
     if (queueSearchOpen && queue.contains(document.activeElement)) { setQueueSearchOpen(false); return; }
     if (searchPage && !searchPage.hidden) { searchGoBack(); return; }   // 分层退：详情→推荐区→退出
-    if (!morePop.hidden || !importPop.hidden || (movePop && !movePop.hidden)) { closePops(); return; }
+    if (!morePop.hidden || !importPop.hidden || (movePop && !movePop.hidden) || (listPop && !listPop.hidden)) { closePops(); return; }
     if (player.getAttribute('data-layout') === 'wide' && state.drawer) closeDrawer();
   });
 
@@ -7902,7 +8071,9 @@
     progressStars.classList.add('progress-sparkles');
     progressPlayed.appendChild(progressStars);
   }
-  var stripLyricAnimation = null;
+  var stripLyricAnimation = null, stripLyricSample = null;
+  var stripLyricSeeking = false, stripLyricSeekUntil = 0;
+  var stripLyricFontCache = null;
   var stripSmall = false, stripMotion = null, stripMotionRaf = 0, stripTransitions = 0;
   var layoutBackdropSize = null;
   var stripStopped = false;
@@ -7943,41 +8114,493 @@
     return isStrip() && stripLayout.matches(':has(.strip-bar:hover, .strip-cover:hover, :focus-visible, :active), [data-open="1"]');
   }
   function stripText(id, text) { var el = $(id); text = String(text || ''); if (el.textContent !== text) el.textContent = text; }
-  function clearStripLyricAnimation() {
+  /* 全曲共用一个整数档：16–22px，两行行高 1.2，上下各留 4px。
+   * 因而 56px 条最高 20px，64px 及更高的条最高 22px。只在曲目/歌词、
+   * 几何或字体变化时量一次，不按当前句调号，也不在转场/播放帧里测量。
+   * 用真实排版测全曲最长（最难折进两行）的一行，兼顾中英文断词差异。 */
+  function syncStripLyricFont() {
+    if (!stripLayout || !isStrip()) return;
+    var context = stripLayout.querySelector('.strip-context'), lyric = $('stripLyric');
+    var width = Math.floor(context.getBoundingClientRect().width), height = context.clientHeight;
+    if (!(width > 0 && height >= 16 * 2.4)) return;
+    var cs = getComputedStyle(lyric), lines = state.lyricLines;
+    var upper = Math.max(16, Math.min(22, Math.floor((height - 8) / 2.4)));
+    var font = cs.fontFamily + '|' + cs.fontWeight + '|' + cs.fontStyle + '|' + cs.letterSpacing;
+    var cached = stripLyricFontCache;
+    if (cached && cached.lines === lines && cached.generation === lyricGen && cached.width === width
+      && cached.height === height && cached.font === font) return;
+    clearStripLyricAnimation(); // 几何变化后，不留旧行形和旧坐标的星尘。
+    var measure = document.createElement('span'), probes = [], size = 16;
+    measure.className = 'strip-lyric-measure'; measure.setAttribute('aria-hidden', 'true');
+    measure.style.width = width + 'px';
+    for (var i = 0; i < lines.length; i++) {
+      var probe = document.createElement('span');
+      probe.className = 'strip-lyric'; probe.textContent = lines[i].text;
+      probe.style.webkitLineClamp = 'unset'; probe.style.overflow = 'visible';
+      measure.appendChild(probe); probes.push(probe);
+    }
+    context.appendChild(measure);
+    try {
+      for (var candidate = upper; candidate >= 16; candidate--) {
+        measure.style.setProperty('--strip-lyric-font', candidate + 'px');
+        var fits = true;
+        // 一次写入，再批量读：每个候选只触发一次排版，不逐句写/读交错。
+        for (var j = 0; j < probes.length; j++) {
+          if (probes[j].getBoundingClientRect().height > candidate * 2.4 + 0.5) { fits = false; break; }
+        }
+        if (fits) { size = candidate; break; }
+      }
+    } finally { context.removeChild(measure); }
+    stripLayout.style.setProperty('--strip-lyric-font', size + 'px');
+    stripLyricFontCache = { lines: lines, generation: lyricGen, width: width, height: height, font: font,
+      size: size, upper: upper };
+  }
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', function () {
+    stripLyricFontCache = null; syncStripLyricFont();
+  });
+  function resetStripLyricSample() {
+    stripLyricSample = null;
+    stripLyricSeeking = false; stripLyricSeekUntil = 0;
+  }
+  function markStripLyricDiscontinuity() {
+    stripLyricSeeking = true;
+    stripLyricSeekUntil = performance.now() + 500;
+    clearStripLyricAnimation();
+  }
+  function stripLyricMotionAllowed() {
+    return isStrip() && !stripLayout.hidden && !stripStopped && stripInView && !document.hidden && lyricHostVisible
+      && !stripControlsVisible() && !stripMotion && !SHOT && !reducedMotion()
+      && !audio.paused && !audio.ended && !audio.seeking && !stripLyricSeeking
+      && performance.now() >= stripLyricSeekUntil && !(pendingSeek > 0);
+  }
+  /* 旧句「整句同时化开」：不再从左到右擦除，全部可见字在同一短时间窗起散。
+   * 时长分两段：dissolve（旧句整句淡淡化开）+ tail（星尘自己飘完的余辉）。
+   * 罐头要「更慢点」：消散与余辉基准整体 ×1.3，不改阅读/播放时钟。 */
+  function stripLyricTransitionDuration(interval, nextInterval) {
+    var pace = Math.max(0.35, Math.min(3.2, interval));
+    var dissolve = Math.round((200 + pace * 80) * 1.3);
+    var appear = Math.round((150 + pace * 40) * 1.3);
+    var tail = Math.round((300 + pace * 150) * 1.3);
+    var particles = dissolve + tail;
+    if (nextInterval > 0) {
+      /* 快歌仍用相邻句间隔封顶，不积压、不延误新句。 */
+      dissolve = Math.min(dissolve, Math.round(Math.max(150, nextInterval * 650)));
+      appear = Math.min(appear, Math.round(Math.max(110, nextInterval * 520)));
+      particles = Math.min(particles, Math.round(Math.max(220, nextInterval * 900)));
+    }
+    /* 提前量：旧句在切句前就起雾，切句点已基本化开。 */
+    var lead = Math.round(dissolve * 0.72);
+    appear = Math.min(appear, particles - lead - 16);
+    return { dissolve: dissolve, lead: lead, appear: appear, particles: particles };
+  }
+  function buildStripLyricTransition(previousIndex, nextIndex, time, instant, sample, trackUid) {
+    var lines = state.lyricLines;
+    if (instant || previousIndex < 0 || nextIndex < 0 || !sample
+      || sample.uid !== trackUid || sample.generation !== lyricGen || sample.index !== previousIndex
+      || !stripLyricMotionAllowed() || !lines[previousIndex] || !lines[nextIndex]) return null;
+    var previous = lines[previousIndex], current = lines[nextIndex];
+    if (!(current.t > previous.t) || !(time > sample.time + 0.001)) return null;
+    var crossed = 0, last = previous.t;
+    for (var i = previousIndex + 1; i <= nextIndex; i++) {
+      var stamp = lines[i].t;
+      if (stamp > previous.t + 0.001 && stamp <= current.t + 0.001 && stamp !== last) {
+        crossed++; last = stamp;
+      }
+    }
+    /* 媒体时钟可能一口气跨过多组歌词；只呈现最新句，不补播中间转场。 */
+    if (crossed !== 1) return null;
+    var nextInterval = 0;
+    for (var j = nextIndex + 1; j < lines.length; j++) {
+      if (lines[j].t > current.t + 0.001) { nextInterval = lines[j].t - current.t; break; }
+    }
+    var timing = stripLyricTransitionDuration(current.t - previous.t, nextInterval);
+    return { index: nextIndex, generation: lyricGen, trackUid: trackUid,
+      interval: current.t - previous.t, nextInterval: nextInterval,
+      dissolveMs: timing.dissolve, leadMs: timing.lead, appearMs: timing.appear, particleMs: timing.particles };
+  }
+  /* ---------- 星尘消散的「句尾提前量」 ----------
+   * 消散不再等切句那一刻才起手：按这句的节奏提前 lead 毫秒，先把旧句拆成雾，
+   * 切句点再加速散尽，新句随后缓缓浮现。提前量用一次性定时器预约，不常驻 rAF；
+   * seek / 暂停 / 悬停 / 离屏 / 换句都会取消（统一走 clearStripLyricAnimation）。 */
+  var stripLyricLead = null;
+  function cancelStripLyricLead() {
+    if (!stripLyricLead) return;
+    if (stripLyricLead.leadTimer) clearTimeout(stripLyricLead.leadTimer);
+    if (stripLyricLead.swapTimer) clearTimeout(stripLyricLead.swapTimer);
+    stripLyricLead = null;
+  }
+  function stripLyricLeadPlan(index) {
+    var lines = state.lyricLines, current = lines[index], next = lines[index + 1];
+    if (!current || !next || !(next.t > current.t)) return null;
+    var nextInterval = 0;
+    for (var j = index + 2; j < lines.length; j++) {
+      if (lines[j].t > next.t + 0.001) { nextInterval = lines[j].t - next.t; break; }
+    }
+    var timing = stripLyricTransitionDuration(next.t - current.t, nextInterval);
+    if (!(timing.lead > 0)) return null;
+    return { index: index, nextIndex: index + 1, interval: next.t - current.t, nextInterval: nextInterval,
+      dissolveMs: timing.dissolve, leadMs: timing.lead, appearMs: timing.appear, particleMs: timing.particles };
+  }
+  function syncStripLyricLead() {
+    if (stripLyricLead && stripLyricLead.index === lyricIndex
+      && stripLyricLead.uid === (state.currentUid || '') && stripLyricLead.generation === lyricGen) return;
+    scheduleStripLyricLead();
+  }
+  function scheduleStripLyricLead() {
+    cancelStripLyricLead();
+    if (lyricIndex < 0 || !stripLyricMotionAllowed() || state.page !== 'play') return;
+    var plan = stripLyricLeadPlan(lyricIndex);
+    if (!plan) return;
+    var now = audio.currentTime;
+    if (!isFinite(now)) return;
+    var nextT = state.lyricLines[plan.nextIndex].t;
+    var leadDelay = (nextT - plan.leadMs / 1000 - now) * 1000;
+    if (!(leadDelay >= 16)) return;             // 来不及提前，交给切句时的兑底路径
+    var token = { leadTimer: 0, swapTimer: 0, index: plan.index,
+      uid: state.currentUid || '', generation: lyricGen, plan: plan };
+    token.leadTimer = setTimeout(function () {
+      if (stripLyricLead !== token) return;
+      beginStripLyricLead(token);
+    }, leadDelay);
+    /* 切句点也预约一下：timeupdate 只有 ~4Hz，靠它推进会让新句迟到最多 250ms，
+     * 旧句已散尽就会出现空白。多一枚一次性定时器把切句钉在拍点上；
+     * audio.currentTime 可能略滞后于墙钟，所以到点没推进索引就再补几次
+     * （最多 4 次 ≈ 100ms），timeupdate 先到就自然取消。 */
+    function tryStripLyricSwap() {
+      if (stripLyricLead !== token) return;
+      updateLyricIndex(false);
+      if (stripLyricLead === token && lyricIndex === token.index
+        && (token.swapTries = (token.swapTries || 0) + 1) < 4) token.swapTimer = setTimeout(tryStripLyricSwap, 24);
+    }
+    token.swapTimer = setTimeout(tryStripLyricSwap, (nextT - now) * 1000 + 12);
+    stripLyricLead = token;
+  }
+  function beginStripLyricLead(token) {
+    if (!stripLyricMotionAllowed()) return;
+    var lines = state.lyricLines, el = $('stripLyric');
+    if (!lines || !el || lyricIndex !== token.index || (state.currentUid || '') !== token.uid
+      || lyricGen !== token.generation || !lines[token.index]) return;
+    var text = el.textContent;
+    if (!text) return;
+    var plan = token.plan;
+    var motion = startStripLyricDissolve(text, {
+      index: plan.nextIndex, generation: lyricGen, trackUid: token.uid,
+      interval: plan.interval, nextInterval: plan.nextInterval,
+      dissolveMs: plan.dissolveMs, leadMs: plan.leadMs, appearMs: plan.appearMs, particleMs: plan.particleMs
+    }, token.index);
+    if (!motion) return;
+    /* 主槽先隐起来，画面只留正在起雾的旧句；新句到切句点再淡入。 */
+    el.style.visibility = 'hidden';
+  }
+  /* 只收动画与覆盖层/星尘，不动「句尾提前量」预约（提前量起雾时要保住切句定时器）。 */
+  function clearStripLyricMotion() {
+    var host = $('stripLyric');
+    if (host && host.style.visibility === 'hidden') host.style.visibility = '';
     if (!stripLyricAnimation) return;
     var previous = stripLyricAnimation;
     stripLyricAnimation = null;
-    previous.animations.forEach(function (anim) { anim.cancel(); });
-    previous.outgoing.remove();
+    if (previous.raf) cancelAnimationFrame(previous.raf);
+    previous.animations.forEach(function (anim) { try { anim.cancel(); } catch (e) {} });
+    if (previous.outgoing && previous.outgoing.parentNode) previous.outgoing.parentNode.removeChild(previous.outgoing);
+    if (previous.dust && previous.dust.parentNode) previous.dust.parentNode.removeChild(previous.dust);
   }
-  function renderStripLyric(text) {
+  function clearStripLyricAnimation() {
+    cancelStripLyricLead();
+    clearStripLyricMotion();
+  }
+  function stripLyricRandom(seed) {
+    var value = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
+    return value - Math.floor(value);
+  }
+  /* 可见字形的真实边界：两行、换行、省略号覆盖区都以 Range 为准。
+   * 被 clamp 掉的字不进取样，也不发射粒子。 */
+  function stripLyricVisibleGlyphs(outgoing) {
+    var node = outgoing.firstChild, textRect = outgoing.getBoundingClientRect();
+    var text = node && node.nodeValue || '', range = document.createRange();
+    var glyphs = [], offset = 0, minX = Infinity, maxX = -Infinity;
+    var clipped = outgoing.scrollHeight > outgoing.clientHeight + 1;
+    var textStyle = getComputedStyle(outgoing), lineHeight = parseFloat(textStyle.lineHeight);
+    var ellipsisWidth = parseFloat(textStyle.fontSize);
+    while (node && offset < text.length) {
+      var length = text.charCodeAt(offset) >= 0xD800 && text.charCodeAt(offset) <= 0xDBFF ? 2 : 1;
+      range.setStart(node, offset); range.setEnd(node, Math.min(text.length, offset + length));
+      var rect = range.getBoundingClientRect();
+      if (rect.top > textRect.bottom) break;
+      var ellipsis = clipped && rect.top > textRect.top + lineHeight * 0.5 && rect.right > textRect.right - ellipsisWidth;
+      var visible = !ellipsis && /\S/.test(text.slice(offset, offset + length)) && rect.width > 0
+        && rect.top >= textRect.top - 1 && rect.bottom <= textRect.bottom + 1
+        && rect.left >= textRect.left - 1 && rect.right <= textRect.right + 1;
+      if (visible) {
+        glyphs.push({ left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom,
+          text: text.slice(offset, offset + length) });
+        minX = Math.min(minX, rect.left); maxX = Math.max(maxX, rect.right);
+      }
+      offset += length;
+    }
+    return { glyphs: glyphs, textRect: textRect, minX: minX, maxX: maxX,
+      width: maxX > minX ? maxX - minX : textRect.width };
+  }
+  function stripLyricDustOrigins(outgoing, count) {
+    var barRect = stripBar.getBoundingClientRect(), map = stripLyricVisibleGlyphs(outgoing);
+    var origins = [], glyphs = map.glyphs, i;
+    for (i = 0; i < count; i++) {
+      var glyph = glyphs[Math.min(glyphs.length - 1, Math.floor((i + 0.5) * glyphs.length / count))];
+      origins.push(glyph
+        ? { x: (glyph.left + glyph.right) / 2 - barRect.left, y: (glyph.top + glyph.bottom) / 2 - barRect.top }
+        : { x: map.textRect.left + map.textRect.width / 2 - barRect.left,
+          y: map.textRect.top + map.textRect.height / 2 - barRect.top });
+    }
+    return { parent: stripBar, parentRect: barRect, origins: origins, glyphs: map };
+  }
+  function stripLyricStarColor(index) {
+    var probe = document.createElement('span');
+    probe.style.color = 'var(--strip-star-' + (index % 6) + ')';
+    stripBar.appendChild(probe);
+    var color = getComputedStyle(probe).color;
+    stripBar.removeChild(probe);
+    return color || 'rgb(226, 214, 196)';
+  }
+  /* 星尘强度：罐头要「比现在弱 10%」，取相对值而非减 10 个百分点（滑杆 50%→45%）。
+   * 这是唯一旋钮：数量、位移、出生窗、亮度基调同组缩放。
+   * 精灵渐变 alpha / glow / core 是不随强度变化的硬常数 —— 本轮不再叠加额外 0.9，
+   * 否则会连乘成 20%+ 的骤弱；0.45 本身已让整体可见强度稍弱。 */
+  var STRIP_DUST_STRENGTH = 0.45;
+  /* 每色一张精灵：白亮芯 + 彩色径向柔光，模仿参考稿的 sprite 材质，
+   * 不再是实心纯色圆。同一轮转场里每种色只生成一次，逐帧 drawImage。 */
+  var stripDustSpriteCache = {};
+  function stripLyricDustSprite(color) {
+    var key = String(color) + '|' + STRIP_DUST_STRENGTH.toFixed(2);
+    if (stripDustSpriteCache[key]) return stripDustSpriteCache[key];
+    var size = 64, cv = document.createElement('canvas');
+    cv.width = cv.height = size;
+    var c = cv.getContext('2d');
+    var rgb = (color.match(/\d+/g) || [230, 220, 205]).slice(0, 3).map(Number);
+    var toRgba = function (a) { return 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + a + ')'; };
+    var g = c.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+    g.addColorStop(0, 'rgba(255,255,255,0.98)');
+    g.addColorStop(0.10, 'rgba(255,255,255,0.86)');
+    g.addColorStop(0.22, toRgba(0.62));
+    g.addColorStop(0.46, toRgba(0.24));
+    g.addColorStop(0.72, toRgba(0.07));
+    g.addColorStop(1, toRgba(0));
+    c.fillStyle = g; c.fillRect(0, 0, size, size);
+    stripDustSpriteCache[key] = cv;
+    return cv;
+  }
+  function createStripLyricDust(outgoing, transition) {
+    var budget = Math.round((stripSmall ? 200 : 320) * STRIP_DUST_STRENGTH);
+    var glyphs = stripLyricVisibleGlyphs(outgoing).glyphs;
+    var layer = document.createElement('canvas'), particles = [], i;
+    layer.className = 'strip-lyric-dust'; layer.setAttribute('aria-hidden', 'true');
+    stripBar.appendChild(layer);
+    var bar = stripBar.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var width = Math.max(1, Math.round(bar.width)), height = Math.max(1, Math.round(bar.height));
+    layer.width = Math.round(width * dpr); layer.height = Math.round(height * dpr);
+    layer.style.width = width + 'px'; layer.style.height = height + 'px';
+    var ctx = layer.getContext('2d');
+    if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var colors = [];
+    for (i = 0; i < 6; i++) colors.push(stripLyricStarColor(i));
+    var lyricColor = getComputedStyle(outgoing).color || colors[0];
+    colors.push(lyricColor);
+    if (glyphs.length && ctx) {
+      var step = Math.max(2, Math.round(parseFloat(getComputedStyle(outgoing).fontSize) / 7));
+      /* 整句均摊：先按可见字数均分，余数逐个补到前几个字；
+       * 不再为了凑预算从数组尾部删，避免后几个字完全没有粒子。 */
+      var perGlyph = Math.floor(budget / glyphs.length);
+      var leftover = budget - perGlyph * glyphs.length;
+      var off = document.createElement('canvas'), octx = off.getContext('2d', { willReadFrequently: true });
+      var font = getComputedStyle(outgoing).font;
+      glyphs.forEach(function (glyph, glyphIndex) {
+        var gw = Math.max(2, Math.ceil(glyph.right - glyph.left) + 2);
+        var gh = Math.max(2, Math.ceil(glyph.bottom - glyph.top) + 2);
+        if (off.width < gw) off.width = gw;
+        if (off.height < gh) off.height = gh;
+        octx.clearRect(0, 0, gw, gh);
+        octx.font = font; octx.fillStyle = '#fff';
+        octx.textAlign = 'center'; octx.textBaseline = 'middle';
+        octx.fillText(glyph.text, gw / 2, gh / 2);
+        /* 步长必须是这张小图的真实宽 gw（不是离屏画布宽），
+         * 否则只有顶部几行被采到，粒子全堆到字上方——“头顶冒泡”的根因。 */
+        var pixels = octx.getImageData(0, 0, gw, gh).data, hits = [];
+        for (var py = 1; py < gh - 1; py += step) for (var px = 1; px < gw - 1; px += step) {
+          if (pixels[(py * gw + px) * 4 + 3] > 96) hits.push({ x: px, y: py });
+        }
+        var midX = (glyph.left + glyph.right) / 2 - bar.left;
+        var midY = (glyph.top + glyph.bottom) / 2 - bar.top;
+        var qx = gw / 2, qy = gh / 2;
+        var quota = perGlyph + (glyphIndex < leftover ? 1 : 0);
+        for (var n = 0; n < quota && hits.length; n++) {
+          var hit = hits[Math.floor(stripLyricRandom(transition.index * 97 + glyphIndex * 13 + n * 29) * hits.length)];
+          var seed = transition.index * 17 + particles.length * 31 + glyphIndex;
+          var rx = stripLyricRandom(seed), ry = stripLyricRandom(seed + 7);
+          var ox = (hit.x - qx) / Math.max(1, qx);
+          var oy = (hit.y - qy) / Math.max(1, qy);
+          var kind = ry > 0.93 ? 'flare' : (ry > 0.8 ? 'nebula' : 'dot');
+          particles.push({
+            x: midX + (hit.x - qx), y: midY + (hit.y - qy),
+            /* 从字面向外散开，位移量按参考的几十 px/s 量级，不再一味做小。 */
+            vx: (ox * 34 + (rx - 0.5) * 42) * (0.55 + STRIP_DUST_STRENGTH * 0.6),
+            vy: (oy * 22 + (ry - 0.5) * 30 - 12) * (0.55 + STRIP_DUST_STRENGTH * 0.6),
+            amp: 1.4 + rx * 4.2, phase: ry * Math.PI * 2,
+            glow: (kind === 'nebula' ? 9 + rx * 7 : kind === 'flare' ? 7 + rx * 5 : 3.4 + rx * 2.6),
+            core: kind === 'flare' ? 1.5 : kind === 'nebula' ? 0.7 : 0.95,
+            kind: kind, trail: ry < 0.22,
+            color: colors[Math.floor(stripLyricRandom(seed + 3) * colors.length)]
+          });
+        }
+      });
+      /* 极端长句仍超预算时，按整句均匀步长抽样，而不是砍掉后半句。 */
+      if (particles.length > budget) {
+        var kept = [], stride = particles.length / budget;
+        for (i = 0; i < budget; i++) kept.push(particles[Math.floor(i * stride)]);
+        particles = kept;
+      }
+    }
+    return { layer: layer, ctx: ctx, particles: particles,
+      width: width, height: height, started: 0 };
+  }
+  /* 整句同时消散：旧句不左→右擦除，而是整体缓缓淡化；
+   * 星尘在同一个短时间窗内从全句真实字迹同时释放，出生延迟不依赖 x/sweep/字符顺序。
+   * 只靠 opacity + 轻微 blur 化开，不加 shader。 */
+  function stripLyricEase(t) { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); }
+  /* 起散短窗：约 dissolve 的前 38%，逐粒子随机抖动，避免“一下全爆”也不退回空间扫描。 */
+  var STRIP_DUST_BIRTH_SPAN = 0.38;
+  function paintStripLyricDust(motion, now) {
+    var dust = motion.dustState;
+    if (!dust || !dust.ctx || !motion.started) return false;
+    var elapsed = now - motion.started;
+    var dissolveMs = motion.transition.dissolveMs;
+    var tail = Math.max(120, motion.transition.particleMs - dissolveMs);
+    var total = dissolveMs + tail + 80;
+    var alive = false;
+    /* 1) 旧句整体淡化：进度 0→1 铺满整个 dissolve 时段，不分区、不擦除。 */
+    var progress = stripLyricEase(elapsed / Math.max(1, dissolveMs));
+    if (progress >= 1) {
+      motion.outgoing.style.opacity = '0';
+      motion.outgoing.style.filter = '';
+    } else {
+      motion.outgoing.style.opacity = String(1 - progress);
+      var blur = progress * 0.8;
+      motion.outgoing.style.filter = blur > 0.05 ? 'blur(' + blur.toFixed(2) + 'px)' : '';
+    }
+    /* 2) 粒子：同一短窗起散，与旧句淡化同时展开。 */
+    dust.ctx.clearRect(0, 0, dust.width, dust.height);
+    dust.ctx.globalCompositeOperation = 'lighter';
+    var birthSpan = dissolveMs * STRIP_DUST_BIRTH_SPAN;
+    for (var i = 0; i < dust.particles.length; i++) {
+      var p = dust.particles[i];
+      var birth = stripLyricRandom(i + 5) * birthSpan;
+      var age = elapsed - birth;
+      if (age <= 0) { if (elapsed < total) alive = true; continue; }
+      if (age >= tail) continue;
+      alive = true;
+      var sec = age / 1000, life = age / tail;
+      var fadeIn = Math.min(1, age / 80);
+      var fadeOut = Math.max(0, 1 - Math.max(0, life - 0.16) / 0.84);
+      var alpha = fadeIn * fadeOut * (0.35 + 0.6 * STRIP_DUST_STRENGTH);
+      if (alpha < 0.02) continue;
+      var x = p.x + p.vx * sec + Math.sin(sec * 5.2 + p.phase) * p.amp * sec;
+      var y = p.y + p.vy * sec - 3 * sec * sec;
+      x = Math.max(2, Math.min(dust.width - 2, x));
+      y = Math.max(2, Math.min(dust.height - 2, y));
+      var shrink = 0.86 + 0.3 * Math.min(1, life);
+      /* 细尾迹：沿速度反方向一条短线，只给少量粒子，模仿参考的 glint。 */
+      if (p.trail && age > 60) {
+        dust.ctx.globalAlpha = alpha * 0.34;
+        dust.ctx.strokeStyle = p.color; dust.ctx.lineWidth = 0.6;
+        dust.ctx.beginPath(); dust.ctx.moveTo(x, y);
+        dust.ctx.lineTo(x - p.vx * 0.045, y - p.vy * 0.045); dust.ctx.stroke();
+      }
+      /* 彩色径向柔光 sprite（白亮芯 + 色环）。 */
+      var sprite = stripLyricDustSprite(p.color), g = p.glow * shrink;
+      dust.ctx.globalAlpha = alpha * (p.kind === 'nebula' ? 0.5 : 0.62);
+      dust.ctx.drawImage(sprite, x - g, y - g, g * 2, g * 2);
+      /* 星芒：少量，短十字 + 白芯。 */
+      if (p.kind === 'flare') {
+        var ray = (3.2 + 3.4 * (1 - Math.min(1, life))) * (0.5 + STRIP_DUST_STRENGTH);
+        dust.ctx.globalAlpha = alpha * 0.5;
+        dust.ctx.strokeStyle = 'rgba(255,255,255,0.9)'; dust.ctx.lineWidth = 0.7;
+        dust.ctx.beginPath();
+        dust.ctx.moveTo(x - ray, y); dust.ctx.lineTo(x + ray, y);
+        dust.ctx.moveTo(x, y - ray); dust.ctx.lineTo(x, y + ray); dust.ctx.stroke();
+      }
+      /* 白亮芯：所有粒子都有一点，flare/普通更亮。 */
+      dust.ctx.globalAlpha = Math.min(1, alpha * (p.kind === 'nebula' ? 0.5 : 0.95));
+      dust.ctx.fillStyle = '#ffffff';
+      dust.ctx.beginPath();
+      dust.ctx.arc(x, y, Math.max(0.4, p.core * shrink), 0, Math.PI * 2);
+      dust.ctx.fill();
+    }
+    dust.ctx.globalAlpha = 1;
+    dust.ctx.globalCompositeOperation = 'source-over';
+    return alive || elapsed < total;
+  }
+  function runStripLyricDust(motion) {
+    if (stripLyricAnimation !== motion) return;
+    var alive = paintStripLyricDust(motion, performance.now());
+    if (!alive) {
+      motion.raf = 0;
+      if (stripLyricAnimation === motion) clearStripLyricMotion();
+      return;
+    }
+    motion.raf = requestAnimationFrame(function () { runStripLyricDust(motion); });
+  }
+  /* 建立旧句覆盖层 + 星尘。旧句不再需要 mask 遮罩：整句同时淡化，
+   * 星尘在全句真实字迹上同一短窗释放（不再有左→右前沿）。
+   * leadIndex >= 0 表示这是「句尾提前量」起的雾，切句点只淡入新句。 */
+  function startStripLyricDissolve(oldText, transition, leadIndex) {
+    var el = $('stripLyric');
+    if (!oldText || !transition) return null;
+    clearStripLyricMotion();
+    var outgoing = document.createElement('span');
+    outgoing.className = 'strip-lyric strip-lyric-previous';
+    outgoing.setAttribute('aria-hidden', 'true'); outgoing.textContent = oldText;
+    el.parentNode.appendChild(outgoing);
+    var dust = createStripLyricDust(outgoing, transition);
+    var motion = {
+      outgoing: outgoing, dust: dust.layer, dustState: dust, animations: [], raf: 0,
+      transition: transition, started: performance.now(),
+      leadIndex: leadIndex == null ? -1 : leadIndex, appearMs: transition.appearMs || 240
+    };
+    stripLyricAnimation = motion;
+    motion.raf = requestAnimationFrame(function () { runStripLyricDust(motion); });
+    return motion;
+  }
+  /* 切句点：提前量已经起雾，这里只把新句从透明缓缓推到不透明，旧句继续散完。 */
+  function finishStripLyricLead(text) {
+    var motion = stripLyricAnimation, el = $('stripLyric');
+    if (!motion) return;
+    motion.leadIndex = -1;
+    if (el) { el.style.visibility = ''; el.textContent = text; el.title = text; }
+    if (!el || !text || !el.animate) return;
+    motion.animations.push(el.animate([{ opacity: 0 }, { opacity: 1 }], {
+      duration: motion.appearMs, easing: 'cubic-bezier(.22,.61,.36,1)', fill: 'forwards'
+    }));
+  }
+  function renderStripLyric(text, transition) {
     var el = $('stripLyric');
     text = String(text || '');
+    /* 句尾提前量还在跑：切句点只收尾新句，旧句覆盖层与星尘继续散完。 */
+    if (stripLyricAnimation && stripLyricAnimation.leadIndex >= 0
+      && stripLyricAnimation.leadIndex === lyricIndex - 1) { finishStripLyricLead(text); return; }
     if (el.textContent === text) return;
     clearStripLyricAnimation();
     var old = el.textContent;
     el.textContent = text; el.title = text;
-    if (!old || !text || stripControlsVisible() || stripMotion || SHOT || reducedMotion() || !el.animate) return;
-    var outgoing = document.createElement('span');
-    outgoing.className = 'strip-lyric strip-lyric-previous';
-    outgoing.setAttribute('aria-hidden', 'true'); outgoing.textContent = old;
-    el.parentNode.appendChild(outgoing);
-    var options = { duration: 120, easing: 'ease-out' };
-    var motion = { outgoing: outgoing, animations: [
-      outgoing.animate([{ opacity: 1 }, { opacity: 0 }], options),
-      el.animate([{ opacity: 0 }, { opacity: 1 }], options)
-    ] };
-    stripLyricAnimation = motion;
-    motion.animations[1].onfinish = function () {
-      if (stripLyricAnimation === motion) clearStripLyricAnimation();
-    };
+    if (!old || !text || !transition || !stripLyricMotionAllowed() || !el.animate) return;
+    var motion = startStripLyricDissolve(old, transition, -1);
+    if (!motion) return;
+    motion.animations.push(el.animate([{ opacity: 0 }, { opacity: 1 }], {
+      duration: transition.appearMs, easing: 'cubic-bezier(.22,.61,.36,1)', fill: 'forwards'
+    }));
   }
-  function renderStrip() {
+  function renderStrip(lyricTransition) {
     if (!stripLayout) return;
     /* 横条只是呈现层。它被挂在 renderTrack/renderProgress/renderPlayState 末尾，
      * 而那几个函数在 playTrack() 主链路里 —— 这里一旦抛异常就会打断 loadAudio，
      * 表现为「切歌后接管播放 / 播放失败」。所以整块兜住：横条出错不许影响播放。 */
-    try { syncStripAmbient(); if (isStrip()) renderStripInner(); } catch (e) { if (!renderStrip._warned) { renderStrip._warned = true; if (window.console) console.warn('[player] strip render failed', e); } }
+    try { syncStripAmbient(); if (isStrip()) renderStripInner(lyricTransition); } catch (e) { if (!renderStrip._warned) { renderStrip._warned = true; if (window.console) console.warn('[player] strip render failed', e); } }
   }
   function syncStripAmbient() {
     if (!stripLayout) return;
@@ -8051,7 +8674,7 @@
     if (stripFlowRaf) cancelAnimationFrame(stripFlowRaf);
     stripFlowRaf = requestAnimationFrame(settleStripFlow);
   }
-  function renderStripInner() {
+  function renderStripInner(lyricTransition) {
     var t = currentTrack(), d = trackDuration(t), p = liveProgress();
     d = isFinite(d) && d > 0 ? d : 0;
     p = isFinite(p) ? Math.max(0, d ? Math.min(p, d) : p) : 0;
@@ -8059,7 +8682,7 @@
     stripText('stripArtist', t ? t.author : '');
     $('stripIdentity').title = t ? t.title + (t.author ? ' · ' + t.author : '') : '';
     var line = state.lyricLines && state.lyricLines[lyricIndex];
-    renderStripLyric(line && line.text ? line.text : '');
+    renderStripLyric(line && line.text ? line.text : '', lyricTransition);
     stripText('stripNow', fmtTime(p)); stripText('stripTotal', d ? fmtTime(d) : '--:--');
     stripBar.style.setProperty('--strip-fill', (d ? p / d * 100 : 0).toFixed(3) + '%');
     setAttrIf(stripBar, 'data-progress', !d || p <= 0 ? 'empty' : (p >= d ? 'full' : 'partial'));
@@ -8229,14 +8852,31 @@
         positionControls();
       }
     }
+    syncStripLyricFont();
     cacheStripFlowAnimations();
     syncInteractiveRegions();
   }
   /* 显隐仅由 CSS :hover / :focus-visible / :active 决定，没有移入计时或 inert 门闩。 */
   $('stripCover').addEventListener('click', function () {
     var open = stripLayout.getAttribute('data-open') !== '1';
-    if (open) stripLayout.setAttribute('data-open', '1');
+    if (open) { clearStripLyricAnimation(); stripLayout.setAttribute('data-open', '1'); }
     else stripLayout.removeAttribute('data-open');
+  });
+  stripLayout.addEventListener('pointerenter', function () {
+    if (stripControlsVisible()) clearStripLyricAnimation();
+  });
+  stripLayout.addEventListener('pointerover', function () {
+    if (stripControlsVisible()) clearStripLyricAnimation();
+  });
+  stripLayout.addEventListener('focusin', function () {
+    if (stripControlsVisible()) clearStripLyricAnimation();
+  });
+  stripLayout.addEventListener('pointerdown', function () {
+    if (stripControlsVisible()) clearStripLyricAnimation();
+  });
+  audio.addEventListener('seeking', markStripLyricDiscontinuity);
+  audio.addEventListener('seeked', function () {
+    stripLyricSeeking = false; stripLyricSeekUntil = 0;
   });
   function closeStripVolumeForLayout() {
     closeVolPop(); volDragging = false;
@@ -8274,7 +8914,7 @@
   document.addEventListener('pointerup', finishRangePointer);
   document.addEventListener('pointercancel', finishRangePointer);
   window.addEventListener('blur', function () {
-    rangePointers = {}; volDragging = false; closeVolPop(); resetStripSeekEffect();
+    rangePointers = {}; volDragging = false; closeVolPop(); resetStripSeekEffect(); clearStripLyricAnimation();
   });
   document.addEventListener('pointerdown', function (e) {
     if (isStrip() && !stripLayout.contains(e.target)) stripLayout.removeAttribute('data-open');
@@ -8347,7 +8987,10 @@
     state.page = 'play'; state.drawer = false;
   }
   ['play', 'pause', 'ended'].forEach(function (type) { audio.addEventListener(type, function () {
-    if (type !== 'play' && !stripSeekGesture) resetStripSeekEffect();
+    if (type !== 'play') {
+      if (!stripSeekGesture) resetStripSeekEffect();
+      clearStripLyricAnimation();
+    }
     syncStripAmbient();
   }); });
   function refreshStripMotionPreference() {
@@ -8421,6 +9064,8 @@
     var formChanged = next !== layout;
     var stripCrossing = formChanged && (next === 'strip' || layout === 'strip');
     var animateCrossing = stripCrossing && ctlForm !== null;
+    /* 先清掉实时歌词副本，避免它被布局过渡快照克隆后短暂残留。 */
+    if (formChanged && layout === 'strip') clearStripLyricAnimation();
     if (animateCrossing && !SHOT && !reducedMotion()) captureLayoutBackdrop();
     if (formChanged) {
       if (next === 'strip') prepareStrip();
@@ -9143,6 +9788,13 @@
       return { hueOff: RIPPLE_HUE_OFF, satMul: RIPPLE_SAT_MUL, lightBase: RIPPLE_LIGHT_BASE, darkBase: RIPPLE_DARK_BASE, minContrast: RIPPLE_MIN_CONTRAST };
     },
     contrastOf: contrastOf,
+    lyricAccentFromStars: lyricAccentFromStars,
+    lyricAccentState: function () { return lyricAccentState; },
+    stripLyricTiming: stripLyricTransitionDuration,
+    stripLyricFontState: function () {
+      var c = stripLyricFontCache;
+      return c ? { size: c.size, upper: c.upper, width: c.width, height: c.height, count: c.lines.length } : null;
+    },
     parseLrcDocument: parseLrcDocument,
     lyricAlignState: function () {
       return { active: !!lyricAlign, dragging: !!(lyricPress && lyricPress.dragging),

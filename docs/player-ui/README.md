@@ -61,6 +61,12 @@
 ### 歌词
 | 文件 | 一句话 |
 |---|---|
+| [STRIP-LYRIC-SIMULTANEOUS-1003131768.md](handoffs/STRIP-LYRIC-SIMULTANEOUS-1003131768.md) | 横条歌词当前候选：整句同时消散、时长约×1.3、星尘强度0.45；真实宿主观感待验 |
+| [LYRIC-UNIFORM-STROKE-1003131758.md](handoffs/LYRIC-UNIFORM-STROKE-1003131758.md) | 未部署返修：统一2px深描边、保留字色/辉光；真实像素新口径连续三次46/46，交互27/27，竖卡3.81为用户已知3.0取舍 |
+| [LYRIC-CONTRAST-SURFACES-BLOCKER-1003131756.md](handoffs/LYRIC-CONTRAST-SURFACES-BLOCKER-1003131756.md) | 历史反证（后续裁决见1758）：真实背景四项均未过4.5，同RGB跨深浅底数学无解；跨组旧35项连续三次通过，全套35/39，待统筹裁决 |
+| [STRIP-LYRIC-FONT-16-22-1003131756.md](handoffs/STRIP-LYRIC-FONT-16-22-1003131756.md) | 未部署字号返修：整曲统一 16–22px、两行/高度夹限；歌词 35/35、交互 27/27，含 16/22px 新录像与省略阈值 |
+| [STRIP-LYRIC-STAR-FAMILY-1003131755.md](handoffs/STRIP-LYRIC-STAR-FAMILY-1003131755.md) | 未部署候选：进度同款星尘、固定 13px 两行、整组撞色；歌词 30/30、交互 27/27、三节奏 60fps 新录像 |
+| [STRIP-LYRIC-FINE-DUST-1003131751.md](handoffs/STRIP-LYRIC-FINE-DUST-1003131751.md) | 未部署候选：横条歌词细光尘化开；交互 27/27，歌词专项因旧十字星等待阻塞，视觉待真机验收 |
 | [LYRIC-MATCH-DONE.md](handoffs/LYRIC-MATCH-DONE.md) | 歌词标题精简与手动匹配 |
 | [LYRICS-SYNC-DONE.md](handoffs/LYRICS-SYNC-DONE.md) | 歌词节奏手动对齐 |
 | [LYRIC-PICK-DONE.md](handoffs/LYRIC-PICK-DONE.md) | 歌词「挑 / 换」——匹配错了能自选 |

@@ -103,6 +103,12 @@
   --on-veil-paper: #F2F6FA;
   --veil-paper-a: 0.34;
   --veil-ink-a: 0.42;
+  /* D：统一暗柔影，不描边、不按表面换规则。近影分离字迹，远影柔化边缘。 */
+  --lyric-separation-color: var(--veil-ink);
+  --lyric-separation-shadow:
+    0 1px 2px color-mix(in srgb, var(--lyric-separation-color) 95%, transparent),
+    0 0 6px color-mix(in srgb, var(--lyric-separation-color) 85%, transparent);
+  --lyric-ink-overflow: 2px;
   /* 歌词字自带一点点反差阴影，可读性不再全交在一层厚纱上 */
   --lyric-shadow: 0 1px 2px color-mix(in srgb, var(--veil-paper) 72%, transparent);
   /* 当前句高亮用的强调色：默认跟主题；取到封面主色时（.ambient-ok）
@@ -203,6 +209,7 @@
 }
 
 /* 取到封面主色：当前句高亮改用主色派生的撞色（比主题色更辉、更贴封面） */
+.player { --hl-accent: var(--ambient-accent, var(--hk-accent)); }
 .player.ambient-ok { --hl-accent: var(--ambient-accent, var(--hk-accent)); }
 
 /* 无封面兜底态：没有封面要压，顶部与歌词遮罩都不需要。
@@ -306,7 +313,7 @@ body {
 
    光色 = --hk-accent（**不跟封面**）。控制条与队列是常驻面板，不是沉浸区；
    封面换一首歌就换色的话按钮会跟着晃。跟随封面主色的撞色只留给
-   --hl-accent 那一族语义（歌词当前句 / 红心描线），两者别混。
+   --hl-accent 只服务歌词当前句；红心描线仍用主题 --hk-accent，两者别混。
 
    分两档强度：辅助位一档，中央三键一档（更强的近光 + 远光，焦点仍落在它身上）。
    队列容器（.queue / .queue-list / .list-tabs / .pop）有 overflow 裁切，
@@ -646,7 +653,7 @@ button:disabled { cursor: default; }
 .track-artist:not(:disabled):hover .ta-name { text-decoration: underline; text-underline-offset: 2px; }
 .track-artist:not(:disabled):hover .ta-go { opacity: 1; }
 .track-artist:not(:disabled):active { opacity: 0.72; }
-.track-artist:focus-visible { outline: 2px solid var(--hl-accent); outline-offset: 3px; border-radius: 4px; }
+.track-artist:focus-visible { outline: 2px solid var(--hk-accent); outline-offset: 3px; border-radius: 4px; }
 /* 元信息行：专辑 / 歌手 / 来源，拿不到的字段优雅省略（不显空标签） */
 .track-meta {
   margin: 0;
@@ -675,7 +682,7 @@ button:disabled { cursor: default; }
   height: 26px;
   margin: -3px 0;
   border-radius: var(--radius-s);
-  color: var(--hl-accent);
+  color: var(--hk-accent);
   opacity: 0.75;
 }
 .fav-btn:hover { background: var(--hv-surface); opacity: 1; box-shadow: var(--hv-ring-icon); }
@@ -748,8 +755,8 @@ button:disabled { cursor: default; }
 .lyric-line.is-flowing { will-change: opacity; }
 .lyric-line.is-flowing .lyric-text { will-change: transform; }
 .lyric-line.is-current {
-  /* 反差阴影垫底（保可读）+ accent 柔光（把当前句从纱上挑出来） */
-  text-shadow: var(--lyric-shadow), var(--lyric-glow);
+  /* 暗影在前、原反差阴影与强调色辉光在后；深底保留亮芯，不换字色。 */
+  text-shadow: var(--lyric-separation-shadow), var(--lyric-shadow), var(--lyric-glow);
 }
 .lyrics.is-browsing .lyric-line {
   opacity: 1;
@@ -857,7 +864,7 @@ button:disabled { cursor: default; }
   opacity: 1;
   color: var(--lyric-current);
   font-weight: 400;
-  text-shadow: var(--lyric-shadow), var(--lyric-glow);
+  text-shadow: var(--lyric-separation-shadow), var(--lyric-shadow), var(--lyric-glow);
 }
 @media (prefers-reduced-motion: reduce) { .lyric-align-tools { animation: none; } }
 
@@ -1201,7 +1208,7 @@ button:disabled { cursor: default; }
 }
 
 /* ============================================================
-   红心（喜欢）：未点亮 = 撞色描线（与歌词当前句同一套 --hl-accent），
+   红心（喜欢）：未点亮 = 主题描线（--hk-accent，不随歌词/封面变色），
    点亮 = 实心填充。三处入口共用这套语义：控制条 .fav-btn-bar / 队列行 .q-fav / 播放页 .fav-btn。
    ============================================================ */
 /* 控制条红心：纯图标（不再带「喜欢」文字），与队列行红心同一套视觉。
@@ -1214,7 +1221,7 @@ button:disabled { cursor: default; }
   width: 30px;
   height: 30px;
   border-radius: var(--radius-s);
-  color: var(--hl-accent);
+  color: var(--hk-accent);
   opacity: 0.55;
 }
 .fav-btn-bar:hover {
@@ -1234,7 +1241,7 @@ button:disabled { cursor: default; }
   width: 30px;
   height: 30px;
   border-radius: var(--radius-s);
-  color: var(--hl-accent);
+  color: var(--hk-accent);
   opacity: 0.55;
 }
 .q-row:hover .q-fav,
@@ -1843,7 +1850,7 @@ body.is-shot .ripple-tip { display: none; }
   height: 44px;
   margin: 0;
   border-radius: var(--radius-s, 5px);
-  color: var(--hl-accent);
+  color: var(--hk-accent);
   opacity: 1;
 }
 .controls .identity > .heart .icon { width: 19px; height: 19px; stroke-width: 1.65; }
@@ -2084,6 +2091,31 @@ body.is-shot .ripple-tip { display: none; }
 }
 .toast[hidden] { display: none; }
 
+/* 网易云官方接口确诊为下架时的轻量操作浮层，不遮断播放器其它控件。 */
+.unavailable-pop {
+  position: absolute;
+  left: 50%;
+  bottom: 124px;
+  transform: translateX(-50%);
+  z-index: 32;
+  width: min(340px, calc(100% - 24px));
+  padding: 10px;
+  border-radius: var(--radius-m);
+  background: var(--hk-surface);
+  border: 1px solid var(--hk-hairline);
+  box-shadow: var(--hk-pop-shadow);
+  color: var(--hk-text);
+}
+.unavailable-pop[hidden] { display: none; }
+.unavailable-pop .pop-title { max-width: none; color: var(--hk-text); font-size: 12px; }
+.unavailable-copy {
+  margin: 4px 6px 8px;
+  color: var(--hk-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
 /* 「继续播放」引导：自动播放被拦时的轻量恢复入口 */
 .resume-chip {
   position: absolute;
@@ -2162,7 +2194,7 @@ body.is-shot .ripple-tip { display: none; }
   text-shadow: var(--lyric-shadow), var(--lyric-glow);
 }
 .lyric-ask-btn:active { transform: scale(0.97); }
-.lyric-ask-btn:focus-visible { outline: 2px solid var(--hl-accent); outline-offset: 2px; }
+.lyric-ask-btn:focus-visible { outline: 2px solid var(--hk-accent); outline-offset: 2px; }
 
 .lyric-match {
   position: absolute;
@@ -2794,7 +2826,7 @@ body.is-shot *::after {
   width: 30px;
   height: 30px;
   border-radius: var(--radius-s, 5px);
-  color: var(--hl-accent);
+  color: var(--hk-accent);
   opacity: 0.55;
   cursor: pointer;
   transition: background-color 0.16s ease, opacity 0.16s ease, transform 0.1s ease-out;
@@ -2855,7 +2887,7 @@ body.is-shot *::after {
   transition: background-color 0.16s ease, border-color 0.16s ease;
 }
 .bili-tbtn:hover { background: var(--hk-hover); }
-.bili-tbtn.primary { border-color: var(--hl-accent); color: var(--hl-accent); }
+.bili-tbtn.primary { border-color: var(--hk-accent); color: var(--hk-accent); }
 .bili-tbtn.primary:hover { background: var(--hk-hover); }
 .bili-count { margin-left: auto; padding-right: 2px; font-size: 11px; color: var(--hk-faint); }
 
@@ -2956,7 +2988,7 @@ body.is-shot *::after {
 .track-title[role="button"], .track-meta[role="button"] { cursor: pointer; transition: opacity 120ms ease; }
 .track-title[role="button"]:hover, .track-meta[role="button"]:hover { opacity: .82; }
 .track-title[role="button"]:focus-visible, .track-meta[role="button"]:focus-visible {
-  outline: 2px solid var(--hl-accent); outline-offset: 2px;
+  outline: 2px solid var(--hk-accent); outline-offset: 2px;
 }
 
 /* 单曲封面请求的常驻指示：不依赖 toast 的 2.6 秒寿命，也不随队列翻页隐藏。 */
@@ -2990,6 +3022,11 @@ body.is-shot *::after {
 
 /* Touch Bar · 完整的第四态。只重排呈现，根尺寸始终由宿主裁决。 */
 .player { --strip-height: 64px; }
+/* 横条歌词柔影比竖卡轻一档：收窄模糊半径、降低远影不透明度，
+ * 近影仍负责分离度（真实背景实测仍 ≥4.5）。只作用于横条，不动竖卡同一变量。背景已实测。 */
+.strip-layout { --lyric-separation-shadow:
+    0 1px 1px color-mix(in srgb, var(--lyric-separation-color) 88%, transparent),
+    0 0 4px color-mix(in srgb, var(--lyric-separation-color) 52%, transparent); }
 .strip-layout { display: none; position: absolute; inset: 0; z-index: 2; --strip-y: max(0px, calc((100% - var(--strip-height)) / 2)); --strip-cover-size: calc(var(--strip-height) * .97); --strip-cover-inset: calc(var(--strip-height) * .015); --strip-controls-opacity: 0; --strip-controls-visibility: hidden; --strip-controls-events: none; --strip-lyric-opacity: 1; --strip-time-opacity: 0; }
 /* 浏览器直接决定显隐；按住拖动或键盘操作时保留控件，不经过 JS 门闩或延时。 */
 .strip-layout:is(:has(.strip-bar:hover, .strip-cover:hover, :focus-visible, :active), [data-open="1"]) { --strip-controls-opacity: 1; --strip-controls-visibility: visible; --strip-controls-events: auto; --strip-lyric-opacity: 0; --strip-time-opacity: .85; }
@@ -3116,12 +3153,18 @@ body.is-shot *::after {
  * 右留白 --strip-right 由 arrangeStrip() 按可用宽度算：宽容器=136（盒对称 → 轴=条中线），
  * 越窄留白收得越多（轴随之右偏），窄到极限才回落 10px 并改左对齐 —— 保证可读宽度。 */
 .strip-context { position: absolute; z-index: 2; left: 136px; right: var(--strip-right, 136px); top: 0; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-.strip-lyric-line { position: relative; display: flex; justify-content: center; max-width: 100%; min-width: 0; opacity: var(--strip-lyric-opacity); transition: opacity 80ms ease; }
-.strip-lyric { display: block; max-width: 100%; min-width: 0; font-size: 13px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.strip-lyric-previous { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: max-content; }
-/* 横条只显示正在唱的这一句，所以它本身就是「当前句」：给它和竖卡当前句同一套强调色 +
- * 高光描边（只动颜色/阴影，不动字号字距，不会重排也不抖）。没词时空字符串不发光。 */
-.strip-lyric:not(:empty) { color: color-mix(in srgb, var(--hl-accent) 52%, var(--hk-text)); text-shadow: var(--strip-lyric-glow); }
+.strip-lyric-line { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: calc(var(--strip-lyric-font, 16px) * 2.4); max-width: 100%; min-width: 0; opacity: var(--strip-lyric-opacity); transition: opacity 80ms ease; }
+/* 整曲按最长行与实际宽高共选 16–22px；不随切句变号，极端长句第二行省略。 */
+.strip-lyric-measure { position: absolute; left: 0; top: 0; visibility: hidden; pointer-events: none; }
+.strip-lyric { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; width: 100%; max-width: 100%; min-width: 0; font-size: var(--strip-lyric-font, 16px); line-height: 1.2; white-space: normal; overflow-wrap: anywhere; overflow: clip; overflow-clip-margin: var(--lyric-ink-overflow); clip-path: inset(0 calc(-1 * var(--lyric-ink-overflow))); text-overflow: ellipsis; text-align: center; }
+.strip-lyric-previous { position: absolute; top: 50%; left: 0; transform: translateY(-50%); width: 100%; }
+/* 整句同时消散：旧句由转场 rAF 逐帧写 opacity/filter 淡淡化开，不再用 mask 空间擦除。 */
+/* 字形星尘画在条内、歌词之上（否则粒子被歌词字盖住，只能从上方溢出）。 */
+.strip-lyric-dust { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; overflow: hidden; border-radius: inherit; pointer-events: none; }
+/* 横条只显示当前句：与竖卡共用填色与暗柔影，暗影在前，原辉光在后。
+ * clip-margin + clip-path 只扩横向绘制边界；纵向仍止于两行，防止露出第三行碎片。
+ * 不加 padding、不挤宽度、不改变换行与 Range。空句不发光。 */
+.strip-lyric:not(:empty) { color: var(--lyric-current); text-shadow: var(--lyric-separation-shadow), var(--strip-lyric-glow); }
 .strip-controls { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: var(--strip-gap, 10px); opacity: var(--strip-controls-opacity); visibility: var(--strip-controls-visibility); pointer-events: none; }
 .strip-controls .strip-btn { pointer-events: var(--strip-controls-events); }
 .strip-controls .strip-btn > * { pointer-events: none; }
@@ -3132,13 +3175,13 @@ body.is-shot *::after {
 .strip-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; flex: 0 0 32px; margin: 0; padding: 0; border: 0; border-radius: var(--radius-s); color: var(--hk-muted); background: transparent; cursor: pointer; }
 .strip-btn .icon { width: 18px; height: 18px; }
 /* 真实红心仍带普通卡片的类；横条尺寸压过旧的 tight 档规则。 */
-.strip-layout .strip-controls .fav-btn { width: 32px; height: 32px; margin: 0; opacity: 1; }
+.strip-layout .strip-controls .fav-btn { width: 32px; height: 32px; margin: 0; opacity: 1; color: var(--hk-accent); }
 .strip-layout .strip-controls .fav-btn .icon { width: 18px; height: 18px; }
 .strip-btn, .strip-cover { transition: background-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease, transform 0.14s cubic-bezier(0.22, 0.61, 0.36, 1); }
 .strip-btn:hover { background: var(--hv-surface-strong); color: var(--hk-text); box-shadow: var(--hv-ring-icon); }
 .strip-btn:active { transform: scale(0.96); }
 .strip-btn:disabled { opacity: .45; cursor: default; }
-.strip-btn[aria-pressed="true"] { color: var(--hl-accent); }
+.strip-btn[aria-pressed="true"] { color: var(--hk-accent); }
 .strip-btn[aria-pressed="true"] .icon { fill: currentColor; }
 /* 圆形与命中框一起缩小，上沿多留 2px；左右各留 2px 外边距，保持原 32px 占位与中轴。 */
 .strip-btn.strip-play { position: relative; width: 28px; height: 28px; flex-basis: 28px; margin: 0 2px; border-radius: 50%; background: var(--hk-accent); color: var(--hk-on-accent); }
