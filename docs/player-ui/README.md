@@ -20,7 +20,7 @@
 | `REFACTOR-BRIEF.md` | 前端重构的需求原文（重构起点，历史背景） | 参考 |
 | `FRONTEND-CRITIQUE-2026-10-12.md` | `/impeccable critique` 评审问题清单（含证据） | 参考 |
 | `FRONTEND-TODO-2026-10-12.md` | 上条评审的用户取舍与排序（实施前先读原文） | 待办 |
-| `handoffs/` | **每轮改动的技术交接稿**（46 份，见下表） | 历史 |
+| `handoffs/` | **每轮改动与发版的技术交接稿**（见下表） | 历史 |
 | `archive/` | 开工前的旧简报（已被 CONTRACT 取代） | 历史 |
 | `archive/prototype/` | 淘汰的 UI 原型（`app.js`/`index.html`/`style.css`、`alt-mine/`、`dev/`） | 历史 |
 | `ripple-lab*.html` | 涟漪实验台（`tools/` 里 4 个脚本会引用，**别删**） | 在役工具 |
@@ -39,6 +39,7 @@
 | [WIRING.md](handoffs/WIRING.md) | 后端接线表：URL、请求/响应形状、缺口 |
 | [WIRING-DONE.md](handoffs/WIRING-DONE.md) | 原型 → 生产 `ui/` 融合完成记录 |
 | [MARKET-ENROLL-1.0.0.md](handoffs/MARKET-ENROLL-1.0.0.md) | 1.0.0 市场登记流程 |
+| [RELEASE-1.2.1.md](handoffs/RELEASE-1.2.1.md) | 1.2.1 stable Release、自测范围、zip 哈希与市场 PR #91 登记记录 |
 
 ### 音源 / 导入 / 歌单
 | 文件 | 一句话 |
@@ -61,7 +62,7 @@
 ### 歌词
 | 文件 | 一句话 |
 |---|---|
-| [STRIP-LYRIC-SIMULTANEOUS-1003131768.md](handoffs/STRIP-LYRIC-SIMULTANEOUS-1003131768.md) | 横条歌词当前候选：整句同时消散、时长约×1.3、星尘强度0.45；真实宿主观感待验 |
+| [STRIP-LYRIC-SIMULTANEOUS-1003131768.md](handoffs/STRIP-LYRIC-SIMULTANEOUS-1003131768.md) | 1.2.1 发布项：整句同时消散、时长约×1.3、星尘强度0.45；用户已确认候选预览，实际使用反馈待收 |
 | [LYRIC-UNIFORM-STROKE-1003131758.md](handoffs/LYRIC-UNIFORM-STROKE-1003131758.md) | 未部署返修：统一2px深描边、保留字色/辉光；真实像素新口径连续三次46/46，交互27/27，竖卡3.81为用户已知3.0取舍 |
 | [LYRIC-CONTRAST-SURFACES-BLOCKER-1003131756.md](handoffs/LYRIC-CONTRAST-SURFACES-BLOCKER-1003131756.md) | 历史反证（后续裁决见1758）：真实背景四项均未过4.5，同RGB跨深浅底数学无解；跨组旧35项连续三次通过，全套35/39，待统筹裁决 |
 | [STRIP-LYRIC-FONT-16-22-1003131756.md](handoffs/STRIP-LYRIC-FONT-16-22-1003131756.md) | 未部署字号返修：整曲统一 16–22px、两行/高度夹限；歌词 35/35、交互 27/27，含 16/22px 新录像与省略阈值 |
