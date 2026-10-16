@@ -379,8 +379,12 @@ export async function verifyTouchbar({ newPage, BASE, API, UI_BASE, outDir, asse
     const st=await geo();
     const pick=id=>st.controls.find(c=>c.id===id);
     const chain=()=>page.evaluate(()=>[...document.querySelectorAll(':hover')].map(e=>e.id).filter(Boolean));
-    const pairs=[['modeBtn','prevBtn'],['prevBtn','favBtn'],['favBtn','muteBtn'],['muteBtn','nextBtn']];
-    let ok=true, detail=[];
+    /* 不要硬编码四个键：1738 起音量会「整组提前移除」（滑杆放不下就整组消失）,
+     * muteBtn 是 volGroup 的子节点，640 宽下随整组一起不在集合里 —— 这是设计行为,
+     * 不是回归。所以按**当前实际可见集合**取相邻对，测的是「悬停跟手」本身。 */
+    const present=st.controls.map(c=>c.id).filter(Boolean);
+    const pairs=[]; for (let i=0;i+1<present.length;i++) pairs.push([present[i],present[i+1]]);
+    let ok=pairs.length>=2, detail=[{present}];
     for (const [A,B] of pairs) {
       const a=pick(A), b=pick(B);
       if (!a||!b) { ok=false; detail.push('missing '+A+'/'+B); continue; }

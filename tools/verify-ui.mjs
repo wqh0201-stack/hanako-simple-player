@@ -2278,14 +2278,44 @@ const motion = {};
     motion.audio.ok === true && motion.audio.afterEnv > (motion.audio.beforeEnv || 0),
     JSON.stringify(motion.audio));
 
-  // 按钮按压：:active 样式存在（scale）—— 检查样式表里确实写了
+  // 按钮按压反馈：1734 起契约改为「命中盒不缩放，内层图形 scale + 播放键 filter 提亮」,
+  // 不再动画按钮自身的 transform（那时 transition-property 里有 transform，现已移出）。
+  // 所以这条要量的是**当前真实契约**：样式表里存在 :active 的内层图形 transform
+  // 规则、该图标确实 transition transform、按钮盒自身 :active 不缩放。
   motion.press = await page.evaluate(() => {
-    const el = document.getElementById('playBtn');
-    const cs = getComputedStyle(el).transitionProperty || '';
-    return { trans: cs };
+    const btn = document.getElementById('playBtn');
+    const icon = btn.querySelector('.play-glyph > .icon');
+    const rules = [...document.styleSheets].flatMap((sh) => { try { return [...sh.cssRules]; } catch (e) { return []; } });
+    const flat = [];
+    const walk = (rs) => rs.forEach((r) => { flat.push(r); if (r.cssRules) walk([...r.cssRules]); });
+    walk(rules);
+    // selectorText 常常是逗号连接的整串（如 `.a:active, .b:active { transform:none }`）,
+    // 必须按逗号切分后逐段精确匹配，不能用 $ 锚到串尾，否则量不到这种规则。
+    const parts = (r) => (r.selectorText || '').split(',').map((s) => s.trim());
+    const anyRule = (sels, test) => flat.some((r) => parts(r).some((p) => sels.indexOf(p) >= 0) && test(r));
+    // 内层图形按下缩放
+    const glyphActive = anyRule(
+      ['.controls button:active > .icon', '.controls button:active .play-glyph > .icon',
+       '.strip-btn:active > .icon', '.strip-btn:active .play-glyph > .icon'],
+      (r) => /scale\(/.test(r.style.transform || ''));
+    // 命中盒自身 :active 明确不缩放
+    const boxNoScale = anyRule(['.controls .play-btn:active', '.strip-btn:active', '.strip-btn.strip-play:active'],
+      (r) => (r.style.transform || '') === 'none');
+    // 播放键按下提亮
+    const playBright = anyRule(['.controls .play-btn:active', '.strip-btn:active', '.strip-btn.strip-play:active'],
+      (r) => /brightness\(/.test(r.style.filter || ''));
+    return {
+      glyphActive,
+      playBright,
+      boxNoScale,
+      iconTransforms: !!icon && getComputedStyle(icon).transitionProperty.indexOf('transform') >= 0,
+      iconDuration: icon ? getComputedStyle(icon).transitionDuration : 'NO ICON',
+      boxTransitionProperty: getComputedStyle(btn).transitionProperty
+    };
   });
   assert('motion-press-feedback',
-    /transform/.test(motion.press.trans),
+    motion.press.glyphActive === true && motion.press.playBright === true &&
+    motion.press.boxNoScale === true && motion.press.iconTransforms === true,
     JSON.stringify(motion.press));
 
   // 队列退场（宽窗抽屉）：关闭瞬间仍挂载（is-q-leaving），动画后才卸载
