@@ -157,3 +157,13 @@
 - **手动匹配要存「选中的源 + id」，不能只存关键词** —— 否则重载会按关键词重搜，
   又解回另一条。绑定写 `raw.lyricMatch = {…, server, mid, title}`。
 - **网易云电台节目接口必须带 Referer**，否则 `code:-462`。
+
+## 验证 / 断言
+
+- **改了交互契约，先看有没有断言在测旧口径。** 1734 把按压反馈从「按钮自身 `transform`」
+  改成「内层 `.icon` scale + 播放键 `filter` 提亮」，`verify-ui` 的 `motion-press-feedback`
+  却还在读按钮 `transition-property` 里有没有 `transform`；1738 让音量滑杆放不下就整组移除
+  （`muteBtn` 是 `volGroup` 的子节点，640 宽下随之不在集合），`verify-touchbar` 的
+  `TB-03-hover-follows-pointer` 仍硬编码四个键。**两条都是「App 演进、测试没跟」，不是回归。**
+  处理口径：断言改成量**当前真实契约**（按逗号切分 `selectorText` 精确匹配，别用 `$` 锚串尾），
+  再**反向植入**（把实现改坏一次）确认断言真的会转红 —— 别靠放宽断言让全量变绿。
