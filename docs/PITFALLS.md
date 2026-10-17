@@ -138,6 +138,17 @@
   `seeked` 用 `updateLyricIndex(!lyricReturn)`、`canFlowLyrics` 里 `lyricReturn` 直接放行。
   断言 `lyrics-click-line-jumps-with-animation`、`lyrics-bounce-back-is-animated`。
 
+- **横条歌词的取样 / 比较不能假设「一个文本节点」**。横条把「日文原文（中文翻译）」
+  拆成 `.strip-lyric-main` + `.strip-lyric-sub` 两个行节点后：
+  (1) `stripLyricVisibleGlyphs()` 若仍取 `outgoing.firstChild`，星尘**只从日文行喷**，
+      整行中文一个粒子都没有 —— 必须按所有行内文本节点依次取样、每行的 rect 各自收敛；
+  (2) `renderStripLyric()` 若仍用 `el.textContent === text` 早退，`textContent` 是两行
+      拼接串且括号已去，会把切句误判成同句、**整体跳过转场**。必须统一走
+      `stripLyricRaw()`（命中拆分时取记下的原始文本）与 `writeStripLyric()`。
+  另外拆分形态必须同步进 `syncStripLyricFont()` 的探针，否则字号按「拼成一整行」去量。
+  构建号 1003131770，见 [交接](player-ui/handoffs/STRIP-LYRIC-BILINEAR-DONE.md)。
+- **星尘是 canvas，旧 DOM / mask 断言已废弃**。`--strip-lyrics-only` 现在直接读取画布像素与亮芯分布、用早期 `drawImage` 采样确认粒子来自真实字形，并按强度 `0.45` 验证常规/窄条预算（144 / 90）；旧句改测 opacity + blur 的逐帧淡出及清理，不再期待 `.strip-spark`、mask 或粒子 WAAPI。横条双语转场还要确认 main/sub 两行各有真实绘制。修订记录与自测数字见 [歌词星尘验证套件修订交接](player-ui/handoffs/STRIP-LYRIC-VERIFY-SUITE-REPAIR.md)。
+
 ## 部署 / 打包
 
 - **宿主快照 UI**：宿主加载 app 时把 `ui/` 拷进 `.cache/app-ui-snapshots/`，

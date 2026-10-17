@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { measureLyricSurfaces, measureLyricClip } from './measure-lyric-surfaces.mjs';
+import { measureLyricSurfaces, measureLyricClip, scoreSoftShadow } from './measure-lyric-surfaces.mjs';
 
 // Touch Bar 歌词星尘：真实 <audio> 时钟与 updateLyricIndex() 路径，另录制页面帧。
 export async function verifyStripLyrics({ newPage, BASE, API, UI_BASE, outDir, assert, sleep, clickTab, report }) {
@@ -20,87 +20,230 @@ export async function verifyStripLyrics({ newPage, BASE, API, UI_BASE, outDir, a
     const events = await page.evaluate(() => window.__stripLyricEvents || []);
     return events.filter((event) => event.text === text).slice(-1)[0] || null;
   }
+  async function fadeFor(oldText) {
+    return page.evaluate((value) => {
+      const rows = window.__stripLyricFadeSamples || [];
+      return rows.filter((row) => row.oldText === value).slice(-1)[0] || null;
+    }, oldText);
+  }
+  async function installDustProbe(target) {
+    await target.evaluate(() => {
+      window.__stripCanvasStats = function (canvas) {
+        if (!canvas || canvas.tagName !== 'CANVAS' || !canvas.width || !canvas.height) return {
+          activePixels:0, brightPixels:0, brightComponents:0, colorPixels:0, bounds:null,
+          xBands:[], yBands:[], width:canvas ? canvas.width : 0, height:canvas ? canvas.height : 0
+        };
+        const width = canvas.width, height = canvas.height;
+        const data = canvas.getContext('2d').getImageData(0, 0, width, height).data;
+        const xBands = Array(6).fill(0), yBands = Array(4).fill(0);
+        const bright = new Uint8Array(width * height);
+        let activePixels = 0, brightPixels = 0, colorPixels = 0;
+        let left = width, top = height, right = -1, bottom = -1;
+        for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+          const i = (y * width + x) * 4, a = data[i + 3];
+          if (a <= 8) continue;
+          activePixels++;
+          if (x < left) left = x; if (x > right) right = x;
+          if (y < top) top = y; if (y > bottom) bottom = y;
+          xBands[Math.min(5, Math.floor(x * 6 / width))]++;
+          yBands[Math.min(3, Math.floor(y * 4 / height))]++;
+          const max = Math.max(data[i], data[i + 1], data[i + 2]);
+          const min = Math.min(data[i], data[i + 1], data[i + 2]);
+          if (max - min > 28 && a > 16) colorPixels++;
+          if (data[i] > 210 && data[i + 1] > 210 && data[i + 2] > 210 && a > 18) {
+            bright[ y * width + x ] = 1; brightPixels++;
+          }
+        }
+        let brightComponents = 0;
+        const seen = new Uint8Array(bright.length), stack = [];
+        for (let seed = 0; seed < bright.length; seed++) {
+          if (!bright[seed] || seen[seed]) continue;
+          brightComponents++; seen[seed] = 1; stack.push(seed);
+          while (stack.length) {
+            const at = stack.pop(), x = at % width, y = Math.floor(at / width);
+            for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+              if (!dx && !dy) continue;
+              const nx = x + dx, ny = y + dy;
+              if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+              const next = ny * width + nx;
+              if (bright[next] && !seen[next]) { seen[next] = 1; stack.push(next); }
+            }
+          }
+        }
+        return { activePixels, brightPixels, brightComponents, colorPixels,
+          bounds:right < 0 ? null : { left, top, right, bottom }, xBands, yBands, width, height };
+      };
+      const probe = window.__stripDustProbe = { canvases:[] };
+      const byCanvas = new WeakMap();
+      const remember = (node) => {
+        if (!node || node.nodeType !== 1) return;
+        if (node.matches && node.matches('canvas.strip-lyric-dust') && !byCanvas.has(node)) {
+          const record = { canvas:node, createdAt:performance.now(), calls:[] };
+          byCanvas.set(node, record); probe.canvases.push(record);
+        }
+        if (node.querySelectorAll) node.querySelectorAll('canvas.strip-lyric-dust').forEach(remember);
+      };
+      const host = document.getElementById('stripBar');
+      new MutationObserver((records) => records.forEach((record) => record.addedNodes.forEach(remember)))
+        .observe(host, { childList:true, subtree:true });
+      const originalDrawImage = CanvasRenderingContext2D.prototype.drawImage;
+      CanvasRenderingContext2D.prototype.drawImage = function (image) {
+        const record = byCanvas.get(this.canvas);
+        if (record) {
+          const args = Array.prototype.slice.call(arguments, 1), now = performance.now();
+          let x, y, w, h;
+          if (args.length === 2) { x=args[0]; y=args[1]; w=image.width; h=image.height; }
+          else if (args.length === 4) { x=args[0]; y=args[1]; w=args[2]; h=args[3]; }
+          else if (args.length === 8) { x=args[4]; y=args[5]; w=args[6]; h=args[7]; }
+          if (Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(w) && Number.isFinite(h)
+            && now - record.createdAt <= 220 && record.calls.length < 12000) {
+            record.calls.push({ x:x+w/2, y:y+h/2, elapsedMs:now-record.createdAt });
+          }
+        }
+        return originalDrawImage.apply(this, arguments);
+      };
+      window.__stripDustEmissionStats = function (canvas, outgoing) {
+        if (!canvas || !outgoing) return { calls:0, glyphHits:0, lineHits:[] };
+        const record = probe.canvases.find((entry) => entry.canvas === canvas);
+        const rect = canvas.getBoundingClientRect(), glyphs = [];
+        const walker = document.createTreeWalker(outgoing, NodeFilter.SHOW_TEXT);
+        let node;
+        while ((node = walker.nextNode())) {
+          const row = node.parentElement && node.parentElement.closest('.strip-lyric-main, .strip-lyric-sub');
+          for (let i = 0; i < node.nodeValue.length; i++) {
+            const range = document.createRange(); range.setStart(node, i); range.setEnd(node, i + 1);
+            const r = range.getBoundingClientRect();
+            if (r.width > 0 && r.height > 0) glyphs.push({ left:r.left-rect.left, right:r.right-rect.left,
+              top:r.top-rect.top, bottom:r.bottom-rect.top, row:row ? row.classList[0] : '' });
+          }
+        }
+        const lineCenters = [];
+        glyphs.slice().sort((a,b) => a.top-b.top).forEach((g) => {
+          const center = (g.top+g.bottom)/2;
+          if (!lineCenters.some((line) => Math.abs(line.center-center) <= 3)) lineCenters.push({ center, hits:0 });
+        });
+        const rowHits = {};
+        const calls = record ? record.calls.filter((call) => call.elapsedMs <= 220) : [];
+        let glyphHits = 0;
+        calls.forEach((call) => {
+          const glyph = glyphs.find((g) => call.x >= g.left-9 && call.x <= g.right+9
+            && call.y >= g.top-9 && call.y <= g.bottom+9);
+          if (!glyph) return;
+          glyphHits++;
+          let key = glyph.row;
+          if (!key) {
+            let best = 0, distance = Infinity;
+            lineCenters.forEach((line, i) => { const d=Math.abs(line.center-call.y); if(d<distance){distance=d;best=i;} });
+            key = 'line-' + best;
+          }
+          rowHits[key] = (rowHits[key] || 0) + 1;
+        });
+        return { calls:calls.length, glyphHits, lineHits:lineCenters.map((line,i) => rowHits['line-'+i] || 0),
+          rowHits, glyphLines:lineCenters.length, record:!!record };
+      };
+    });
+  }
   async function state() {
-    return page.evaluate(() => ({
-      text: document.getElementById('stripLyric').textContent,
-      layout: document.getElementById('player').getAttribute('data-layout'),
-      hot: window.__playerDebug.stripState().hot,
-      audioTime: document.querySelector('audio').currentTime,
-      paused: document.querySelector('audio').paused,
-      previous: document.querySelectorAll('.strip-lyric-previous').length,
-      dust: document.querySelectorAll('.strip-lyric-dust').length,
-      particles: document.querySelectorAll('.strip-lyric-dust > span').length,
-      currentOpacity: getComputedStyle(document.getElementById('stripLyric')).opacity
-    }));
+    return page.evaluate(() => {
+      const dust = document.querySelector('.strip-lyric-dust');
+      const stats = window.__stripCanvasStats ? window.__stripCanvasStats(dust) : { activePixels:0 };
+      return {
+        text: document.getElementById('stripLyric').textContent,
+        layout: document.getElementById('player').getAttribute('data-layout'),
+        hot: window.__playerDebug.stripState().hot,
+        audioTime: document.querySelector('audio').currentTime,
+        paused: document.querySelector('audio').paused,
+        previous: document.querySelectorAll('.strip-lyric-previous').length,
+        dust: document.querySelectorAll('.strip-lyric-dust').length,
+        dustPixels: stats.activePixels,
+        dustBrightComponents: stats.brightComponents || 0,
+        currentOpacity: getComputedStyle(document.getElementById('stripLyric')).opacity
+      };
+    });
   }
   async function dustLive() {
     return page.evaluate(() => {
       const dust = document.querySelector('.strip-lyric-dust');
-      const points = dust ? [...dust.children] : [];
-      const recipes = [...document.querySelectorAll('#stripBar .strip-flight')];
-      const sample = points.map((point, i) => {
-        const style = getComputedStyle(point), core = getComputedStyle(point, '::before');
-        const source = getComputedStyle(recipes[i % 6].firstElementChild);
-        const r = point.getBoundingClientRect();
-        return { opacity:parseFloat(style.opacity), transform:style.transform, x:r.x, y:r.y,
-          size:parseFloat(style.width), core:core.content, glow:style.boxShadow,
-          sameRecipe:style.width === source.width && style.backgroundColor === source.backgroundColor
-            && style.boxShadow === source.boxShadow && style.color === source.color,
-          colorSource:point.style.getPropertyValue('--spark-color'),
-          origin:point.getAttribute('data-origin').split(',').map(Number),
-          destination:point.getAttribute('data-destination').split(',').map(Number),
-          target:point.getAttribute('data-star-target').split(',').map(Number),
-          frames:point.getAnimations()[0].effect.getKeyframes() };
-      });
-      return { count:points.length, starCount:sample.filter((p) => p.core !== 'none').length,
-        visiblePoints:sample.filter((p) => p.opacity > 0.2).length,
-        maxOpacity:sample.reduce((max, p) => Math.max(max, p.opacity), 0), sample };
+      const old = document.querySelector('.strip-lyric-previous');
+      const stats = window.__stripCanvasStats(dust);
+      const emission = window.__stripDustEmissionStats(dust, old);
+      const bar = document.getElementById('stripBar').getBoundingClientRect();
+      const rect = dust ? dust.getBoundingClientRect() : null;
+      const small = window.__playerDebug.stripState().small;
+      const budget = Math.round((small ? 200 : 320) * 0.45);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      return { canvas:!!dust && dust.tagName === 'CANVAS', count:stats.brightComponents,
+        budget, small, stats, emission,
+        contained:!!rect && rect.left >= bar.left-1 && rect.right <= bar.right+1
+          && rect.top >= bar.top-1 && rect.bottom <= bar.bottom+1
+          && (!stats.bounds || (stats.bounds.left >= 0 && stats.bounds.top >= 0
+            && stats.bounds.right < dust.width && stats.bounds.bottom < dust.height)),
+        cssSize:rect ? { width:rect.width, height:rect.height } : null, dpr };
     });
   }
   async function observeMotion() {
     await page.evaluate(() => {
-      const el = document.getElementById('stripLyric');
+      const el = document.getElementById('stripLyric'), bar = document.getElementById('stripBar');
       const events = window.__stripLyricEvents = [];
+      const fades = window.__stripLyricFadeSamples = [];
       let last = el.textContent;
       const animation = (node) => node && node.getAnimations().map((item) => {
         const timing = item.effect.getTiming();
         return { duration: timing.duration, elapsedMs:item.currentTime, keyframes: item.effect.getKeyframes() };
       });
+      const readOpacity = (node, started) => ({ elapsedMs:performance.now()-started,
+        opacity:parseFloat(getComputedStyle(node).opacity), filter:getComputedStyle(node).filter });
+      const sampleFade = (node, record) => {
+        record.samples.push(readOpacity(node, record.started));
+        if (node.isConnected) requestAnimationFrame(() => sampleFade(node, record));
+        else record.closed = true;
+      };
+      new MutationObserver((records) => records.forEach((record) => record.addedNodes.forEach((node) => {
+        const overlays = [];
+        if (node.nodeType === 1 && node.matches('.strip-lyric-previous')) overlays.push(node);
+        if (node.nodeType === 1 && node.querySelectorAll) overlays.push(...node.querySelectorAll('.strip-lyric-previous'));
+        overlays.forEach((old) => {
+          const fade = { oldText:old.textContent, started:performance.now(), samples:[], closed:false };
+          fades.push(fade); sampleFade(old, fade);
+        });
+      }))).observe(bar, { childList:true, subtree:true });
+      new MutationObserver((records) => records.forEach((record) => record.removedNodes.forEach((node) => {
+        const removed = [];
+        if (node.nodeType === 1 && node.matches('.strip-lyric-previous')) removed.push(node);
+        if (node.nodeType === 1 && node.querySelectorAll) removed.push(...node.querySelectorAll('.strip-lyric-previous'));
+        removed.forEach((old) => {
+          const fade = fades.filter((item) => item.oldText === old.textContent).slice(-1)[0];
+          if (fade && !fade.closed) { fade.samples.push(readOpacity(old, fade.started)); fade.closed = true; }
+        });
+      }))).observe(bar, { childList:true, subtree:true });
       new MutationObserver(() => {
         const text = el.textContent;
         if (text === last) return;
         last = text;
         const old = document.querySelector('.strip-lyric-previous');
         const dust = document.querySelector('.strip-lyric-dust');
-        const maskStyle = old ? getComputedStyle(old) : null;
+        const flow = window.__playerDebug.lyricFlowState(), clock = flow.clock || [];
+        const index = flow.index;
+        const interval = index > 0 && clock[index] && clock[index-1] ? clock[index].t-clock[index-1].t : 0;
+        const nextInterval = clock[index+1] && clock[index] ? clock[index+1].t-clock[index].t : 0;
+        const timing = interval > 0 ? window.__playerDebug.stripLyricTiming(interval, nextInterval) : null;
+        const fade = old ? fades.filter((item) => item.oldText === old.textContent).slice(-1)[0] : null;
+        const stats = window.__stripCanvasStats(dust);
+        const emission = window.__stripDustEmissionStats(dust, old);
         events.push({
-          text,
-          wallTime: Date.now() / 1000,
-          oldText: old ? old.textContent : '',
-          oldClass: old ? old.className : '',
-          mask: maskStyle ? (maskStyle.webkitMaskImage || maskStyle.maskImage) : 'none',
-          maskPosition: maskStyle ? (maskStyle.webkitMaskPosition || maskStyle.maskPosition) : 'none',
-          oldRect: old ? (() => { const r = old.getBoundingClientRect(); return { x:r.x,y:r.y,w:r.width,h:r.height }; })() : null,
-          currentTransform: getComputedStyle(el).transform,
-          currentFade: animation(el),
-          oldAnimations: animation(old),
-          dustCount: dust ? dust.children.length : 0,
-          dustStars: dust ? [...dust.children].filter((p) => getComputedStyle(p, '::before').content !== 'none').length : 0,
-          dustGlows: dust ? [...dust.children].filter((p) => getComputedStyle(p).boxShadow !== 'none').length : 0,
-          fontSize: getComputedStyle(el).fontSize,
-          starCore: dust && dust.children[1] ? getComputedStyle(dust.children[1], '::before').content : 'none',
-          dustParticles: dust ? [...dust.children].map((p) => {
-            const r = p.getBoundingClientRect(), style = getComputedStyle(p), animationState = p.getAnimations()[0];
-            return { x:r.x,y:r.y,w:r.width,h:r.height,opacity:style.opacity,transform:style.transform,
-              background:style.backgroundImage,boxShadow:style.boxShadow,playState:animationState && animationState.playState };
-          }) : [],
-          dustAnimation: animation(dust),
-          particleColors: dust ? [...dust.children].map((p) => getComputedStyle(p).color) : [],
-          index: window.__playerDebug.lyricFlowState().index,
-          time: document.querySelector('audio').currentTime,
-          layout: document.getElementById('player').getAttribute('data-layout')
+          text, wallTime:Date.now()/1000, oldText:old ? old.textContent : '', oldClass:old ? old.className : '',
+          oldOpacity:old ? parseFloat(getComputedStyle(old).opacity) : null,
+          oldFilter:old ? getComputedStyle(old).filter : 'none',
+          fadeElapsedMs:fade ? performance.now()-fade.started : 0,
+          interval, nextInterval,
+          oldRect:old ? (() => { const r=old.getBoundingClientRect(); return { x:r.x,y:r.y,w:r.width,h:r.height }; })() : null,
+          currentTransform:getComputedStyle(el).transform, currentFade:animation(el),
+          dustCanvas:!!dust && dust.tagName === 'CANVAS', dustStats:stats, dustEmission:emission,
+          dustBudget:Math.round((window.__playerDebug.stripState().small ? 200 : 320) * 0.45),
+          timing, fontSize:getComputedStyle(el).fontSize, index, time:document.querySelector('audio').currentTime,
+          layout:document.getElementById('player').getAttribute('data-layout')
         });
-      }).observe(el, { childList: true, characterData: true, subtree: true });
+      }).observe(el, { childList:true, characterData:true, subtree:true });
     });
   }
   async function beginRecording(target = page, name = 'motion-frames') {
@@ -209,35 +352,26 @@ export async function verifyStripLyrics({ newPage, BASE, API, UI_BASE, outDir, a
     check('hearts-retain-theme-accent', palette.controlsUseTheme, palette);
     report.stripLyricPalette = palette;
     const measured = await measureLyricSurfaces(page, dir);
-    const luminance = (rgb) => rgb.map((v) => v / 255).map((v) => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
-      .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
-    const contrast = (a,b) => { const x=luminance(a),y=luminance(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05); };
-    const score = (surface) => ({ ...surface, strokeFill:surface.stroke ? contrast(surface.stroke,surface.foreground) : 0,
-      samples:surface.pixels.map(p=>({ ...p,luminance:luminance(p.rgb),fillContrast:contrast(surface.foreground,p.rgb),
-        strokeContrast:surface.stroke ? contrast(surface.stroke,p.rgb) : 0,
-        effective:Math.max(contrast(surface.foreground,p.rgb),surface.stroke ? contrast(surface.stroke,p.rgb) : 0) })) });
-    report.stripLyricMeasured = { surfaces:measured.surfaces.map(score),
-      regression:{before:score(measured.regression.before),after:score(measured.regression.after)} };
-    for(const surface of report.stripLyricMeasured.surfaces) {
-      const vertical=surface.name==='vertical';
-      // 2026-10-16罐头拍板：竖卡深底保持现状，使用指定的大字3.0数值门槛，未修成4.5。
-      // 不宣称当前字号已满足WCAG“大字”定义；亮于黑字4.5分界(L>=.175)的点仍走4.5有效分离度。
-      const passed=surface.samples.every(p=>vertical&&p.luminance<.175 ? p.fillContrast>=3 : p.effective>=4.5&&surface.strokeFill>=3);
-      const worst=surface.samples.reduce((a,b)=>(vertical?a.fillContrast:a.effective)<(vertical?b.fillContrast:b.effective)?a:b);
-      check('measured-contrast-'+surface.name, !!surface.stroke&&surface.strokeFill>=3&&passed,
-        {policy:vertical?'用户已知取舍：深底fill>=3，非4.5修复；亮点仍effective>=4.5':'effective>=4.5 && stroke/fill>=3',
-          foreground:surface.foreground,stroke:surface.stroke,strokeFill:surface.strokeFill,worst,pixels:surface.samples.length,
-          fillSource:surface.fillInk,strokeSource:surface.strokeInk});
+    report.stripLyricMeasured = { surfaces:measured.surfaces.map(scoreSoftShadow),
+      regression:{before:scoreSoftShadow(measured.regression.before),after:scoreSoftShadow(measured.regression.after)} };
+    for (const surface of report.stripLyricMeasured.surfaces) {
+      // 竖卡深底遵循已确认的 fill>=3 取舍；亮底仍要求真实像素阴影提供 >=4.5 有效分离度。
+      check('measured-contrast-' + surface.name, surface.pass && !!surface.shadow && surface.shadowFill >= 3,
+        { policy:surface.name === 'vertical' ? '深底fill>=3用户已确认；亮点effective>=4.5，shadow/fill>=3'
+          : '实际rendered像素effective>=4.5，soft-shadow/fill>=3',
+          fill:surface.fill, shadow:surface.shadow, shadowFill:surface.shadowFill,
+          minimumFill:surface.minimumFill, minimumEffective:surface.minimumEffective,
+          samples:surface.samples.length, pass:surface.pass });
     }
-    const r=report.stripLyricMeasured.regression,min=(s,key)=>Math.min(...s.samples.map(p=>p[key]));
-    check('stroke-regression-old-fill-fails-rendered-outline-passes', !r.before.stroke && min(r.before,'fillContrast')<4.5
-      && !!r.after.stroke && min(r.after,'effective')>=4.5 && r.after.strokeFill>=3
-      && JSON.stringify(r.before.foreground)===JSON.stringify(r.after.foreground),
-      {beforeFill:min(r.before,'fillContrast'),afterFill:min(r.after,'fillContrast'),afterEffective:min(r.after,'effective'),
-        strokeFill:r.after.strokeFill,beforeFillRGB:r.before.foreground,afterFillRGB:r.after.foreground,stroke:r.after.stroke});
-    const rules=report.stripLyricMeasured.surfaces.map(s=>s.strokeRule);
-    check('outline-one-rule-all-surfaces-and-glow-retained',rules.every(s=>s.color===rules[0].color&&s.width===rules[0].width
-      && parseFloat(s.width)>0&&s.paintOrder.split(/\s+/)[0]==='stroke'&&s.glow!=='none'),rules);
+    const r=report.stripLyricMeasured.regression;
+    check('shadow-regression-old-fill-fails-rendered-separation-passes', !r.before.shadow
+      && r.before.minimumEffective < 4.5 && !!r.after.shadow && r.after.minimumEffective >= 4.5
+      && r.after.shadowFill >= 3 && JSON.stringify(r.before.fill) === JSON.stringify(r.after.fill),
+      { before:r.before, after:r.after });
+    const rules=measured.surfaces.map(surface => surface.strokeRule);
+    check('soft-shadow-consistent-per-surface-and-glow-retained',
+      rules.slice(0,3).every(rule => rule.separation === rules[0].separation)
+      && rules.every(rule => !!rule.separation && rule.glow !== 'none'), rules);
     fs.writeFileSync(path.join(dir, 'measured-surfaces.json'), JSON.stringify(report.stripLyricMeasured, null, 2));
   }
   async function verifyWrapping() {
@@ -253,6 +387,7 @@ export async function verifyStripLyrics({ newPage, BASE, API, UI_BASE, outDir, a
         await wrap.waitForFunction(() => window.__playerDebug && document.querySelector('#listTabs .list-tab'));
         await clickTab(wrap, 'imp:1');
         await wrap.waitForFunction(() => document.querySelector('#queueList .q-hit'));
+        await installDustProbe(wrap);
         await wrap.mouse.move(1, 127);
         fontRecorder = await beginRecording(wrap, 'font-' + profile.size + '-frames');
         await wrap.evaluate(() => document.querySelector('#queueList .q-hit').click());
@@ -300,25 +435,21 @@ export async function verifyStripLyrics({ newPage, BASE, API, UI_BASE, outDir, a
         const outgoing = await wrap.evaluate(() => {
           const old = document.querySelector('.strip-lyric-previous'), dust = document.querySelector('.strip-lyric-dust');
           if (!old || !dust) return null;
-          const r = old.getBoundingClientRect(), bar = document.getElementById('stripBar').getBoundingClientRect();
-          const range = document.createRange(), centers = [], text = old.firstChild;
-          for (let i = 0; i < text.length; i++) {
-            range.setStart(text, i); range.setEnd(text, i + 1); const b = range.getBoundingClientRect();
-            if (b.top >= r.top - 1 && b.bottom <= r.bottom + 1) centers.push([(b.left + b.right) / 2 - bar.left, (b.top + b.bottom) / 2 - bar.top]);
-          }
-          const origins = [...dust.children].map((p) => p.getAttribute('data-origin').split(',').map(Number));
-          const ink=(el)=>{const s=getComputedStyle(el);return {width:s.webkitTextStrokeWidth,color:s.webkitTextStrokeColor,order:s.paintOrder};};
+          const r = old.getBoundingClientRect(), emission = window.__stripDustEmissionStats(dust, old);
+          const ink=(el)=>{const s=getComputedStyle(el);return {color:s.color,textShadow:s.textShadow,fontSize:s.fontSize};};
           return { text:old.textContent, x:r.x, y:r.y, width:r.width, height:r.height,
-            stroke:ink(old),currentStroke:ink(document.getElementById('stripLyric')),
-            origins, rows:new Set(origins.map((p) => Math.round(p[1]))).size,
-            onGlyph:origins.every((p) => centers.some((c) => Math.hypot(p[0] - c[0], p[1] - c[1]) < 1)) };
+            ink:ink(old),currentInk:ink(document.getElementById('stripLyric')),
+            emission, canvasStats:window.__stripCanvasStats(dust) };
         });
-        check('multiline-outgoing-and-range-origins-stay-aligned' + suffix, !!outgoing
+        check('multiline-outgoing-and-canvas-emission-cover-both-lines' + suffix, !!outgoing
           && outgoing.text === long.text && Math.abs(outgoing.x - long.x) <= 1 && Math.abs(outgoing.y - long.y) <= 1
           && Math.abs(outgoing.width - long.width) <= 1 && Math.abs(outgoing.height - long.height) <= 1
-          && outgoing.rows === 2 && outgoing.onGlyph, { long, outgoing });
-        check('outgoing-inherits-identical-outline-' + profile.size,!!outgoing
-          && JSON.stringify(outgoing.stroke)===JSON.stringify(outgoing.currentStroke)&&parseFloat(outgoing.stroke.width)>0,outgoing);
+          && outgoing.emission.glyphLines === 2 && outgoing.emission.lineHits.length === 2
+          && outgoing.emission.lineHits.every((count) => count > 0)
+          && outgoing.canvasStats.activePixels > 0, { long, outgoing });
+        check('outgoing-inherits-identical-current-ink-' + profile.size,!!outgoing
+          && JSON.stringify(outgoing.ink)===JSON.stringify(outgoing.currentInk)
+          && outgoing.ink.textShadow !== 'none' && outgoing.ink.fontSize === long.font,outgoing);
         await wrap.screenshot({ path:path.join(dir, 'two-line-outgoing-' + profile.size + '.png') });
         const fontFrames = await fontRecorder.stop();
         const fontRecord = encodeRecording(fontFrames, fontRecorder.frameDir, 'font-' + profile.size + '-two-line-60fps');
@@ -362,6 +493,74 @@ export async function verifyStripLyrics({ newPage, BASE, API, UI_BASE, outDir, a
     }
     report.stripLyricWrapping = { profiles };
   }
+  async function verifyBilingualStrip() {
+    await fetch(`${BASE}${API}/__fixture/reset?mode=strip-bilingual&appSurfaceSession=fake-ticket`);
+    const bilingual = await newPage();
+    const mainText = '僕が歌うものは 既にあるものじゃーーーん';
+    const subText = '可我所演唱的歌曲 不是已经有了吗——';
+    try {
+      await bilingual.setViewport({ width:720, height:128, deviceScaleFactor:1 });
+      await bilingual.goto(`${UI_BASE}/index.html?appSurfaceSession=fake-ticket`, { waitUntil:'domcontentloaded' });
+      await bilingual.waitForFunction(() => window.__playerDebug && document.querySelector('#listTabs .list-tab'));
+      await clickTab(bilingual, 'imp:1');
+      await bilingual.waitForFunction(() => document.querySelector('#queueList .q-hit'));
+      await installDustProbe(bilingual);
+      await bilingual.mouse.move(1, 127);
+      await bilingual.evaluate(() => document.querySelector('#queueList .q-hit').click());
+      await bilingual.waitForFunction(() => !document.querySelector('audio').paused
+        && document.getElementById('player').getAttribute('data-layout') === 'strip', { timeout:10000 });
+      await bilingual.waitForFunction((expected) => document.getElementById('stripLyric').textContent === expected,
+        { timeout:6000 }, mainText + subText);
+      const rendered = await bilingual.evaluate(() => {
+        const el = document.getElementById('stripLyric'), main = el.querySelector('.strip-lyric-main'), sub = el.querySelector('.strip-lyric-sub');
+        const box = (node) => { const r=node.getBoundingClientRect(); return { top:r.top,bottom:r.bottom,text:node.textContent }; };
+        return { text:el.textContent, hasMain:!!main, hasSub:!!sub, main:main&&box(main), sub:sub&&box(sub),
+          transform:getComputedStyle(el).transform };
+      });
+      check('bilingual-strip-renders-two-rows-without-parentheses', rendered.hasMain && rendered.hasSub
+        && rendered.main.text === mainText && rendered.sub.text === subText
+        && rendered.text.indexOf('（') < 0 && rendered.text.indexOf('）') < 0
+        && rendered.main.bottom <= rendered.sub.top + 1 && rendered.transform === 'none', rendered);
+
+      const seek = async (time) => {
+        await bilingual.evaluate((target) => { window.__bilingualSeek=target; document.querySelector('audio').currentTime=target; }, time);
+        await bilingual.waitForFunction(() => {
+          const audio=document.querySelector('audio');
+          return !audio.seeking && Math.abs(audio.currentTime-window.__bilingualSeek)<0.8;
+        }, { timeout:4000 });
+      };
+      await seek(4.2);
+      await bilingual.waitForFunction((expected) => {
+        const old=document.querySelector('.strip-lyric-previous'), dust=document.querySelector('.strip-lyric-dust');
+        if (!old || !dust || old.textContent !== expected) return false;
+        const emission=window.__stripDustEmissionStats(dust, old);
+        return emission.rowHits['strip-lyric-main'] > 0 && emission.rowHits['strip-lyric-sub'] > 0;
+      }, { timeout:4000 }, mainText + subText);
+      const dustEvidence = await bilingual.evaluate(() => {
+        const canvas=document.querySelector('.strip-lyric-dust'), old=document.querySelector('.strip-lyric-previous');
+        const main=old.querySelector('.strip-lyric-main').getBoundingClientRect();
+        const sub=old.querySelector('.strip-lyric-sub').getBoundingClientRect();
+        const rect=canvas.getBoundingClientRect(), dpr=canvas.width/Math.max(1,rect.width);
+        const data=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+        let mainPixels=0, subPixels=0;
+        for(let y=0;y<canvas.height;y++) for(let x=0;x<canvas.width;x++) {
+          if(data[(y*canvas.width+x)*4+3]<=8) continue;
+          const cssY=rect.top+y/dpr;
+          if(cssY>=main.top-2&&cssY<=main.bottom+2) mainPixels++;
+          if(cssY>=sub.top-2&&cssY<=sub.bottom+2) subPixels++;
+        }
+        return { oldText:old.textContent, rows:window.__stripDustEmissionStats(canvas,old),
+          bandPixels:{ main:mainPixels, sub:subPixels }, canvas:window.__stripCanvasStats(canvas) };
+      });
+      check('bilingual-dust-canvas-has-pixels-in-both-row-bands', dustEvidence.oldText === mainText+subText
+        && dustEvidence.rows.rowHits['strip-lyric-main'] > 0 && dustEvidence.rows.rowHits['strip-lyric-sub'] > 0
+        && dustEvidence.bandPixels.main > 0 && dustEvidence.bandPixels.sub > 0
+        && dustEvidence.canvas.activePixels > 0, dustEvidence);
+    } finally {
+      await bilingual.close().catch(() => {});
+      await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`).catch(() => {});
+    }
+  }
 
   try {
     await fetch(`${BASE}${API}/__fixture/reset?mode=strip-rhythm&appSurfaceSession=fake-ticket`);
@@ -370,6 +569,7 @@ export async function verifyStripLyrics({ newPage, BASE, API, UI_BASE, outDir, a
     await page.waitForFunction(() => window.__playerDebug && document.querySelector('#listTabs .list-tab'));
     await clickTab(page, 'imp:1');
     await page.waitForFunction(() => document.querySelector('#queueList .q-hit'));
+    await installDustProbe(page);
     await observeMotion();
     await page.mouse.move(1, 127);
     recorder = await beginRecording();
@@ -382,21 +582,23 @@ export async function verifyStripLyrics({ newPage, BASE, API, UI_BASE, outDir, a
 
     await waitText('正常节奏一');
     const normal = await transition('正常节奏一');
-    await page.waitForFunction(() => [...document.querySelectorAll('.strip-lyric-dust > .strip-spark')]
-      .some((point) => parseFloat(getComputedStyle(point).opacity) > 0.2), { timeout: 500 });
+    await page.waitForFunction(() => {
+      const dust = document.querySelector('.strip-lyric-dust');
+      return !!dust && window.__stripCanvasStats(dust).activePixels > 0;
+    }, { timeout: 1000 });
     const normalLive = await dustLive();
-    check('star-points-are-visibly-lit', normalLive.count > 0 && normalLive.visiblePoints > 0
-      && normalLive.maxOpacity > 0.2 && normalLive.maxOpacity <= 0.66, normalLive);
-    check('dust-uses-progress-star-recipe', normalLive.sample.every((p) => p.sameRecipe
-      // Chromium 布局宽度量化到 1/64 CSS px；仍逐粒与真实进度条样式严格比对。
-      && p.size >= 1.1 - 1 / 64 && p.size <= 2.8 + 1 / 64 && /var\(--strip-star-[0-5]\)/.test(p.colorSource)
-      && p.frames.some((f) => +f.opacity === 0.65))
-      && normalLive.starCount === Math.floor((normalLive.count + 4) / 6), normalLive);
-    check('dust-travels-from-text-toward-star-field', normalLive.sample.every((p) => {
-      const distance = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
-      return p.destination[0] < p.origin[0] && distance(p.destination, p.target) < distance(p.origin, p.target)
-        && +p.frames.at(-1).opacity === 0;
-    }), normalLive);
+    check('canvas-dust-renders-visible-colored-cores-within-budget', normalLive.canvas
+      && normalLive.stats.activePixels > 0 && normalLive.stats.brightPixels > 0
+      && normalLive.stats.brightComponents > 0 && normalLive.stats.brightComponents <= normalLive.budget
+      && normalLive.stats.colorPixels > 0 && normalLive.count <= normalLive.budget, normalLive);
+    check('canvas-dust-is-contained-and-emits-from-real-glyphs', normalLive.contained
+      && normalLive.stats.bounds && normalLive.stats.xBands.some((n) => n > 0)
+      && normalLive.stats.yBands.some((n) => n > 0) && normalLive.emission.calls > 0
+      && normalLive.emission.glyphHits > 0 && normalLive.emission.glyphLines === 1
+      && normalLive.emission.lineHits[0] > 0, normalLive);
+    check('canvas-particle-budget-follows-strip-strength', normalLive.budget === (normalLive.small ? 90 : 144)
+      && normalLive.dpr <= 2 && normalLive.stats.activePixels <= normalLive.stats.width * normalLive.stats.height,
+      { budget:normalLive.budget, small:normalLive.small, dpr:normalLive.dpr, stats:normalLive.stats });
     await page.screenshot({ path: path.join(dir, 'star-dissolve-live.png') });
     await waitText('快速歌词一');
     const fast = await transition('快速歌词一');
@@ -410,30 +612,44 @@ export async function verifyStripLyrics({ newPage, BASE, API, UI_BASE, outDir, a
     await waitText('快速连切三');
     await sleep(120);
 
-    check('natural-transition-has-local-mask-and-particles', !!normal && normal.oldText === '起始歌词'
-      && /linear-gradient/i.test(normal.mask) && normal.oldClass.indexOf('is-dissolving') >= 0
-      && normal.dustCount > 0 && normal.dustCount <= 14 && normal.dustStars > 0
-      && normal.dustGlows === normal.dustCount && normal.starCore !== 'none'
-      && normal.oldAnimations.length > 0 && normal.oldAnimations[0].keyframes.some((frame) => frame.maskPosition), normal);
-    check('incoming-is-immediate-in-place-fade', !!normal && normal.text === '正常节奏一'
+    const normalFade = normal && await fadeFor(normal.oldText);
+    const fastFade = fast && await fadeFor(fast.oldText);
+    const slowFade = slow && await fadeFor(slow.oldText);
+    const zeroAt = (fade) => fade && fade.samples.find((sample) => sample.opacity <= 0.01);
+    const fadeLifetime = (fade) => fade && fade.samples.length ? fade.samples[fade.samples.length-1].elapsedMs : 0;
+    const lifetimeMatches = (fade, timing) => !!fade && !!timing
+      && fadeLifetime(fade) >= timing.particles + 20 && fadeLifetime(fade) <= timing.particles + 170;
+    const monotonic = (fade) => !!fade && fade.samples.length > 2
+      && fade.samples.every((sample, i) => i === 0 || sample.opacity <= fade.samples[i-1].opacity + 0.025);
+    const normalZero = zeroAt(normalFade), fastZero = zeroAt(fastFade), slowZero = zeroAt(slowFade);
+    const normalLifetime = fadeLifetime(normalFade), slowLifetime = fadeLifetime(slowFade);
+    check('natural-transition-fades-old-overlay-with-opacity-and-blur', !!normal && normal.oldText === '起始歌词'
+      && !!normal.timing && normal.dustCanvas && normalLive.stats.activePixels > 0 && normalFade && normalFade.closed
+      && normalFade.samples[0].opacity > 0.9 && monotonic(normalFade) && !!normalZero
+      && normalFade.samples.some((sample) => /^blur\(/.test(sample.filter))
+      && normalZero.elapsedMs >= normal.timing.dissolve - 50
+      && normalZero.elapsedMs <= normal.timing.dissolve + 100
+      && lifetimeMatches(normalFade, normal.timing), { normal, normalFade, normalZero, normalLifetime });
+    check('incoming-is-immediate-in-place-fade', !!normal && !!normal.timing && normal.text === '正常节奏一'
       && normal.currentFade && normal.currentFade[0].duration > 0
-      && normal.currentFade[0].duration <= normal.oldAnimations[0].duration && normal.currentTransform === 'none', normal);
-    // 首句允许启动/seek 防护下走切句兜底；检查的是后续已排好预约不被上一轮收尾取消。
+      && normal.currentFade[0].duration <= normal.timing.dissolve && normal.currentTransform === 'none', normal);
+    // 首句允许启动/seek 防护下走切句兜底；后续句应在切换文本前已开始旧句淡化。
     check('cleanup-preserves-next-lines-pre-scheduled-lead', [fast, slow].every((event) =>
-      event.oldAnimations && event.oldAnimations[0].elapsedMs > 0),
-      [fast, slow].map((event) => ({ text:event.text, elapsed:event.oldAnimations[0].elapsedMs })));
-    check('fast-transition-is-shorter-than-normal', !!fast && !!normal
-      && fast.oldAnimations[0].duration < normal.oldAnimations[0].duration
-      && fast.dustAnimation[0].duration < normal.dustAnimation[0].duration, { fast, normal });
-    // stripLyricTransitionDuration 按下一组歌词间隔封顶；由实测媒体时钟推导窗口，避免写死毫秒。
+      event && event.oldText && event.fadeElapsedMs > 0),
+      [fast, slow].map((event) => ({ text:event && event.text, elapsed:event && event.fadeElapsedMs })));
+    check('fast-transition-is-shorter-than-normal', !!fast && !!normal && !!fast.timing && !!normal.timing
+      && fast.timing.dissolve < normal.timing.dissolve && !!fastZero && !!normalZero
+      && fastZero.elapsedMs < normalZero.elapsedMs, { fast, normal, fastFade, normalFade, fastZero, normalZero });
+    // particleMs 按下一组歌词间隔封顶；星尘的实际粒子数另以 canvas 可见核心和强度预算验证。
     const slowWindowMs = slow && duplicate ? Math.max(0, (duplicate.time - slow.time) * 1000) : 0;
-    check('slow-transition-has-longer-bounded-dust-tail', !!slow && !!normal && slowWindowMs > 0
-      && slow.oldAnimations[0].duration > normal.oldAnimations[0].duration
-      && slow.dustAnimation[0].duration > normal.dustAnimation[0].duration
-      && slow.oldAnimations[0].duration <= slowWindowMs && slow.dustAnimation[0].duration <= slowWindowMs,
-      { slow, normal, slowWindowMs });
+    check('slow-transition-has-longer-bounded-canvas-tail', !!slow && !!normal && !!slow.timing && !!normal.timing
+      && slowWindowMs > 0 && slow.timing.dissolve > normal.timing.dissolve
+      && slow.timing.particles > normal.timing.particles
+      && slow.timing.particles <= slowWindowMs
+      && !!normalZero && !!slowZero && slowZero.elapsedMs > normalZero.elapsedMs
+      && lifetimeMatches(slowFade, slow.timing) && slowLifetime > normalLifetime,
+      { slow, normal, slowWindowMs, slowFade, slowZero, normalLifetime, slowLifetime });
     check('same-timestamp-lines-use-one-group', !!duplicate && duplicate.text === '同刻翻译'
-      && duplicate.dustAnimation[0].duration > 0
       && !(await page.evaluate(() => (window.__stripLyricEvents || []).some((event) => event.text === '舒缓歌词二'))), duplicate);
     check('same-track-font-is-uniform-and-bounded', await page.evaluate(() => {
       const events = (window.__stripLyricEvents || []).filter((event) => event.oldText);
@@ -443,9 +659,14 @@ export async function verifyStripLyrics({ newPage, BASE, API, UI_BASE, outDir, a
         && events.every((event) => Number.isInteger(parseFloat(event.fontSize))
           && parseFloat(event.fontSize) >= 16 && parseFloat(event.fontSize) <= upper);
     }), { normal:normal.fontSize, fast:fast.fontSize, slow:slow.fontSize });
-    check('no-queued-transitions-or-duplicate-layers', await page.evaluate(() =>
-      document.querySelectorAll('.strip-lyric-previous').length <= 1 && document.querySelectorAll('.strip-lyric-dust').length <= 1
-      && document.querySelectorAll('.strip-lyric-dust > span').length <= 14), await state());
+    check('no-queued-transitions-or-duplicate-layers', await page.evaluate(() => {
+      const dust = document.querySelector('.strip-lyric-dust');
+      const budget = Math.round((window.__playerDebug.stripState().small ? 200 : 320) * 0.45);
+      const stats = window.__stripCanvasStats(dust);
+      return document.querySelectorAll('.strip-lyric-previous').length <= 1
+        && document.querySelectorAll('.strip-lyric-dust').length <= 1
+        && stats.brightComponents <= budget;
+    }), await state());
 
     // 真实 range 点击定位：记录快切后 seek 与控件 hover； seek 应立即呈现目标句。
     const bar = await page.$eval('#stripBar', (el) => {
@@ -486,7 +707,7 @@ export async function verifyStripLyrics({ newPage, BASE, API, UI_BASE, outDir, a
     await seekByMediaTime(15.1);
     await waitText('Seek目标歌词');
     const seekEvent = await transition('Seek目标歌词');
-    check('seeked-path-does-not-create-particles', !!seekEvent && seekEvent.dustCount === 0 && seekEvent.oldText === '', seekEvent);
+    check('seeked-path-does-not-create-dust-canvas', !!seekEvent && !seekEvent.dustCanvas && seekEvent.oldText === '', seekEvent);
 
     // 暂停落在正在执行的自然转场中，清理副本/粒子并立刻恢复新句可读性。
     await seekByMediaTime(16.05);
@@ -497,7 +718,7 @@ export async function verifyStripLyrics({ newPage, BASE, API, UI_BASE, outDir, a
     await sleep(40);
     const paused = await state();
     check('pause-cancels-and-restores-current-text', paused.paused && paused.previous === 0 && paused.dust === 0
-      && paused.particles === 0 && paused.currentOpacity === '1', paused);
+      && paused.dustPixels === 0 && paused.currentOpacity === '1', paused);
 
     // 页面隐藏期间中止；恢复后不补播同一转场。
     await seekByMediaTime(18.35);
@@ -508,7 +729,7 @@ export async function verifyStripLyrics({ newPage, BASE, API, UI_BASE, outDir, a
     await other.bringToFront();
     await page.waitForFunction(() => document.hidden, { timeout: 3000 });
     const hidden = await state();
-    check('hidden-page-cleans-animation', hidden.previous === 0 && hidden.dust === 0 && hidden.particles === 0, hidden);
+    check('hidden-page-cleans-animation', hidden.previous === 0 && hidden.dust === 0 && hidden.dustPixels === 0, hidden);
     await page.bringToFront();
     await other.close();
     await page.waitForFunction(() => !document.hidden, { timeout: 3000 });
@@ -525,7 +746,7 @@ export async function verifyStripLyrics({ newPage, BASE, API, UI_BASE, outDir, a
     await sleep(40);
     const hoverCancelled = await state();
     check('hover-cancels-active-dissolve', hoverCancelled.hot && hoverCancelled.previous === 0
-      && hoverCancelled.dust === 0 && hoverCancelled.particles === 0, hoverCancelled);
+      && hoverCancelled.dust === 0 && hoverCancelled.dustPixels === 0, hoverCancelled);
     await page.mouse.move(1, 127);
     await waitText('悬停中断句');
     await sleep(90);
@@ -557,20 +778,27 @@ export async function verifyStripLyrics({ newPage, BASE, API, UI_BASE, outDir, a
     await seekByMediaTime(22.85);
     await page.evaluate(() => window.__playerDebug.requestPlay('user'));
     await waitText('窄幅歌词');
+    await page.waitForFunction(() => {
+      const dust=document.querySelector('.strip-lyric-dust');
+      return !!dust && window.__stripCanvasStats(dust).activePixels > 0
+        && window.__stripCanvasStats(dust).brightPixels > 0;
+    }, { timeout:900 });
     const narrow = await page.evaluate(() => {
       const bar = document.getElementById('stripBar').getBoundingClientRect();
-      const dust = document.querySelector('.strip-lyric-dust');
-      const particles = dust ? [...dust.children].map((el) => {
-        const r = el.getBoundingClientRect(), spread = 12; // 同款最大辉光 10px blur + 2px spread
-        return { left:r.left - spread,right:r.right + spread,top:r.top - spread,bottom:r.bottom + spread };
-      }) : [];
-      const stars = dust ? [...dust.children].filter((p) => getComputedStyle(p, '::before').content !== 'none').length : 0;
-      return { text:document.getElementById('stripLyric').textContent, count:particles.length, stars,
-        inside:particles.every((p) => p.left >= bar.left - 1 && p.right <= bar.right + 1 && p.top >= bar.top - 1 && p.bottom <= bar.bottom + 1),
+      const dust = document.querySelector('.strip-lyric-dust'), stats = window.__stripCanvasStats(dust);
+      const rect = dust ? dust.getBoundingClientRect() : null;
+      const budget = Math.round((window.__playerDebug.stripState().small ? 200 : 320) * 0.45);
+      const emission = window.__stripDustEmissionStats(dust, document.querySelector('.strip-lyric-previous'));
+      return { text:document.getElementById('stripLyric').textContent, budget, stats, emission,
+        inside:!!rect && rect.left >= bar.left-1 && rect.right <= bar.right+1
+          && rect.top >= bar.top-1 && rect.bottom <= bar.bottom+1
+          && (!stats.bounds || (stats.bounds.left >= 0 && stats.bounds.top >= 0
+            && stats.bounds.right < dust.width && stats.bounds.bottom < dust.height)),
         previous:document.querySelectorAll('.strip-lyric-previous').length };
     });
-    check('narrow-dust-is-limited-and-contained', narrow.count > 0 && narrow.count < normal.dustCount
-      && narrow.stars > 0 && narrow.inside && narrow.previous <= 1, narrow);
+    check('narrow-dust-is-limited-and-contained', narrow.budget === 90 && narrow.budget < normalLive.budget
+      && narrow.stats.activePixels > 0 && narrow.stats.brightComponents > 0
+      && narrow.stats.brightComponents <= narrow.budget && narrow.inside && narrow.previous <= 1, narrow);
 
     // 切歌时恰逢自然转场，也必须立即移除上一曲的歌词副本与粒子。
     // 目标句放在 29s，留出足够观察窗口，不依赖几十毫秒轮询竞态。
@@ -584,11 +812,15 @@ export async function verifyStripLyrics({ newPage, BASE, API, UI_BASE, outDir, a
       { timeout: 5000 }, beforeTrackChange);
     await sleep(50);
     const changedTrack = await state();
-    check('track-switch-clears-previous-lyric-effects', changedTrack.previous === 0 && changedTrack.dust === 0 && changedTrack.particles === 0, changedTrack);
+    check('track-switch-clears-previous-lyric-effects', changedTrack.previous === 0 && changedTrack.dust === 0
+      && changedTrack.dustPixels === 0, changedTrack);
 
     await verifyPalette();
     await verifyWrapping();
-    fs.writeFileSync(path.join(dir, 'transitions.json'), JSON.stringify({ normal, normalLive, fast, slow, duplicate, events: await page.evaluate(() => window.__stripLyricEvents || []), recording: recordingReport }, null, 2));
+    await verifyBilingualStrip();
+    fs.writeFileSync(path.join(dir, 'transitions.json'), JSON.stringify({ normal, normalLive, fast, slow, duplicate,
+      fades:await page.evaluate(() => window.__stripLyricFadeSamples || []),
+      events:await page.evaluate(() => window.__stripLyricEvents || []), recording:recordingReport }, null, 2));
     await page.screenshot({ path: path.join(dir, 'strip-lyrics-narrow.png') });
     await page.close();
     await fetch(`${BASE}${API}/__fixture/reset?mode=main&appSurfaceSession=fake-ticket`);

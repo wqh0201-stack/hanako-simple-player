@@ -3158,6 +3158,13 @@ body.is-shot *::after {
 .strip-lyric-measure { position: absolute; left: 0; top: 0; visibility: hidden; pointer-events: none; }
 .strip-lyric { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; width: 100%; max-width: 100%; min-width: 0; font-size: var(--strip-lyric-font, 16px); line-height: 1.2; white-space: normal; overflow-wrap: anywhere; overflow: clip; overflow-clip-margin: var(--lyric-ink-overflow); clip-path: inset(0 calc(-1 * var(--lyric-ink-overflow))); text-overflow: ellipsis; text-align: center; }
 .strip-lyric-previous { position: absolute; top: 50%; left: 0; transform: translateY(-50%); width: 100%; }
+/* 「日文原文（中文翻译）」显式双行：日文在上、中文在下，括号本身不显示。
+ * 只在命中拆分的句子上加这两个行节点 —— 无括号的歌仍是单文本节点，零额外成本。
+ * 对外观保守：每个 span 独占一行（与父级 -webkit-box 折的两个视觉行同为一个 box 计数），
+ * 不继承 ellipse/clamp 到行内（那样会出现第二颗省略号），不引入任何 image:[keyword]。
+ * 容器不变的证据：min-self/two-line/extreme 三档 ±1px 容差断言全过。 */
+.strip-lyric-main, .strip-lyric-sub { display: block; }
+.strip-lyric-sub { margin-top: calc(var(--strip-lyric-font, 16px) * .05); opacity: .92; }
 /* 整句同时消散：旧句由转场 rAF 逐帧写 opacity/filter 淡淡化开，不再用 mask 空间擦除。 */
 /* 字形星尘画在条内、歌词之上（否则粒子被歌词字盖住，只能从上方溢出）。 */
 .strip-lyric-dust { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; overflow: hidden; border-radius: inherit; pointer-events: none; }

@@ -4157,6 +4157,47 @@
     return /纯音乐|請欣賞|请欣赏|尽情欣赏|無歌詞|无歌词|暂无歌词|instrumental/i.test(head);
   }
 
+  /* ---------- 「原文（翻译）」拆分（只给横条呈现层用） ----------
+   * 日文歌词常把中文翻译塞进句尾括号里，横条按一行自然换行会把中文拦腰折断。
+   * 这里纯解析出 { main, sub }（括号本身去掉），交给横条显式排成两行；
+   * state.lyricLines / parseLrc / 竖卡渲染一概不动。
+   * 判定口径（全部满足才拆，否则返回 null 由调用方整行原样渲染）：
+   *   1. 存在成对括号（半角 () / 全角（）【】），一行多个时只认最后那个；
+   *   2. 该括号在句尾（其后只允许空白与破折号类收尾符）；
+   *   3. 主行含日文假名 —— 纯中文行不拆；
+   *   4. 括号内是正经译文（含汉字），且不是 Live/伴奏/Inst/ver./feat. 这类版本标注。 */
+  var LYRIC_KANA = /[\u3040-\u309F\u30A0-\u30FF]/;
+  var LYRIC_HAN = /[\u3400-\u4DBF\u4E00-\u9FFF]/;
+  var LYRIC_BRACKETS = { '(': ')', '（': '）', '【': '】' };
+  var LYRIC_TAIL = /^[\s\u3000\u2014\u2013\-~\uFF5E\u30FC\u2026\u30FB.,\u3001\uFF0C\u3002!\uFF01?\uFF1F]*$/;
+  var LYRIC_NOTE = /(?:^|[^a-z])(?:live|inst|instrumental|off[\s\-]?vocal|tv[\s\-]?size|remix|ver|version|feat|cover|demo|acoustic)(?![a-z])|\u30E9\u30A4\u30D6|\u4F34\u594F|\u7EAF\u97F3\u4E50|\u65E0\u6B4C\u8BCD|\u7FFB\u5531|\u8BD5\u542C/i;
+  function splitLyricTranslation(text) {
+    var raw = String(text == null ? '' : text), i, ch;
+    if (!raw) return null;
+    var last = null;
+    for (i = 0; i < raw.length; i++) {
+      ch = raw.charAt(i);
+      if (!(ch in LYRIC_BRACKETS)) continue;
+      var end = raw.indexOf(LYRIC_BRACKETS[ch], i + 1);
+      if (end < 0) continue;
+      var inner = raw.slice(i + 1, end);
+      if (/[()\uFF08\uFF09\u3010\u3011]/.test(inner)) continue;  // 嵌套/不配对：不当翻译
+      last = { start: i, end: end, inner: inner };
+      i = end;                                    // 多个括号时只认最后那个
+    }
+    if (!last) return null;
+    var tail = raw.slice(last.end + 1);
+    if (!LYRIC_TAIL.test(tail)) return null;
+    var main = raw.slice(0, last.start).replace(/[\s\u3000]+$/, '');
+    var sub = last.inner.replace(/^[\s\u3000]+|[\s\u3000]+$/g, '')
+      + tail.replace(/[\s\u3000]+/g, '');
+    if (!main || !sub) return null;
+    if (!LYRIC_KANA.test(main)) return null;      // 主行不是日文：不拆
+    if (!LYRIC_HAN.test(sub)) return null;        // 译文得有汉字：罗马音/和声不算翻译
+    if (LYRIC_NOTE.test(sub)) return null;        // 版本/演出标注不是翻译
+    return { main: main, sub: sub };
+  }
+
   function parseLrc(text) {
     if (!text) return [];
     var out = [];
@@ -8114,6 +8155,62 @@
     return isStrip() && stripLayout.matches(':has(.strip-bar:hover, .strip-cover:hover, :focus-visible, :active), [data-open="1"]');
   }
   function stripText(id, text) { var el = $(id); text = String(text || ''); if (el.textContent !== text) el.textContent = text; }
+  /* ---------- 横条歌词的「写 / 读」两件套 ----------
+   * 命中拆分时容器里是两个行节点（main 在上、sub 在下、括号已去），否则仍是
+   * 单个文本节点 —— 非翻译歌一行 DOM 都不多。所有以 textContent 做比较/写入的
+   * 地方都必须走这两个函数，否则「旧句 = 新句」的早退和转场覆盖层会按拼接后的
+   * 文本误判（切句被当成同句跳过，星尘就不发射了）。
+   * 读：拆开过就取记下来的原始文本；没拆过（含外部直接改 textContent 的情况）
+   *     用 textContent 兜底，永不返回拼接串。 */
+  function writeStripLyric(el, text) {
+    if (!el) return;
+    text = String(text || '');
+    var split = splitLyricTranslation(text);
+    el._stripRawText = text;
+    if (!split) { if (el.textContent !== text) el.textContent = text; return; }
+    var main = el.querySelector('.strip-lyric-main'), sub = el.querySelector('.strip-lyric-sub');
+    if (main && sub) {
+      if (main.textContent !== split.main) main.textContent = split.main;
+      if (sub.textContent !== split.sub) sub.textContent = split.sub;
+      return;
+    }
+    el.textContent = '';
+    main = document.createElement('span');
+    main.className = 'strip-lyric-main';
+    main.textContent = split.main;
+    sub = document.createElement('span');
+    sub.className = 'strip-lyric-sub';
+    sub.textContent = split.sub;
+    el.appendChild(main);
+    el.appendChild(sub);
+  }
+  function stripLyricRaw(el) {
+    if (!el) return '';
+    if (!el.querySelector('.strip-lyric-main')) return el.textContent;
+    var raw = el._stripRawText;
+    if (raw == null) {
+      var sub = el.querySelector('.strip-lyric-sub');
+      return el.querySelector('.strip-lyric-main').textContent + '（' + (sub ? sub.textContent : '') + '）';
+    }
+    return String(raw);
+  }
+  function stripLyricTextNodes(root) {
+    var nodes = [], stack = [root], node, i;
+    while (stack.length) {
+      node = stack.pop();
+      if (node.nodeType === 3) { if (node.nodeValue) nodes.push(node); continue; }
+      if (node.nodeType !== 1) continue;
+      for (i = node.childNodes.length - 1; i >= 0; i--) stack.push(node.childNodes[i]);
+    }
+    return nodes;
+  }
+  /* 取样边界按「行」算：没拆分时行就是覆盖层本身（与旧实现逐字一致），
+   * 拆分后每行各自收敛，日文行与中文行都参与取样。 */
+  function stripLyricRowBounds(node, root) {
+    var parent = node && node.parentNode, row = root;
+    if (parent && parent !== root && /strip-lyric-(main|sub)/.test(String(parent.className || ''))) row = parent;
+    return { rect: row.getBoundingClientRect(), clipped: row.scrollHeight > row.clientHeight + 1 };
+  }
   /* 全曲共用一个整数档：16–22px，两行行高 1.2，上下各留 4px。
    * 因而 56px 条最高 20px，64px 及更高的条最高 22px。只在曲目/歌词、
    * 几何或字体变化时量一次，不按当前句调号，也不在转场/播放帧里测量。
@@ -8135,7 +8232,9 @@
     measure.style.width = width + 'px';
     for (var i = 0; i < lines.length; i++) {
       var probe = document.createElement('span');
-      probe.className = 'strip-lyric'; probe.textContent = lines[i].text;
+      probe.className = 'strip-lyric';
+      /* 探针用真实拆分后的形态量：拆过的句子按两行排，字号才选得准。 */
+      writeStripLyric(probe, lines[i].text);
       probe.style.webkitLineClamp = 'unset'; probe.style.overflow = 'visible';
       measure.appendChild(probe); probes.push(probe);
     }
@@ -8280,7 +8379,7 @@
     var lines = state.lyricLines, el = $('stripLyric');
     if (!lines || !el || lyricIndex !== token.index || (state.currentUid || '') !== token.uid
       || lyricGen !== token.generation || !lines[token.index]) return;
-    var text = el.textContent;
+    var text = stripLyricRaw(el);
     if (!text) return;
     var plan = token.plan;
     var motion = startStripLyricDissolve(text, {
@@ -8315,27 +8414,35 @@
   /* 可见字形的真实边界：两行、换行、省略号覆盖区都以 Range 为准。
    * 被 clamp 掉的字不进取样，也不发射粒子。 */
   function stripLyricVisibleGlyphs(outgoing) {
-    var node = outgoing.firstChild, textRect = outgoing.getBoundingClientRect();
-    var text = node && node.nodeValue || '', range = document.createRange();
-    var glyphs = [], offset = 0, minX = Infinity, maxX = -Infinity;
-    var clipped = outgoing.scrollHeight > outgoing.clientHeight + 1;
+    /* 拆分后的旧句覆盖层不再只有一个文本节点：这里按所有行内文本节点依次取样
+     * （main 行、sub 行都参与），凡是只认 firstChild 的写法都会在日文+中文双行
+     * 上漏掉整行中文的字形 —— 星尘只从半句喷出来。 */
+    var nodes = stripLyricTextNodes(outgoing), textRect = outgoing.getBoundingClientRect();
+    var range = document.createRange();
+    var glyphs = [], minX = Infinity, maxX = -Infinity;
     var textStyle = getComputedStyle(outgoing), lineHeight = parseFloat(textStyle.lineHeight);
     var ellipsisWidth = parseFloat(textStyle.fontSize);
-    while (node && offset < text.length) {
-      var length = text.charCodeAt(offset) >= 0xD800 && text.charCodeAt(offset) <= 0xDBFF ? 2 : 1;
-      range.setStart(node, offset); range.setEnd(node, Math.min(text.length, offset + length));
-      var rect = range.getBoundingClientRect();
-      if (rect.top > textRect.bottom) break;
-      var ellipsis = clipped && rect.top > textRect.top + lineHeight * 0.5 && rect.right > textRect.right - ellipsisWidth;
-      var visible = !ellipsis && /\S/.test(text.slice(offset, offset + length)) && rect.width > 0
-        && rect.top >= textRect.top - 1 && rect.bottom <= textRect.bottom + 1
-        && rect.left >= textRect.left - 1 && rect.right <= textRect.right + 1;
-      if (visible) {
-        glyphs.push({ left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom,
-          text: text.slice(offset, offset + length) });
-        minX = Math.min(minX, rect.left); maxX = Math.max(maxX, rect.right);
+    for (var n = 0; n < nodes.length; n++) {
+      var node = nodes[n], text = node.nodeValue || '', offset = 0;
+      var bounds = stripLyricRowBounds(node, outgoing);
+      while (offset < text.length) {
+        var length = text.charCodeAt(offset) >= 0xD800 && text.charCodeAt(offset) <= 0xDBFF ? 2 : 1;
+        range.setStart(node, offset); range.setEnd(node, Math.min(text.length, offset + length));
+        var rect = range.getBoundingClientRect();
+        var clipped = bounds.clipped;
+        if (rect.top > bounds.rect.bottom) break;
+        var ellipsis = clipped && rect.top > bounds.rect.top + lineHeight * 0.5
+          && rect.right > bounds.rect.right - ellipsisWidth;
+        var visible = !ellipsis && /\S/.test(text.slice(offset, offset + length)) && rect.width > 0
+          && rect.top >= bounds.rect.top - 1 && rect.bottom <= bounds.rect.bottom + 1
+          && rect.left >= bounds.rect.left - 1 && rect.right <= bounds.rect.right + 1;
+        if (visible) {
+          glyphs.push({ left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom,
+            text: text.slice(offset, offset + length) });
+          minX = Math.min(minX, rect.left); maxX = Math.max(maxX, rect.right);
+        }
+        offset += length;
       }
-      offset += length;
     }
     return { glyphs: glyphs, textRect: textRect, minX: minX, maxX: maxX,
       width: maxX > minX ? maxX - minX : textRect.width };
@@ -8555,7 +8662,8 @@
     clearStripLyricMotion();
     var outgoing = document.createElement('span');
     outgoing.className = 'strip-lyric strip-lyric-previous';
-    outgoing.setAttribute('aria-hidden', 'true'); outgoing.textContent = oldText;
+    outgoing.setAttribute('aria-hidden', 'true');
+    writeStripLyric(outgoing, oldText);   // 旧句覆盖层也按真实拆分形态排，星尘才落在真字迹上
     el.parentNode.appendChild(outgoing);
     var dust = createStripLyricDust(outgoing, transition);
     var motion = {
@@ -8572,7 +8680,7 @@
     var motion = stripLyricAnimation, el = $('stripLyric');
     if (!motion) return;
     motion.leadIndex = -1;
-    if (el) { el.style.visibility = ''; el.textContent = text; el.title = text; }
+    if (el) { el.style.visibility = ''; writeStripLyric(el, text); el.title = text; }
     if (!el || !text || !el.animate) return;
     motion.animations.push(el.animate([{ opacity: 0 }, { opacity: 1 }], {
       duration: motion.appearMs, easing: 'cubic-bezier(.22,.61,.36,1)', fill: 'forwards'
@@ -8584,10 +8692,13 @@
     /* 句尾提前量还在跑：切句点只收尾新句，旧句覆盖层与星尘继续散完。 */
     if (stripLyricAnimation && stripLyricAnimation.leadIndex >= 0
       && stripLyricAnimation.leadIndex === lyricIndex - 1) { finishStripLyricLead(text); return; }
-    if (el.textContent === text) return;
+    var previous = stripLyricRaw(el);
+    /* 与「原始未拆分文本」比：拆开过的句子 textContent 是两行拼接串，
+     * 直接比 textContent 会把切句误判成同句，转场整体被跳过。 */
+    if (previous === text) return;
     clearStripLyricAnimation();
-    var old = el.textContent;
-    el.textContent = text; el.title = text;
+    writeStripLyric(el, text); el.title = text;
+    var old = previous;
     if (!old || !text || !transition || !stripLyricMotionAllowed() || !el.animate) return;
     var motion = startStripLyricDissolve(old, transition, -1);
     if (!motion) return;
@@ -9774,6 +9885,8 @@
     /* 跨源歌词兜底的匹配判定（测试用）：不依赖网络，直接喂结果集。 */
     pickLyricHit: pickLyricHit,
     lyricIsPlaceholder: lyricIsPlaceholder,
+    /* 「原文（翻译）」拆分（测试用）：纯函数，直接喂一句歌词。 */
+    splitLyricTranslation: splitLyricTranslation,
     normLyricTitle: normLyricTitle,
     normLyricAuthor: normLyricAuthor,
     /* 歌词关键词清洗（测试用）：纯函数，直接喂标题/歌手。 */

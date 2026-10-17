@@ -340,6 +340,12 @@ const server = http.createServer((req, res) => {
       '[00:00.00]短句', '[00:01.20]这句歌词需要换成两行读完', '[00:02.60]短句再来',
       '[00:04.00]' + '超过两行的极端文本必须在第二行省略而不滚动'.repeat(5), '[00:08.00]收尾'
     ].join('\n'), 'text/plain; charset=utf-8');
+    if (fixtureMode === 'strip-bilingual') return text(res, 200, [
+      '[00:00.00]测试起句',
+      '[00:02.00]僕が歌うものは 既にあるものじゃーーーん（可我所演唱的歌曲 不是已经有了吗——）',
+      '[00:05.00]双行后续',
+      '[00:08.00]收尾'
+    ].join('\n'), 'text/plain; charset=utf-8');
     if (fixtureMode === 'strip-rhythm') return text(res, 200, [
       '[00:00.00]起始歌词',
       '[00:01.20]正常节奏一',

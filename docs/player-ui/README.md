@@ -62,6 +62,7 @@
 ### 歌词
 | 文件 | 一句话 |
 |---|---|
+| [STRIP-LYRIC-VERIFY-SUITE-REPAIR.md](handoffs/STRIP-LYRIC-VERIFY-SUITE-REPAIR.md) | 旧 DOM / mask 断言迁移到 canvas 像素、opacity+blur、真实粒子预算与双语双行来源采样；不改生产代码 |
 | [STRIP-LYRIC-SIMULTANEOUS-1003131768.md](handoffs/STRIP-LYRIC-SIMULTANEOUS-1003131768.md) | 1.2.1 发布项：整句同时消散、时长约×1.3、星尘强度0.45；用户已确认候选预览，实际使用反馈待收 |
 | [LYRIC-UNIFORM-STROKE-1003131758.md](handoffs/LYRIC-UNIFORM-STROKE-1003131758.md) | 未部署返修：统一2px深描边、保留字色/辉光；真实像素新口径连续三次46/46，交互27/27，竖卡3.81为用户已知3.0取舍 |
 | [LYRIC-CONTRAST-SURFACES-BLOCKER-1003131756.md](handoffs/LYRIC-CONTRAST-SURFACES-BLOCKER-1003131756.md) | 历史反证（后续裁决见1758）：真实背景四项均未过4.5，同RGB跨深浅底数学无解；跨组旧35项连续三次通过，全套35/39，待统筹裁决 |
