@@ -340,12 +340,17 @@ export async function verifyStripLyrics({ newPage, BASE, API, UI_BASE, outDir, a
       const controls = [...document.querySelectorAll('.fav-btn, .fav-btn-bar, .q-fav, .search-fav, .controls .identity > .heart')]
         .map((el) => rgb(getComputedStyle(el).color));
       return { stars, actual, state, minHueDistance:chromatic.length ? Math.min(...chromatic.map((c) => gap(c[0], hsl(actual)[0]))) : 180,
-        sameSource:JSON.stringify(actual) === JSON.stringify(rgb(cs.getPropertyValue('--lyric-current')))
-          && JSON.stringify(actual) === JSON.stringify(rgb(cs.getPropertyValue('--hl-accent'))),
+        /* 契约（1.2.2 起）：高亮字色 = --lyric-current，而 --lyric-current 是
+         * 「强调色 × 58% + 墨/纸」的混合值 —— 为了在浅纱/深纱上都保住 4.5:1，
+         * 字色不能再等于强调色原色。所以这里查两件事：
+         *   ① 实际渲染色确实来自 --lyric-current（不是别处硬编码）；
+         *   ② 它的色相仍由 --hl-accent 派生（混墨只压明度/饱和，不该改色相）。 */
+        sameSource:JSON.stringify(actual) === JSON.stringify(rgb(cs.getPropertyValue('--lyric-current'))),
+        accentHueDistance:gap(hsl(actual)[0], hsl(rgb(cs.getPropertyValue('--hl-accent')))[0]),
         controls, theme, controlsUseTheme:controls.length > 0 && controls.every((c) => JSON.stringify(c) === JSON.stringify(theme)), cases };
     });
     check('highlight-separates-from-star-group', palette.minHueDistance >= 25
-      && palette.sameSource, palette);
+      && palette.sameSource && palette.accentHueDistance <= 12, palette);
     check('highlight-colored-readable-and-deterministic-fallback', palette.cases.every((c) =>
       c.minHueDistance >= 25 && c.contrast >= 4.5 && c.saturation >= 0.4)
       && palette.cases.filter((c) => c.count === 0).every((c) => c.fallback), palette.cases);
