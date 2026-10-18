@@ -1735,14 +1735,18 @@
     var bg = themeBg, stars = [], tone = resolveTone();
     if (res && res.color) {
       var veil = rgbStr2arr(root.getPropertyValue(pol === 'dark' ? '--veil-ink' : '--veil-paper').trim());
-      var alpha = parseFloat(root.getPropertyValue(pol === 'dark' ? '--veil-ink-a' : '--veil-paper-a'));
+      /* 与 --lyric-scrim 实际渲染浓度一致（dark 30% / light 26%）。
+       * 别用 --veil-*-a —— 那是另一层纱的浓度（42%/34%），比歌词遮罩厚，
+       * 算出来的 bg 偏暗 → solveByContrast 选色对比虚高 → 实际渲染掉到 3.6:1。 */
+      var alpha = pol === 'dark' ? 0.30 : 0.26;
       bg = res.color.map(function (v, i) { return veil ? veil[i] * alpha + v * (1 - alpha) : v; });
       var spark = res.stripField && res.stripField.spark;
       if (spark) stars = spark[tone].map(rgbStr2arr);
     }
     lyricAccentState = lyricAccentFromStars(stars, bg, pol, theme);
     player.style.setProperty('--ambient-accent', rgbStr(lyricAccentState.color));
-    player.style.setProperty('--lyric-current', rgbStr(lyricAccentState.color));
+    /* --lyric-current 由 CSS 的 data-ambient 两态控制，不再 inline 覆盖。
+     * inline style 优先级高于一切 CSS —— 导致极性/主题切换时字色无法跟随。 */
   }
 
   /* 占比最多的色（4bit/通道量化）。近中性色（灰/黑/白）降权，优先取有彩的：
@@ -3639,7 +3643,10 @@
       // 位移/缩放逐帧保留精度；肉眼不可分的色阶合并，免得长句每帧反复栅格化。
       setLyricStyle(node, '--lyric-scale', (still ? 1 : 1 + g.wavePeak * strength).toFixed(5));
       setLyricStyle(node, '--lyric-opacity', (.65 + .35 * strength).toFixed(3));
-      setLyricStyle(node, '--lyric-strength', (Math.pow(strength, 3) * 100).toFixed(0) + '%');
+      /* 色相插值曲线：原来是三次方（焦点行只到 68%），任何强调色都被 --lyric-near 的灰
+       * 稀释成「深灰」，看起来只有黑白。1.8 次方让焦点行到 ~82%，相邻行 ~42% ——
+       * 仍然只集中在焦点附近，但颜色立得住。 */
+      setLyricStyle(node, '--lyric-strength', (Math.pow(strength, 1.8) * 100).toFixed(0) + '%');
       if (node.classList.contains('is-flowing') !== flowing) node.classList.toggle('is-flowing', flowing);
     });
     g.painted = active;
