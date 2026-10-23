@@ -43,7 +43,15 @@ const EXCLUDE = new Set([
   "CLAUDE.md",
   ".gitignore",
   ".DS_Store",
+  /* 罐头自己的截图暂存夹：仓库里以未跟踪状态待着，但**绝不许进包**。
+   * 2026-10-23 踩过：1.3.0 首包把 2.3MB 截图打进了公开 Release（EXCLUDE 漏登记），
+   * 包里出现过 OH-Works/截图。新加顶层本地目录时记得同步这里。 */
+  "OH-Works",
+  "OH-Works/",
 ]);
+
+/** 包里绝对不允许出现的顶层名 —— 防的是 EXCLUDE 漏登记（包打出来才发现就晚了）。 */
+const FORBIDDEN_IN_PACKAGE = ["OH-Works", "docs", "tools/fixtures", ".impeccable", ".git"];
 
 /**
  * tools/ 不能整目录排除：里面混着两种东西——
@@ -106,16 +114,17 @@ function copyRuntime(src, dst, rel = "") {
     const name = entry.name;
     const relPath = rel ? `${rel}/${name}` : name;
     if (!rel && EXCLUDE.has(name)) continue; // 只按顶层名排除
-    if (rel === "tools" && entry.isFile() && !TOOLS_RUNTIME.has(name)) continue; // tools/ 只留运行时
     if (name === ".DS_Store" || name.endsWith(".log")) continue;
+    /* tools/ 只放行运行时工具，子目录一律不进包（fixtures/ 等是开发夹具）。
+     * 2026-10-23 修：旧写法在目录分支里比较的是 relPath（此时已是 "tools/fixtures"），
+     * 永远不等于 "tools"，导致 tools/fixtures 一直跟着进包。 */
+    if (rel === "tools") {
+      if (entry.isDirectory()) continue;
+      if (!TOOLS_RUNTIME.has(name)) continue;
+    }
     const from = path.join(src, name);
     const to = path.join(dst, name);
     if (entry.isDirectory()) {
-      // tools/ 下若没有运行时文件就不必建目录
-      if (relPath === "tools") {
-        const keep = fs.readdirSync(from).filter((f) => TOOLS_RUNTIME.has(f));
-        if (!keep.length) continue;
-      }
       fs.mkdirSync(to, { recursive: true });
       copyRuntime(from, to, relPath);
     } else if (entry.isFile()) {
@@ -251,6 +260,17 @@ function main() {
     return;
   }
   console.log("[pack-release] 运行时 import 完整性：OK");
+
+  /* 黑名单守卫：EXCLUDE 漏登记一个新顶层目录时，它就会静默跟进包。
+   * 2026-10-23 踩过：OH-Works/ 的 2.3MB 截图被 1.3.0 首包带进了公开 Release。 */
+  const leaked = FORBIDDEN_IN_PACKAGE.filter((name) => fs.existsSync(path.join(stageDir, name)));
+  if (leaked.length) {
+    console.error("[pack-release] 包里出现了不该发布的目录，中止打包：");
+    for (const name of leaked) console.error(`  - ${name}（补进 EXCLUDE）`);
+    process.exitCode = 1;
+    return;
+  }
+  console.log("[pack-release] 黑名单：OK");
 
   // 先校验（便宜且能提前拦下 MISSING_UI_RESOURCE 这类 error）
   const validate = spawnSync(process.execPath, [path.join(toolsRoot, "scripts/validate-app.mjs"), "--dir", stageDir, "--json"], {
