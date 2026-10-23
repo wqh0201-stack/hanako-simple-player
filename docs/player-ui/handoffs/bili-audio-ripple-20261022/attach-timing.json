@@ -1,0 +1,12 @@
+{
+  "probe": "probe3.html —— 在 loadedmetadata / play / playing 三个时点分别 captureStream（模拟 app 在 'play' 事件里挂链）",
+  "results": [
+    {"name": "mp3", "when": "loadedmetadata", "readyStateAtCapture": 4, "measure": {"tracks": 1, "trackState": "live", "muted": false, "peakDb": null, "verdict": "SILENT"}, "note": "尚未 play，静音符合预期"},
+    {"name": "mp3", "when": "play", "readyStateAtCapture": 4, "measure": {"tracks": 1, "trackState": "live", "muted": false, "peakDb": -41.7, "verdict": "AUDIO PRESENT"}},
+    {"name": "mp3", "when": "playing", "readyStateAtCapture": 4, "measure": {"tracks": 1, "trackState": "live", "muted": false, "peakDb": -41.7, "verdict": "AUDIO PRESENT"}},
+    {"name": "frag-mp4(video/mp4)", "when": "loadedmetadata", "readyStateAtCapture": 4, "measure": {"tracks": 1, "trackState": "live", "muted": false, "peakDb": null, "verdict": "SILENT"}, "note": "尚未 play"},
+    {"name": "frag-mp4(video/mp4)", "when": "play", "readyStateAtCapture": 4, "measure": {"tracks": 1, "trackState": "live", "muted": false, "peakDb": -41.5, "verdict": "AUDIO PRESENT"}},
+    {"name": "frag-mp4(video/mp4)", "when": "playing", "readyStateAtCapture": 4, "measure": {"tracks": 1, "trackState": "live", "muted": false, "peakDb": -41.5, "verdict": "AUDIO PRESENT"}}
+  ],
+  "conclusion": "轨道数恒为 1、trackState=live；挂链时点（'play' 事件）不是失败原因。"
+}

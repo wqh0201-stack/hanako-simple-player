@@ -1,0 +1,18 @@
+{
+  "env": {
+    "browser": "Google Chrome 155.0.8059.85 (--headless=new)",
+    "fixtures": "本地 ffmpeg 生成：80Hz+900Hz 混音 8s，mp3 192k / fMP4(AAC, frag_keyframe+empty_moov, 以 video/mp4 提供)",
+    "server": "serve.py：127.0.0.1:8801 同源（支持 Range→206）+ 127.0.0.1:8802 跨源；/redir 为 8801 上 302 到 8802",
+    "chain": "复刻 ui/app.js::attachAudio：audio.captureStream() → createMediaStreamSource → Analyser(fftSize 4096, smoothing .2) → Gain(0) → destination"
+  },
+  "run1_probe.html": [
+    {"name": "same-origin mp3 (206 range)", "src": "/tone.mp3", "readyState": 4, "currentSrc": "http://127.0.0.1:8801/tone.mp3", "paused": false, "tracks": 1, "trackState": "live", "peakAllDb": -41.7, "peakBassDb": -41.8, "nonSilentBins": 8749, "currentTime": 4.96},
+    {"name": "same-origin -> 302 -> cross-origin mp3", "src": "/redir", "readyState": 4, "currentSrc": "http://127.0.0.1:8801/redir", "paused": false, "captureError": "SecurityError: Failed to execute 'captureStream' on 'HTMLMediaElement': Cannot capture from element with cross-origin data"},
+    {"name": "same-origin fragmented mp4 (video/mp4, B站 m4s shape)", "src": "/tone-frag.mp4", "readyState": 4, "currentSrc": "http://127.0.0.1:8801/tone-frag.mp4", "paused": false, "tracks": 1, "trackState": "live", "peakAllDb": -41.5, "peakBassDb": -41.5, "nonSilentBins": 11076, "currentTime": 5.28},
+    {"name": "direct cross-origin mp3", "src": "http://127.0.0.1:8802/tone.mp3", "readyState": 4, "currentSrc": "http://127.0.0.1:8802/tone.mp3", "paused": false, "captureError": "SecurityError: Failed to execute 'captureStream' on 'HTMLMediaElement': Cannot capture from element with cross-origin data"}
+  ],
+  "run2_probe4.html_octet_stream": [
+    {"name": "same-origin mp3 served as application/octet-stream", "src": "/octet/tone.mp3", "readyState": 4, "currentSrc": "http://127.0.0.1:8801/octet/tone.mp3", "paused": false, "tracks": 1, "trackState": "live", "peakAllDb": -41.7, "peakBassDb": -41.8, "nonSilentBins": 13151, "currentTime": 5.27}
+  ],
+  "note": "302 到跨源后 currentSrc 仍显示同源 /redir，仅从元素属性看不出跨源；播放一切正常（readyState 4、时间前进），只有 captureStream 抛 SecurityError。"
+}

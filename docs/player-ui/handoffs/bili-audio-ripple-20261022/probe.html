@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>captureStream probe</title></head>
+<body>
+<pre id="log"></pre>
+<script>
+/* 复刻 ui/app.js 的采集链路：<audio> → captureStream() → MediaStreamSource → Analyser(4096) → 零增益
+   逐个 case 换源，量 1.2s 内 bass 频段（40–180Hz）的实际能量峰值与整段 RMS。
+   结果 POST 回 /report，由 serve.py 落盘。 */
+var log = document.getElementById('log');
+function say(s) { log.textContent += s + '\n'; }
+
+var ctx = null;
+function ac() {
+  if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+  return ctx;
+}
+
+function waitEvent(el, name, ms) {
+  return new Promise(function (res) {
+    var t = setTimeout(function () { el.removeEventListener(name, h); res(false); }, ms);
+    function h() { clearTimeout(t); el.removeEventListener(name, h); res(true); }
+    el.addEventListener(name, h, { once: true });
+  });
+}
+
+function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+async function runCase(c) {
+  var out = { name: c.name, src: c.src, mode: c.mode || 'same-origin' };
+  var a = document.createElement('audio');
+  a.preload = 'auto';
+  a.src = c.src;
+  document.body.appendChild(a);
+  try {
+    await a.play();
+  } catch (e) {
+    out.playError = String(e && e.name) + ': ' + String(e && e.message);
+  }
+  await waitEvent(a, 'playing', 4000);
+  out.readyState = a.readyState;
+  out.currentSrc = a.currentSrc;
+  out.paused = a.paused;
+  var stream = null, src = null, an = null, g = null, data = null;
+  try {
+    var c0 = ac();
+    if (c0.state !== 'running') { try { await c0.resume(); } catch (e) {} }
+    stream = a.captureStream();
+    out.tracks = stream.getAudioTracks ? stream.getAudioTracks().length : -1;
+    out.trackState = stream.getAudioTracks && stream.getAudioTracks()[0] ? stream.getAudioTracks()[0].readyState : 'n/a';
+    if (!out.tracks) throw new Error('no audio track');
+    src = c0.createMediaStreamSource(stream);
+    an = c0.createAnalyser();
+    an.fftSize = 4096;
+    an.smoothingTimeConstant = 0.2;
+    an.minDecibels = -90; an.maxDecibels = -15;
+    g = c0.createGain(); g.gain.value = 0;
+    src.connect(an); an.connect(g); g.connect(c0.destination);
+    data = new Float32Array(an.frequencyBinCount);
+  } catch (e) {
+    out.captureError = String(e && e.name) + ': ' + String(e && e.message);
+  }
+  if (an) {
+    var peakAll = -Infinity, peakBass = -Infinity, sum = 0, n = 0, nonSilent = 0;
+    var binHz = ac().sampleRate / an.fftSize;
+    var lo = Math.max(1, Math.floor(40 / binHz)), hi = Math.min(data.length, Math.ceil(180 / binHz));
+    var t0 = performance.now();
+    while (performance.now() - t0 < 1400) {
+      an.getFloatFrequencyData(data);
+      var localMax = -Infinity;
+      for (var i = 0; i < data.length; i++) {
+        var v = data[i];
+        if (!isFinite(v)) continue;
+        if (v > peakAll) peakAll = v;
+        if (v > -140) nonSilent++;
+        sum += v; n++;
+        if (v > localMax) localMax = v;
+      }
+      for (var b = lo; b < hi; b++) if (data[b] > peakBass) peakBass = data[b];
+      await delay(40);
+    }
+    out.peakAllDb = Math.round(peakAll * 10) / 10;
+    out.peakBassDb = Math.round(peakBass * 10) / 10;
+    out.meanDb = n ? Math.round((sum / n) * 10) / 10 : null;
+    out.nonSilentBins = nonSilent;
+    out.currentTime = Math.round(a.currentTime * 100) / 100;
+  }
+  try { a.pause(); } catch (e) {}
+  try { if (src) src.disconnect(); if (an) an.disconnect(); if (g) g.disconnect(); } catch (e) {}
+  a.remove();
+  say(JSON.stringify(out));
+  return out;
+}
+
+(async function () {
+  var cases = [
+    { name: 'same-origin mp3 (206 range)', src: '/tone.mp3' },
+    { name: 'same-origin -> 302 -> cross-origin mp3', src: '/redir' },
+    { name: 'same-origin fragmented mp4 (video/mp4, B站 m4s shape)', src: '/tone-frag.mp4' },
+    { name: 'direct cross-origin mp3', src: 'http://127.0.0.1:8802/tone.mp3' }
+  ];
+  var all = [];
+  for (var i = 0; i < cases.length; i++) {
+    try { all.push(await runCase(cases[i])); }
+    catch (e) { all.push({ name: cases[i].name, fatal: String(e) }); }
+    await delay(300);
+  }
+  await fetch('/report?data=' + encodeURIComponent(JSON.stringify(all)));
+  document.title = 'DONE';
+})();
+</script>
+</body>
+</html>

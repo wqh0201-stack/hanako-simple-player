@@ -251,11 +251,25 @@ const server = http.createServer((req, res) => {
   if (p === API + '/widget/api/music/cover-catalog') {
     const kind = u.searchParams.get('kind'); coverRequests.push(kind);
     let body;
-    const entry = { title: '稻香', songId: 185709, artists: [{ id: 6452, name: '周杰伦' }], albumId: 18877, album: '魔杰座', subType: '录音室版', published: 2008, pic: coverImageBad ? WAV_URL : COVER_SQUARE };
+    const entry = { title: '稻香', songId: 185709, artists: [{ id: 6452, name: '周杰伦' }], albumId: 18877, album: '魔杰座', albumType: '专辑', albumSize: 10, subType: '录音室版', published: 2008, pic: coverImageBad ? WAV_URL : COVER_SQUARE };
+    const live = { ...entry, albumId: 10, album: '超时代演唱会', albumType: '专辑', albumSize: 12, subType: '现场版', published: 2010 };
+    const compilation = { ...entry, albumId: 9, album: '精选集', albumType: '精选集', albumSize: 20, published: 2000 };
+    const maple = { ...entry, songId: 185912, title: '枫', albumId: 11, album: '11月的萧邦', albumType: '专辑', albumSize: 12, published: 2005 };
     if (coverFail) body = { ok: false, error: '上游返回 -462' };
-    else if (kind === 'artist') body = { ok: true, artist: { id: 6452, name: '周杰伦' } };
-    else if (kind === 'albums') body = { ok: true, albums: [{ id: 18877, name: '魔杰座' }], more: false };
-    else if (kind === 'album') body = { ok: true, tracks: [{ ...entry, albumId: 10, album: '超时代演唱会', published: 2010 }, { ...entry, albumId: 9, album: '精选集', published: 2000 }, entry, { ...entry, songId: 185912, title: '枫', album: '11月的萧邦', published: 2005 }] };
+    else if (kind === 'artist') body = { ok: true, artist: { id: 6452, name: '周杰伦', aliases: ['Jay Chou'] } };
+    else if (kind === 'search') {
+      const title = u.searchParams.get('title');
+      body = { ok: true, tracks: title === '稻香' ? [entry, live, compilation] : title === '枫' ? [maple] : [] };
+    }
+    else if (kind === 'albums') body = { ok: true, albums: [
+      { id: 18877, name: '魔杰座', type: '专辑', subType: '录音室版', size: 10, published: 2008 },
+      { id: 10, name: '超时代演唱会', type: '专辑', subType: '现场版', size: 12, published: 2010 },
+      { id: 9, name: '精选集', type: '精选集', subType: '录音室版', size: 20, published: 2000 },
+      { id: 11, name: '11月的萧邦', type: '专辑', subType: '录音室版', size: 12, published: 2005 }], more: false };
+    else if (kind === 'album') {
+      const id = u.searchParams.get('id');
+      body = { ok: true, tracks: id === '10' ? [live] : id === '9' ? [compilation] : id === '11' ? [maple] : [entry] };
+    }
     else body = { ok: true, title: '周杰伦 全集' };
     if (coverDelay) return setTimeout(() => { if (!res.destroyed) json(res, 200, body); }, coverDelay);
     return json(res, 200, body);
@@ -1483,9 +1497,9 @@ async function verifySongEntryCover() {
     window.__coverFeedbackPhase = '';
     window.fetch = async function (url, opts) {
       const text = String(url);
-      if (text.includes('/cover-catalog') && text.includes('kind=album&')) {
+      if (text.includes('/cover-catalog') && text.includes('kind=album&') && !window.__coverAlbumReleased) {
         window.__coverFeedbackPhase = 'album';
-        await new Promise(resolve => { window.__releaseCoverAlbum = resolve; });
+        await new Promise(resolve => { window.__releaseCoverAlbum = () => { window.__coverAlbumReleased = true; resolve(); }; });
       }
       if (text.includes('/widget/api/playlist') && opts && opts.method === 'POST' && String(opts.body).includes('"songId":185709')) {
         window.__coverFeedbackPhase = 'save';
@@ -1555,13 +1569,23 @@ async function verifySongEntryCover() {
     const before = await page.evaluate(() => JSON.stringify(window.__playerDebug.coverInfo('netease:entry18')));
     const requestsBefore = coverRequests.length;
     await getAgain();
-    const outcome = await page.evaluate(() => ({ info: JSON.stringify(window.__playerDebug.coverInfo('netease:entry18')), toast: document.getElementById('toast').textContent }));
-    assert('song-entry-cover-preserves-on-' + kind, outcome.info === before && /没有歌手|没有找到|失败/.test(outcome.toast), JSON.stringify(outcome));
+    const outcome = await page.evaluate(() => ({ info: JSON.stringify(window.__playerDebug.coverInfo('netease:entry18')), toast: document.getElementById('toast').textContent,
+      panel: !document.getElementById('coverPop').hidden, song: document.getElementById('coverSong').value, note: document.getElementById('coverNote').textContent }));
+    if (kind === 'no-artist') {
+      assert('song-entry-cover-no-artist-opens-prefilled-panel', outcome.info === before && outcome.panel && outcome.song === '稻香' && /补填/.test(outcome.note), JSON.stringify(outcome));
+      assert('song-entry-cover-no-artist-no-request', coverRequests.length === requestsBefore);
+    } else {
+      assert('song-entry-cover-preserves-on-' + kind, outcome.info === before && outcome.panel && /没有找到|失败/.test(outcome.toast), JSON.stringify(outcome));
+    }
     assert('song-entry-cover-spinner-cleanup-' + kind, await page.$eval('#coverFetchStatus', el => el.hidden));
-    if (kind === 'no-artist') assert('song-entry-cover-no-artist-no-request', coverRequests.length === requestsBefore);
     await page.evaluate(() => { if (window.__entryFetch) { window.fetch = window.__entryFetch; delete window.__entryFetch; } });
     coverFail = coverImageBad = false;
   }
+  await page.evaluate(() => { const t = window.__playerDebug.currentTrack(); t.author = ''; t.title = '稻香'; });
+  await getAgain();
+  await page.evaluate(() => { document.getElementById('coverArtist').value = '周杰伦'; document.getElementById('coverStartBtn').click(); });
+  await page.waitForFunction(() => document.getElementById('coverPop').hidden && document.getElementById('toast').textContent === '已获取此曲封面', { timeout: 8000 });
+  assert('song-entry-cover-manual-retry-succeeds', (await page.evaluate(() => window.__playerDebug.coverInfo('netease:entry18'))).every(t => t.match && t.match.songId === 185709));
   await page.evaluate(() => { const t = window.__playerDebug.currentTrack(); t.author = ''; t.title = '周杰伦 - 稻香'; });
   await getAgain();
   assert('song-entry-cover-artist-from-title', await page.$eval('#toast', el => el.textContent === '已获取此曲封面'));
@@ -1614,14 +1638,31 @@ async function verifyCoverFill() {
   assert('cover-clean-keeps-single-character-songs', clean.slice(0, 3).map(q => q.song).join(',') === '枫,默,扯');
   assert('cover-clean-preserves-multiple-artists', clean[3].artists.join(',') === '蔡依林,周杰伦');
   assert('cover-clean-aimer-dates-translations-and-instrumental-heading', clean[4].song === '今日から思い出' && clean[4].ok);
-  assert('cover-clean-skips-live-versions', !clean[5].ok);
+  assert('cover-clean-parses-live-version-without-dropping-it', clean[5].ok && clean[5].song === '稻香' && clean[5].version === 'live');
+  const cleanSuffix = await page.evaluate(() => window.__playerDebug.cleanCoverQuery('周杰伦 - 稻香 现场版'));
+  assert('cover-clean-parses-unbracketed-version-suffix', cleanSuffix.song === '稻香' && cleanSuffix.version === 'live' && cleanSuffix.ok, JSON.stringify(cleanSuffix));
   const picked = await page.evaluate(() => {
     const artist = { id: 6452, name: '周杰伦' }, d = window.__playerDebug;
     const s = { title: '稻香', artists: [artist], albumId: 2, album: '魔杰座', pic: '/original', published: 2008 };
     const songs = [{ ...s, artists: [{ id: 1, name: '翻唱者' }], album: '翻唱', published: 1990 }, { ...s, album: '演唱会', published: 2000 }, { ...s, album: '精选集', published: 1999 }, { ...s, album: '魔杰座再版', published: 2020 }, s];
     return [d.pickCoverMatch('周杰伦 - 稻香', artist, songs), d.pickCoverMatch('周杰伦、陈奕迅 - 稻香', artist, songs), d.pickCoverMatch('周杰伦 - 稻香 (Live)', artist, songs)];
   });
-  assert('cover-match-selects-original-before-covers-live-compilation-reissue', picked[0].album === '魔杰座' && !picked[1] && !picked[2]);
+  assert('cover-match-selects-original-before-compilation-and-reissue', picked[0].album === '魔杰座' && !picked[1]);
+  assert('cover-match-accepts-confirmed-live-version', picked[2] && picked[2].album === '演唱会', JSON.stringify(picked[2]));
+  const dirty = await page.evaluate(() => {
+    const artist = { id: 6452, name: '周杰伦' };
+    const dict = [{ title: '七里香', songId: 1, albumId: 2, album: '七里香', pic: '/cover', published: 2004, artists: [artist] }];
+    const d = window.__playerDebug;
+    return ['004.周杰伦-七里香', '【无损音质】周杰伦-七里香', '周杰伦-七里香[1080P]', '七里香 - 周杰伦', '周杰伦－七里香'].map(function (t) { return d.pickCoverMatch(t, artist, dict); });
+  });
+  assert('cover-dirty-names-numbering-quality-tags-and-reversed-order', dirty.every(Boolean), JSON.stringify(dirty));
+  const strict = await page.evaluate(() => {
+    const artist = { id: 6452, name: '周杰伦' };
+    const dict = [{ title: '枫叶', songId: 2, album: 'x', pic: '/cover', artists: [artist] }, { title: '枫', songId: 3, album: 'y', pic: '/cover', artists: [artist] }];
+    const d = window.__playerDebug;
+    return { exact: d.pickCoverMatch('周杰伦 - 枫', artist, dict), other: d.pickCoverMatch('周杰伦 - 枫叶', artist, dict) };
+  });
+  assert('cover-short-title-needs-exact-name', strict.exact && strict.exact.songId === 3 && strict.other && strict.other.songId === 2, JSON.stringify(strict));
   await page.click('#importBtn'); await page.click('[data-import="covers"]');
   assert('cover-menu-opens-prefilled-current-list', await page.$eval('#coverArtist', el => el.value) === '周杰伦' && await page.$eval('#coverPop', el => !el.hidden));
   for (const [width, height] of [[312, 930], [465, 930], [1040, 780]]) {
@@ -1629,14 +1670,42 @@ async function verifyCoverFill() {
     if (width >= 720) { await page.click('#queueBtn'); await sleep(400); }
     await page.evaluate(() => window.__playerDebug.openCoverPanel('imp:1'));
     const fits = await page.$eval('#coverPop', el => { const r = el.getBoundingClientRect(); return el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight; });
+    const batchMode = await page.evaluate(() => ({ row: document.getElementById('coverSongRow').checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }), restore: document.getElementById('coverRestoreBtn').checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) }));
     assert('cover-panel-fits-' + width, fits);
+    assert('cover-batch-panel-hides-single-song-row-' + width, !batchMode.row && batchMode.restore, JSON.stringify(batchMode));
     await page.screenshot({ path: path.join(outDir, 'cover-panel-' + width + '.png') });
   }
+  for (const [width, height] of [[312, 494], [465, 930], [1040, 780]]) {
+    await page.setViewport({ width, height, deviceScaleFactor: 1 }); await sleep(120);
+    if (width === 312) {
+      await page.evaluate(() => { const p = document.getElementById('player'); if (p.dataset.page !== 'queue') document.getElementById('queueBtn').click(); });
+      await page.waitForFunction(() => document.getElementById('player').dataset.page === 'queue');
+      await sleep(350);
+    }
+    if (width >= 720) { await page.click('#queueBtn'); await sleep(400); }
+    await page.evaluate(() => window.__playerDebug.openSingleCoverPanel(
+      { uid: 'probe-single', id: 'bilibili:BVprobe', list: 'imp:1', title: '稻香', author: 'UP主' },
+      { song: '稻香', artist: '' }, '缺少歌手线索；可补填歌名或歌手后重试。'));
+    const fit = await page.evaluate(() => {
+      const pop = document.getElementById('coverPop'), r = pop.getBoundingClientRect();
+      const vis = (id) => document.getElementById(id).checkVisibility({ checkOpacity: true, checkVisibilityCSS: true });
+      return { visible: vis('coverPop'), inside: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight,
+        row: vis('coverSongRow'), label: vis('coverSongLabel'), restore: vis('coverRestoreBtn'), song: document.getElementById('coverSong').value, disabled: document.getElementById('coverSong').disabled };
+    });
+    assert('cover-single-panel-fits-' + width, fit.visible && fit.inside && fit.row && fit.label && !fit.restore && fit.song === '稻香' && !fit.disabled, JSON.stringify(fit));
+    await page.screenshot({ path: path.join(outDir, 'cover-single-panel-' + width + '.png') });
+    await page.evaluate(() => document.getElementById('coverCloseBtn').click());
+  }
+  await page.evaluate(() => window.__playerDebug.getTrackCover({ uid: 'probe-up', id: 'bilibili:BVprobe', title: '稻香', author: '某UP主', list: 'imp:1' }));
+  const upAuthor = await page.evaluate(() => ({ panel: !document.getElementById('coverPop').hidden, artist: document.getElementById('coverArtist').value, song: document.getElementById('coverSong').value }));
+  assert('cover-bilibili-up-author-is-not-used-as-singer', upAuthor.panel && upAuthor.artist === '' && upAuthor.song === '稻香', JSON.stringify(upAuthor));
+  await page.evaluate(() => document.getElementById('coverCloseBtn').click());
+  await page.evaluate(() => window.__playerDebug.openCoverPanel('imp:1'));
   await page.evaluate(() => window.__playerDebug.startCoverFill());
   const copies = await page.evaluate(id => window.__playerDebug.coverInfo(id), id);
   assert('cover-fill-syncs-source-favorite-and-recent-copies', copies.length === 3 && copies.every(t => t.pic === COVER_SQUARE && t.match.originalPic === '' && t.match.album === '魔杰座'), JSON.stringify(copies));
-  assert('cover-fill-preserves-live-custom-and-other-platform-covers', !persistedPlaylist.find(t => t.id.endsWith('_3')).pic && persistedPlaylist.find(t => t.id.endsWith('_4')).pic === COVER && persistedPlaylist.find(t => t.id === 'netease:1').pic === COVER);
-  assert('cover-fill-saves-match-provenance', persistedPlaylist.filter(t => t.id === id).every(t => t.coverMatch.songId === 185709 && t.coverMatch.source === 'netease'));
+  assert('cover-fill-uses-correct-live-version-and-preserves-custom-and-other-platform-covers', persistedPlaylist.find(t => t.id.endsWith('_3')) && persistedPlaylist.find(t => t.id.endsWith('_3')).pic === COVER_SQUARE && persistedPlaylist.find(t => t.id.endsWith('_3')).coverMatch && persistedPlaylist.find(t => t.id.endsWith('_3')).coverMatch.album === '超时代演唱会' && persistedPlaylist.find(t => t.id.endsWith('_4')).pic === COVER && persistedPlaylist.find(t => t.id === 'netease:1').pic === COVER);
+  assert('cover-fill-saves-match-provenance', persistedPlaylist.filter(t => t.id === id).every(t => t.coverMatch && t.coverMatch.songId === 185709 && t.coverMatch.source === 'netease'));
   await page.evaluate(() => window.__playerDebug.startCoverFill());
   assert('cover-repeat-preserves-original-backup', (await page.evaluate(id => window.__playerDebug.coverInfo(id), id)).every(t => t.match.originalPic === ''));
   await page.setViewport({ width: 465, height: 930, deviceScaleFactor: 1 });
@@ -1654,7 +1723,7 @@ async function verifyCoverFill() {
   assert('cover-metadata-failure-preserves-original', (await page.evaluate(id => window.__playerDebug.coverInfo(id), id)).every(t => !t.match) && await page.$eval('#coverNote', el => el.textContent.includes('-462')));
   coverImageBad = true;
   await page.evaluate(() => window.__playerDebug.startCoverFill()); coverImageBad = false;
-  assert('cover-undecodable-image-is-not-written', (await page.evaluate(id => window.__playerDebug.coverInfo(id), id)).every(t => !t.match) && await page.$eval('#coverNote', el => el.textContent.includes('失败 2 首')));
+  assert('cover-undecodable-image-is-not-written', (await page.evaluate(id => window.__playerDebug.coverInfo(id), id)).every(t => !t.match) && await page.$eval('#coverNote', el => /3 首请求失败/.test(el.textContent)), await page.$eval('#coverNote', el => el.textContent));
   await page.evaluate(async () => {
     const fetchBefore = window.fetch;
     window.fetch = function (url, opts) { return String(url).includes('/widget/api/playlist') && opts && opts.method === 'POST' ? Promise.resolve(new Response('{}', { status: 500 })) : fetchBefore.apply(this, arguments); };

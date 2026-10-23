@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "at": "2026-10-22T07:56:12.179Z",
+  "build": "1003131823",
+  "shell": "window",
+  "layout": "wide",
+  "page": "play",
+  "track": {"sourceKind":"bilibili","mode":"在线","hasUrl":true,"assignedUrlIsAppRoute":true},
+  "media": {"paused":false,"ended":false,"seeking":false,"currentTime":36.23,"duration":242,"readyState":4,"networkState":1,"volume":1,"muted":true,"errorCode":null},
+  "ownership": {"isOwner":true,"takeover":false,"docLockSupported":true,"statePlaying":true},
+  "ripple": {
+    "audioContext":{"exists":true,"state":"running"},
+    "capture":{"supported":true,"ready":true,"analysing":true,"building":false,"lastAttachOk":true,"lastAttachAt":1792655739244,"lastError":null},
+    "streamTrack":{"readyState":"live","muted":false,"enabled":true},
+    "spectrum":{"available":true,"at":1792655772180,"finiteBins":2048,"nonSilentBins":999,"peakDb":-42.5},
+    "analysis":{"envBass":0.874,"onsets":0,"kinds":{"bass":0,"low":0,"mid":0,"high":0},"lastReadAt":35991.59999996424,"signal":{"lowRatio":1.196,"bassFlux":0,"fluxBgLow":0,"highFlux":1.646}},
+    "scheduler":{"playing":true,"hidden":false,"inView":true,"reducedMotion":false,"shot":false,"blocked":false,"width":1040,"height":680,"waves":0,"audioWaves":0}
+  }
+}

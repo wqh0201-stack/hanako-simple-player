@@ -1,0 +1,11 @@
+node_runtime=ELECTRON_RUN_AS_NODE=1 /Applications/HanaAgent.app/Contents/MacOS/HanaAgent
+node_version=v24.15.0
+chrome='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+puppeteer_core=/Volumes/SSD/hanadesk/鹈鹕/motion-reel/node_modules/puppeteer-core
+baseline_head=744523f
+
+build=1003131784
+fixture=tools/fixtures/cover-avril-real-2026-10-20.json
+real_api_requests=8 (all HTTP 200 / code 200; 405 not reproduced)
+
+build=1003131785

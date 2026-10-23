@@ -21,6 +21,12 @@ docs/player-ui/handoffs/album-ambient-glass-bright/
 docs/player-ui/handoffs/album-ambient-strong/
 docs/player-ui/handoffs/touchbar/
 
+# 2026-10 歌单整理那批的验收截图：日志与 JSON 证据入库，图片留在本地
+# （同名多轮返修各留一份 10 张 PNG，加起来 14MB，全入库不值）
+docs/player-ui/handoffs/playlist-catalog-enrich-20261020/*.png
+docs/player-ui/handoffs/cover-fill-safe-20261020/*.png
+docs/player-ui/handoffs/cover-fill-safe-20261020-hana*/*.png
+
 # 本地工具状态（impeccable 评审产物等，不入库）
 .impeccable/
 

@@ -1,0 +1,446 @@
+{
+  "isolation": "localhost fixture APIs; not production Hana or real playlist writes",
+  "checks": [
+    {
+      "name": "312-pending-search-defaults-A-keeps-display-B",
+      "ok": true
+    },
+    {
+      "name": "312-restore-actions-are-draft",
+      "ok": true
+    },
+    {
+      "name": "312-lyric-link-keeps-dirty-draft",
+      "ok": true
+    },
+    {
+      "name": "1040-pending-search-defaults-A-keeps-display-B",
+      "ok": true
+    },
+    {
+      "name": "1040-restore-actions-are-draft",
+      "ok": true
+    },
+    {
+      "name": "1040-lyric-link-keeps-dirty-draft",
+      "ok": true
+    }
+  ],
+  "runtimeErrors": [],
+  "missingAuth": [],
+  "api": [
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/playback-state",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2Fe1.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/lrc/load",
+      "query": "?name=Shared%20Song",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/audio-owner",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/lists",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+      "query": "?appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2Fe1.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/search",
+      "query": "?keyword=manual&server=netease",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2Fe1.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/lrc",
+      "query": "?id=770006&server=netease",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/lrc/save",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/playback-state",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2Fe1.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2Fe2.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2Fe3.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2Fe4.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2Fe5.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=artist&name=Artist+A",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=search&title=No+Artist+Song&artist=Artist+A",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2Fe1.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/playback-state",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/playback-state",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2Fe1.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/lrc/load",
+      "query": "?name=Shared%20Song",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/audio-owner",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/lists",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+      "query": "?appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2Fe1.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/search",
+      "query": "?keyword=manual&server=netease",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2Fe1.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/lrc",
+      "query": "?id=770006&server=netease",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/lrc/save",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2Fe1.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2Fe2.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2Fe3.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2Fe4.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2Fe5.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/playback-state",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=artist&name=Artist+A",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=search&title=No+Artist+Song&artist=Artist+A",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2Fe1.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "POST"
+    }
+  ],
+  "payloads": [
+    {
+      "tracks": [
+        {
+          "id": "bilibili:BV_EDIT_1",
+          "name": "Shared Song",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 240,
+          "pic": "https://i0.hdslb.com/e1.jpg",
+          "catalogMatch": {
+            "provider": "netease",
+            "songId": 11,
+            "albumId": 11,
+            "title": "Shared Song",
+            "artist": "Artist A",
+            "artistId": 1,
+            "artists": [
+              {
+                "id": 1,
+                "name": "Artist A"
+              }
+            ]
+          },
+          "album": "A Album",
+          "albumId": 11,
+          "songId": 11,
+          "lyricMatch": {
+            "song": "manual",
+            "keyword": "manual"
+          },
+          "lyricOffset": 123,
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_EDIT_2",
+          "name": "Edit Only",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 200,
+          "pic": "https://i0.hdslb.com/e2.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_EDIT_3",
+          "name": "No Artist Song",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 180,
+          "pic": "https://i0.hdslb.com/e3.jpg",
+          "catalogPending": {
+            "artist": "Artist A",
+            "reason": "no-match",
+            "at": 1792597941862
+          },
+          "author": "Artist B",
+          "catalogBackup": {
+            "name": "Original No Artist",
+            "author": "Original UP",
+            "artist": "Original UP",
+            "hadAlbum": false,
+            "hadAlbumId": false,
+            "hadSongId": false
+          },
+          "coverMatch": {
+            "albumId": 90,
+            "pic": "https://i0.hdslb.com/current.jpg",
+            "originalPic": "https://i0.hdslb.com/original.jpg"
+          },
+          "coverBasePic": "https://i0.hdslb.com/original.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_EDIT_4",
+          "name": "Cancel Song",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 190,
+          "pic": "https://i0.hdslb.com/e4.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_EDIT_5",
+          "name": "Duo Song",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 190,
+          "author": "Artist A / Artist B",
+          "pic": "https://i0.hdslb.com/e5.jpg",
+          "group": ""
+        }
+      ],
+      "baseTracks": [
+        {
+          "id": "bilibili:BV_EDIT_1",
+          "name": "Shared Song",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 240,
+          "pic": "https://i0.hdslb.com/e1.jpg",
+          "catalogMatch": {
+            "provider": "netease",
+            "songId": 11,
+            "albumId": 11,
+            "title": "Shared Song",
+            "artist": "Artist A",
+            "artistId": 1,
+            "artists": [
+              {
+                "id": 1,
+                "name": "Artist A"
+              }
+            ]
+          },
+          "album": "A Album",
+          "albumId": 11,
+          "songId": 11,
+          "lyricMatch": {
+            "song": "manual",
+            "keyword": "manual"
+          },
+          "lyricOffset": 123
+        },
+        {
+          "id": "bilibili:BV_EDIT_2",
+          "name": "Edit Only",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 200,
+          "pic": "https://i0.hdslb.com/e2.jpg"
+        },
+        {
+          "id": "bilibili:BV_EDIT_3",
+          "name": "No Artist Song",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 180,
+          "pic": "https://i0.hdslb.com/e3.jpg",
+          "catalogPending": {
+            "artist": "Artist A",
+            "reason": "no-match"
+          },
+          "author": "Artist B",
+          "catalogBackup": {
+            "name": "Original No Artist",
+            "author": "Original UP",
+            "artist": "Original UP",
+            "hadAlbum": false,
+            "hadAlbumId": false,
+            "hadSongId": false
+          },
+          "coverMatch": {
+            "albumId": 90,
+            "pic": "https://i0.hdslb.com/current.jpg",
+            "originalPic": "https://i0.hdslb.com/original.jpg"
+          },
+          "coverBasePic": "https://i0.hdslb.com/original.jpg"
+        },
+        {
+          "id": "bilibili:BV_EDIT_4",
+          "name": "Cancel Song",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 190,
+          "pic": "https://i0.hdslb.com/e4.jpg"
+        },
+        {
+          "id": "bilibili:BV_EDIT_5",
+          "name": "Duo Song",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 190,
+          "author": "Artist A / Artist B",
+          "pic": "https://i0.hdslb.com/e5.jpg"
+        }
+      ]
+    }
+  ]
+}

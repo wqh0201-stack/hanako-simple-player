@@ -1,0 +1,10 @@
+{
+  "probe": "probe5.html —— 先 captureStream（readyState 1 / 已 canplay），再 play，再量 1.6s 频谱",
+  "results": [
+    {"name": "mp3", "attachWhen": "loadedmetadata", "readyStateAtAttach": 1, "tracks": 1, "readyStateAtPlaying": 4, "peakDb": -41.7, "verdict": "AUDIO PRESENT", "currentTime": 1.46},
+    {"name": "frag-mp4", "attachWhen": "loadedmetadata", "readyStateAtAttach": 4, "tracks": 1, "readyStateAtPlaying": 4, "peakDb": -41.5, "verdict": "AUDIO PRESENT", "currentTime": 1.49},
+    {"name": "mp3", "attachWhen": "canplay", "readyStateAtAttach": 4, "tracks": 1, "readyStateAtPlaying": 4, "peakDb": -41.7, "verdict": "AUDIO PRESENT", "currentTime": 1.51},
+    {"name": "frag-mp4", "attachWhen": "canplay", "readyStateAtAttach": 4, "tracks": 1, "readyStateAtPlaying": 4, "peakDb": -41.5, "verdict": "AUDIO PRESENT", "currentTime": 1.49}
+  ],
+  "conclusion": "「早挂链导致永久静音」不成立：readyState 1 时挂上的链，开播后照样读到真实频谱。"
+}

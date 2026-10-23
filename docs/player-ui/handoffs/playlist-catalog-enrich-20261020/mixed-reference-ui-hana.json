@@ -1,0 +1,1009 @@
+{
+  "isolation": "localhost fixture APIs; not production Hana or real playlist writes",
+  "checks": [
+    {
+      "name": "312-match-search-select-apply-real-save",
+      "ok": true
+    },
+    {
+      "name": "312-edit-display-does-not-change-reference",
+      "ok": true
+    },
+    {
+      "name": "312-cancel-search-no-write",
+      "ok": true
+    },
+    {
+      "name": "1040-match-search-select-apply-real-save",
+      "ok": true
+    },
+    {
+      "name": "1040-edit-display-does-not-change-reference",
+      "ok": true
+    },
+    {
+      "name": "1040-cancel-search-no-write",
+      "ok": true
+    }
+  ],
+  "runtimeErrors": [],
+  "missingAuth": [],
+  "api": [
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/playback-state",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F1.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/lrc/load",
+      "query": "?name=Anti-Hero",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/audio-owner",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/lists",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+      "query": "?appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F1.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/lyric",
+      "query": "?songId=401",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F1.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/playback-state",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F1.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F2.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F3.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F4.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F5.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F6.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F7.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F8.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=artist&name=Taylor+Swift",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=search&title=Anti-Hero&artist=Taylor+Swift",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=search&title=Anti-Hero&artist=",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=album&id=4",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=album&id=5",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=5",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=5&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/lyric",
+      "query": "?songId=402",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=5&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/lrc/load",
+      "query": "?name=Anti-Hero",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/lyric",
+      "query": "?songId=402",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/playback-state",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=artist&name=Taylor+Swift",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=search&title=Anti-Hero&artist=Taylor+Swift",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=search&title=Anti-Hero&artist=",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=album&id=4",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/playback-state",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F1.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/lrc/load",
+      "query": "?name=Anti-Hero",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/audio-owner",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/lists",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+      "query": "?appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F1.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/lyric",
+      "query": "?songId=401",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F1.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F1.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F2.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F3.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F4.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F5.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F6.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F7.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F8.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/playback-state",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=artist&name=Taylor+Swift",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=search&title=Anti-Hero&artist=Taylor+Swift",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=search&title=Anti-Hero&artist=",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=album&id=4",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=album&id=5",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=5",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=5&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/lyric",
+      "query": "?songId=402",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=5&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F2.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F3.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F4.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F5.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F6.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F7.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F8.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=5&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/lrc/load",
+      "query": "?name=Anti-Hero",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F2.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F3.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F4.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F5.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F6.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F7.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F8.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/lyric",
+      "query": "?songId=402",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F2.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F3.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F4.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F5.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F6.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F7.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F8.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=5&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F2.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F3.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F4.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F5.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F6.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F7.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover",
+      "query": "?url=https%3A%2F%2Fi0.hdslb.com%2F8.jpg&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=artist&name=Taylor+Swift",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=search&title=Anti-Hero&artist=Taylor+Swift",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=search&title=Anti-Hero&artist=",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=album&id=4",
+      "method": "GET"
+    }
+  ],
+  "payloads": [
+    {
+      "tracks": [
+        {
+          "id": "bilibili:BV_MIX_1",
+          "name": "Anti-Hero",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 200,
+          "pic": "/api/apps/hanako-simple-player/routes/api/catalog/cover?albumId=5",
+          "catalogMatch": {
+            "provider": "netease",
+            "songId": 402,
+            "albumId": 5,
+            "title": "Anti-Hero",
+            "duration": 205,
+            "artistId": 44266,
+            "artist": "Taylor Swift",
+            "artists": [
+              {
+                "id": 44266,
+                "name": "Taylor Swift"
+              }
+            ],
+            "at": 1792582850987
+          },
+          "album": "Anti-Hero Single",
+          "albumId": 5,
+          "songId": 402,
+          "catalogBackup": {
+            "name": "Anti-Hero",
+            "author": "",
+            "at": 1792582850987,
+            "version": 2,
+            "hadAlbum": true,
+            "hadAlbumId": true,
+            "hadSongId": true,
+            "artist": "",
+            "album": "Midnights",
+            "albumId": 4,
+            "songId": 401
+          },
+          "coverBasePic": "https://i0.hdslb.com/1.jpg",
+          "catalogLyric": {
+            "provider": "netease",
+            "songId": 402,
+            "at": 1792582851120
+          },
+          "group": "",
+          "author": "Taylor Swift"
+        },
+        {
+          "id": "bilibili:BV_MIX_2",
+          "name": "Pure Song",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 300,
+          "pic": "https://i0.hdslb.com/2.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_MIX_3",
+          "name": "Artist Three - Song Three",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 240,
+          "pic": "https://i0.hdslb.com/3.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_MIX_4",
+          "name": "Song Four",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 180,
+          "pic": "https://i0.hdslb.com/4.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_MIX_5",
+          "name": "Song Five",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 210,
+          "pic": "https://i0.hdslb.com/5.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_MIX_6",
+          "name": "Song Six",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 220,
+          "pic": "https://i0.hdslb.com/6.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_MIX_7",
+          "name": "Song Seven",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 230,
+          "pic": "https://i0.hdslb.com/7.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_MIX_8",
+          "name": "Song Eight",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 240,
+          "pic": "https://i0.hdslb.com/8.jpg",
+          "group": ""
+        }
+      ],
+      "baseTracks": [
+        {
+          "id": "bilibili:BV_MIX_1",
+          "name": "Anti-Hero",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 200,
+          "pic": "https://i0.hdslb.com/1.jpg",
+          "catalogMatch": {
+            "provider": "netease",
+            "songId": 401,
+            "albumId": 4,
+            "title": "Anti-Hero",
+            "artist": "Taylor Swift",
+            "artistId": 44266,
+            "artists": [
+              {
+                "id": 44266,
+                "name": "Taylor Swift"
+              }
+            ]
+          },
+          "album": "Midnights",
+          "albumId": 4,
+          "songId": 401
+        },
+        {
+          "id": "bilibili:BV_MIX_2",
+          "name": "Pure Song",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 300,
+          "pic": "https://i0.hdslb.com/2.jpg"
+        },
+        {
+          "id": "bilibili:BV_MIX_3",
+          "name": "Artist Three - Song Three",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 240,
+          "pic": "https://i0.hdslb.com/3.jpg"
+        },
+        {
+          "id": "bilibili:BV_MIX_4",
+          "name": "Song Four",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 180,
+          "pic": "https://i0.hdslb.com/4.jpg"
+        },
+        {
+          "id": "bilibili:BV_MIX_5",
+          "name": "Song Five",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 210,
+          "pic": "https://i0.hdslb.com/5.jpg"
+        },
+        {
+          "id": "bilibili:BV_MIX_6",
+          "name": "Song Six",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 220,
+          "pic": "https://i0.hdslb.com/6.jpg"
+        },
+        {
+          "id": "bilibili:BV_MIX_7",
+          "name": "Song Seven",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 230,
+          "pic": "https://i0.hdslb.com/7.jpg"
+        },
+        {
+          "id": "bilibili:BV_MIX_8",
+          "name": "Song Eight",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 240,
+          "pic": "https://i0.hdslb.com/8.jpg"
+        }
+      ]
+    },
+    {
+      "tracks": [
+        {
+          "id": "bilibili:BV_MIX_1",
+          "name": "Anti-Hero",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 200,
+          "pic": "/api/apps/hanako-simple-player/routes/api/catalog/cover?albumId=5",
+          "catalogMatch": {
+            "provider": "netease",
+            "songId": 402,
+            "albumId": 5,
+            "title": "Anti-Hero",
+            "duration": 205,
+            "artistId": 44266,
+            "artist": "Taylor Swift",
+            "artists": [
+              {
+                "id": 44266,
+                "name": "Taylor Swift"
+              }
+            ],
+            "at": 1792582850987
+          },
+          "album": "Anti-Hero Single",
+          "albumId": 5,
+          "songId": 402,
+          "catalogBackup": {
+            "name": "Anti-Hero",
+            "author": "",
+            "at": 1792582850987,
+            "version": 2,
+            "hadAlbum": true,
+            "hadAlbumId": true,
+            "hadSongId": true,
+            "artist": "",
+            "album": "Midnights",
+            "albumId": 4,
+            "songId": 401
+          },
+          "coverBasePic": "https://i0.hdslb.com/1.jpg",
+          "catalogLyric": {
+            "provider": "netease",
+            "songId": 402,
+            "at": 1792582851120
+          },
+          "group": "",
+          "author": "Taylor Swift"
+        },
+        {
+          "id": "bilibili:BV_MIX_2",
+          "name": "Edited Display",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 300,
+          "pic": "https://i0.hdslb.com/2.jpg",
+          "group": "",
+          "author": "Edited Artist"
+        },
+        {
+          "id": "bilibili:BV_MIX_3",
+          "name": "Artist Three - Song Three",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 240,
+          "pic": "https://i0.hdslb.com/3.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_MIX_4",
+          "name": "Song Four",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 180,
+          "pic": "https://i0.hdslb.com/4.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_MIX_5",
+          "name": "Song Five",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 210,
+          "pic": "https://i0.hdslb.com/5.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_MIX_6",
+          "name": "Song Six",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 220,
+          "pic": "https://i0.hdslb.com/6.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_MIX_7",
+          "name": "Song Seven",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 230,
+          "pic": "https://i0.hdslb.com/7.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_MIX_8",
+          "name": "Song Eight",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 240,
+          "pic": "https://i0.hdslb.com/8.jpg",
+          "group": ""
+        }
+      ],
+      "baseTracks": [
+        {
+          "id": "bilibili:BV_MIX_1",
+          "name": "Anti-Hero",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 200,
+          "pic": "/api/apps/hanako-simple-player/routes/api/catalog/cover?albumId=5",
+          "catalogMatch": {
+            "provider": "netease",
+            "songId": 402,
+            "albumId": 5,
+            "title": "Anti-Hero",
+            "duration": 205,
+            "artistId": 44266,
+            "artist": "Taylor Swift",
+            "artists": [
+              {
+                "id": 44266,
+                "name": "Taylor Swift"
+              }
+            ],
+            "at": 1792582850987
+          },
+          "album": "Anti-Hero Single",
+          "albumId": 5,
+          "songId": 402,
+          "catalogBackup": {
+            "name": "Anti-Hero",
+            "author": "",
+            "at": 1792582850987,
+            "version": 2,
+            "hadAlbum": true,
+            "hadAlbumId": true,
+            "hadSongId": true,
+            "artist": "",
+            "album": "Midnights",
+            "albumId": 4,
+            "songId": 401
+          },
+          "coverBasePic": "https://i0.hdslb.com/1.jpg",
+          "catalogLyric": {
+            "provider": "netease",
+            "songId": 402,
+            "at": 1792582851120
+          },
+          "group": "",
+          "author": "Taylor Swift"
+        },
+        {
+          "id": "bilibili:BV_MIX_2",
+          "name": "Pure Song",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 300,
+          "pic": "https://i0.hdslb.com/2.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_MIX_3",
+          "name": "Artist Three - Song Three",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 240,
+          "pic": "https://i0.hdslb.com/3.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_MIX_4",
+          "name": "Song Four",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 180,
+          "pic": "https://i0.hdslb.com/4.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_MIX_5",
+          "name": "Song Five",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 210,
+          "pic": "https://i0.hdslb.com/5.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_MIX_6",
+          "name": "Song Six",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 220,
+          "pic": "https://i0.hdslb.com/6.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_MIX_7",
+          "name": "Song Seven",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 230,
+          "pic": "https://i0.hdslb.com/7.jpg",
+          "group": ""
+        },
+        {
+          "id": "bilibili:BV_MIX_8",
+          "name": "Song Eight",
+          "list": "imp:1",
+          "mode": "在线",
+          "url": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+          "dur": 240,
+          "pic": "https://i0.hdslb.com/8.jpg",
+          "group": ""
+        }
+      ]
+    }
+  ]
+}

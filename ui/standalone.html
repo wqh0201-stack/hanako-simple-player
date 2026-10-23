@@ -252,10 +252,15 @@
             <svg class="icon icon-sm" aria-hidden="true"><use href="#i-copy"></use></svg>
             <span>复制歌名</span>
           </button>
-          <button class="pop-item" id="getCoverBtn" type="button">
-            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-cover"></use></svg>
-            <span>获取此曲封面</span>
+          <button class="pop-item" id="copyArtistBtn" type="button">
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-user"></use></svg>
+            <span>复制歌手</span>
           </button>
+          <button class="pop-item" id="editSongBtn" type="button">
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-pencil"></use></svg>
+            <span>编辑歌曲…</span>
+          </button>
+          <p class="pop-note" id="moreRef"></p>
         </div>
 
         <!-- 移动目标（二级浮层）：只列可移动到的真歌单（我的喜欢 + 导入歌单） -->
@@ -288,6 +293,10 @@
             <svg class="icon icon-sm" aria-hidden="true"><use href="#i-disc"></use></svg>
             <span>补全封面…</span>
           </button>
+          <button class="pop-item" data-import="enrich" type="button">
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-disc"></use></svg>
+            <span>整理歌单…</span>
+          </button>
           <p class="pop-note" id="importNote"></p>
         </div>
 
@@ -296,8 +305,9 @@
           <p class="pop-title" id="listPopTitle"></p>
           <button class="pop-item" id="listCoverBtn" type="button">
             <svg class="icon icon-sm" aria-hidden="true"><use href="#i-disc"></use></svg>
-            <span>补全封面…</span>
+            <span>整理歌单…</span>
           </button>
+          <p class="pop-note cover-reset-note">整理会把封面更新为默认专辑封面，替换你选过的其他专辑封面。</p>
           <button class="pop-item" id="listDeleteBtn" type="button">
             <svg class="icon icon-sm" aria-hidden="true"><use href="#i-trash"></use></svg>
             <span>删除歌单</span>
@@ -307,16 +317,105 @@
             <span>取消</span>
           </button>
         </div>
+        <div class="pop match-pop" id="matchPop" hidden role="dialog" aria-labelledby="matchTitle">
+          <p class="pop-title" id="matchTitle">更换匹配</p>
+          <p class="match-current" id="matchCurrent"></p>
+          <label class="cover-label" for="matchSong">歌名</label>
+          <div class="pop-link"><input class="pop-input" id="matchSong" type="text" maxlength="160" autocomplete="off" placeholder="官方歌名"></div>
+          <label class="cover-label" for="matchArtist">歌手（可留空，按歌名查找）</label>
+          <div class="pop-link">
+            <input class="pop-input" id="matchArtist" type="text" maxlength="120" autocomplete="off" placeholder="歌手 / 合作歌手">
+            <button class="pop-go" id="matchSearchBtn" type="button">搜索</button>
+          </div>
+          <p class="pop-note" id="matchNote" role="status" aria-live="polite"></p>
+          <div class="match-list" id="matchList"></div>
+          <div class="cover-pick-actions">
+            <button class="pop-item" id="matchCancelBtn" type="button">取消</button>
+            <button class="pop-go" id="matchApplyBtn" type="button" disabled>使用此匹配</button>
+          </div>
+        </div>
+        <div class="pop edit-pop" id="editPop" hidden role="dialog" aria-labelledby="editTitle">
+          <p class="pop-title" id="editTitle">编辑显示信息</p>
+          <p class="pop-note">只修改当前副本的歌名、歌手、专辑显示；不会更换参考身份、封面或歌词。</p>
+          <label class="cover-label" for="editSong">歌名</label>
+          <div class="pop-link"><input class="pop-input" id="editSong" type="text" maxlength="160" autocomplete="off"></div>
+          <label class="cover-label" for="editArtist">歌手</label>
+          <div class="pop-link"><input class="pop-input" id="editArtist" type="text" maxlength="120" autocomplete="off"></div>
+          <label class="cover-label" for="editAlbum">专辑</label>
+          <div class="pop-link"><input class="pop-input" id="editAlbum" type="text" maxlength="160" autocomplete="off"></div>
+          <p class="pop-note" id="editNote" role="status" aria-live="polite"></p>
+          <div class="cover-pick-actions">
+            <button class="pop-item" id="editCancelBtn" type="button">取消</button>
+            <button class="pop-go" id="editSaveBtn" type="button">保存</button>
+          </div>
+        </div>
+        <div class="pop song-edit-pop" id="songEditPop" hidden role="dialog" aria-labelledby="songEditTitle">
+          <p class="pop-title" id="songEditTitle">编辑歌曲</p>
+          <p class="song-edit-track" id="songEditTrack"></p>
+          <p class="pop-note" id="songEditPending" hidden></p>
+          <div class="song-edit-scroll">
+            <section class="song-edit-section">
+              <p class="song-edit-head">显示信息</p>
+              <label class="cover-label" for="songEditName">歌名</label>
+              <div class="pop-link"><input class="pop-input" id="songEditName" type="text" maxlength="160" autocomplete="off"></div>
+              <label class="cover-label" for="songEditArtist">歌手</label>
+              <div class="pop-link"><input class="pop-input" id="songEditArtist" type="text" maxlength="160" autocomplete="off"><button class="pop-go" id="songEditCopyArtist" type="button">复制</button></div>
+              <label class="cover-label" for="songEditAlbum">专辑</label>
+              <div class="pop-link"><input class="pop-input" id="songEditAlbum" type="text" maxlength="160" autocomplete="off"></div>
+              <p class="pop-note">显示修改只作用当前副本；不更换参考身份、封面或歌词。</p>
+            </section>
+            <section class="song-edit-section">
+              <div class="song-edit-head-row"><p class="song-edit-head">参考匹配</p><button class="pop-go" id="songEditSearchBtn" type="button">查找版本</button></div>
+              <p class="song-edit-current" id="songEditRef"></p>
+              <label class="cover-label" for="songEditSearchArtist">查找用歌手（可留空；与显示歌手分开）</label>
+              <div class="pop-link"><input class="pop-input" id="songEditSearchArtist" type="text" maxlength="160" autocomplete="off" placeholder="指定歌手或留空"></div>
+              <p class="pop-note" id="songEditNote" role="status" aria-live="polite"></p>
+              <div class="match-list" id="songEditCandidates"></div>
+            </section>
+            <section class="song-edit-section">
+              <div class="song-edit-head-row"><p class="song-edit-head">封面</p><button class="pop-go" id="songEditCoverReload" type="button">刷新</button></div>
+              <p class="pop-note" id="songEditCoverNote" role="status" aria-live="polite"></p>
+              <div class="cover-choice-list song-edit-cover-list" id="songEditCovers"></div>
+            </section>
+            <section class="song-edit-section">
+              <p class="song-edit-head">歌词</p>
+              <p class="pop-note" id="songEditLyric"></p>
+              <button class="pop-item" id="songEditLyricBtn" type="button"><span>调整歌词…</span></button>
+            </section>
+          </div>
+          <div class="song-edit-actions">
+            <button class="pop-item" id="songEditRestoreInfo" type="button">恢复原始信息</button>
+            <button class="pop-item" id="songEditRestoreCover" type="button">恢复原图</button>
+            <button class="pop-item" id="songEditCancel" type="button">取消</button>
+            <button class="pop-go" id="songEditSave" type="button">保存更改</button>
+          </div>
+        </div>
         <div class="pop cover-pop" id="coverPop" hidden role="dialog" aria-labelledby="coverTitle">
           <p class="pop-title" id="coverTitle">补全封面</p>
-          <label class="cover-label" for="coverArtist">这组曲目的歌手</label>
+          <p class="pop-note cover-reset-note" id="coverResetNote" hidden>整理将把封面更新为默认专辑封面，替换你选过的其他专辑封面；不会改动手动歌词。</p>
+          <label class="cover-label" id="coverSongLabel" for="coverSong" hidden>歌名（仅用于本曲封面）</label>
+          <div class="pop-link" id="coverSongRow" hidden>
+            <input class="pop-input" id="coverSong" type="text" maxlength="160" autocomplete="off" placeholder="填写歌名">
+          </div>
+          <label class="cover-label" for="coverArtist" id="coverArtistLabel">缺省歌手（可留空）</label>
           <div class="pop-link">
             <input class="pop-input" id="coverArtist" type="text" maxlength="80" autocomplete="off" placeholder="填写歌手名">
             <button class="pop-go" id="coverStartBtn" type="button">开始</button>
           </div>
           <p class="pop-note" id="coverNote" role="status" aria-live="polite"></p>
           <button class="pop-item" id="coverRestoreBtn" type="button"><span>恢复原封面</span></button>
+          <button class="pop-item" id="catalogRestoreBtn" type="button" hidden><span>恢复原始曲目信息</span></button>
           <button class="pop-item" id="coverCloseBtn" type="button">关闭</button>
+        </div>
+        <div class="pop cover-pick-pop" id="coverPickPop" hidden role="dialog" aria-labelledby="coverPickTitle">
+          <p class="pop-title" id="coverPickTitle">更换封面</p>
+          <p class="cover-pick-track" id="coverPickTrack"></p>
+          <p class="pop-note" id="coverPickNote" role="status" aria-live="polite"></p>
+          <div class="cover-choice-list" id="coverChoiceList"></div>
+          <div class="cover-pick-actions">
+            <button class="pop-item" id="coverPickCancelBtn" type="button">取消</button>
+            <button class="pop-go" id="coverPickApplyBtn" type="button" disabled>使用此封面</button>
+          </div>
         </div>
       </section>
 
@@ -586,7 +685,7 @@
 </defs></svg>
 
 <script src="app.js" defer></script>
-<script>window.__HANA_BUILD = "1003131778";</script>
+<script>window.__HANA_BUILD = "1003131827";</script>
 <script type="module">
   import { hana } from "./sdk.js";
   window.hana = hana;

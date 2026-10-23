@@ -1,0 +1,40 @@
+{
+  "source": "Official music.163.com public search API, read through web_fetch on logical date 2026-10-20. Six search responses had business code 200. Selected fields only; this is not a full album catalog, playback entitlement or a 100-song match-rate measurement.",
+  "urls": [
+    "https://music.163.com/api/search/get/web?s=Taylor%20Swift&type=100&limit=5&offset=0",
+    "https://music.163.com/api/search/get/web?s=Anti-Hero%20Taylor%20Swift&type=1&limit=5&offset=0",
+    "https://music.163.com/api/search/get/web?s=Long%20Live%20Taylor%20Swift&type=1&limit=5&offset=0",
+    "https://music.163.com/api/search/get/web?s=exile%20Taylor%20Swift&type=1&limit=3&offset=0",
+    "https://music.163.com/api/search/get/web?s=I%20Knew%20You%20Were%20Trouble%20Taylor%20Swift&type=1&limit=3&offset=0",
+    "https://music.163.com/api/search/get/web?s=Love%20Story%20Taylor%20Swift&type=1&limit=5&offset=0"
+  ],
+  "normalization": "title/artists/album IDs, names, publishTime and size copied from search records. Album type/subType and real cover URL are not returned by these records and must not be invented. A test may derive its local catalogCover URL from albumId.",
+  "albumDetailObservation": { "url": "https://music.163.com/api/album/92895788", "businessCode": -462, "message": "请绑定手机后再试哦~", "context": "web_fetch without account; stopped after one rejection. This is not proof that the App's different network context also fails, nor proof of rate limiting. No verification tokens copied." },
+  "artist": { "id": 44266, "name": "Taylor Swift", "aliases": [] },
+  "baseExpected": {
+    "008. Anti-Hero": 1990192694,
+    "096. Long Live": 19292862,
+    "005. exile": 1465114465,
+    "004. I Knew You Were Trouble [2012]": 25648017,
+    "001. Love Story": 19292984
+  },
+  "tracks": [
+    { "songId": 1990192694, "title": "Anti-Hero", "artists": [{ "id": 44266, "name": "Taylor Swift" }], "albumId": 153345099, "album": "Midnights (3am Edition)", "published": 1666281600000, "albumSize": 20 },
+    { "songId": 2050561736, "title": "Anti-Hero", "artists": [{ "id": 44266, "name": "Taylor Swift" }], "albumId": 166435890, "album": "Midnights (The Til Dawn Edition)", "published": 1685030400000, "albumSize": 23 },
+    { "songId": 2001557202, "title": "Anti-Hero (Acoustic Version)", "artists": [{ "id": 44266, "name": "Taylor Swift" }], "albumId": 155516301, "album": "Anti-Hero (Acoustic Version)", "published": 1669305600000, "albumSize": 1 },
+    { "songId": 1999582076, "title": "Anti-Hero (ILLENIUM Remix)", "artists": [{ "id": 44266, "name": "Taylor Swift" }, { "id": 1050518, "name": "ILLENIUM" }], "albumId": 155170506, "album": "Anti-Hero (ILLENIUM Remix)", "published": 1668700800000, "albumSize": 1 },
+    { "songId": 19292862, "title": "Long Live", "artists": [{ "id": 44266, "name": "Taylor Swift" }], "albumId": 1770431, "album": "Speak Now (Deluxe Edition)", "published": 1287936000000, "albumSize": 22 },
+    { "songId": 2059790562, "title": "Long Live (Taylor's Version)", "artists": [{ "id": 44266, "name": "Taylor Swift" }], "albumId": 168588248, "album": "Speak Now (Taylor's Version)", "published": 1688659200000, "albumSize": 22 },
+    { "songId": 19292833, "title": "Long Live (Live/2011)", "artists": [{ "id": 44266, "name": "Taylor Swift" }], "albumId": 1770429, "album": "Speak Now World Tour Live", "published": 1321804800000, "albumSize": 16 },
+    { "songId": 1333125886, "title": "Long Live (Commentary)", "artists": [{ "id": 44266, "name": "Taylor Swift" }], "albumId": 74869788, "album": "Speak Now (Big Machine Radio Release Special)", "published": 1287936000000, "albumSize": 28 },
+    { "songId": 1465114465, "title": "exile", "artists": [{ "id": 44266, "name": "Taylor Swift" }, { "id": 29337, "name": "Bon Iver" }], "albumId": 92895788, "album": "folklore (deluxe version)", "published": 1597680000000, "albumSize": 17 },
+    { "songId": 1498028618, "title": "exile (the long pond studio sessions)", "artists": [{ "id": 44266, "name": "Taylor Swift" }, { "id": 29337, "name": "Bon Iver" }], "albumId": 98745690, "album": "folklore: the long pond studio sessions (from the Disney+ special) (deluxe edition)", "published": 1606233600000, "albumSize": 34 },
+    { "songId": 1498023990, "title": "exile", "artists": [{ "id": 44266, "name": "Taylor Swift" }, { "id": 29337, "name": "Bon Iver" }], "albumId": 98745690, "album": "folklore: the long pond studio sessions (from the Disney+ special) (deluxe edition)", "published": 1606233600000, "albumSize": 34 },
+    { "songId": 25648017, "title": "I Knew You Were Trouble.", "artists": [{ "id": 44266, "name": "Taylor Swift" }], "albumId": 2265005, "album": "I Knew You Were Trouble.", "published": 1349712000007, "albumSize": 1 },
+    { "songId": 1891454316, "title": "I Knew You Were Trouble (Taylor's Version)", "artists": [{ "id": 44266, "name": "Taylor Swift" }], "albumId": 135521226, "album": "Red (Taylor's Version)", "published": 1636646400000, "albumSize": 30 },
+    { "songId": 19292984, "title": "Love Story", "artists": [{ "id": 44266, "name": "Taylor Swift" }], "albumId": 1770438, "album": "Fearless", "published": 1226332800000, "albumSize": 13 },
+    { "songId": 1819857342, "title": "Love Story (Taylor’s Version)", "artists": [{ "id": 44266, "name": "Taylor Swift" }], "albumId": 125149262, "album": "Fearless (Taylor's Version)", "published": 1617897600000, "albumSize": 26 },
+    { "songId": 1443002886, "title": "Love Story (Live From Clear Channel Stripped 2008)", "artists": [{ "id": 44266, "name": "Taylor Swift" }], "albumId": 88459233, "album": "Live From Clear Channel Stripped 2008", "published": 1214582400000, "albumSize": 8 },
+    { "songId": 1439303315, "title": "Love Story (Pop Mix)", "artists": [{ "id": 44266, "name": "Taylor Swift" }], "albumId": 87850174, "album": "Love Story (Pop Mix)", "published": 1581004800000, "albumSize": 1 }
+  ]
+}

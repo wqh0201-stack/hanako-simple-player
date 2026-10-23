@@ -1,0 +1,19 @@
+{
+  "probe": "probe2.html —— 用 Chrome 直接摸 B站最高码率音频的 PCDN 节点（2026-10-22 取的 30232/103kbps 节点，与 app 选中的 30280 同类）",
+  "url_host": "xy124x225x154x138xy.mcdn.bilivideo.cn:8082",
+  "fetch_with_range_bytes_0_1023": {
+    "status": 206,
+    "contentLength": "1024",
+    "contentType": "application/octet-stream",
+    "contentRange_readable": null,
+    "note": "Content-Range / Accept-Ranges / ACAO 都不在 CORS 安全列表里，JS 读不到 —— null 既可能是「没发」也可能是「没暴露」，无法据此判断。"
+  },
+  "audio_element_on_same_url": {
+    "readyState": 1,
+    "duration": 266.88,
+    "played": true,
+    "currentTime": 0.269069,
+    "captureError": "SecurityError: Failed to execute 'captureStream' on 'HTMLMediaElement': Cannot capture from element with cross-origin data"
+  },
+  "conclusion": "PCDN 节点本身能播、能回 206（1024 字节正好是请求的 range 长度）；跨源挂载时 captureStream 抛 SecurityError。"
+}

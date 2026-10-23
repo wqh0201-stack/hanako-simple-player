@@ -1,0 +1,497 @@
+{
+  "isolation": "localhost fixture APIs; not production Hana or real playlist writes",
+  "checks": [
+    {
+      "name": "312-batch-real-menu-click-and-save",
+      "ok": true
+    },
+    {
+      "name": "312-single-input-restore-scope-no-catalog-build",
+      "ok": true
+    },
+    {
+      "name": "312-single-cover-restore-does-not-touch-other-song",
+      "ok": true
+    },
+    {
+      "name": "312-old-get-cover-does-not-normalize-or-bind-lyrics",
+      "ok": true
+    },
+    {
+      "name": "1040-batch-real-menu-click-and-save",
+      "ok": true
+    },
+    {
+      "name": "1040-single-input-restore-scope-no-catalog-build",
+      "ok": true
+    },
+    {
+      "name": "1040-single-cover-restore-does-not-touch-other-song",
+      "ok": true
+    },
+    {
+      "name": "1040-old-get-cover-does-not-normalize-or-bind-lyrics",
+      "ok": true
+    }
+  ],
+  "runtimeErrors": [],
+  "missingAuth": [],
+  "api": [
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/playback-state",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/lrc/load",
+      "query": "?name=%E6%94%B6%E8%97%8F%E5%89%AF%E6%9C%AC%E5%8E%9F%E5%90%8D",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/audio-owner",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/lists",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+      "query": "?appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/search",
+      "query": "?keyword=%E6%94%B6%E8%97%8F%E5%89%AF%E6%9C%AC%E5%8E%9F%E5%90%8D&server=netease",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/search",
+      "query": "?keyword=%E6%94%B6%E8%97%8F%E5%89%AF%E6%9C%AC%E5%8E%9F%E5%90%8D&server=tencent",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/search",
+      "query": "?keyword=%E6%94%B6%E8%97%8F%E5%89%AF%E6%9C%AC%E5%8E%9F%E5%90%8D&server=kugou",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/playback-state",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/artist",
+      "query": "?name=Avril%20Lavigne",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/build",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/index",
+      "query": "?artistId=46490",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=34734318",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=34734318&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/lyric",
+      "query": "?songId=416633695",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=1515088",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=1515088&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/lyric",
+      "query": "?songId=16431880",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=34734318&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=1515088&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/playback-state",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/artist",
+      "query": "?name=Avril%20Lavigne",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/index",
+      "query": "?artistId=46490",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/lyric",
+      "query": "?songId=416633695",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/playback-state",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/lrc/load",
+      "query": "?name=%E6%94%B6%E8%97%8F%E5%89%AF%E6%9C%AC%E5%8E%9F%E5%90%8D",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/audio-owner",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/lists",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+      "query": "?appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/search",
+      "query": "?keyword=%E6%94%B6%E8%97%8F%E5%89%AF%E6%9C%AC%E5%8E%9F%E5%90%8D&server=netease",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/search",
+      "query": "?keyword=%E6%94%B6%E8%97%8F%E5%89%AF%E6%9C%AC%E5%8E%9F%E5%90%8D&server=tencent",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/search",
+      "query": "?keyword=%E6%94%B6%E8%97%8F%E5%89%AF%E6%9C%AC%E5%8E%9F%E5%90%8D&server=kugou",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/playback-state",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=artist&name=Avril+Lavigne",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=search&title=Innocence&artist=Avril+Lavigne",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=albums&id=46490",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=album&id=34734318",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/playback-state",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/lrc/load",
+      "query": "?name=%E6%94%B6%E8%97%8F%E5%89%AF%E6%9C%AC%E5%8E%9F%E5%90%8D",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/audio-owner",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/lists",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+      "query": "?appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/search",
+      "query": "?keyword=%E6%94%B6%E8%97%8F%E5%89%AF%E6%9C%AC%E5%8E%9F%E5%90%8D&server=netease",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/search",
+      "query": "?keyword=%E6%94%B6%E8%97%8F%E5%89%AF%E6%9C%AC%E5%8E%9F%E5%90%8D&server=tencent",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/search",
+      "query": "?keyword=%E6%94%B6%E8%97%8F%E5%89%AF%E6%9C%AC%E5%8E%9F%E5%90%8D&server=kugou",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/playback-state",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/artist",
+      "query": "?name=Avril%20Lavigne",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/build",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/index",
+      "query": "?artistId=46490",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=34734318",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=34734318&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/lyric",
+      "query": "?songId=416633695",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=1515088",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=1515088&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/lyric",
+      "query": "?songId=16431880",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=34734318&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=1515088&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=34734318&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/cover",
+      "query": "?albumId=34734318&appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/artist",
+      "query": "?name=Avril%20Lavigne",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/index",
+      "query": "?artistId=46490",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/catalog/lyric",
+      "query": "?songId=416633695",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/playback-state",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/lrc/load",
+      "query": "?name=%E6%94%B6%E8%97%8F%E5%89%AF%E6%9C%AC%E5%8E%9F%E5%90%8D",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/audio-owner",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/lists",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/_fixture/audio.wav",
+      "query": "?appSurfaceSession=fake-ticket",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/search",
+      "query": "?keyword=%E6%94%B6%E8%97%8F%E5%89%AF%E6%9C%AC%E5%8E%9F%E5%90%8D&server=netease",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/search",
+      "query": "?keyword=%E6%94%B6%E8%97%8F%E5%89%AF%E6%9C%AC%E5%8E%9F%E5%90%8D&server=tencent",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/search",
+      "query": "?keyword=%E6%94%B6%E8%97%8F%E5%89%AF%E6%9C%AC%E5%8E%9F%E5%90%8D&server=kugou",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/api/playback-state",
+      "query": "",
+      "method": "POST"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=artist&name=Avril+Lavigne",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=search&title=Innocence&artist=Avril+Lavigne",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=albums&id=46490",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog",
+      "query": "?kind=album&id=34734318",
+      "method": "GET"
+    },
+    {
+      "p": "/api/apps/hanako-simple-player/routes/widget/api/playlist",
+      "query": "",
+      "method": "POST"
+    }
+  ],
+  "diagnostics": []
+}

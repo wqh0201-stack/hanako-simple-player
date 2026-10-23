@@ -1,0 +1,470 @@
+{
+  "selfCheck": [],
+  "wiring": {},
+  "four": {},
+  "darkFallback": {},
+  "runtimeErrors": [],
+  "expectedProbes": [
+    "http 404 http://127.0.0.1:52314/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:52314/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:52314/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:52314/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:52314/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%9C%A8%E7%BA%BF%E6%9B%B2%E7%9B%AE%201",
+    "reqfail: http://127.0.0.1:52314/api/apps/hanako-simple-player/routes/widget/api/music/go/900000?server=netease&appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:52314/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%91%A8%E6%9D%B0%E4%BC%A6%20-%20%E7%A8%BB%E9%A6%99",
+    "reqfail: http://127.0.0.1:52314/api/apps/hanako-simple-player/routes/_fixture/audio.wav?appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:52314/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E5%91%A8%E6%9D%B0%E4%BC%A6%20-%20%E7%A8%BB%E9%A6%99",
+    "reqfail: http://127.0.0.1:52314/api/apps/hanako-simple-player/routes/_fixture/audio.wav?appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "reqfail: http://127.0.0.1:52314/api/apps/hanako-simple-player/routes/widget/api/music/cover-catalog?kind=artist&name=%E5%91%A8%E6%9D%B0%E4%BC%A6 net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:52314/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E6%9B%B2%E7%9B%AE0",
+    "reqfail: http://127.0.0.1:52314/api/apps/hanako-simple-player/routes/_fixture/audio.wav?appSurfaceSession=fake-ticket net::ERR_ABORTED",
+    "http 404 http://127.0.0.1:52314/api/apps/hanako-simple-player/routes/widget/api/lrc/load?name=%E7%A8%BB%E9%A6%99"
+  ],
+  "assertions": [
+    {
+      "name": "mood-lists-backend-priority-and-order",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-rename-backend-persistence",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-rename-survives-reload",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-own-echo-no-rerender",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-external-create-shows-tracks-immediately",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-broadcast-does-not-write-back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-same-name-replacement-refreshes-tracks",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-no-direct-storage-write",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mood-lists-backend-unavailable-legacy-fallback",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-clean-keeps-single-character-songs",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-clean-preserves-multiple-artists",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-clean-aimer-dates-translations-and-instrumental-heading",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-clean-parses-live-version-without-dropping-it",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-clean-parses-unbracketed-version-suffix",
+      "ok": true,
+      "detail": "{\"song\":\"稻香\",\"artists\":[\"周杰伦\"],\"version\":\"live\",\"forms\":[{\"song\":\"稻香\",\"version\":\"live\",\"detail\":\"现场版\",\"artists\":[\"周杰伦\"]},{\"song\":\"周杰伦\",\"version\":\"\",\"detail\":\"\",\"artists\":[\"稻香 现场版\"]},{\"song\":\"周杰伦 - 稻香\",\"version\":\"live\",\"detail\":\"现场版\",\"artists\":[]}],\"text\":\"周杰伦 - 稻香 现场版\",\"ok\":true}"
+    },
+    {
+      "name": "cover-match-selects-original-before-compilation-and-reissue",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-match-accepts-confirmed-live-version",
+      "ok": true,
+      "detail": "{\"title\":\"稻香\",\"artists\":[{\"id\":6452,\"name\":\"周杰伦\"}],\"albumId\":2,\"album\":\"演唱会\",\"pic\":\"/original\",\"published\":2000}"
+    },
+    {
+      "name": "cover-dirty-names-numbering-quality-tags-and-reversed-order",
+      "ok": true,
+      "detail": "[{\"title\":\"七里香\",\"songId\":1,\"albumId\":2,\"album\":\"七里香\",\"pic\":\"/cover\",\"published\":2004,\"artists\":[{\"id\":6452,\"name\":\"周杰伦\"}]},{\"title\":\"七里香\",\"songId\":1,\"albumId\":2,\"album\":\"七里香\",\"pic\":\"/cover\",\"published\":2004,\"artists\":[{\"id\":6452,\"name\":\"周杰伦\"}]},{\"title\":\"七里香\",\"songId\":1,\"albumId\":2,\"album\":\"七里香\",\"pic\":\"/cover\",\"published\":2004,\"artists\":[{\"id\":6452,\"name\":\"周杰伦\"}]},{\"title\":\"七里香\",\"songId\":1,\"albumId\":2,\"album\":\"七里香\",\"pic\":\"/cover\",\"published\":2004,\"artists\":[{\"id\":6452,\"name\":\"周杰伦\"}]},{\"title\":\"七里香\",\"songId\":1,\"albumId\":2,\"album\":\"七里香\",\"pic\":\"/cover\",\"published\":2004,\"artists\":[{\"id\":6452,\"name\":\"周杰伦\"}]}]"
+    },
+    {
+      "name": "cover-short-title-needs-exact-name",
+      "ok": true,
+      "detail": "{\"exact\":{\"title\":\"枫\",\"songId\":3,\"album\":\"y\",\"pic\":\"/cover\",\"artists\":[{\"id\":6452,\"name\":\"周杰伦\"}]},\"other\":{\"title\":\"枫叶\",\"songId\":2,\"album\":\"x\",\"pic\":\"/cover\",\"artists\":[{\"id\":6452,\"name\":\"周杰伦\"}]}}"
+    },
+    {
+      "name": "cover-menu-opens-prefilled-current-list",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-panel-fits-312",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-batch-panel-hides-single-song-row-312",
+      "ok": true,
+      "detail": "{\"row\":false,\"restore\":true}"
+    },
+    {
+      "name": "cover-panel-fits-465",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-batch-panel-hides-single-song-row-465",
+      "ok": true,
+      "detail": "{\"row\":false,\"restore\":true}"
+    },
+    {
+      "name": "cover-panel-fits-1040",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-batch-panel-hides-single-song-row-1040",
+      "ok": true,
+      "detail": "{\"row\":false,\"restore\":true}"
+    },
+    {
+      "name": "cover-single-panel-fits-312",
+      "ok": true,
+      "detail": "{\"visible\":true,\"inside\":true,\"row\":true,\"label\":true,\"restore\":false,\"song\":\"稻香\",\"disabled\":false}"
+    },
+    {
+      "name": "cover-single-panel-fits-465",
+      "ok": true,
+      "detail": "{\"visible\":true,\"inside\":true,\"row\":true,\"label\":true,\"restore\":false,\"song\":\"稻香\",\"disabled\":false}"
+    },
+    {
+      "name": "cover-single-panel-fits-1040",
+      "ok": true,
+      "detail": "{\"visible\":true,\"inside\":true,\"row\":true,\"label\":true,\"restore\":false,\"song\":\"稻香\",\"disabled\":false}"
+    },
+    {
+      "name": "cover-bilibili-up-author-is-not-used-as-singer",
+      "ok": true,
+      "detail": "{\"panel\":true,\"artist\":\"\",\"song\":\"稻香\"}"
+    },
+    {
+      "name": "cover-fill-syncs-source-favorite-and-recent-copies",
+      "ok": true,
+      "detail": "[{\"uid\":\"imp:1|bilibili:BV16XpM6EEtF_1\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"match\":{\"originalPic\":\"\",\"source\":\"netease\",\"artistId\":6452,\"artist\":\"周杰伦\",\"artists\":[{\"id\":6452,\"name\":\"周杰伦\"}],\"title\":\"稻香\",\"songId\":185709,\"albumId\":18877,\"album\":\"魔杰座\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"at\":1792505654439}},{\"uid\":\"fav|bilibili:BV16XpM6EEtF_1\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"match\":{\"originalPic\":\"\",\"source\":\"netease\",\"artistId\":6452,\"artist\":\"周杰伦\",\"artists\":[{\"id\":6452,\"name\":\"周杰伦\"}],\"title\":\"稻香\",\"songId\":185709,\"albumId\":18877,\"album\":\"魔杰座\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"at\":1792505654439}},{\"uid\":\"recent|bilibili:BV16XpM6EEtF_1\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"match\":{\"originalPic\":\"\",\"source\":\"netease\",\"artistId\":6452,\"artist\":\"周杰伦\",\"artists\":[{\"id\":6452,\"name\":\"周杰伦\"}],\"title\":\"稻香\",\"songId\":185709,\"albumId\":18877,\"album\":\"魔杰座\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"at\":1792505654439}}]"
+    },
+    {
+      "name": "cover-fill-uses-correct-live-version-and-preserves-custom-and-other-platform-covers",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-fill-saves-match-provenance",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-repeat-preserves-original-backup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-restore-after-reload-syncs-copies-and-removes-binding",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-stop-prevents-commit-and-further-catalog-requests",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-metadata-failure-preserves-original",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover-undecodable-image-is-not-written",
+      "ok": true,
+      "detail": "已补全 0 首，还有 3 首未补全。其中 3 首请求失败，可稍后重试。可点击歌曲后的「⋯」→「获取此曲封面」单独补充。"
+    },
+    {
+      "name": "cover-save-failure-rolls-back-pics-and-backups",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-title-search-song-scope",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-title-keyboard-Enter",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-source-keyboard-Enter",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-title-keyboard-Space",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-source-keyboard-Space",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-source-centers-long",
+      "ok": true,
+      "detail": "{\"list\":\"imp:1\",\"layout\":\"long\",\"page\":\"play\",\"drawer\":\"0\",\"error\":0.5}"
+    },
+    {
+      "name": "song-entry-source-centers-compact",
+      "ok": true,
+      "detail": "{\"list\":\"imp:1\",\"layout\":\"compact\",\"page\":\"queue\",\"drawer\":\"0\",\"error\":0}"
+    },
+    {
+      "name": "song-entry-source-centers-wide",
+      "ok": true,
+      "detail": "{\"list\":\"imp:1\",\"layout\":\"wide\",\"page\":\"play\",\"drawer\":\"1\",\"error\":0}"
+    },
+    {
+      "name": "song-entry-cover-menu-after-copy",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-busy-disabled",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-spinner-immediate",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-spinner-rotates",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-spinner-position-long-light",
+      "ok": true,
+      "detail": "{\"visible\":true,\"left\":12,\"top\":12,\"width\":26,\"safe\":true,\"position\":\"absolute\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-position-long-dark",
+      "ok": true,
+      "detail": "{\"visible\":true,\"left\":12,\"top\":12,\"width\":26,\"safe\":true,\"position\":\"absolute\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-visible-on-compact-queue",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-spinner-clears-queue-back-icon",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-spinner-position-compact-light",
+      "ok": true,
+      "detail": "{\"visible\":true,\"left\":12,\"top\":12,\"width\":26,\"safe\":true,\"position\":\"absolute\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-position-compact-dark",
+      "ok": true,
+      "detail": "{\"visible\":true,\"left\":12,\"top\":12,\"width\":26,\"safe\":true,\"position\":\"absolute\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-position-wide-light",
+      "ok": true,
+      "detail": "{\"visible\":true,\"left\":12,\"top\":12,\"width\":26,\"safe\":true,\"position\":\"absolute\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-position-wide-dark",
+      "ok": true,
+      "detail": "{\"visible\":true,\"left\":12,\"top\":12,\"width\":26,\"safe\":true,\"position\":\"absolute\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-outlives-toast",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-spinner-through-save",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-spinner-never-hidden-before-result",
+      "ok": true,
+      "detail": "{\"controlledWaitMs\":2920.300000011921,\"visibleSamples\":58,\"hiddenSamples\":0,\"phase\":\"save\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-success-cleanup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-any-platform-replaces-and-backs-up",
+      "ok": true,
+      "detail": "[{\"uid\":\"recent|netease:entry18\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"match\":{\"originalPic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\",\"source\":\"netease\",\"artistId\":6452,\"artist\":\"周杰伦\",\"artists\":[{\"id\":6452,\"name\":\"周杰伦\"}],\"title\":\"稻香\",\"songId\":185709,\"albumId\":18877,\"album\":\"魔杰座\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"at\":1792505665180}},{\"uid\":\"imp:1|netease:entry18\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"match\":{\"originalPic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\",\"source\":\"netease\",\"artistId\":6452,\"artist\":\"周杰伦\",\"artists\":[{\"id\":6452,\"name\":\"周杰伦\"}],\"title\":\"稻香\",\"songId\":185709,\"albumId\":18877,\"album\":\"魔杰座\",\"pic\":\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\",\"at\":1792505665180}}]"
+    },
+    {
+      "name": "song-entry-cover-persisted",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-repeat-keeps-first-backup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-no-artist-opens-prefilled-panel",
+      "ok": true,
+      "detail": "{\"info\":\"[{\\\"uid\\\":\\\"recent|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"artists\\\":[{\\\"id\\\":6452,\\\"name\\\":\\\"周杰伦\\\"}],\\\"title\\\":\\\"稻香\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792505665394}},{\\\"uid\\\":\\\"imp:1|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"artists\\\":[{\\\"id\\\":6452,\\\"name\\\":\\\"周杰伦\\\"}],\\\"title\\\":\\\"稻香\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792505665394}}]\",\"toast\":\"已获取此曲封面\",\"panel\":true,\"song\":\"稻香\",\"note\":\"缺少歌手线索；可补填歌名或歌手后重试。\"}"
+    },
+    {
+      "name": "song-entry-cover-no-artist-no-request",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-spinner-cleanup-no-artist",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-preserves-on-no-match",
+      "ok": true,
+      "detail": "{\"info\":\"[{\\\"uid\\\":\\\"recent|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"artists\\\":[{\\\"id\\\":6452,\\\"name\\\":\\\"周杰伦\\\"}],\\\"title\\\":\\\"稻香\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792505665394}},{\\\"uid\\\":\\\"imp:1|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"artists\\\":[{\\\"id\\\":6452,\\\"name\\\":\\\"周杰伦\\\"}],\\\"title\\\":\\\"稻香\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792505665394}}]\",\"toast\":\"没有找到可靠的封面，请修改关键词后重试\",\"panel\":true,\"song\":\"绝无此曲\",\"note\":\"没有找到可靠的封面；可修改歌名或歌手后重试。\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-cleanup-no-match",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-preserves-on-request",
+      "ok": true,
+      "detail": "{\"info\":\"[{\\\"uid\\\":\\\"recent|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"artists\\\":[{\\\"id\\\":6452,\\\"name\\\":\\\"周杰伦\\\"}],\\\"title\\\":\\\"稻香\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792505665394}},{\\\"uid\\\":\\\"imp:1|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"artists\\\":[{\\\"id\\\":6452,\\\"name\\\":\\\"周杰伦\\\"}],\\\"title\\\":\\\"稻香\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792505665394}}]\",\"toast\":\"获取封面失败：上游返回 -462\",\"panel\":true,\"song\":\"稻香\",\"note\":\"接口暂时失败；可修改歌名或歌手后重试。\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-cleanup-request",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-preserves-on-image",
+      "ok": true,
+      "detail": "{\"info\":\"[{\\\"uid\\\":\\\"recent|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"artists\\\":[{\\\"id\\\":6452,\\\"name\\\":\\\"周杰伦\\\"}],\\\"title\\\":\\\"稻香\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792505665394}},{\\\"uid\\\":\\\"imp:1|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"artists\\\":[{\\\"id\\\":6452,\\\"name\\\":\\\"周杰伦\\\"}],\\\"title\\\":\\\"稻香\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792505665394}}]\",\"toast\":\"封面图片加载失败，原封面保留\",\"panel\":true,\"song\":\"稻香\",\"note\":\"封面图片加载失败；可修改关键词后重试，原封面保留。\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-cleanup-image",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-preserves-on-save",
+      "ok": true,
+      "detail": "{\"info\":\"[{\\\"uid\\\":\\\"recent|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"artists\\\":[{\\\"id\\\":6452,\\\"name\\\":\\\"周杰伦\\\"}],\\\"title\\\":\\\"稻香\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792505665394}},{\\\"uid\\\":\\\"imp:1|netease:entry18\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"match\\\":{\\\"originalPic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover.png\\\",\\\"source\\\":\\\"netease\\\",\\\"artistId\\\":6452,\\\"artist\\\":\\\"周杰伦\\\",\\\"artists\\\":[{\\\"id\\\":6452,\\\"name\\\":\\\"周杰伦\\\"}],\\\"title\\\":\\\"稻香\\\",\\\"songId\\\":185709,\\\"albumId\\\":18877,\\\"album\\\":\\\"魔杰座\\\",\\\"pic\\\":\\\"/api/apps/hanako-simple-player/routes/_fixture/cover-square.png\\\",\\\"at\\\":1792505665394}}]\",\"toast\":\"获取封面失败：保存失败，原封面保留\",\"panel\":true,\"song\":\"稻香\",\"note\":\"请求失败；已保留歌名，可补填或修改后重试。\"}"
+    },
+    {
+      "name": "song-entry-cover-spinner-cleanup-save",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-manual-retry-succeeds",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-cover-artist-from-title",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-restore-panel-all-platforms-copy",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-restore-save-failure-rolls-back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-restore-local-empty-original",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-restore-leaves-unmatched-untouched",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-restore-any-platform-and-copies",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-batch-fill-still-bilibili-only",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-source-deleted-list-not-empty",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-empty-has-no-button-semantics",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "song-entry-empty-click-inert",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "refine": [],
+  "narrowSelfCheck": [],
+  "theme": {},
+  "ambient": {},
+  "coverFetchFeedback": {
+    "controlledWaitMs": 2920.300000011921,
+    "visibleSamples": 58,
+    "hiddenSamples": 0,
+    "phase": "save"
+  }
+}

@@ -1,0 +1,4970 @@
+{
+  "source": "music.163.com public metadata; captured 2026-10-20; no playlist/cookies",
+  "artist": {
+    "id": 46490,
+    "name": "Avril Lavigne",
+    "aliases": []
+  },
+  "searches": {
+    "Innocence": [
+      {
+        "songId": 16431842,
+        "title": "Innocence",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 1515085,
+        "album": "The Best Damn Thing (Deluxe Edition)",
+        "albumPublished": 1176739200000,
+        "albumSize": 16
+      },
+      {
+        "songId": 2117321,
+        "title": "Innocence (Live)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 213287,
+        "album": "The Best Damn Tour (Live In Toronto)",
+        "albumPublished": 1220889600007,
+        "albumSize": 21
+      },
+      {
+        "songId": 405313591,
+        "title": "Innocence (MSN Control Room)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 34530920,
+        "album": "The Best Damn Thing（MSN Control Room）",
+        "albumPublished": 1212940800000,
+        "albumSize": 5
+      },
+      {
+        "songId": 16432061,
+        "title": "Innocence (MSN Control Room)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 1515124,
+        "album": "Control Room - Live EP",
+        "albumPublished": 1210694400000,
+        "albumSize": 6
+      },
+      {
+        "songId": 416633598,
+        "title": "Innocence",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 34734307,
+        "album": "The Best Damn Thing",
+        "albumPublished": 1176739200000,
+        "albumSize": 17
+      },
+      {
+        "songId": 416633695,
+        "title": "Innocence",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 34734318,
+        "album": "The Best Damn Thing",
+        "albumPublished": 1176652800007,
+        "albumSize": 12
+      }
+    ],
+    "Rock N Roll": [
+      {
+        "songId": 27090060,
+        "title": "Rock N Roll",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 2569121,
+        "album": "Rock N Roll",
+        "albumPublished": 1375113600007,
+        "albumSize": 2
+      },
+      {
+        "songId": 27896563,
+        "title": "Rock N Roll",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 2662056,
+        "album": "Avril Lavigne (Expanded Edition)",
+        "albumPublished": 1383580800000,
+        "albumSize": 16
+      },
+      {
+        "songId": 27671068,
+        "title": "Rock N Roll (Instrumental Version)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 2569121,
+        "album": "Rock N Roll",
+        "albumPublished": 1375113600007,
+        "albumSize": 2
+      },
+      {
+        "songId": 27937700,
+        "title": "Rock N Roll (Acoustic)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 2662056,
+        "album": "Avril Lavigne (Expanded Edition)",
+        "albumPublished": 1383580800000,
+        "albumSize": 16
+      },
+      {
+        "songId": 2166438870,
+        "title": "Rock N Roll",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 199345404,
+        "album": "Greatest Hits",
+        "albumPublished": 1718899200000,
+        "albumSize": 20
+      },
+      {
+        "songId": 34497406,
+        "title": "Rock N Roll",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 3286133,
+        "album": "Happiness Forever",
+        "albumPublished": 1523289600000,
+        "albumSize": 100
+      },
+      {
+        "songId": 35661139,
+        "title": "Rock N Roll (Clean Version)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 3362012,
+        "album": "30 Stars: Pop",
+        "albumPublished": 1396800000000,
+        "albumSize": 30
+      }
+    ],
+    "Head Above Water": [
+      {
+        "songId": 2166438873,
+        "title": "Head Above Water",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 199345404,
+        "album": "Greatest Hits",
+        "albumPublished": 1718899200000,
+        "albumSize": 20
+      },
+      {
+        "songId": 3342121531,
+        "title": "Head Above Water",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 359326935,
+        "album": "Head Above Water",
+        "albumPublished": 1550160000000,
+        "albumSize": 12
+      },
+      {
+        "songId": 1388594162,
+        "title": "Head Above Water (feat. We The Kings)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          },
+          {
+            "id": 105089,
+            "name": "We the Kings"
+          }
+        ],
+        "albumId": 81351045,
+        "album": "Head Above Water (feat. We The Kings)",
+        "albumPublished": 1537286400000,
+        "albumSize": 1
+      },
+      {
+        "songId": 3326453763,
+        "title": "Head Above Water",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          },
+          {
+            "id": 105089,
+            "name": "We the Kings"
+          }
+        ],
+        "albumId": 353814747,
+        "album": "Head Above Water",
+        "albumPublished": 1537286400000,
+        "albumSize": 1
+      },
+      {
+        "songId": 2729050380,
+        "title": "Head Above Water (Live)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 279326879,
+        "album": "Live at Rock in Rio 2022",
+        "albumPublished": 1659024000000,
+        "albumSize": 11
+      },
+      {
+        "songId": 1310906383,
+        "title": "Head Above Water",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 75552216,
+        "album": "Head Above Water",
+        "albumPublished": 1550160000000,
+        "albumSize": 12
+      }
+    ],
+    "Complicated": [
+      {
+        "songId": 16431880,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 1515088,
+        "album": "Let Go",
+        "albumPublished": 1023120000000,
+        "albumSize": 13
+      },
+      {
+        "songId": 1952433295,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 145834163,
+        "album": "Let Go (20th Anniversary Edition)",
+        "albumPublished": 1654185600000,
+        "albumSize": 19
+      },
+      {
+        "songId": 2117307,
+        "title": "Complicated (Live)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 213287,
+        "album": "The Best Damn Tour (Live In Toronto)",
+        "albumPublished": 1220889600007,
+        "albumSize": 21
+      },
+      {
+        "songId": 436355416,
+        "title": "Complicated (Live)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 213352,
+        "album": "My World",
+        "albumPublished": 1067788800007,
+        "albumSize": 20
+      },
+      {
+        "songId": 2729049490,
+        "title": "Complicated (Live)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 279326879,
+        "album": "Live at Rock in Rio 2022",
+        "albumPublished": 1659024000000,
+        "albumSize": 11
+      },
+      {
+        "songId": 2117955,
+        "title": "Complicated (Tom-Lord Alge Mix)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 213365,
+        "album": "Complicated",
+        "albumPublished": 1019491200007,
+        "albumSize": 4
+      },
+      {
+        "songId": 2117958,
+        "title": "Complicated (Suggested Call Out Research Hook)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 213365,
+        "album": "Complicated",
+        "albumPublished": 1019491200007,
+        "albumSize": 4
+      },
+      {
+        "songId": 2166439864,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 199345404,
+        "album": "Greatest Hits",
+        "albumPublished": 1718899200000,
+        "albumSize": 20
+      },
+      {
+        "songId": 2117253,
+        "title": "Complicated (The Matrix Mix)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 213283,
+        "album": "12\" Masters - The Essential Mixes",
+        "albumPublished": 1284652800000,
+        "albumSize": 10
+      },
+      {
+        "songId": 5159516,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 506631,
+        "album": "Die Ultimative Chartshow - Die erfolgreichsten Radiohits",
+        "albumPublished": 1199376000007,
+        "albumSize": 42
+      },
+      {
+        "songId": 2146636593,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 192549297,
+        "album": "Pop Pool Party Hits",
+        "albumPublished": 1714665600000,
+        "albumSize": 149
+      },
+      {
+        "songId": 2139159046,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 190038573,
+        "album": "Summer Roadtrip",
+        "albumPublished": 1712592000000,
+        "albumSize": 147
+      },
+      {
+        "songId": 574692681,
+        "title": "Complicated (instrumental)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 39780435,
+        "album": "Rock & Pop",
+        "albumPublished": 1229270400007,
+        "albumSize": 12
+      },
+      {
+        "songId": 509315756,
+        "title": "Complicated (Karaoke Version)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 12539147,
+            "name": "Golden Bear Karaoke"
+          },
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          },
+          {
+            "id": 15010513,
+            "name": "David Scott Alspach"
+          },
+          {
+            "id": 13066458,
+            "name": "Graham Edwards"
+          },
+          {
+            "id": 64258,
+            "name": "Lauren Christy"
+          }
+        ],
+        "albumId": 36433254,
+        "album": "Karaoke Pop Hits, Vol. 28",
+        "albumPublished": 1344960000007,
+        "albumSize": 16
+      },
+      {
+        "songId": 483012020,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 450740,
+            "name": "Karaoke Diamonds"
+          },
+          {
+            "id": 15010513,
+            "name": "David Scott Alspach"
+          },
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          },
+          {
+            "id": 64258,
+            "name": "Lauren Christy"
+          },
+          {
+            "id": 13066458,
+            "name": "Graham Edwards"
+          }
+        ],
+        "albumId": 35141795,
+        "album": "Karaoke Party Time, Vol. 14",
+        "albumPublished": 1481040000007,
+        "albumSize": 15
+      },
+      {
+        "songId": 2146637837,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 192550168,
+        "album": "Beach Beats",
+        "albumPublished": 1714492800000,
+        "albumSize": 148
+      },
+      {
+        "songId": 5052316,
+        "title": "Complicated (Pablo La Rossa Vocal Mix)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 501242,
+        "album": "FIFA 2003",
+        "albumPublished": 1033833600007,
+        "albumSize": 16
+      },
+      {
+        "songId": 2146635523,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 192550022,
+        "album": "Chill Summer 2024",
+        "albumPublished": 1714579200000,
+        "albumSize": 99
+      },
+      {
+        "songId": 499823618,
+        "title": "Complicated (Karaoke Version)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 12203586,
+            "name": "Amazing Karaoke"
+          },
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          },
+          {
+            "id": 13066458,
+            "name": "Graham Edwards"
+          },
+          {
+            "id": 64258,
+            "name": "Lauren Christy"
+          },
+          {
+            "id": 13067415,
+            "name": "Scott Spock"
+          }
+        ],
+        "albumId": 35992161,
+        "album": "Best of Rock, Vol. 3 (Karaoke Version)",
+        "albumPublished": 1325174400007,
+        "albumSize": 15
+      },
+      {
+        "songId": 2010958535,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 157471105,
+        "album": "The Dome Vol. 24",
+        "albumPublished": 1039104000000,
+        "albumSize": 40
+      },
+      {
+        "songId": 424960835,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 34803372,
+        "album": "I Wanna Rock Compilation Vol. 5",
+        "albumPublished": 1470758400000,
+        "albumSize": 14
+      },
+      {
+        "songId": 5142304,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 505896,
+        "album": "The Best of Now That's What I Call Music! 10th Anniversary",
+        "albumPublished": 1226332800007,
+        "albumSize": 20
+      },
+      {
+        "songId": 26975767,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 2572895,
+        "album": "Grammy Nominees 2003",
+        "albumPublished": 1044892800007,
+        "albumSize": 19
+      },
+      {
+        "songId": 1960446787,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 147442217,
+        "album": "Fête de la musique : Best of 2022 France",
+        "albumPublished": 1656691200000,
+        "albumSize": 58
+      },
+      {
+        "songId": 22442672,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 2054391,
+        "album": "NOW 2000's (2000-2005)",
+        "albumPublished": 1288627200007,
+        "albumSize": 16
+      },
+      {
+        "songId": 5200793,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 508687,
+        "album": "2003 Juno Awards",
+        "albumPublished": 1047312000007,
+        "albumSize": 15
+      },
+      {
+        "songId": 26787010,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 2555455,
+        "album": "100X Women",
+        "albumPublished": 1314201600007,
+        "albumSize": 99
+      },
+      {
+        "songId": 1334491415,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 74937570,
+        "album": "Female Pop Ballads",
+        "albumPublished": 1545321600007,
+        "albumSize": 30
+      },
+      {
+        "songId": 26571267,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 2525157,
+        "album": "Now the Ultimate Collection",
+        "albumPublished": 1371916800007,
+        "albumSize": 39
+      },
+      {
+        "songId": 1960744539,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 147514340,
+        "album": "L'été au calme : Chill 2022 hits",
+        "albumPublished": 1656691200000,
+        "albumSize": 42
+      },
+      {
+        "songId": 1337306869,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 75042277,
+        "album": "2000s XL",
+        "albumPublished": 1600963200000,
+        "albumSize": 40
+      },
+      {
+        "songId": 2010945854,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 157468547,
+        "album": "The Number One Divas",
+        "albumPublished": 1048780800000,
+        "albumSize": 38
+      },
+      {
+        "songId": 1960446768,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 147442218,
+        "album": "Soirée d'été : Summer Hits Mix 2022",
+        "albumPublished": 1656691200000,
+        "albumSize": 58
+      },
+      {
+        "songId": 2139165904,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 190040536,
+        "album": "BBQ Classics",
+        "albumPublished": 1712073600000,
+        "albumSize": 148
+      },
+      {
+        "songId": 1960446728,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 147441306,
+        "album": "Vacances & tubes : Chansons 2022",
+        "albumPublished": 1656691200000,
+        "albumSize": 58
+      },
+      {
+        "songId": 2153124290,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 194831552,
+        "album": "Chill Summer Hits",
+        "albumPublished": 1716134400000,
+        "albumSize": 60
+      },
+      {
+        "songId": 35669931,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 3362333,
+        "album": "Love Songs",
+        "albumPublished": 1233504000000,
+        "albumSize": 90
+      },
+      {
+        "songId": 1960707855,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 147505157,
+        "album": "Vacances détente : Été 2022",
+        "albumPublished": 1656691200000,
+        "albumSize": 42
+      },
+      {
+        "songId": 2148388791,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 193143328,
+        "album": "Viral Summer Hits",
+        "albumPublished": 1715270400000,
+        "albumSize": 97
+      },
+      {
+        "songId": 1960701510,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 147504826,
+        "album": "Chill sur la plage : Beach ambiance",
+        "albumPublished": 1656691200000,
+        "albumSize": 42
+      },
+      {
+        "songId": 2152133026,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 194488048,
+        "album": "American Spirit",
+        "albumPublished": 1715616000000,
+        "albumSize": 117
+      },
+      {
+        "songId": 2152132454,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 194487938,
+        "album": "I Love America",
+        "albumPublished": 1715702400000,
+        "albumSize": 145
+      },
+      {
+        "songId": 2117962,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 213366,
+        "album": "Angus Drive",
+        "albumPublished": 1018713600007,
+        "albumSize": 4
+      },
+      {
+        "songId": 425377844,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 34803477,
+        "album": "Let Go/Under My Skin",
+        "albumPublished": 1363564800000,
+        "albumSize": 25
+      },
+      {
+        "songId": 1964550886,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 148217403,
+        "album": "O Melhor do Pop Internacional",
+        "albumPublished": 1658419200000,
+        "albumSize": 60
+      },
+      {
+        "songId": 2069807606,
+        "title": "Complicated",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 171218908,
+        "album": "Sommer Pop Hits",
+        "albumPublished": 1691078400000,
+        "albumSize": 80
+      }
+    ],
+    "Sk8er Boi": [
+      {
+        "songId": 2117959,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 213366,
+        "album": "Angus Drive",
+        "albumPublished": 1018713600007,
+        "albumSize": 4
+      },
+      {
+        "songId": 16431881,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 1515088,
+        "album": "Let Go",
+        "albumPublished": 1023120000000,
+        "albumSize": 13
+      },
+      {
+        "songId": 436355410,
+        "title": "Sk8er Boi (Live)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 213352,
+        "album": "My World",
+        "albumPublished": 1067788800007,
+        "albumSize": 20
+      },
+      {
+        "songId": 16432068,
+        "title": "Sk8er Boi (Live)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 1515127,
+        "album": "Avril Live: Try To Shut Me Up",
+        "albumPublished": 1072800000000,
+        "albumSize": 5
+      },
+      {
+        "songId": 1808533985,
+        "title": "Sk8er Boi (Live)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 0,
+        "album": "",
+        "albumPublished": 0,
+        "albumSize": 0
+      },
+      {
+        "songId": 2166439861,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 199345404,
+        "album": "Greatest Hits",
+        "albumPublished": 1718899200000,
+        "albumSize": 20
+      },
+      {
+        "songId": 1952434227,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 145834163,
+        "album": "Let Go (20th Anniversary Edition)",
+        "albumPublished": 1654185600000,
+        "albumSize": 19
+      },
+      {
+        "songId": 41650386,
+        "title": "Sk8er Boi (Walmart Soundcheck)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 3451260,
+        "album": "Walmart Soundcheck",
+        "albumPublished": 1170086400000,
+        "albumSize": 5
+      },
+      {
+        "songId": 454202183,
+        "title": "Sk8er Boi (MSN Control Room)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 35118608,
+        "album": "The Best Damn Thing",
+        "albumPublished": 1212940800007,
+        "albumSize": 2
+      },
+      {
+        "songId": 2627695368,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 248049918,
+        "album": "Boxing Day Bangers",
+        "albumPublished": 1726761600000,
+        "albumSize": 31
+      },
+      {
+        "songId": 401531749,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 34459040,
+        "album": "Pure... Dance Party",
+        "albumPublished": 1409500800000,
+        "albumSize": 63
+      },
+      {
+        "songId": 2117350,
+        "title": "Sk8er Boi (Live)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 213287,
+        "album": "The Best Damn Tour (Live In Toronto)",
+        "albumPublished": 1220889600007,
+        "albumSize": 21
+      },
+      {
+        "songId": 2117262,
+        "title": "Sk8er Boi (Live Acoustic Version)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 213283,
+        "album": "12\" Masters - The Essential Mixes",
+        "albumPublished": 1284652800000,
+        "albumSize": 10
+      },
+      {
+        "songId": 16431851,
+        "title": "Sk8er Boi (Nissan Live Sets on Yahoo! Music)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 1515086,
+        "album": "Nissan Live Sets on Yahoo! Music",
+        "albumPublished": 1214841600000,
+        "albumSize": 7
+      },
+      {
+        "songId": 2117865,
+        "title": "Sk8er Boi (Live, recorded in Dublin)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 213352,
+        "album": "My World",
+        "albumPublished": 1067788800007,
+        "albumSize": 20
+      },
+      {
+        "songId": 16432059,
+        "title": "Sk8er Boi (MSN Control Room)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 1515124,
+        "album": "Control Room - Live EP",
+        "albumPublished": 1210694400000,
+        "albumSize": 6
+      },
+      {
+        "songId": 2117843,
+        "title": "Sk8er Boi (Live Acoustic Version)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 213349,
+        "album": "Avril Live Acoustic",
+        "albumPublished": 1081785600007,
+        "albumSize": 6
+      },
+      {
+        "songId": 2729049494,
+        "title": "Sk8er Boi (Live)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 279326879,
+        "album": "Live at Rock in Rio 2022",
+        "albumPublished": 1659024000000,
+        "albumSize": 11
+      },
+      {
+        "songId": 2663650690,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 258927507,
+        "album": "2000 Pop Punk Anthems",
+        "albumPublished": 1737043200000,
+        "albumSize": 59
+      },
+      {
+        "songId": 27976026,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 2707291,
+        "album": "Het Beste Uit De Q-Music Top 500 Van De 00's",
+        "albumPublished": 1384185600007,
+        "albumSize": 107
+      },
+      {
+        "songId": 1302359906,
+        "title": "Sk8er Boi (Live at The Point, Dublin, Ireland - March 2003)",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 72348044,
+        "album": "My World EP",
+        "albumPublished": 1067788800000,
+        "albumSize": 6
+      },
+      {
+        "songId": 2146635464,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 192550016,
+        "album": "Summer Hits 2024",
+        "albumPublished": 1714838400000,
+        "albumSize": 100
+      },
+      {
+        "songId": 28873110,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 2919090,
+        "album": "#planetpop throwback",
+        "albumPublished": 1406563200007,
+        "albumSize": 24
+      },
+      {
+        "songId": 1950533060,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 145513054,
+        "album": "Summer Viral Hits 2022",
+        "albumPublished": 1653494400000,
+        "albumSize": 81
+      },
+      {
+        "songId": 507452519,
+        "title": "Sk8er Boi (Karaoke Version) [Originally Performed By Avril Lavigne]",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 12475498,
+            "name": "Zoom Karaoke"
+          },
+          {
+            "id": 15037457,
+            "name": "David Alspach"
+          },
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          },
+          {
+            "id": 13066458,
+            "name": "Graham Edwards"
+          },
+          {
+            "id": 64258,
+            "name": "Lauren Christy"
+          }
+        ],
+        "albumId": 36283016,
+        "album": "Zoom Karaoke Party, Vol. 87",
+        "albumPublished": 1408377600007,
+        "albumSize": 15
+      },
+      {
+        "songId": 2053765114,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 167168833,
+        "album": "Summer Pop Throwback",
+        "albumPublished": 1678291200000,
+        "albumSize": 51
+      },
+      {
+        "songId": 1950533067,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 145512444,
+        "album": "Viral Summer Hits",
+        "albumPublished": 1653494400000,
+        "albumSize": 80
+      },
+      {
+        "songId": 483349789,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          },
+          {
+            "id": 12335427,
+            "name": "Matrix"
+          },
+          {
+            "id": 450740,
+            "name": "Karaoke Diamonds"
+          }
+        ],
+        "albumId": 35602130,
+        "album": "Be A Star, Vol. 11",
+        "albumPublished": 1482076800007,
+        "albumSize": 16
+      },
+      {
+        "songId": 483331662,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          },
+          {
+            "id": 12335427,
+            "name": "Matrix"
+          },
+          {
+            "id": 450740,
+            "name": "Karaoke Diamonds"
+          }
+        ],
+        "albumId": 35601399,
+        "album": "Karaoke Party Time, Vol. 11",
+        "albumPublished": 1481040000007,
+        "albumSize": 17
+      },
+      {
+        "songId": 436245209,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 34928028,
+        "album": "Ultimate... 2000s",
+        "albumPublished": 1476979200000,
+        "albumSize": 73
+      },
+      {
+        "songId": 1960446777,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 147442217,
+        "album": "Fête de la musique : Best of 2022 France",
+        "albumPublished": 1656691200000,
+        "albumSize": 58
+      },
+      {
+        "songId": 2152132132,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 194487830,
+        "album": "Feel Good Summer",
+        "albumPublished": 1716048000000,
+        "albumSize": 77
+      },
+      {
+        "songId": 2138967527,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 189982049,
+        "album": "Upbeat Summer Hits",
+        "albumPublished": 1712764800000,
+        "albumSize": 98
+      },
+      {
+        "songId": 2138330846,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 189813169,
+        "album": "Classic Rock BBQ",
+        "albumPublished": 1712246400000,
+        "albumSize": 98
+      },
+      {
+        "songId": 1960446716,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 147441306,
+        "album": "Vacances & tubes : Chansons 2022",
+        "albumPublished": 1656691200000,
+        "albumSize": 58
+      },
+      {
+        "songId": 2138970803,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 189982257,
+        "album": "Viral Summer Hits 2024",
+        "albumPublished": 1712937600000,
+        "albumSize": 100
+      },
+      {
+        "songId": 2148388773,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 193143328,
+        "album": "Viral Summer Hits",
+        "albumPublished": 1715270400000,
+        "albumSize": 97
+      },
+      {
+        "songId": 2139159110,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 190038573,
+        "album": "Summer Roadtrip",
+        "albumPublished": 1712592000000,
+        "albumSize": 147
+      },
+      {
+        "songId": 1950533203,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 145512457,
+        "album": "Viral Summer Hits 2022",
+        "albumPublished": 1653494400000,
+        "albumSize": 81
+      },
+      {
+        "songId": 2146636544,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 192549297,
+        "album": "Pop Pool Party Hits",
+        "albumPublished": 1714665600000,
+        "albumSize": 149
+      },
+      {
+        "songId": 2146637901,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 192550168,
+        "album": "Beach Beats",
+        "albumPublished": 1714492800000,
+        "albumSize": 148
+      },
+      {
+        "songId": 1960446743,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 147442218,
+        "album": "Soirée d'été : Summer Hits Mix 2022",
+        "albumPublished": 1656691200000,
+        "albumSize": 58
+      },
+      {
+        "songId": 2139165186,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 190040536,
+        "album": "BBQ Classics",
+        "albumPublished": 1712073600000,
+        "albumSize": 148
+      },
+      {
+        "songId": 2138968330,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 189981369,
+        "album": "Summer Viral Hits 2024",
+        "albumPublished": 1712678400000,
+        "albumSize": 98
+      },
+      {
+        "songId": 2138330758,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 189813157,
+        "album": "Pop Summer Hits 2024",
+        "albumPublished": 1712332800000,
+        "albumSize": 100
+      },
+      {
+        "songId": 2149310663,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 193493856,
+        "album": "Hen Do Classics",
+        "albumPublished": 1714060800000,
+        "albumSize": 27
+      },
+      {
+        "songId": 2142210131,
+        "title": "Sk8er Boi",
+        "aliases": [],
+        "artists": [
+          {
+            "id": 46490,
+            "name": "Avril Lavigne"
+          }
+        ],
+        "albumId": 191078039,
+        "album": "Summer Hits",
+        "albumPublished": 1713628800000,
+        "albumSize": 109
+      }
+    ]
+  },
+  "albumList": [
+    {
+      "id": 199345404,
+      "name": "Greatest Hits",
+      "type": "精选集",
+      "subType": "录音室版",
+      "published": 1718899200000,
+      "size": 20,
+      "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg"
+    },
+    {
+      "id": 279326879,
+      "name": "Live at Rock in Rio 2022",
+      "type": "专辑",
+      "subType": "现场版",
+      "published": 1659024000000,
+      "size": 11,
+      "pic": "https://p1.music.126.net/2g8q-mNUU-wehYiqEk2dfA==/109951171507132361.jpg"
+    },
+    {
+      "id": 145834163,
+      "name": "Let Go (20th Anniversary Edition)",
+      "type": "专辑",
+      "subType": "录音室版",
+      "published": 1654185600000,
+      "size": 19,
+      "pic": "https://p1.music.126.net/BFqtHQST6xEOg5hdCwaDuw==/109951167499346442.jpg"
+    },
+    {
+      "id": 359326935,
+      "name": "Head Above Water",
+      "type": "专辑",
+      "subType": "录音室版",
+      "published": 1550160000000,
+      "size": 12,
+      "pic": "https://p2.music.126.net/YUAe_eIxAVRtO1z2jYACKQ==/109951172629688854.jpg"
+    },
+    {
+      "id": 75552216,
+      "name": "Head Above Water",
+      "type": "专辑",
+      "subType": "录音室版",
+      "published": 1550160000000,
+      "size": 12,
+      "pic": "https://p2.music.126.net/2wEqkjCrSHcwIdiwWirzUw==/109951163872739510.jpg"
+    },
+    {
+      "id": 353814747,
+      "name": "Head Above Water",
+      "type": "Single",
+      "subType": "录音室版",
+      "published": 1537286400000,
+      "size": 1,
+      "pic": "https://p2.music.126.net/yYumK1iCYOVtMfYgY4lkmw==/109951172403441871.jpg"
+    },
+    {
+      "id": 81351045,
+      "name": "Head Above Water (feat. We The Kings)",
+      "type": "Single",
+      "subType": "录音室版",
+      "published": 1537286400000,
+      "size": 1,
+      "pic": "https://p2.music.126.net/1S5FqBvdhxqv8zr1hBADjA==/109951169060588861.jpg"
+    },
+    {
+      "id": 2662056,
+      "name": "Avril Lavigne (Expanded Edition)",
+      "type": "专辑",
+      "subType": "录音室版",
+      "published": 1383580800000,
+      "size": 16,
+      "pic": "https://p2.music.126.net/lvXLtnC5MhwmrvDcJnYvBQ==/109951165968796628.jpg"
+    },
+    {
+      "id": 2569121,
+      "name": "Rock N Roll",
+      "type": "Single",
+      "subType": "录音室版",
+      "published": 1375113600007,
+      "size": 2,
+      "pic": "https://p2.music.126.net/O-f5roYSa7nAi35zOaPFTw==/109951163208576410.jpg"
+    },
+    {
+      "id": 34803477,
+      "name": "Let Go/Under My Skin",
+      "type": "专辑",
+      "subType": "录音室版",
+      "published": 1363564800000,
+      "size": 25,
+      "pic": "https://p2.music.126.net/uguwync2BTtef6CbqowpdQ==/109951163437468615.jpg"
+    },
+    {
+      "id": 213283,
+      "name": "12\" Masters - The Essential Mixes",
+      "type": "专辑",
+      "subType": "录音室版",
+      "published": 1284652800000,
+      "size": 10,
+      "pic": "https://p2.music.126.net/12g7VGBjCWoRnutoDpMgcg==/109951167488290258.jpg"
+    },
+    {
+      "id": 213287,
+      "name": "The Best Damn Tour (Live In Toronto)",
+      "type": "专辑",
+      "subType": "现场版",
+      "published": 1220889600007,
+      "size": 21,
+      "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg"
+    },
+    {
+      "id": 1515086,
+      "name": "Nissan Live Sets on Yahoo! Music",
+      "type": "专辑",
+      "subType": "现场版",
+      "published": 1214841600000,
+      "size": 7,
+      "pic": "https://p2.music.126.net/vILxSk5w8nR3FOCcyqSA0A==/621224069700463.jpg"
+    },
+    {
+      "id": 34530920,
+      "name": "The Best Damn Thing（MSN Control Room）",
+      "type": "EP",
+      "subType": "录音室版",
+      "published": 1212940800000,
+      "size": 5,
+      "pic": "https://p2.music.126.net/Wvusf8UVC5p0AILH4EXwxA==/16668596277638118.jpg"
+    },
+    {
+      "id": 35118608,
+      "name": "The Best Damn Thing",
+      "type": "Single",
+      "subType": "录音室版",
+      "published": 1212940800007,
+      "size": 2,
+      "pic": "https://p2.music.126.net/PTv7pHofE_b09BPxj3QLuA==/18431113416673796.jpg"
+    },
+    {
+      "id": 1515124,
+      "name": "Control Room - Live EP",
+      "type": "EP",
+      "subType": "现场版",
+      "published": 1210694400000,
+      "size": 6,
+      "pic": "https://p2.music.126.net/DH9PVm3sSVzpquEgcB8TQA==/109951165991876045.jpg"
+    },
+    {
+      "id": 34734307,
+      "name": "The Best Damn Thing",
+      "type": "专辑",
+      "subType": "录音室版",
+      "published": 1176739200000,
+      "size": 17,
+      "pic": "https://p2.music.126.net/GfmrCb14iecB0sPAH6F-VQ==/109951165991854768.jpg"
+    },
+    {
+      "id": 1515085,
+      "name": "The Best Damn Thing (Deluxe Edition)",
+      "type": "专辑",
+      "subType": "录音室版",
+      "published": 1176739200000,
+      "size": 16,
+      "pic": "https://p2.music.126.net/JsjUOYJytWLfFsA-RaHLgQ==/109951163471012053.jpg"
+    },
+    {
+      "id": 34734318,
+      "name": "The Best Damn Thing",
+      "type": "专辑",
+      "subType": "录音室版",
+      "published": 1176652800007,
+      "size": 12,
+      "pic": "https://p2.music.126.net/SX9lG2RjFYDBZs1uNIAcNA==/18358545649758834.jpg"
+    },
+    {
+      "id": 3451260,
+      "name": "Walmart Soundcheck",
+      "type": "EP",
+      "subType": "录音室版",
+      "published": 1170086400000,
+      "size": 5,
+      "pic": "https://p2.music.126.net/-K9HQLCg7mVRLLXoPzjNQw==/1364493978235022.jpg"
+    },
+    {
+      "id": 213349,
+      "name": "Avril Live Acoustic",
+      "type": "EP",
+      "subType": "现场版",
+      "published": 1081785600007,
+      "size": 6,
+      "pic": "https://p1.music.126.net/eHUwpNYe29CFp4drzjHb4w==/922490255756960.jpg"
+    },
+    {
+      "id": 1515127,
+      "name": "Avril Live: Try To Shut Me Up",
+      "type": "EP",
+      "subType": "现场版",
+      "published": 1072800000000,
+      "size": 5,
+      "pic": "https://p1.music.126.net/Im3ptMDythRUPGfqQkdhpw==/109951165991788514.jpg"
+    },
+    {
+      "id": 72348044,
+      "name": "My World EP",
+      "type": "EP",
+      "subType": "录音室版",
+      "published": 1067788800000,
+      "size": 6,
+      "pic": "https://p1.music.126.net/akDTMkLN6npRpDJtxRRpvA==/109951171732145798.jpg"
+    },
+    {
+      "id": 213352,
+      "name": "My World",
+      "type": "专辑",
+      "subType": "录音室版",
+      "published": 1067788800007,
+      "size": 20,
+      "pic": "https://p1.music.126.net/aPRo5t_38qIMnzOjzCLhmQ==/821335185993192.jpg"
+    },
+    {
+      "id": 1515088,
+      "name": "Let Go",
+      "type": "专辑",
+      "subType": "录音室版",
+      "published": 1023120000000,
+      "size": 13,
+      "pic": "https://p1.music.126.net/rNWoK0vpHAW1H9kTFKRVig==/109951167596882130.jpg"
+    },
+    {
+      "id": 213365,
+      "name": "Complicated",
+      "type": "EP",
+      "subType": "录音室版",
+      "published": 1019491200007,
+      "size": 4,
+      "pic": "https://p1.music.126.net/_z0UfOqRfLx1ztSGBDcTLA==/815837627861985.jpg"
+    },
+    {
+      "id": 213366,
+      "name": "Angus Drive",
+      "type": "EP",
+      "subType": "录音室版",
+      "published": 1018713600007,
+      "size": 4,
+      "pic": "https://p1.music.126.net/6-TAXmoB_kEJagOf00aLig==/1781208836997879.jpg"
+    }
+  ],
+  "albums": {
+    "213287": {
+      "id": 213287,
+      "name": "The Best Damn Tour (Live In Toronto)",
+      "type": "专辑",
+      "subType": "现场版",
+      "published": 1220889600007,
+      "size": 21,
+      "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+      "tracks": [
+        {
+          "songId": 2117303,
+          "title": "Intro (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 326
+        },
+        {
+          "songId": 2117304,
+          "title": "Girlfriend (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 326
+        },
+        {
+          "songId": 2117305,
+          "title": "I Can Do Better (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 269
+        },
+        {
+          "songId": 2117307,
+          "title": "Complicated (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 260
+        },
+        {
+          "songId": 2117309,
+          "title": "My Happy Ending (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 321
+        },
+        {
+          "songId": 2117312,
+          "title": "I'm With You (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 243
+        },
+        {
+          "songId": 2117315,
+          "title": "I Always Get What I Want (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 214
+        },
+        {
+          "songId": 2117317,
+          "title": "Best Damn Dance Break (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 87
+        },
+        {
+          "songId": 2117319,
+          "title": "When You're Gone (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 232
+        },
+        {
+          "songId": 2117321,
+          "title": "Innocence (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 149
+        },
+        {
+          "songId": 2117324,
+          "title": "Don't Tell Me (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 125
+        },
+        {
+          "songId": 2117326,
+          "title": "Hot (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 140
+        },
+        {
+          "songId": 2117328,
+          "title": "Losing Grip (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 135
+        },
+        {
+          "songId": 2117331,
+          "title": "Bad Reputation Video Montage (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 161
+        },
+        {
+          "songId": 2117332,
+          "title": "Everything Back But You (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 239
+        },
+        {
+          "songId": 2117334,
+          "title": "Avril on Drums (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 92
+        },
+        {
+          "songId": 2117336,
+          "title": "The Best Damn Thing (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 252
+        },
+        {
+          "songId": 2117340,
+          "title": "I Don't Have to Try (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 192
+        },
+        {
+          "songId": 2117344,
+          "title": "He Wasn't (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 335
+        },
+        {
+          "songId": 2117347,
+          "title": "Girlfriend (Remix) [live]",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 133
+        },
+        {
+          "songId": 2117350,
+          "title": "Sk8er Boi (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 213287,
+          "album": "The Best Damn Tour (Live In Toronto)",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1220889600007,
+          "pic": "https://p2.music.126.net/RzTqRjMLFF4bOEeUPhev6w==/863116627858334.jpg",
+          "duration": 250
+        }
+      ]
+    },
+    "1515085": {
+      "id": 1515085,
+      "name": "The Best Damn Thing (Deluxe Edition)",
+      "type": "专辑",
+      "subType": "录音室版",
+      "published": 1176739200000,
+      "size": 16,
+      "pic": "https://p1.music.126.net/JsjUOYJytWLfFsA-RaHLgQ==/109951163471012053.jpg",
+      "tracks": [
+        {
+          "songId": 16431835,
+          "title": "Girlfriend",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515085,
+          "album": "The Best Damn Thing (Deluxe Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p1.music.126.net/JsjUOYJytWLfFsA-RaHLgQ==/109951163471012053.jpg",
+          "duration": 217.093
+        },
+        {
+          "songId": 16431836,
+          "title": "I Can Do Better",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515085,
+          "album": "The Best Damn Thing (Deluxe Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p1.music.126.net/JsjUOYJytWLfFsA-RaHLgQ==/109951163471012053.jpg",
+          "duration": 197.066
+        },
+        {
+          "songId": 16431837,
+          "title": "Runaway",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515085,
+          "album": "The Best Damn Thing (Deluxe Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p1.music.126.net/JsjUOYJytWLfFsA-RaHLgQ==/109951163471012053.jpg",
+          "duration": 228.573
+        },
+        {
+          "songId": 16431838,
+          "title": "The Best Damn Thing",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515085,
+          "album": "The Best Damn Thing (Deluxe Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p1.music.126.net/JsjUOYJytWLfFsA-RaHLgQ==/109951163471012053.jpg",
+          "duration": 190.4
+        },
+        {
+          "songId": 16431839,
+          "title": "When You're Gone",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515085,
+          "album": "The Best Damn Thing (Deluxe Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p1.music.126.net/JsjUOYJytWLfFsA-RaHLgQ==/109951163471012053.jpg",
+          "duration": 240.163
+        },
+        {
+          "songId": 16431840,
+          "title": "Everything Back But You",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515085,
+          "album": "The Best Damn Thing (Deluxe Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p1.music.126.net/JsjUOYJytWLfFsA-RaHLgQ==/109951163471012053.jpg",
+          "duration": 183.066
+        },
+        {
+          "songId": 16431841,
+          "title": "Hot",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515085,
+          "album": "The Best Damn Thing (Deluxe Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p1.music.126.net/JsjUOYJytWLfFsA-RaHLgQ==/109951163471012053.jpg",
+          "duration": 203.533
+        },
+        {
+          "songId": 16431842,
+          "title": "Innocence",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515085,
+          "album": "The Best Damn Thing (Deluxe Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p1.music.126.net/JsjUOYJytWLfFsA-RaHLgQ==/109951163471012053.jpg",
+          "duration": 233
+        },
+        {
+          "songId": 16431843,
+          "title": "I Don't Have To Try",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515085,
+          "album": "The Best Damn Thing (Deluxe Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p1.music.126.net/JsjUOYJytWLfFsA-RaHLgQ==/109951163471012053.jpg",
+          "duration": 197.706
+        },
+        {
+          "songId": 16431844,
+          "title": "One Of Those Girls",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515085,
+          "album": "The Best Damn Thing (Deluxe Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p1.music.126.net/JsjUOYJytWLfFsA-RaHLgQ==/109951163471012053.jpg",
+          "duration": 176.266
+        },
+        {
+          "songId": 16431845,
+          "title": "Contagious",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515085,
+          "album": "The Best Damn Thing (Deluxe Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p1.music.126.net/JsjUOYJytWLfFsA-RaHLgQ==/109951163471012053.jpg",
+          "duration": 130.56
+        },
+        {
+          "songId": 16431846,
+          "title": "Keep Holding On",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515085,
+          "album": "The Best Damn Thing (Deluxe Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p1.music.126.net/JsjUOYJytWLfFsA-RaHLgQ==/109951163471012053.jpg",
+          "duration": 239.906
+        },
+        {
+          "songId": 16432036,
+          "title": "I Will Be",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515085,
+          "album": "The Best Damn Thing (Deluxe Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p1.music.126.net/JsjUOYJytWLfFsA-RaHLgQ==/109951163471012053.jpg",
+          "duration": 240.466
+        },
+        {
+          "songId": 436346731,
+          "title": "I Can Do Better (Acoustic Version)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515085,
+          "album": "The Best Damn Thing (Deluxe Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p1.music.126.net/JsjUOYJytWLfFsA-RaHLgQ==/109951163471012053.jpg",
+          "duration": 219.196
+        },
+        {
+          "songId": 436355543,
+          "title": "Girlfriend (The Submarines' Time Warp '66 Mix - English)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            },
+            {
+              "id": 44299,
+              "name": "The Submarines"
+            }
+          ],
+          "albumId": 1515085,
+          "album": "The Best Damn Thing (Deluxe Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p1.music.126.net/JsjUOYJytWLfFsA-RaHLgQ==/109951163471012053.jpg",
+          "duration": 204.866
+        },
+        {
+          "songId": 436355544,
+          "title": "When You're Gone (Acoustic)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515085,
+          "album": "The Best Damn Thing (Deluxe Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p1.music.126.net/JsjUOYJytWLfFsA-RaHLgQ==/109951163471012053.jpg",
+          "duration": 239.306
+        }
+      ]
+    },
+    "1515088": {
+      "id": 1515088,
+      "name": "Let Go",
+      "type": "专辑",
+      "subType": "录音室版",
+      "published": 1023120000000,
+      "size": 13,
+      "pic": "https://p2.music.126.net/rNWoK0vpHAW1H9kTFKRVig==/109951167596882130.jpg",
+      "tracks": [
+        {
+          "songId": 16431879,
+          "title": "Losing Grip",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515088,
+          "album": "Let Go",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1023120000000,
+          "albumSize": 13,
+          "pic": "https://p2.music.126.net/rNWoK0vpHAW1H9kTFKRVig==/109951167596882130.jpg",
+          "duration": 234
+        },
+        {
+          "songId": 16431880,
+          "title": "Complicated",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515088,
+          "album": "Let Go",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1023120000000,
+          "albumSize": 13,
+          "pic": "https://p2.music.126.net/rNWoK0vpHAW1H9kTFKRVig==/109951167596882130.jpg",
+          "duration": 245.693
+        },
+        {
+          "songId": 16431881,
+          "title": "Sk8er Boi",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515088,
+          "album": "Let Go",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1023120000000,
+          "albumSize": 13,
+          "pic": "https://p2.music.126.net/rNWoK0vpHAW1H9kTFKRVig==/109951167596882130.jpg",
+          "duration": 204.056
+        },
+        {
+          "songId": 16431882,
+          "title": "I'm with You",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515088,
+          "album": "Let Go",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1023120000000,
+          "albumSize": 13,
+          "pic": "https://p2.music.126.net/rNWoK0vpHAW1H9kTFKRVig==/109951167596882130.jpg",
+          "duration": 222.906
+        },
+        {
+          "songId": 16431883,
+          "title": "Mobile",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515088,
+          "album": "Let Go",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1023120000000,
+          "albumSize": 13,
+          "pic": "https://p2.music.126.net/rNWoK0vpHAW1H9kTFKRVig==/109951167596882130.jpg",
+          "duration": 211.998
+        },
+        {
+          "songId": 16431884,
+          "title": "Unwanted",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515088,
+          "album": "Let Go",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1023120000000,
+          "albumSize": 13,
+          "pic": "https://p2.music.126.net/rNWoK0vpHAW1H9kTFKRVig==/109951167596882130.jpg",
+          "duration": 221.077
+        },
+        {
+          "songId": 16431885,
+          "title": "Tomorrow",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515088,
+          "album": "Let Go",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1023120000000,
+          "albumSize": 13,
+          "pic": "https://p2.music.126.net/rNWoK0vpHAW1H9kTFKRVig==/109951167596882130.jpg",
+          "duration": 228.902
+        },
+        {
+          "songId": 16431886,
+          "title": "Anything but Ordinary",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515088,
+          "album": "Let Go",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1023120000000,
+          "albumSize": 13,
+          "pic": "https://p2.music.126.net/rNWoK0vpHAW1H9kTFKRVig==/109951167596882130.jpg",
+          "duration": 251.541
+        },
+        {
+          "songId": 16431887,
+          "title": "Things I'll Never Say",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515088,
+          "album": "Let Go",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1023120000000,
+          "albumSize": 13,
+          "pic": "https://p2.music.126.net/rNWoK0vpHAW1H9kTFKRVig==/109951167596882130.jpg",
+          "duration": 223.866
+        },
+        {
+          "songId": 16431888,
+          "title": "My World",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515088,
+          "album": "Let Go",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1023120000000,
+          "albumSize": 13,
+          "pic": "https://p2.music.126.net/rNWoK0vpHAW1H9kTFKRVig==/109951167596882130.jpg",
+          "duration": 207.33
+        },
+        {
+          "songId": 16431889,
+          "title": "Nobody's Fool",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515088,
+          "album": "Let Go",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1023120000000,
+          "albumSize": 13,
+          "pic": "https://p2.music.126.net/rNWoK0vpHAW1H9kTFKRVig==/109951167596882130.jpg",
+          "duration": 237.333
+        },
+        {
+          "songId": 16431890,
+          "title": "Too Much to Ask",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515088,
+          "album": "Let Go",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1023120000000,
+          "albumSize": 13,
+          "pic": "https://p2.music.126.net/rNWoK0vpHAW1H9kTFKRVig==/109951167596882130.jpg",
+          "duration": 225.4
+        },
+        {
+          "songId": 16431891,
+          "title": "Naked",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 1515088,
+          "album": "Let Go",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1023120000000,
+          "albumSize": 13,
+          "pic": "https://p2.music.126.net/rNWoK0vpHAW1H9kTFKRVig==/109951167596882130.jpg",
+          "duration": 208.793
+        }
+      ]
+    },
+    "2569121": {
+      "id": 2569121,
+      "name": "Rock N Roll",
+      "type": "Single",
+      "subType": "录音室版",
+      "published": 1375113600007,
+      "size": 2,
+      "pic": "https://p1.music.126.net/O-f5roYSa7nAi35zOaPFTw==/109951163208576410.jpg",
+      "tracks": [
+        {
+          "songId": 27090060,
+          "title": "Rock N Roll",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 2569121,
+          "album": "Rock N Roll",
+          "albumType": "Single",
+          "subType": "录音室版",
+          "published": 1375113600007,
+          "pic": "https://p1.music.126.net/O-f5roYSa7nAi35zOaPFTw==/109951163208576410.jpg",
+          "duration": 207.173
+        },
+        {
+          "songId": 27671068,
+          "title": "Rock N Roll (Instrumental Version)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 2569121,
+          "album": "Rock N Roll",
+          "albumType": "Single",
+          "subType": "录音室版",
+          "published": 1375113600007,
+          "pic": "https://p1.music.126.net/O-f5roYSa7nAi35zOaPFTw==/109951163208576410.jpg",
+          "duration": 203
+        }
+      ]
+    },
+    "2662056": {
+      "id": 2662056,
+      "name": "Avril Lavigne (Expanded Edition)",
+      "type": "专辑",
+      "subType": "录音室版",
+      "published": 1383580800000,
+      "size": 16,
+      "pic": "https://p2.music.126.net/lvXLtnC5MhwmrvDcJnYvBQ==/109951165968796628.jpg",
+      "tracks": [
+        {
+          "songId": 27896563,
+          "title": "Rock N Roll",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 2662056,
+          "album": "Avril Lavigne (Expanded Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1383580800000,
+          "pic": "https://p2.music.126.net/lvXLtnC5MhwmrvDcJnYvBQ==/109951165968796628.jpg",
+          "duration": 206.75
+        },
+        {
+          "songId": 27896565,
+          "title": "Here's to Never Growing Up",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 2662056,
+          "album": "Avril Lavigne (Expanded Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1383580800000,
+          "pic": "https://p2.music.126.net/lvXLtnC5MhwmrvDcJnYvBQ==/109951165968796628.jpg",
+          "duration": 214.389
+        },
+        {
+          "songId": 27698445,
+          "title": "17",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 2662056,
+          "album": "Avril Lavigne (Expanded Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1383580800000,
+          "pic": "https://p2.music.126.net/lvXLtnC5MhwmrvDcJnYvBQ==/109951165968796628.jpg",
+          "duration": 205.008
+        },
+        {
+          "songId": 27896566,
+          "title": "Bitchin' Summer",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 2662056,
+          "album": "Avril Lavigne (Expanded Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1383580800000,
+          "pic": "https://p2.music.126.net/lvXLtnC5MhwmrvDcJnYvBQ==/109951165968796628.jpg",
+          "duration": 210.651
+        },
+        {
+          "songId": 27804368,
+          "title": "Let Me Go",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            },
+            {
+              "id": 30366,
+              "name": "Chad Kroeger"
+            }
+          ],
+          "albumId": 2662056,
+          "album": "Avril Lavigne (Expanded Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1383580800000,
+          "pic": "https://p2.music.126.net/lvXLtnC5MhwmrvDcJnYvBQ==/109951165968796628.jpg",
+          "duration": 268.027
+        },
+        {
+          "songId": 27896567,
+          "title": "Give You What You Like",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 2662056,
+          "album": "Avril Lavigne (Expanded Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1383580800000,
+          "pic": "https://p2.music.126.net/lvXLtnC5MhwmrvDcJnYvBQ==/109951165968796628.jpg",
+          "duration": 225.266
+        },
+        {
+          "songId": 27896564,
+          "title": "Bad Girl",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            },
+            {
+              "id": 96268,
+              "name": "Marilyn Manson"
+            }
+          ],
+          "albumId": 2662056,
+          "album": "Avril Lavigne (Expanded Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1383580800000,
+          "pic": "https://p2.music.126.net/lvXLtnC5MhwmrvDcJnYvBQ==/109951165968796628.jpg",
+          "duration": 174.962
+        },
+        {
+          "songId": 27896568,
+          "title": "Hello Kitty",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 2662056,
+          "album": "Avril Lavigne (Expanded Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1383580800000,
+          "pic": "https://p2.music.126.net/lvXLtnC5MhwmrvDcJnYvBQ==/109951165968796628.jpg",
+          "duration": 196.301
+        },
+        {
+          "songId": 27896572,
+          "title": "You Ain't Seen Nothin' Yet",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 2662056,
+          "album": "Avril Lavigne (Expanded Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1383580800000,
+          "pic": "https://p2.music.126.net/lvXLtnC5MhwmrvDcJnYvBQ==/109951165968796628.jpg",
+          "duration": 193.352
+        },
+        {
+          "songId": 27896571,
+          "title": "Sippin' On Sunshine",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 2662056,
+          "album": "Avril Lavigne (Expanded Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1383580800000,
+          "pic": "https://p2.music.126.net/lvXLtnC5MhwmrvDcJnYvBQ==/109951165968796628.jpg",
+          "duration": 209.443
+        },
+        {
+          "songId": 27896569,
+          "title": "Hello Heartache",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 2662056,
+          "album": "Avril Lavigne (Expanded Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1383580800000,
+          "pic": "https://p2.music.126.net/lvXLtnC5MhwmrvDcJnYvBQ==/109951165968796628.jpg",
+          "duration": 229.482
+        },
+        {
+          "songId": 27896570,
+          "title": "Falling Fast",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 2662056,
+          "album": "Avril Lavigne (Expanded Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1383580800000,
+          "pic": "https://p2.music.126.net/lvXLtnC5MhwmrvDcJnYvBQ==/109951165968796628.jpg",
+          "duration": 193.77
+        },
+        {
+          "songId": 27896573,
+          "title": "Hush Hush",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 2662056,
+          "album": "Avril Lavigne (Expanded Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1383580800000,
+          "pic": "https://p2.music.126.net/lvXLtnC5MhwmrvDcJnYvBQ==/109951165968796628.jpg",
+          "duration": 239.444
+        },
+        {
+          "songId": 27937700,
+          "title": "Rock N Roll (Acoustic)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 2662056,
+          "album": "Avril Lavigne (Expanded Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1383580800000,
+          "pic": "https://p2.music.126.net/lvXLtnC5MhwmrvDcJnYvBQ==/109951165968796628.jpg",
+          "duration": 203.911
+        },
+        {
+          "songId": 27937701,
+          "title": "Bad Reputation",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 2662056,
+          "album": "Avril Lavigne (Expanded Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1383580800000,
+          "pic": "https://p2.music.126.net/lvXLtnC5MhwmrvDcJnYvBQ==/109951165968796628.jpg",
+          "duration": 162.33
+        },
+        {
+          "songId": 27937702,
+          "title": "How You Remind Me",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 2662056,
+          "album": "Avril Lavigne (Expanded Edition)",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1383580800000,
+          "pic": "https://p2.music.126.net/lvXLtnC5MhwmrvDcJnYvBQ==/109951165968796628.jpg",
+          "duration": 245.783
+        }
+      ]
+    },
+    "3286133": {
+      "id": 3286133,
+      "name": "Happiness Forever",
+      "type": "专辑",
+      "subType": "录音室版",
+      "published": 1523289600000,
+      "size": 0,
+      "pic": "https://p2.music.126.net/oewJxBfhdsvSYslFGYSLfA==/109951165972560991.jpg",
+      "tracks": [
+        {
+          "songId": 34497406,
+          "title": "Rock N Roll",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 3286133,
+          "album": "Happiness Forever",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1523289600000,
+          "pic": "https://p2.music.126.net/oewJxBfhdsvSYslFGYSLfA==/109951165972560991.jpg",
+          "duration": 207.173
+        }
+      ]
+    },
+    "34734307": {
+      "id": 34734307,
+      "name": "The Best Damn Thing",
+      "type": "专辑",
+      "subType": "录音室版",
+      "published": 1176739200000,
+      "size": 17,
+      "pic": "https://p2.music.126.net/GfmrCb14iecB0sPAH6F-VQ==/109951165991854768.jpg",
+      "tracks": [
+        {
+          "songId": 416633591,
+          "title": "Girlfriend (Explicit Version)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734307,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p2.music.126.net/GfmrCb14iecB0sPAH6F-VQ==/109951165991854768.jpg",
+          "duration": 217.066
+        },
+        {
+          "songId": 416633592,
+          "title": "I Can Do Better (Explicit Version)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734307,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p2.music.126.net/GfmrCb14iecB0sPAH6F-VQ==/109951165991854768.jpg",
+          "duration": 197.066
+        },
+        {
+          "songId": 416633593,
+          "title": "Runaway",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734307,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p2.music.126.net/GfmrCb14iecB0sPAH6F-VQ==/109951165991854768.jpg",
+          "duration": 228.573
+        },
+        {
+          "songId": 416633594,
+          "title": "The Best Damn Thing",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734307,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p2.music.126.net/GfmrCb14iecB0sPAH6F-VQ==/109951165991854768.jpg",
+          "duration": 190.4
+        },
+        {
+          "songId": 416633595,
+          "title": "When You're Gone",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734307,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p2.music.126.net/GfmrCb14iecB0sPAH6F-VQ==/109951165991854768.jpg",
+          "duration": 240.493
+        },
+        {
+          "songId": 416633596,
+          "title": "Everything Back But You (Explicit Version)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734307,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p2.music.126.net/GfmrCb14iecB0sPAH6F-VQ==/109951165991854768.jpg",
+          "duration": 183.066
+        },
+        {
+          "songId": 416633597,
+          "title": "Hot",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734307,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p2.music.126.net/GfmrCb14iecB0sPAH6F-VQ==/109951165991854768.jpg",
+          "duration": 203.533
+        },
+        {
+          "songId": 416633598,
+          "title": "Innocence",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734307,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p2.music.126.net/GfmrCb14iecB0sPAH6F-VQ==/109951165991854768.jpg",
+          "duration": 233
+        },
+        {
+          "songId": 416633599,
+          "title": "I Don't Have To Try (Explicit Version)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734307,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p2.music.126.net/GfmrCb14iecB0sPAH6F-VQ==/109951165991854768.jpg",
+          "duration": 197.706
+        },
+        {
+          "songId": 416633600,
+          "title": "One Of Those Girls",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734307,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p2.music.126.net/GfmrCb14iecB0sPAH6F-VQ==/109951165991854768.jpg",
+          "duration": 176.266
+        },
+        {
+          "songId": 416633601,
+          "title": "Contagious",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734307,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p2.music.126.net/GfmrCb14iecB0sPAH6F-VQ==/109951165991854768.jpg",
+          "duration": 130.56
+        },
+        {
+          "songId": 416633602,
+          "title": "Keep Holding On",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734307,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p2.music.126.net/GfmrCb14iecB0sPAH6F-VQ==/109951165991854768.jpg",
+          "duration": 239.906
+        },
+        {
+          "songId": 416633603,
+          "title": "Alone",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734307,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p2.music.126.net/GfmrCb14iecB0sPAH6F-VQ==/109951165991854768.jpg",
+          "duration": 193.77
+        },
+        {
+          "songId": 416633604,
+          "title": "I Will Be",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734307,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p2.music.126.net/GfmrCb14iecB0sPAH6F-VQ==/109951165991854768.jpg",
+          "duration": 239.746
+        },
+        {
+          "songId": 416633605,
+          "title": "I Can Do Better (Acoustic Version)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734307,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p2.music.126.net/GfmrCb14iecB0sPAH6F-VQ==/109951165991854768.jpg",
+          "duration": 219.196
+        },
+        {
+          "songId": 416633606,
+          "title": "Girlfriend (The Submarines' Time Warp '66 Mix - English)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734307,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p2.music.126.net/GfmrCb14iecB0sPAH6F-VQ==/109951165991854768.jpg",
+          "duration": 190.868
+        },
+        {
+          "songId": 416633607,
+          "title": "Girlfriend (Dr. Luke mix featuring Lil Mama)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 64219,
+              "name": "Lil Mama"
+            },
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734307,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176739200000,
+          "pic": "https://p2.music.126.net/GfmrCb14iecB0sPAH6F-VQ==/109951165991854768.jpg",
+          "duration": 206
+        }
+      ]
+    },
+    "34734318": {
+      "id": 34734318,
+      "name": "The Best Damn Thing",
+      "type": "专辑",
+      "subType": "录音室版",
+      "published": 1176652800007,
+      "size": 12,
+      "pic": "https://p1.music.126.net/SX9lG2RjFYDBZs1uNIAcNA==/18358545649758834.jpg",
+      "tracks": [
+        {
+          "songId": 416633688,
+          "title": "Girlfriend (Explicit Version)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734318,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176652800007,
+          "pic": "https://p1.music.126.net/SX9lG2RjFYDBZs1uNIAcNA==/18358545649758834.jpg",
+          "duration": 217.066
+        },
+        {
+          "songId": 416633689,
+          "title": "I Can Do Better (Explicit Version)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734318,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176652800007,
+          "pic": "https://p1.music.126.net/SX9lG2RjFYDBZs1uNIAcNA==/18358545649758834.jpg",
+          "duration": 195.372
+        },
+        {
+          "songId": 416633690,
+          "title": "Runaway",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734318,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176652800007,
+          "pic": "https://p1.music.126.net/SX9lG2RjFYDBZs1uNIAcNA==/18358545649758834.jpg",
+          "duration": 228.573
+        },
+        {
+          "songId": 416633691,
+          "title": "The Best Damn Thing",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734318,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176652800007,
+          "pic": "https://p1.music.126.net/SX9lG2RjFYDBZs1uNIAcNA==/18358545649758834.jpg",
+          "duration": 190.4
+        },
+        {
+          "songId": 416633692,
+          "title": "When You're Gone",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734318,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176652800007,
+          "pic": "https://p1.music.126.net/SX9lG2RjFYDBZs1uNIAcNA==/18358545649758834.jpg",
+          "duration": 240.493
+        },
+        {
+          "songId": 416633693,
+          "title": "Everything Back But You (Explicit Version)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734318,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176652800007,
+          "pic": "https://p1.music.126.net/SX9lG2RjFYDBZs1uNIAcNA==/18358545649758834.jpg",
+          "duration": 182.16
+        },
+        {
+          "songId": 416633694,
+          "title": "Hot",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734318,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176652800007,
+          "pic": "https://p1.music.126.net/SX9lG2RjFYDBZs1uNIAcNA==/18358545649758834.jpg",
+          "duration": 203.533
+        },
+        {
+          "songId": 416633695,
+          "title": "Innocence",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734318,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176652800007,
+          "pic": "https://p1.music.126.net/SX9lG2RjFYDBZs1uNIAcNA==/18358545649758834.jpg",
+          "duration": 233
+        },
+        {
+          "songId": 416633696,
+          "title": "I Don't Have To Try (Explicit Version)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734318,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176652800007,
+          "pic": "https://p1.music.126.net/SX9lG2RjFYDBZs1uNIAcNA==/18358545649758834.jpg",
+          "duration": 197.323
+        },
+        {
+          "songId": 416633697,
+          "title": "One Of Those Girls",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734318,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176652800007,
+          "pic": "https://p1.music.126.net/SX9lG2RjFYDBZs1uNIAcNA==/18358545649758834.jpg",
+          "duration": 176.266
+        },
+        {
+          "songId": 416633698,
+          "title": "Contagious",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734318,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176652800007,
+          "pic": "https://p1.music.126.net/SX9lG2RjFYDBZs1uNIAcNA==/18358545649758834.jpg",
+          "duration": 130.56
+        },
+        {
+          "songId": 416633699,
+          "title": "Keep Holding On",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 34734318,
+          "album": "The Best Damn Thing",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1176652800007,
+          "pic": "https://p1.music.126.net/SX9lG2RjFYDBZs1uNIAcNA==/18358545649758834.jpg",
+          "duration": 239.906
+        }
+      ]
+    },
+    "75552216": {
+      "id": 75552216,
+      "name": "Head Above Water",
+      "type": "专辑",
+      "subType": "录音室版",
+      "published": 1550160000000,
+      "size": 12,
+      "pic": "https://p1.music.126.net/2wEqkjCrSHcwIdiwWirzUw==/109951163872739510.jpg",
+      "tracks": [
+        {
+          "songId": 1310906383,
+          "title": "Head Above Water",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 75552216,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/2wEqkjCrSHcwIdiwWirzUw==/109951163872739510.jpg",
+          "duration": 220.85
+        },
+        {
+          "songId": 1345983810,
+          "title": "Birdie",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 75552216,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/2wEqkjCrSHcwIdiwWirzUw==/109951163872739510.jpg",
+          "duration": 215.175
+        },
+        {
+          "songId": 1345983804,
+          "title": "I Fell In Love With The Devil",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 75552216,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/2wEqkjCrSHcwIdiwWirzUw==/109951163872739510.jpg",
+          "duration": 255.683
+        },
+        {
+          "songId": 1333026147,
+          "title": "Tell Me It's Over",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 75552216,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/2wEqkjCrSHcwIdiwWirzUw==/109951163872739510.jpg",
+          "duration": 188.573
+        },
+        {
+          "songId": 1345681867,
+          "title": "Dumb Blonde (feat. Nicki Minaj)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            },
+            {
+              "id": 70183,
+              "name": "Nicki Minaj"
+            }
+          ],
+          "albumId": 75552216,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/2wEqkjCrSHcwIdiwWirzUw==/109951163872739510.jpg",
+          "duration": 214.651
+        },
+        {
+          "songId": 1345983806,
+          "title": "It Was In Me",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 75552216,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/2wEqkjCrSHcwIdiwWirzUw==/109951163872739510.jpg",
+          "duration": 223.003
+        },
+        {
+          "songId": 1345991498,
+          "title": "Souvenir",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 75552216,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/2wEqkjCrSHcwIdiwWirzUw==/109951163872739510.jpg",
+          "duration": 177.521
+        },
+        {
+          "songId": 1345991500,
+          "title": "Crush",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 75552216,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/2wEqkjCrSHcwIdiwWirzUw==/109951163872739510.jpg",
+          "duration": 213.614
+        },
+        {
+          "songId": 1345983808,
+          "title": "Goddess",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 75552216,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/2wEqkjCrSHcwIdiwWirzUw==/109951163872739510.jpg",
+          "duration": 221.216
+        },
+        {
+          "songId": 1345983807,
+          "title": "Bigger Wow",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 75552216,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/2wEqkjCrSHcwIdiwWirzUw==/109951163872739510.jpg",
+          "duration": 175.191
+        },
+        {
+          "songId": 1345983809,
+          "title": "Love Me Insane",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 75552216,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/2wEqkjCrSHcwIdiwWirzUw==/109951163872739510.jpg",
+          "duration": 180.726
+        },
+        {
+          "songId": 1345991499,
+          "title": "Warrior",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 75552216,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/2wEqkjCrSHcwIdiwWirzUw==/109951163872739510.jpg",
+          "duration": 225.758
+        }
+      ]
+    },
+    "199345404": {
+      "id": 199345404,
+      "name": "Greatest Hits",
+      "type": "精选集",
+      "subType": "录音室版",
+      "published": 1718899200000,
+      "size": 20,
+      "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+      "tracks": [
+        {
+          "songId": 2166439861,
+          "title": "Sk8er Boi",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 204.75
+        },
+        {
+          "songId": 2166439862,
+          "title": "Girlfriend",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 217.338
+        },
+        {
+          "songId": 2166439863,
+          "title": "What the Hell",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 220.626
+        },
+        {
+          "songId": 2166439864,
+          "title": "Complicated",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 244.784
+        },
+        {
+          "songId": 2166438863,
+          "title": "Don't Tell Me",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 206.158
+        },
+        {
+          "songId": 2166438864,
+          "title": "I'm A Mess",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            },
+            {
+              "id": 12502135,
+              "name": "Yungblud"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 187.793
+        },
+        {
+          "songId": 2166439865,
+          "title": "He Wasn't",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 179.773
+        },
+        {
+          "songId": 2166438865,
+          "title": "Losing Grip",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 230.019
+        },
+        {
+          "songId": 2166438866,
+          "title": "My Happy Ending",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 243.435
+        },
+        {
+          "songId": 2166439866,
+          "title": "Bite Me",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 159.529
+        },
+        {
+          "songId": 2166438867,
+          "title": "Nobody's Home",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 212.413
+        },
+        {
+          "songId": 2166438868,
+          "title": "I'm with You",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 225.806
+        },
+        {
+          "songId": 2166439868,
+          "title": "When You're Gone",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 240.465
+        },
+        {
+          "songId": 2166438869,
+          "title": "Bois Lie",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            },
+            {
+              "id": 28193740,
+              "name": "Machine Gun Kelly"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 163.375
+        },
+        {
+          "songId": 2166439869,
+          "title": "Smile",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 209.554
+        },
+        {
+          "songId": 2166439870,
+          "title": "Love It When You Hate Me",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            },
+            {
+              "id": 1060215,
+              "name": "Blackbear"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 146.755
+        },
+        {
+          "songId": 2166438870,
+          "title": "Rock N Roll",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 208.692
+        },
+        {
+          "songId": 2166438871,
+          "title": "Here's to Never Growing Up",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 216.111
+        },
+        {
+          "songId": 2166438872,
+          "title": "Keep Holding On",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 239.906
+        },
+        {
+          "songId": 2166438873,
+          "title": "Head Above Water",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 199345404,
+          "album": "Greatest Hits",
+          "albumType": "精选集",
+          "subType": "录音室版",
+          "published": 1718899200000,
+          "pic": "https://p1.music.126.net/2Je_senal6rlqaRQeHJcoA==/109951169685619301.jpg",
+          "duration": 220.566
+        }
+      ]
+    },
+    "279326879": {
+      "id": 279326879,
+      "name": "Live at Rock in Rio 2022",
+      "type": "专辑",
+      "subType": "现场版",
+      "published": 1659024000000,
+      "size": 11,
+      "pic": "https://p1.music.126.net/2g8q-mNUU-wehYiqEk2dfA==/109951171507132361.jpg",
+      "tracks": [
+        {
+          "songId": 2729049489,
+          "title": "Girlfriend (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 279326879,
+          "album": "Live at Rock in Rio 2022",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1659024000000,
+          "pic": "https://p1.music.126.net/2g8q-mNUU-wehYiqEk2dfA==/109951171507132361.jpg",
+          "duration": 244.185
+        },
+        {
+          "songId": 2729050377,
+          "title": "Bite Me (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 279326879,
+          "album": "Live at Rock in Rio 2022",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1659024000000,
+          "pic": "https://p1.music.126.net/2g8q-mNUU-wehYiqEk2dfA==/109951171507132361.jpg",
+          "duration": 228.227
+        },
+        {
+          "songId": 2729050378,
+          "title": "What the Hell (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 279326879,
+          "album": "Live at Rock in Rio 2022",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1659024000000,
+          "pic": "https://p1.music.126.net/2g8q-mNUU-wehYiqEk2dfA==/109951171507132361.jpg",
+          "duration": 240.132
+        },
+        {
+          "songId": 2729049490,
+          "title": "Complicated (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 279326879,
+          "album": "Live at Rock in Rio 2022",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1659024000000,
+          "pic": "https://p1.music.126.net/2g8q-mNUU-wehYiqEk2dfA==/109951171507132361.jpg",
+          "duration": 409.593
+        },
+        {
+          "songId": 2729050379,
+          "title": "My Happy Ending (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 279326879,
+          "album": "Live at Rock in Rio 2022",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1659024000000,
+          "pic": "https://p1.music.126.net/2g8q-mNUU-wehYiqEk2dfA==/109951171507132361.jpg",
+          "duration": 376.917
+        },
+        {
+          "songId": 2729049491,
+          "title": "Smile (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 279326879,
+          "album": "Live at Rock in Rio 2022",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1659024000000,
+          "pic": "https://p1.music.126.net/2g8q-mNUU-wehYiqEk2dfA==/109951171507132361.jpg",
+          "duration": 236.839
+        },
+        {
+          "songId": 2729049492,
+          "title": "Love It When You Hate Me (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 279326879,
+          "album": "Live at Rock in Rio 2022",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1659024000000,
+          "pic": "https://p1.music.126.net/2g8q-mNUU-wehYiqEk2dfA==/109951171507132361.jpg",
+          "duration": 170.727
+        },
+        {
+          "songId": 2729049494,
+          "title": "Sk8er Boi (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 279326879,
+          "album": "Live at Rock in Rio 2022",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1659024000000,
+          "pic": "https://p1.music.126.net/2g8q-mNUU-wehYiqEk2dfA==/109951171507132361.jpg",
+          "duration": 377.677
+        },
+        {
+          "songId": 2729050380,
+          "title": "Head Above Water (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 279326879,
+          "album": "Live at Rock in Rio 2022",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1659024000000,
+          "pic": "https://p1.music.126.net/2g8q-mNUU-wehYiqEk2dfA==/109951171507132361.jpg",
+          "duration": 403.387
+        },
+        {
+          "songId": 2729049496,
+          "title": "Avalanche (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 279326879,
+          "album": "Live at Rock in Rio 2022",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1659024000000,
+          "pic": "https://p1.music.126.net/2g8q-mNUU-wehYiqEk2dfA==/109951171507132361.jpg",
+          "duration": 248.745
+        },
+        {
+          "songId": 2729049497,
+          "title": "I'm With You (Live)",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 279326879,
+          "album": "Live at Rock in Rio 2022",
+          "albumType": "专辑",
+          "subType": "现场版",
+          "published": 1659024000000,
+          "pic": "https://p1.music.126.net/2g8q-mNUU-wehYiqEk2dfA==/109951171507132361.jpg",
+          "duration": 307.131
+        }
+      ]
+    },
+    "359326935": {
+      "id": 359326935,
+      "name": "Head Above Water",
+      "type": "专辑",
+      "subType": "录音室版",
+      "published": 1550160000000,
+      "size": 12,
+      "pic": "https://p1.music.126.net/YUAe_eIxAVRtO1z2jYACKQ==/109951172629688854.jpg",
+      "tracks": [
+        {
+          "songId": 3342121531,
+          "title": "Head Above Water",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 359326935,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/YUAe_eIxAVRtO1z2jYACKQ==/109951172629688854.jpg",
+          "duration": 220.85
+        },
+        {
+          "songId": 3342120500,
+          "title": "Birdie",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 359326935,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/YUAe_eIxAVRtO1z2jYACKQ==/109951172629688854.jpg",
+          "duration": 215.175
+        },
+        {
+          "songId": 3342121532,
+          "title": "I Fell In Love With The Devil",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 359326935,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/YUAe_eIxAVRtO1z2jYACKQ==/109951172629688854.jpg",
+          "duration": 255.683
+        },
+        {
+          "songId": 3342120501,
+          "title": "Tell Me It's Over",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 359326935,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/YUAe_eIxAVRtO1z2jYACKQ==/109951172629688854.jpg",
+          "duration": 188.573
+        },
+        {
+          "songId": 3342121533,
+          "title": "Dumb Blonde",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            },
+            {
+              "id": 97931296,
+              "name": "Nicki Minaj"
+            }
+          ],
+          "albumId": 359326935,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/YUAe_eIxAVRtO1z2jYACKQ==/109951172629688854.jpg",
+          "duration": 214.651
+        },
+        {
+          "songId": 3342121534,
+          "title": "It Was In Me",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 359326935,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/YUAe_eIxAVRtO1z2jYACKQ==/109951172629688854.jpg",
+          "duration": 223.003
+        },
+        {
+          "songId": 3342121535,
+          "title": "Souvenir",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 359326935,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/YUAe_eIxAVRtO1z2jYACKQ==/109951172629688854.jpg",
+          "duration": 177.521
+        },
+        {
+          "songId": 3342121536,
+          "title": "Crush",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 359326935,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/YUAe_eIxAVRtO1z2jYACKQ==/109951172629688854.jpg",
+          "duration": 213.614
+        },
+        {
+          "songId": 3342120502,
+          "title": "Goddess",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 359326935,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/YUAe_eIxAVRtO1z2jYACKQ==/109951172629688854.jpg",
+          "duration": 221.216
+        },
+        {
+          "songId": 3342120503,
+          "title": "Bigger Wow",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 359326935,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/YUAe_eIxAVRtO1z2jYACKQ==/109951172629688854.jpg",
+          "duration": 175.191
+        },
+        {
+          "songId": 3342120504,
+          "title": "Love Me Insane",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 359326935,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/YUAe_eIxAVRtO1z2jYACKQ==/109951172629688854.jpg",
+          "duration": 180.726
+        },
+        {
+          "songId": 3342120505,
+          "title": "Warrior",
+          "aliases": [],
+          "artists": [
+            {
+              "id": 46490,
+              "name": "Avril Lavigne"
+            }
+          ],
+          "albumId": 359326935,
+          "album": "Head Above Water",
+          "albumType": "专辑",
+          "subType": "录音室版",
+          "published": 1550160000000,
+          "pic": "https://p1.music.126.net/YUAe_eIxAVRtO1z2jYACKQ==/109951172629688854.jpg",
+          "duration": 225.758
+        }
+      ]
+    }
+  }
+}

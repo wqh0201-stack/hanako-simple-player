@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>early attach then play</title></head>
+<body><pre id="log"></pre>
+<script>
+/* 关键分支：在「已拿到 metadata、尚未开播」时先 captureStream（app 在 'play' 事件里做），
+   然后再 play，看这条早已挂上的链能不能读到真实频谱 —— 还是永远静音。 */
+var log = document.getElementById('log');
+function say(s) { log.textContent += s + '\n'; }
+function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+var ctx = null;
+function ac() { if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)(); return ctx; }
+function ev(el, name, ms) {
+  return new Promise(function (res) {
+    var t = setTimeout(function () { el.removeEventListener(name, h); res('timeout'); }, ms);
+    function h() { clearTimeout(t); el.removeEventListener(name, h); res('fired'); }
+    el.addEventListener(name, h, { once: true });
+  });
+}
+
+async function run(name, src, attachWhen) {
+  var a = document.createElement('audio');
+  a.preload = 'metadata';
+  a.src = src;
+  document.body.appendChild(a);
+  var rec = { name: name, attachWhen: attachWhen };
+  if (attachWhen === 'loadedmetadata') await ev(a, 'loadedmetadata', 6000);
+  else if (attachWhen === 'canplay') await ev(a, 'canplay', 6000);
+  rec.readyStateAtAttach = a.readyState;
+  var c0 = ac();
+  if (c0.state !== 'running') await c0.resume();
+  var st, an, g, srcNode;
+  try {
+    st = a.captureStream();
+    var tracks = st.getAudioTracks();
+    rec.tracks = tracks.length;
+    if (!tracks.length) { rec.verdict = 'NO TRACK'; return rec; }
+    srcNode = c0.createMediaStreamSource(st);
+    an = c0.createAnalyser();
+    an.fftSize = 4096; an.smoothingTimeConstant = 0.2;
+    g = c0.createGain(); g.gain.value = 0;
+    srcNode.connect(an); an.connect(g); g.connect(c0.destination);
+  } catch (e) { rec.captureError = String(e && e.name) + ': ' + String(e && e.message); return rec; }
+  a.play().catch(function () {});
+  await ev(a, 'playing', 6000);
+  rec.readyStateAtPlaying = a.readyState;
+  var d = new Float32Array(an.frequencyBinCount);
+  var peak = -Infinity, t0 = performance.now();
+  while (performance.now() - t0 < 1600) {
+    an.getFloatFrequencyData(d);
+    for (var i = 0; i < d.length; i++) if (isFinite(d[i]) && d[i] > peak) peak = d[i];
+    await delay(50);
+  }
+  rec.peakDb = Math.round(peak * 10) / 10;
+  rec.verdict = peak > -80 ? 'AUDIO PRESENT' : 'SILENT (chain attached but no data)';
+  rec.currentTime = Math.round(a.currentTime * 100) / 100;
+  try { a.pause(); srcNode.disconnect(); an.disconnect(); g.disconnect(); } catch (e) {}
+  a.remove();
+  return rec;
+}
+
+(async function () {
+  var out = [];
+  var cases = [
+    ['mp3', '/tone.mp3', 'loadedmetadata'],
+    ['frag-mp4', '/tone-frag.mp4', 'loadedmetadata'],
+    ['mp3', '/tone.mp3', 'canplay'],
+    ['frag-mp4', '/tone-frag.mp4', 'canplay']
+  ];
+  for (var i = 0; i < cases.length; i++) {
+    try { out.push(await run(cases[i][0], cases[i][1], cases[i][2])); }
+    catch (e) { out.push({ name: cases[i][0], attachWhen: cases[i][2], fatal: String(e) }); }
+    await delay(400);
+  }
+  say(JSON.stringify(out, null, 1));
+  await fetch('/report?data=' + encodeURIComponent(JSON.stringify(out)));
+  document.title = 'DONE';
+})();
+</script>
+</body>
+</html>

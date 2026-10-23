@@ -1,0 +1,61 @@
+{
+  "capturedAt": "2026-10-20T14:42:08.184Z",
+  "requests": [
+    {
+      "url": "https://music.163.com/api/search/get/web?s=Avril+Lavigne&type=100&limit=30&offset=0",
+      "status": 200,
+      "code": 200,
+      "bytes": 5594,
+      "ms": 151
+    },
+    {
+      "url": "https://music.163.com/api/artist/albums/46490?limit=100&offset=0",
+      "status": 200,
+      "code": 200,
+      "bytes": 166814,
+      "ms": 110
+    },
+    {
+      "url": "https://music.163.com/api/search/get/web?s=Innocence+Avril+Lavigne&type=1&limit=50&offset=0",
+      "status": 200,
+      "code": 200,
+      "bytes": 37824,
+      "ms": 204
+    },
+    {
+      "url": "https://music.163.com/api/search/get/web?s=Rock+N+Roll+Avril+Lavigne&type=1&limit=50&offset=0",
+      "status": 200,
+      "code": 200,
+      "bytes": 37381,
+      "ms": 200
+    },
+    {
+      "url": "https://music.163.com/api/search/get/web?s=Head+Above+Water+Avril+Lavigne&type=1&limit=50&offset=0",
+      "status": 200,
+      "code": 200,
+      "bytes": 36178,
+      "ms": 215
+    },
+    {
+      "url": "https://music.163.com/api/search/get/web?s=Complicated+Avril+Lavigne&type=1&limit=50&offset=0",
+      "status": 200,
+      "code": 200,
+      "bytes": 37056,
+      "ms": 200
+    },
+    {
+      "url": "https://music.163.com/api/search/get/web?s=Sk8er+Boi+Avril+Lavigne&type=1&limit=50&offset=0",
+      "status": 200,
+      "code": 200,
+      "bytes": 35838,
+      "ms": 212
+    },
+    {
+      "url": "https://music.163.com/api/v1/album/1515088",
+      "status": 200,
+      "code": 200,
+      "bytes": 25732,
+      "ms": 77
+    }
+  ]
+}

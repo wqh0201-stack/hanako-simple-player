@@ -1,0 +1,8 @@
+{
+  "probe": "probe6.html —— 同源 FLAC-in-MP4（48kHz，B站 Hi-Res 30251 的形状），先 canplay 再挂链",
+  "results": [
+    {"name": "flac-in-mp4 (48k)", "attachWhen": "canplay", "readyStateAtAttach": 4, "tracks": 1, "readyStateAtPlaying": 4, "peakDb": -41.5, "verdict": "AUDIO PRESENT", "currentTime": 1.41}
+  ],
+  "fixture": "ffmpeg -c:a flac -f mp4（80Hz+900Hz 混音 8s）",
+  "conclusion": "Hi-Res 用的 FLAC-in-MP4 也能被 captureStream 采集，编码不是失败点。"
+}

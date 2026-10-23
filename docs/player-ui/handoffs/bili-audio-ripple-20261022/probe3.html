@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>capture timing probe</title></head>
+<body><pre id="log"></pre>
+<script>
+/* 复刻 app 的起播时序：loadedmetadata → play() → 'play' 事件 → resume() → buildAudio()
+   分别在 readyState=1（loadedmetadata）、'play'、'playing' 三个时点 captureStream，
+   看轨道数、以及后续能否读到非零频谱。 */
+var log = document.getElementById('log');
+function say(s) { log.textContent += s + '\n'; }
+function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+var ctx = null;
+function ac() { if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)(); return ctx; }
+
+function ev(el, name, ms) {
+  return new Promise(function (res) {
+    var t = setTimeout(function () { el.removeEventListener(name, h); res('timeout'); }, ms);
+    function h() { clearTimeout(t); el.removeEventListener(name, h); res('fired'); }
+    el.addEventListener(name, h, { once: true });
+  });
+}
+
+async function measure(a, label) {
+  var rec = { label: label, readyState: a.readyState };
+  try {
+    var c0 = ac();
+    if (c0.state !== 'running') await c0.resume();
+    var st = a.captureStream();
+    var tracks = st.getAudioTracks();
+    rec.tracks = tracks.length;
+    rec.trackState = tracks[0] ? tracks[0].readyState : 'n/a';
+    rec.muted = tracks[0] ? tracks[0].muted : 'n/a';
+    if (!tracks.length) { rec.verdict = 'NO TRACK -> app throws no audio track'; return rec; }
+    var src = c0.createMediaStreamSource(st);
+    var an = c0.createAnalyser();
+    an.fftSize = 4096; an.smoothingTimeConstant = 0.2;
+    var g = c0.createGain(); g.gain.value = 0;
+    src.connect(an); an.connect(g); g.connect(c0.destination);
+    var d = new Float32Array(an.frequencyBinCount);
+    var peak = -Infinity, t0 = performance.now();
+    while (performance.now() - t0 < 1200) {
+      an.getFloatFrequencyData(d);
+      for (var i = 0; i < d.length; i++) if (isFinite(d[i]) && d[i] > peak) peak = d[i];
+      await delay(50);
+    }
+    rec.peakDb = Math.round(peak * 10) / 10;
+    rec.verdict = peak > -80 ? 'AUDIO PRESENT' : 'SILENT';
+    try { src.disconnect(); an.disconnect(); g.disconnect(); } catch (e) {}
+  } catch (e) {
+    rec.error = String(e && e.name) + ': ' + String(e && e.message);
+  }
+  return rec;
+}
+
+async function caseRun(name, src, when) {
+  var a = document.createElement('audio');
+  a.preload = 'metadata';   // 与 ui/index.html 的 <audio preload="metadata"> 一致
+  a.src = src;
+  document.body.appendChild(a);
+  var rec = { name: name, when: when };
+  if (when === 'loadedmetadata') {
+    await ev(a, 'loadedmetadata', 5000);
+    rec.readyStateAtCapture = a.readyState;
+    var m = await measure(a, 'at-loadedmetadata');
+    rec.measure = m;
+    a.play().catch(function () {});
+    await delay(1500);
+    rec.after1_5s = { currentTime: a.currentTime, paused: a.paused };
+  } else if (when === 'play') {
+    await ev(a, 'loadedmetadata', 5000);
+    a.play().catch(function () {});
+    await ev(a, 'play', 3000);
+    rec.readyStateAtCapture = a.readyState;
+    rec.measure = await measure(a, 'at-play');
+    await delay(1500);
+    rec.after1_5s = { currentTime: a.currentTime, paused: a.paused };
+  } else {
+    await ev(a, 'loadedmetadata', 5000);
+    a.play().catch(function () {});
+    await ev(a, 'playing', 5000);
+    rec.readyStateAtCapture = a.readyState;
+    rec.measure = await measure(a, 'at-playing');
+  }
+  try { a.pause(); } catch (e) {}
+  a.remove();
+  return rec;
+}
+
+(async function () {
+  var out = [];
+  var srcs = [['mp3', '/tone.mp3'], ['frag-mp4(video/mp4)', '/tone-frag.mp4']];
+  for (var s = 0; s < srcs.length; s++) {
+    for (var w of ['loadedmetadata', 'play', 'playing']) {
+      try { out.push(await caseRun(srcs[s][0], srcs[s][1], w)); }
+      catch (e) { out.push({ name: srcs[s][0], when: w, fatal: String(e) }); }
+      await delay(400);
+    }
+  }
+  say(JSON.stringify(out, null, 1));
+  await fetch('/report?data=' + encodeURIComponent(JSON.stringify(out)));
+  document.title = 'DONE';
+})();
+</script>
+</body>
+</html>

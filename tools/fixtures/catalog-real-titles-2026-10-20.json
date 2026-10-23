@@ -1,0 +1,49 @@
+{
+  "source": "Read-only production playlist title snapshot, logical date 2026-10-20. Titles only; no URLs, cookies, audio files or playlist writes. This is not proof of catalog matching.",
+  "groups": [
+    {
+      "artist": "Avril Lavigne",
+      "count": 50,
+      "missingAuthor": 50,
+      "titles": [
+        "Innocence-Avril Lavigne", "Girlfriend-Avril Lavigne", "Here's To Never Growing Up-Avril Lavigne", "When You're Gone-Avril Lavigne", "Everybody Hurts-Avril Lavigne",
+        "Complicated-Avril Lavigne", "Rock N Roll-Avril Lavigne", "Head Above Water-Avril Lavigne", "Wish You Were Here-Avril Lavigne", "Fly-Avril Lavigne",
+        "Tomorrow-Avril Lavigne", "My Happy Ending-Avril Lavigne", "Dumb Blonde-Avril Lavigne/Nicki Minaj", "Anything but Ordinary-Avril Lavigne", "Let Me Go-Avril Lavigne/Chad Kroeger",
+        "Bite Me-Avril Lavigne", "Sk8er Boi-Avril Lavigne", "How You Remind Me-Avril Lavigne", "Bitchin' Summer-Avril Lavigne", "I Will Be-Avril Lavigne",
+        "17-Avril Lavigne", "We Are Warriors-Avril Lavigne", "I Fell In Love With the Devil-Avril Lavigne", "Nobody's Fool-Avril Lavigne", "Nobody's Home-Avril Lavigne",
+        "What The Hell-Avril Lavigne", "Keep Holding On-Avril Lavigne", "Hello Kitty-Avril Lavigne", "Give You What You Like-Avril Lavigne", "Tell Me It's Over-Avril Lavigne",
+        "I'm with You-Avril Lavigne", "Dare To Love Me-Avril Lavigne", "Hush Hush-Avril Lavigne", "Remember When-Avril Lavigne", "I Love You-Avril Lavigne",
+        "Breakaway-Avril Lavigne", "My World-Avril Lavigne", "I Don't Give-Avril Lavigne", "Skater Boy-Avril Lavigne", "Alice-Avril Lavigne",
+        "Take Me Away-Avril Lavigne", "Losing Grip-Avril Lavigne", "Things I'll Never Say-Avril Lavigne", "Don't Tell Me-Avril Lavigne", "Goodbye-Avril Lavigne",
+        "Hot-Avril Lavigne", "Smile-Avril Lavigne", "4 Real-Avril Lavigne", "The Best Damn Thing-Avril Lavigne", "Runaway-Avril Lavigne"
+      ]
+    },
+    {
+      "artist": "Taylor Swift",
+      "count": 100,
+      "missingAuthor": 100,
+      "titles": [
+        "001. Love Story", "002. Welcome To New York", "003. Cruel Summer", "004. I Knew You Were Trouble [2012]", "005. exile",
+        "006. Look What You Made Me Do", "007. Lover", "008. Anti-Hero", "009. You Belong With Me", "010. Shake It Off",
+        "011. Safe And Sound", "012. Style", "013. Blank Space", "014. ME!", "015. This Love",
+        "016. Lavender Haze", "017. All Of The Girls You Loved Before", "018. Daylight", "019. Only The Young", "020. Red",
+        "021. You Need To Calm Down", "022. Wildest Dreams", "023. Last Christmas", "024. Enchanted", "025. We Are Never Ever Getting Back Together",
+        "026. Snow On The Beach", "027. Gorgeous", "028. willow", "029. Midnight Rain", "030. ...Ready For It？",
+        "031. Back to December", "032. The Man", "033. End Game", "034. Delicate", "035. Two Is Better Than One",
+        "036. Karma", "037. London Boy", "038. Call It What You Want", "039. Maroon", "040. Beautiful Ghosts",
+        "041. Bejeweled", "042. You're On Your Own, Kid", "043. 22", "044. New Romantics", "045. Cornelia Street",
+        "046. Highway Don't Care", "047. The Archer", "048. Sparks Fly", "049. Question..._", "050. All Too Well",
+        "051. Getaway Car", "052. I Forgot That You Existed", "053. Our Song", "054. Vigilante Shit", "055. Clean",
+        "056. Sweet Nothing", "057. Paris", "058. Labyrinth", "059. Christmas Tree Farm", "060. Don't Blame Me",
+        "061. champagne problems", "062. Out Of The Woods", "063. I Did Something Bad", "064. Untouchable", "065. cardigan",
+        "066. Bad Blood", "067. How You Get The Girl", "068. Afterglow", "069. You Are In Love", "070. Mastermind",
+        "071. Mine", "072. Babe", "073. august", "074. Death By A Thousand Cuts", "075. King of My Heart",
+        "076. Safe And Sound", "077. Wonderland", "078. The Great War", "079. Dress", "080. Bigger Than The Whole Sky",
+        "081. the last great american dynasty", "082. New Year's Day", "083. Dear Reader", "084. Sparks Fly", "085. Would've, Could've, Should've",
+        "086. ‘tis the damn season", "087. Eyes Open", "088. Dancing With Our Hands Tied", "089. I Know Places", "090. I Wish You Would",
+        "091. Stay Stay Stay", "092. Paper Rings", "093. High Infidelity", "094. tolerate it", "095. betty",
+        "096. Long Live", "097. Fearless", "098. False God", "099. Beautiful Eyes", "100. the 1"
+      ]
+    }
+  ]
+}
